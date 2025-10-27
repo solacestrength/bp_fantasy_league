@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>British Powerlifting Fantasy League 2025 &#x1f1ec;&#x1f1e7</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+  @keyframes fadeInUp {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+  }
+
+  .animate-fade-in {
+    animation: fadeInUp 1s ease-out forwards;
+  }
+</style>
+</head>
+<body class="relative bg-gray-900 text-white font-sans">
+  <div class="absolute inset-0 bg-[url('background.jpg')] bg-cover bg-center opacity-50"></div>
+  <div class="absolute inset-0 bg-black/70"></div>
+
+  <div class="relative z-10">
+  <!-- Header is no longer fixed; it sits in normal document flow (relative). -->
+<header class="relative w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 z-50">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+    
+    <!-- Left spacer to balance burger menu on small screens -->
+    <div class="w-7 md:w-10"></div>
+    
+    <!-- Centered site title -->
+    <div class="flex-1 text-center">
+      <a href="index.html"
+        class="font-bold text-white hover:text-red-500 transition animate-fade-in-up
+               text-sm sm:text-lg md:text-xl lg:text-2xl leading-tight">
+        British Powerlifting Fantasy League 2025 &#x1f1ec;&#x1f1e7
+      </a>
+    </div>
+
+    <!-- Burger Menu -->
+    <div class="flex justify-end items-center">
+      <button id="menu-btn" aria-expanded="false" aria-controls="site-menu"
+        class="text-gray-300 focus:outline-none p-2 rounded-md hover:bg-gray-800/50">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+        <span class="sr-only">Open menu</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Dropdown Menu -->
+  <div id="mobile-menu"
+    class="absolute top-full right-0 md:right-4 mt-2 md:w-48 w-full
+           bg-gray-900 border border-gray-800 rounded-b-md md:rounded-md
+           shadow-lg z-50 transform scale y-0 opacity-0 origin-top
+           transition-all duration-300 ease-in-out">
+    <nav id="site-menu" class="flex flex-col md:py-2 py-3">
+      <a href="index.html" class="px-4 py-2 text-gray-300 hover:text-red-500 hover:bg-gray-800 transition">Home</a>
+      <a href="leaderboard.html" class="px-4 py-2 text-gray-300 hover:text-red-500 hover:bg-gray-800 transition">Leaderboard</a>
+      <a href="about.html" class="px-4 py-2 text-gray-300 hover:text-red-500 hover:bg-gray-800 transition">About</a>
+    </nav>
+  </div>
+</header>
+  <!-- Add consistent space AFTER the header using margin-top on main (not padding for a fixed header) -->
+  <main class="mt-6 md:mt-10 animate-fade-in">
+    <section class="max-w-2xl mx-auto text-center mb-6">
+      <p class="text-l">
+        <b>Enter and see where you stack up</b> &#127942;
+      </p>
+            <p class="text-sm text-gray-400">
+        <br><br> N.B. You may see a small Google cookie prompt when the form loads.
+        If so, accept or
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLScYHbHof5DR63qAq-nCedxr90ak8KXB5c02kkyAnl9mdgX9Mg/viewform?embedded=true"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="underline hover:text-gray-300">
+           open the form in a new tab.
+        </a>
+      </p>
+    </section>
+
+    <section class="w-full flex justify-center mt-8 px-4">
+      
+    <!-- Embedded form -->
+    <iframe
+      src="https://docs.google.com/forms/d/e/1FAIpQLScYHbHof5DR63qAq-nCedxr90ak8KXB5c02kkyAnl9mdgX9Mg/viewform?embedded=true"
+      class="w-full h-[1000px] rounded-xl border border-gray-700"
+      frameborder="0"
+      marginheight="0"
+      marginwidth="0"
+      title="British Powerlifting Fantasy League entry form">
+      Loading…
+    </iframe>
+</section>
+  
+    <div class="text-center mt-6">
+      <a href="leaderboard.html" class="text-gray-400 underline hover:text-gray-200">
+        View Leaderboard →
+      </a>
+    </div>
+  </main>
+
+  <footer class="text-center text-gray-500 text-sm mt-16 pb-4">
+    British Powerlifting Fantasy League 2025
+  </footer>
+
+<script>
+  const menuBtn = document.getElementById('menu-btn');
+  const mobileMenu = document.getElementById('mobile-menu');
+
+  function toggleMenu(show) {
+    if (show) {
+      mobileMenu.classList.remove('scale-y-0', 'opacity-0', 'pointer-events-none');
+      mobileMenu.classList.add('scale-y-100', 'opacity-100');
+      menuBtn.setAttribute('aria-expanded', 'true');
+    } else {
+      mobileMenu.classList.add('scale-y-0', 'opacity-0', 'pointer-events-none');
+      mobileMenu.classList.remove('scale-y-100', 'opacity-100');
+      menuBtn.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  let menuVisible = false;
+
+  menuBtn.addEventListener('click', (e) => {
+    menuVisible = !menuVisible;
+    toggleMenu(menuVisible);
+    e.stopPropagation();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+      if (menuVisible) {
+        menuVisible = false;
+        toggleMenu(false);
+      }
+    }
+  });
+
+  // Initialize menu as hidden (collapsed)
+  toggleMenu(false);
+</script>
+</div>
+</body>
+</html>
