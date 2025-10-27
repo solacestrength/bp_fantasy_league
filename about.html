@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>British Powerlifting Fantasy League 2025 &#x1f1ec;&#x1f1e7</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+  @keyframes fadeInUp {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+  }
+
+  .animate-fade-in {
+    animation: fadeInUp 1s ease-out forwards;
+  }
+</style>
+</head>
+<body class="relative bg-gray-900 text-white font-sans">
+  <div class="absolute inset-0 bg-[url('about.jpg')] bg-cover bg-center opacity-50"></div>
+  <div class="absolute inset-0 bg-black/70"></div>
+
+  <div class="relative z-10">
+  <!-- Header is no longer fixed; it sits in normal document flow (relative). -->
+<header class="relative w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 z-50">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+    
+    <!-- Left spacer to balance burger menu on small screens -->
+    <div class="w-7 md:w-10"></div>
+    
+    <!-- Centered site title -->
+    <div class="flex-1 text-center">
+      <a href="index.html"
+        class="font-bold text-white hover:text-red-500 transition animate-fade-in-up
+               text-sm sm:text-lg md:text-xl lg:text-2xl leading-tight">
+        British Powerlifting Fantasy League 2025 &#x1f1ec;&#x1f1e7
+      </a>
+    </div>
+
+    <!-- Burger Menu -->
+    <div class="flex justify-end items-center">
+      <button id="menu-btn" aria-expanded="false" aria-controls="site-menu"
+        class="text-gray-300 focus:outline-none p-2 rounded-md hover:bg-gray-800/50">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+        <span class="sr-only">Open menu</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Dropdown Menu -->
+  <div id="mobile-menu"
+    class="absolute top-full right-0 md:right-4 mt-2 md:w-48 w-full
+           bg-gray-900 border border-gray-800 rounded-b-md md:rounded-md
+           shadow-lg z-50 transform scale-y-0 opacity-0 origin-top
+           transition-all duration-300 ease-in-out">
+    <nav id="site-menu" class="flex flex-col md:py-2 py-3">
+      <a href="index.html" class="px-4 py-2 text-gray-300 hover:text-red-500 hover:bg-gray-800 transition">Home</a>
+      <a href="leaderboard.html" class="px-4 py-2 text-gray-300 hover:text-red-500 hover:bg-gray-800 transition">Leaderboard</a>
+      <a href="about.html" class="px-4 py-2 text-gray-300 hover:text-red-500 hover:bg-gray-800 transition">About</a>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const menuBtn = document.getElementById('menu-btn');
+  const mobileMenu = document.getElementById('mobile-menu');
+
+  menuBtn.addEventListener('click', (e) => {
+    const expanded = menuBtn.getAttribute('aria-expanded') === 'true';
+    menuBtn.setAttribute('aria-expanded', String(!expanded));
+    // Animate open/close
+    if (mobileMenu.classList.contains('scale-y-0')) {
+      mobileMenu.classList.remove('scale-y-0', 'opacity-0');
+      mobileMenu.classList.add('scale-y-100', 'opacity-100');
+    } else {
+      mobileMenu.classList.add('scale-y-0', 'opacity-0');
+      mobileMenu.classList.remove('scale-y-100', 'opacity-100');
+    }
+    e.stopPropagation();
+  });
+
+  // Close if user clicks outside
+  document.addEventListener('click', (e) => {
+    if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+      if (!mobileMenu.classList.contains('scale-y-0')) {
+        mobileMenu.classList.add('scale-y-0', 'opacity-0');
+        mobileMenu.classList.remove('scale-y-100', 'opacity-100');
+        menuBtn.setAttribute('aria-expanded', 'false');
+      }
+    }
+  });
+</script>
+    
+  <!-- Main Content -->
+  <main class="max-w-3xl mx-auto px-4 mt-10 mb-16">
+    <section class="bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-700 p-6">
+      <h2 class="text-l font-bold text-center mb-6">Welcome to the British Open Classic Fantasy League.
+        Think you know ball?! Sign up for the chance to win some great prizes!</h2>
+
+      <div class="space-y-8">
+        <div>
+          <h3 class="text-xl font-semibold text-red-400 mb-2">🎁 Prizes</h3>
+          <ul class="list-disc list-inside text-gray-300 space-y-1">
+            <li>Top of leaderboard - <b>BRAND NEW</b> SBD <b>Resolve</b> T-shirt AND <b>Bulk Protein Powder</b> &#128085&#129371</li>
+            <li>Highest accuracy total predictions - <b>Bulk Protein Bars</b> &#127851</li>
+            </ul>
+        </div>
+
+          <div>
+          <h3 class="text-xl font-semibold text-red-400 mb-2">📊 Rules and Scoring</h3>
+          <ul class="list-disc list-inside text-gray-300 space-y-1">
+            <li>Each entrant predicts a winner for all male and female weight classes (8 per gender).</li>
+            <li>Assign a confidence level for your predictions. 1 = least confident and 16 = most confident. 
+                Each correct guess is added to your points total - highest score wins!
+                Placing more points on a prediction in a stacked weight class is high risk, high reward - choose wisely!</li>
+            <li>Entrants will also predict a male and female winner for the best lifter award.</li>
+            <li>Finally, entrants will also have the option to predict the winning total of each weight class. Don't forget your chips &#127839 (0.5kg multiples).
+              This will double up as a tiebreaker (if required) for the main prize. If two or more entrants finish at the top of the leaderboard, the entrant who most 
+              accurately predicted all 16 winning totals will win. Predicting the winning totals most accurately of all entrants will also put you in the running for 
+              an additional prize.</li>
+            <li>Entries close on Thursday 4th December 2025 at 11.59pm. You will be able to amend your responses in the Google form until this date, all the best!</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+  <div class="text-center mt-6">
+    <a href="index.html" class="text-gray-400 underline hover:text-gray-200">← Back to Entry Page</a>
+  </div>
+</main>
+
+<footer class="text-center text-gray-500 text-sm mt-16 pb-4">British Powerlifting Fantasy League 2025</footer>
