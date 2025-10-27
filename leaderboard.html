@@ -126,7 +126,7 @@
           <tbody id="leaderboardBody" class="divide-y divide-gray-700"></tbody>
         </table>
       </div>
-
+      <div id="pagination"></div>
       <p class="text-xs text-gray-500 text-center mt-3">
         Data auto-updates from Google Sheets
       </p>
@@ -157,13 +157,11 @@
   }
 
   let menuVisible = false;
-
   menuBtn.addEventListener('click', (e) => {
     menuVisible = !menuVisible;
     toggleMenu(menuVisible);
     e.stopPropagation();
   });
-
   document.addEventListener('click', (e) => {
     if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
       if (menuVisible) {
@@ -172,36 +170,89 @@
       }
     }
   });
-
-  // Initialize menu as hidden (collapsed)
   toggleMenu(false);
-  
-  // Leaderboard CSV loading (unchanged)
+
+  // --- LEADERBOARD LOGIC ---
+  const ROWS_PER_PAGE = 50;
+  let allRows = [];
+  let currentPage = 1;
+  let filteredRows = [];
+
   async function loadLeaderboard() {
     const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=2003215108&single=true&output=csv";
     const response = await fetch(csvUrl);
     const text = await response.text();
     const rows = text.trim().split("\n").map(r => r.split(","));
     const headerRow = rows.shift();
-    const headerHtml = headerRow.map(h => `<th class='px-3 py-2'>${h}</th>`).join("");
-    document.getElementById("leaderboardHeader").innerHTML = headerHtml;
-    const bodyHtml = rows.map(row => `<tr>${row.map(cell => `<td class="px-3 py-2 text-center">${cell}</td>`).join("")}</tr>`).join("");
+
+    document.getElementById("leaderboardHeader").innerHTML =
+      headerRow.map(h => `<th class='px-3 py-2'>${h}</th>`).join("");
+
+    allRows = rows;
+    filteredRows = [...allRows];
+    renderTable();
+    renderPagination();
+  }
+
+  function renderTable() {
+    const start = (currentPage - 1) * ROWS_PER_PAGE;
+    const end = start + ROWS_PER_PAGE;
+    const rowsToShow = filteredRows.slice(start, end);
+
+    const bodyHtml = rowsToShow
+      .map(row =>
+        `<tr>${row.map(cell => `<td class="px-3 py-2 text-center">${cell}</td>`).join("")}</tr>`
+      )
+      .join("");
+
     document.getElementById("leaderboardBody").innerHTML = bodyHtml;
   }
-  loadLeaderboard();
+
+  function renderPagination() {
+    const totalPages = Math.ceil(filteredRows.length / ROWS_PER_PAGE);
+    const container = document.getElementById("pagination");
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="flex justify-center items-center space-x-2 mt-4">
+        <button id="prevPage" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded disabled:opacity-40" ${currentPage === 1 ? 'disabled' : ''}>Prev</button>
+        <span class="text-sm text-gray-300">Page ${currentPage} of ${totalPages}</span>
+        <button id="nextPage" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded disabled:opacity-40" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
+      </div>
+    `;
+
+    document.getElementById("prevPage").onclick = () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderTable();
+        renderPagination();
+      }
+    };
+    document.getElementById("nextPage").onclick = () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderTable();
+        renderPagination();
+      }
+    };
+  }
+
   // --- SEARCH FUNCTIONALITY ---
   const searchInput = document.getElementById('searchInput');
-
   searchInput.addEventListener('input', () => {
     const filter = searchInput.value.toLowerCase();
-    const rows = document.querySelectorAll('#leaderboardBody tr');
-    rows.forEach(row => {
-      const text = row.textContent.toLowerCase();
-      row.style.display = text.includes(filter) ? '' : 'none';
-    });
+    filteredRows = allRows.filter(row =>
+      row.some(cell => cell.toLowerCase().includes(filter))
+    );
+    currentPage = 1; // Reset to first page after search
+    renderTable();
+    renderPagination();
   });
-  
+
+  // Load data initially
+  loadLeaderboard();
 </script>
+
 </div>
 </body>
 </html>
