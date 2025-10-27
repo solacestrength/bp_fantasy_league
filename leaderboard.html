@@ -83,31 +83,23 @@
   <!-- Left spacer (empty) only on desktop) -->
   <div class="hidden sm:block"></div>
 
-  <!-- Heading -->
-  <h2 class="text-2xl font-bold text-white text-center">
-    Live Leaderboard
-  </h2>
+<div class="flex flex-col md:flex-row items-center justify-between mb-6 space-y-3 md:space-y-0">
+  <h2 class="text-2xl font-bold text-white text-center flex-1">Live Leaderboard</h2>
 
-  <!-- Search input -->
-<div class="relative flex justify-center sm:justify-end mt-2 sm:mt-0">
-  <!-- Magnifying glass icon inside the input -->
-  <svg class="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" 
-       xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-          d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
-  </svg>
-
-  <!-- Search input -->
-  <input
-    id="searchInput"
-    type="text"
-    placeholder="Search"
-    class="pl-8 px-3 py-2 rounded-md
-           bg-gray-800/50 border border-gray-700 text-gray-200
-           placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500
-           w-[12ch]"
-  />
-</div>
+  <div class="relative">
+    <input 
+      type="text" 
+      id="searchInput" 
+      placeholder="Search" 
+      class="w-40 sm:w-48 bg-gray-700/60 text-white placeholder-gray-400 text-sm rounded-lg pl-8 pr-2 py-1 focus:outline-none focus:ring-2 focus:ring-red-500 w-[12ch]"
+    />
+    <svg xmlns="http://www.w3.org/2000/svg" 
+         class="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" 
+         fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+            d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z" />
+    </svg>
+  </div>
 </div>
 
       <div class="overflow-x-auto rounded-xl border border-gray-700">
