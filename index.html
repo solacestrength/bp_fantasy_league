@@ -1,3 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Home | British Classic Fantasy League 2025 &#x1f1ec;&#x1f1e7</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+  @keyframes fadeInUp {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+  }
+
+  .animate-fade-in {
+    animation: fadeInUp 1s ease-out forwards;
+  }
+</style>
+
+<!-- Fixes for mobile menu stacking/pointer events -->
+<link rel="stylesheet" href="/assets/css/fix-dropdown.css">
+</head>
+<body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
+
+  <div class="absolute inset-0 bg-[url('image_home.jpg')] bg-cover bg-center opacity-50 site-background"></div>
+  <div class="absolute inset-0 bg-black/70 site-background-overlay"></div>
+
+  <div class="relative z-10 flex flex-col flex-grow">
+  <!-- Header is no longer fixed; it sits in normal document flow (relative). -->
 <header class="w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 z-50 site-header">
   <div class="w-full flex items-center justify-between px-4 py-3 md:justify-center md:relative">
 
