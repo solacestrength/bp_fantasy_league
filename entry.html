@@ -23,6 +23,10 @@
 
   .animate-fade-in {
     animation: fadeInUp 1s ease-out forwards;
+
+        /* Smooth fade transition for background */
+    .fade-bg {
+      transition: background-color 1s ease-in-out;
   }
 </style>
 </head>
@@ -93,18 +97,38 @@
       </p>
     </section>
 
-    <section class="w-full flex justify-center mt-8 px-4">
-      
-    <!-- Embedded form -->
+<section class="w-full flex justify-center mt-8 px-4">
+  <div id="formContainer"
+       class="fade-bg p-3 sm:p-4 rounded-xl border border-gray-700 shadow-inner w-full max-w-2xl transition-all duration-700 ease-in-out">
     <iframe
       src="https://docs.google.com/forms/d/e/1FAIpQLScYHbHof5DR63qAq-nCedxr90ak8KXB5c02kkyAnl9mdgX9Mg/viewform?embedded=true"
-      class="w-full h-[1000px] rounded-xl border border-gray-700"
+      class="w-full h-[1000px] rounded-lg border-0"
       frameborder="0"
       marginheight="0"
       marginwidth="0"
       title="British Classic Fantasy League entry form">
       Loading…
     </iframe>
+  </div>
+</section>
+
+<script>
+  // Only run on mobile (under 768px width)
+  window.addEventListener('DOMContentLoaded', () => {
+    if (window.innerWidth < 768) {
+      const formContainer = document.getElementById('formContainer');
+
+      // Apply initial light background for readability
+      formContainer.classList.add('bg-gray-100');
+
+      // Revert to dark theme after 15 seconds
+      setTimeout(() => {
+        formContainer.classList.remove('bg-gray-100', 'shadow-inner');
+        formContainer.classList.add('bg-gray-800/70', 'border-gray-600');
+      }, 15000);
+    }
+  });
+</script>
 </section>
   
     <div class="text-center mt-6">
