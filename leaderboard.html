@@ -11,83 +11,55 @@
       0% { opacity: 0; transform: translateY(10px); }
       100% { opacity: 1; transform: translateY(0); }
     }
-
     .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
     .animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
   </style>
 </head>
 <body class="relative bg-gray-900 text-white font-sans">
 
-  <!-- Background image and overlay -->
+  <!-- Background -->
   <div class="site-background absolute inset-0 bg-[url('leaderboard.jpg')] bg-cover bg-center opacity-55"></div>
   <div class="site-background-overlay absolute inset-0 bg-black/70"></div>
 
   <div class="relative z-10">
 
     <!-- Header -->
-<header class="site-header w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 relative z-50">
-  <div class="w-full flex items-center justify-center px-4 py-3">
-    <!-- Title -->
-    <div class="flex-1 text-center">
-      <a href="index.html" class="font-bold text-white hover:text-red-500 text-xl">
-        British Classic Fantasy League 2025 🇬🇧
-      </a>
+    <header class="site-header w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 relative z-50">
+      <div class="w-full flex items-center justify-center px-4 py-3">
+        <div class="flex-1 text-center">
+          <a href="index.html" class="font-bold text-white hover:text-red-500 transition animate-fade-in-up text-sm sm:text-lg md:text-xl lg:text-2xl">
+            British Classic Fantasy League 2025 🇬🇧
+          </a>
+        </div>
+
+        <!-- Burger button -->
+        <div class="absolute right-4 top-1/2 -translate-y-1/2">
+          <button id="menu-btn" aria-expanded="false" class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+            <span class="sr-only">Open menu</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Dropdown menu (fixed outside transformed parent) -->
+    <div id="mobile-menu" class="fixed top-16 right-4 w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-md shadow-lg z-50 scale-y-0 opacity-0 origin-top transition-transform duration-300 ease-in-out">
+      <nav class="flex flex-col py-2 text-white">
+        <a href="index.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Home</a>
+        <a href="entry.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">League Entry</a>
+        <a href="leaderboard.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Leaderboard</a>
+        <a href="accuracy_scores.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Accuracy Scores</a>
+      </nav>
     </div>
 
-    <!-- Burger button (always extreme right) -->
-    <div class="absolute right-4 top-1/2 -translate-y-1/2">
-      <button id="menu-btn" aria-expanded="false" class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-        </svg>
-      </button>
-    </div>
-  </div>
-</header>
-
-<!-- Dropdown menu (outside transformed parent!) -->
-<div id="mobile-menu" class="fixed top-16 right-4 w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-md shadow-lg z-50 scale-y-0 opacity-0 origin-top transition-transform duration-300 ease-in-out">
-  <nav class="flex flex-col py-2">
-    <a href="index.html" class="px-4 py-2 text-white hover:text-red-500 hover:bg-gray-800 transition">Home</a>
-    <a href="entry.html" class="px-4 py-2 text-white hover:text-red-500 hover:bg-gray-800 transition">League Entry</a>
-    <a href="leaderboard.html" class="px-4 py-2 text-white hover:text-red-500 hover:bg-gray-800 transition">Leaderboard</a>
-    <a href="accuracy_scores.html" class="px-4 py-2 text-white hover:text-red-500 hover:bg-gray-800 transition">Accuracy Scores</a>
-  </nav>
-</div>
-
-<script>
-const menuBtn = document.getElementById('menu-btn');
-const mobileMenu = document.getElementById('mobile-menu');
-
-menuBtn.addEventListener('click', (e) => {
-  const isOpen = mobileMenu.classList.contains('opacity-100');
-  if(isOpen){
-    mobileMenu.classList.remove('opacity-100','scale-y-100');
-    mobileMenu.classList.add('opacity-0','scale-y-0');
-    menuBtn.setAttribute('aria-expanded','false');
-  } else {
-    mobileMenu.classList.remove('opacity-0','scale-y-0');
-    mobileMenu.classList.add('opacity-100','scale-y-100');
-    menuBtn.setAttribute('aria-expanded','true');
-  }
-  e.stopPropagation();
-});
-
-document.addEventListener('click', (e) => {
-  if(!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)){
-    mobileMenu.classList.remove('opacity-100','scale-y-100');
-    mobileMenu.classList.add('opacity-0','scale-y-0');
-    menuBtn.setAttribute('aria-expanded','false');
-  }
-});
-</script>
-    
     <!-- Main content -->
     <main class="pt-20 md:pt-24 animate-fade-in">
       <section class="w-full px-4">
         <div class="w-full max-w-3xl lg:max-w-4xl mx-auto bg-gray-800/60 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-gray-700">
 
-          <!-- Live Leaderboard header -->
+          <!-- Leaderboard header -->
           <div class="w-full mt-10 mb-6 flex flex-col sm:grid sm:grid-cols-3 items-center">
             <div class="hidden sm:block"></div>
             <h2 class="text-2xl font-bold text-white text-center sm:text-center">Live Leaderboard</h2>
@@ -104,7 +76,7 @@ document.addEventListener('click', (e) => {
             </div>
           </div>
 
-          <!-- Table -->
+          <!-- Leaderboard table -->
           <div class="overflow-x-auto rounded-xl border border-gray-700">
             <table id="leaderboardTable" class="min-w-full text-sm text-gray-200 text-center">
               <thead class="bg-gray-700 text-gray-100">
@@ -116,6 +88,7 @@ document.addEventListener('click', (e) => {
 
           <div id="paginationContainer" class="flex justify-center items-center mt-4 flex-wrap text-sm text-gray-300"></div>
           <p class="text-xs text-gray-500 text-center mt-3">Data auto-updates from Google Sheets</p>
+
         </div>
       </section>
 
@@ -128,105 +101,14 @@ document.addEventListener('click', (e) => {
   </div>
 
   <script>
-    // --- Mobile dropdown ---
-    const menuBtn = document.getElementById('menu-btn');
-    const mobileMenu = document.getElementById('mobile-menu');
+    document.addEventListener('DOMContentLoaded', () => {
 
-    menuBtn.addEventListener('click', (e) => {
-      const isOpen = mobileMenu.classList.contains('opacity-100');
-      if(isOpen){
-        mobileMenu.classList.remove('opacity-100','scale-y-100');
-        mobileMenu.classList.add('opacity-0','scale-y-0');
-        menuBtn.setAttribute('aria-expanded','false');
-      } else {
-        mobileMenu.classList.remove('opacity-0','scale-y-0');
-        mobileMenu.classList.add('opacity-100','scale-y-100');
-        menuBtn.setAttribute('aria-expanded','true');
-      }
-      e.stopPropagation();
-    });
+      // Dropdown toggle
+      const menuBtn = document.getElementById('menu-btn');
+      const mobileMenu = document.getElementById('mobile-menu');
 
-    document.addEventListener('click', (e) => {
-      if(!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)){
-        mobileMenu.classList.remove('opacity-100','scale-y-100');
-        mobileMenu.classList.add('opacity-0','scale-y-0');
-        menuBtn.setAttribute('aria-expanded','false');
-      }
-    });
-
-    // --- Leaderboard JS ---
-    const rowsPerPage = 50;
-    let allRows = [], filteredRows = [], currentPage = 1;
-
-    async function loadLeaderboard(){
-      const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSuA8YB98ghNeM-cS6Fs1pJNkEBOI0x7WKI4R0vtvAG68mo7PJZYVj2HsdxH3DDqvieaTpe9zUzJcNW/pub?gid=963601969&single=true&output=csv";
-      const response = await fetch(csvUrl);
-      const text = await response.text();
-      const rows = text.trim().split("\n").map(r=>r.split(","));
-      const headerRow = rows.shift();
-      document.getElementById("leaderboardHeader").innerHTML = headerRow.map(h=>`<th class='px-3 py-2'>${h}</th>`).join("");
-      allRows = rows;
-      filteredRows = [...allRows];
-      renderTable();
-    }
-
-    function renderTable(){
-      const tableBody = document.getElementById("leaderboardBody");
-      tableBody.innerHTML = "";
-      const start = (currentPage-1)*rowsPerPage;
-      const end = start+rowsPerPage;
-      const pageRows = filteredRows.slice(start,end);
-      pageRows.forEach(row=>{tableBody.insertAdjacentHTML("beforeend",`<tr>${row.map(cell=>`<td class="px-3 py-2 text-center">${cell}</td>`).join('')}</tr>`);});
-      renderPagination();
-    }
-
-    function renderPagination(){
-      const totalPages = Math.ceil(filteredRows.length/rowsPerPage);
-      const container = document.getElementById("paginationContainer");
-      container.innerHTML = "";
-      if(totalPages<=1) return;
-
-      const prevBtn = document.createElement("button");
-      prevBtn.textContent = "« Prev";
-      prevBtn.className = "px-2 py-1 mx-1 bg-gray-700/60 rounded hover:bg-gray-600";
-      prevBtn.disabled = currentPage===1;
-      prevBtn.onclick=()=>{if(currentPage>1){currentPage--; renderTable();}};
-      container.appendChild(prevBtn);
-
-      const maxButtons=5;
-      let startPage=Math.max(1,currentPage-Math.floor(maxButtons/2));
-      let endPage=Math.min(totalPages,startPage+maxButtons-1);
-      if(endPage-startPage<maxButtons-1) startPage=Math.max(1,endPage-maxButtons+1);
-
-      if(startPage>1){ createPageButton(1,container); if(startPage>2) container.insertAdjacentHTML("beforeend","<span class='mx-1'>...</span>"); }
-      for(let i=startPage;i<=endPage;i++){ createPageButton(i,container); }
-      if(endPage<totalPages){ if(endPage<totalPages-1) container.insertAdjacentHTML("beforeend","<span class='mx-1'>...</span>"); createPageButton(totalPages,container); }
-
-      const nextBtn=document.createElement("button");
-      nextBtn.textContent="Next »";
-      nextBtn.className="px-2 py-1 mx-1 bg-gray-700/60 rounded hover:bg-gray-600";
-      nextBtn.disabled=currentPage===totalPages;
-      nextBtn.onclick=()=>{if(currentPage<totalPages){currentPage++; renderTable();}};
-      container.appendChild(nextBtn);
-    }
-
-    function createPageButton(page,container){
-      const btn=document.createElement("button");
-      btn.textContent=page;
-      btn.className=`px-2 py-1 mx-1 rounded ${page===currentPage?"bg-red-600 text-white":"bg-gray-700/60 hover:bg-gray-600"}`;
-      btn.onclick=()=>{currentPage=page; renderTable();};
-      container.appendChild(btn);
-    }
-
-    const searchInput = document.getElementById("searchInput");
-    searchInput.addEventListener("input",()=>{
-      const filter = searchInput.value.toLowerCase();
-      filteredRows = allRows.filter(row=>row.join(" ").toLowerCase().includes(filter));
-      currentPage=1;
-      renderTable();
-    });
-
-    loadLeaderboard();
-  </script>
-</body>
-</html>
+      menuBtn.addEventListener('click', (e) => {
+        const isOpen = mobileMenu.classList.contains('opacity-100');
+        if(isOpen){
+          mobileMenu.classList.remove('opacity-100','scale-y-100');
+          mobileMenu.classList.add('opacity-0','scale-y-0');
