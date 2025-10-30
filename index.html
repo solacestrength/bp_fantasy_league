@@ -34,7 +34,7 @@
   <div class="relative z-10 flex flex-col flex-grow">
   <!-- Header is no longer fixed; it sits in normal document flow (relative). -->
 <header class="w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 z-50">
-  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+  <div class="w-full flex items-center justify-between px-4 py-3 md:justify-center md:relative">
 
     <!-- Centered site title -->
     <div class="flex-1 text-center">
@@ -46,7 +46,7 @@
     </div>
 
     <!-- Burger Menu + Dropdown -->
-    <div class="relative">
+    <div class="md:absolute md:right-4 md:top-1/2 md:-translate-y-1/2">
       <button id="menu-btn" aria-expanded="false" aria-controls="site-menu"
               class="text-gray-300 focus:outline-none p-2 rounded-md hover:bg-gray-800/50">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none"
