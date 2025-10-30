@@ -25,14 +25,16 @@
     animation: fadeInUp 1s ease-out forwards;
   }
 </style>
+
+<link rel="stylesheet" href="/assets/css/fix-dropdown.css">
 </head>
 <body class="relative bg-gray-900 text-white font-sans">
-  <div class="absolute inset-0 bg-[url('leaderboard.jpg')] bg-cover bg-center opacity-55"></div>
-  <div class="absolute inset-0 bg-black/70"></div>
+  <div class="absolute inset-0 bg-[url('leaderboard.jpg')] bg-cover bg-center opacity-55 site-background"></div>
+  <div class="absolute inset-0 bg-black/70 site-background-overlay"></div>
 
 <div class="relative z-10">
   
-<header class="w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 z-50">
+<header class="w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 z-50 site-header">
   <div class="w-full flex items-center justify-between px-4 py-3 md:justify-center md:relative">
 
     <!-- Centered site title -->
@@ -61,7 +63,7 @@
            class="absolute top-full right-0 mt-2 w-48
                   bg-gray-900 border border-gray-800 rounded-md shadow-lg
                   z-50 transform scale-y-0 opacity-0 origin-top
-                  transition-all duration-300 ease-in-out">
+                  transition-all duration-300 ease-in-out pointer-events-none">
         <nav id="site-menu" class="flex flex-col py-2">
           <a href="index.html" class="px-4 py-2 text-gray-300 hover:text-red-500 hover:bg-gray-800 transition">Home</a>
           <a href="entry.html" class="px-4 py-2 text-gray-300 hover:text-red-500 hover:bg-gray-800 transition">League Entry</a>

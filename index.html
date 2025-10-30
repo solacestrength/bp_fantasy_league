@@ -25,15 +25,18 @@
     animation: fadeInUp 1s ease-out forwards;
   }
 </style>
+
+<!-- Fixes for mobile menu stacking/pointer events -->
+<link rel="stylesheet" href="/assets/css/fix-dropdown.css">
 </head>
 <body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
 
-  <div class="absolute inset-0 bg-[url('image_home.jpg')] bg-cover bg-center opacity-50"></div>
-  <div class="absolute inset-0 bg-black/70"></div>
+  <div class="absolute inset-0 bg-[url('image_home.jpg')] bg-cover bg-center opacity-50 site-background"></div>
+  <div class="absolute inset-0 bg-black/70 site-background-overlay"></div>
 
   <div class="relative z-10 flex flex-col flex-grow">
   <!-- Header is no longer fixed; it sits in normal document flow (relative). -->
-<header class="w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 z-50">
+<header class="w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 z-50 site-header">
   <div class="w-full flex items-center justify-between px-4 py-3 md:justify-center md:relative">
 
     <!-- Centered site title -->
@@ -62,7 +65,7 @@
            class="absolute top-full right-0 mt-2 w-48
                   bg-gray-900 border border-gray-800 rounded-md shadow-lg
                   z-50 transform scale-y-0 opacity-0 origin-top
-                  transition-all duration-300 ease-in-out">
+                  transition-all duration-300 ease-in-out pointer-events-none">
         <nav id="site-menu" class="flex flex-col py-2">
           <a href="index.html" class="px-4 py-2 text-gray-300 hover:text-red-500 hover:bg-gray-800 transition">Home</a>
           <a href="entry.html" class="px-4 py-2 text-gray-300 hover:text-red-500 hover:bg-gray-800 transition">League Entry</a>
@@ -79,30 +82,37 @@
   const menuBtn = document.getElementById('menu-btn');
   const mobileMenu = document.getElementById('mobile-menu');
 
-  menuBtn.addEventListener('click', (e) => {
-    const expanded = menuBtn.getAttribute('aria-expanded') === 'true';
-    menuBtn.setAttribute('aria-expanded', String(!expanded));
-    // Animate open/close
-    if (mobileMenu.classList.contains('scale-y-0')) {
-      mobileMenu.classList.remove('scale-y-0', 'opacity-0');
+  function toggleMenu(show) {
+    if (show) {
+      mobileMenu.classList.remove('scale-y-0', 'opacity-0', 'pointer-events-none');
       mobileMenu.classList.add('scale-y-100', 'opacity-100');
+      menuBtn.setAttribute('aria-expanded', 'true');
     } else {
-      mobileMenu.classList.add('scale-y-0', 'opacity-0');
+      mobileMenu.classList.add('scale-y-0', 'opacity-0', 'pointer-events-none');
       mobileMenu.classList.remove('scale-y-100', 'opacity-100');
+      menuBtn.setAttribute('aria-expanded', 'false');
     }
+  }
+
+  let menuVisible = false;
+
+  menuBtn.addEventListener('click', (e) => {
+    menuVisible = !menuVisible;
+    toggleMenu(menuVisible);
     e.stopPropagation();
   });
 
-  // Close if user clicks outside
   document.addEventListener('click', (e) => {
     if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
-      if (!mobileMenu.classList.contains('scale-y-0')) {
-        mobileMenu.classList.add('scale-y-0', 'opacity-0');
-        mobileMenu.classList.remove('scale-y-100', 'opacity-100');
-        menuBtn.setAttribute('aria-expanded', 'false');
+      if (menuVisible) {
+        menuVisible = false;
+        toggleMenu(false);
       }
     }
   });
+
+  // Initialize menu as hidden (collapsed)
+  toggleMenu(false);
 </script>
     
   <!-- Main Content -->
@@ -138,7 +148,7 @@
             <li>Assign a confidence level for your predictions. 1 = least confident and 16 = most confident. 
                 Each correct guess is added to your points total - highest score wins!
                 Placing more points on a prediction in a stacked weight class is high risk, high reward - choose wisely!</li>
-            <li>Entrants will also have the option to predict the winning total of each weight class. Don't forget your chips &#127839 (0.5kg multiples).
+            <li>Entrants will also have the option to predict the winning total of each weight class. Don't forget your chips 🍟 (0.5kg multiples).
               This will be used as a tiebreaker if required. If two or more entrants finish at the top of the leaderboard, the entrant who most 
               accurately predicted all 16 winning totals will win.</li>
             <li>Finally, entrants will also predict a male and female winner for the best lifter award. This is will be used as a final tie-breaker
@@ -156,3 +166,6 @@
 </main>
 
 <footer class="text-center text-gray-500 text-sm py-4 bg-transparent">British Classic Fantasy League 2025</footer>
+
+</body>
+</html>

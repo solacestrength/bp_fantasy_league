@@ -1,0 +1,25 @@
+/* Small global fixes for mobile menu stacking & pointer events */
+
+/* Put background layers behind and make them non-interactive */
+.site-background,
+.site-background-overlay {
+  z-index: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Ensure header sits above backgrounds */
+.site-header {
+  z-index: 9998 !important;
+  position: relative !important;
+}
+
+/* Force mobile menu above all page content */
+#mobile-menu {
+  z-index: 99999 !important;
+  pointer-events: auto !important; /* allow clicking when visible */
+}
+
+/* When the menu is hidden we still disable pointer events (JS toggles) */
+#mobile-menu.pointer-events-none {
+  pointer-events: none !important;
+}
