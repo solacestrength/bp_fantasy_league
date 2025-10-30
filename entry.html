@@ -37,24 +37,21 @@
   <div class="relative z-10">
   <!-- Header is no longer fixed; it sits in normal document flow (relative). -->
 <header class="w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 z-50">
-  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-    
-    <!-- Left spacer -->
-    <div class="w-7 md:w-10"></div>
-    
+  <div class="w-full flex items-center justify-between px-4 py-3 md:justify-center md:relative">
+
     <!-- Centered site title -->
     <div class="flex-1 text-center">
       <a href="index.html"
-        class="font-bold text-white hover:text-red-500 transition animate-fade-in-up
-               text-sm sm:text-lg md:text-xl lg:text-2xl leading-tight">
+         class="font-bold text-white hover:text-red-500 transition animate-fade-in-up
+                text-sm sm:text-lg md:text-xl lg:text-2xl leading-tight">
         British Classic Fantasy League 2025 &#x1f1ec;&#x1f1e7
       </a>
     </div>
 
-    <!-- Burger Menu + Dropdown Container -->
-    <div class="relative flex justify-end items-center">
+    <!-- Burger Menu + Dropdown -->
+    <div class="md:absolute md:right-4 md:top-1/2 md:-translate-y-1/2">
       <button id="menu-btn" aria-expanded="false" aria-controls="site-menu"
-        class="text-gray-300 focus:outline-none p-2 rounded-md hover:bg-gray-800/50">
+              class="text-gray-300 focus:outline-none p-2 rounded-md hover:bg-gray-800/50">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none"
              viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -63,12 +60,12 @@
         <span class="sr-only">Open menu</span>
       </button>
 
-      <!-- Dropdown Menu -->
+      <!-- Dropdown menu -->
       <div id="mobile-menu"
-        class="absolute top-full right-0 mt-2 w-48
-               bg-gray-900 border border-gray-800 rounded-b-md shadow-lg
-               z-50 transform scale-y-0 opacity-0 origin-top
-               transition-all duration-300 ease-in-out">
+           class="absolute top-full right-0 mt-2 w-48
+                  bg-gray-900 border border-gray-800 rounded-md shadow-lg
+                  z-50 transform scale-y-0 opacity-0 origin-top
+                  transition-all duration-300 ease-in-out">
         <nav id="site-menu" class="flex flex-col py-2">
           <a href="index.html" class="px-4 py-2 text-gray-300 hover:text-red-500 hover:bg-gray-800 transition">Home</a>
           <a href="entry.html" class="px-4 py-2 text-gray-300 hover:text-red-500 hover:bg-gray-800 transition">League Entry</a>
@@ -112,7 +109,6 @@
       Loading…
     </iframe>
   </div>
-</section>
 
 <script>
   // Only run on mobile (under 768px width)
