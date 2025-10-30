@@ -25,37 +25,63 @@
   <div class="relative z-10">
 
     <!-- Header -->
-    <header class="site-header w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 relative">
-      <div class="w-full flex items-center justify-between px-4 py-3 md:justify-center">
+<header class="site-header w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 relative z-50">
+  <div class="w-full flex items-center justify-center px-4 py-3">
+    <!-- Title -->
+    <div class="flex-1 text-center">
+      <a href="index.html" class="font-bold text-white hover:text-red-500 text-xl">
+        British Classic Fantasy League 2025 🇬🇧
+      </a>
+    </div>
 
-        <!-- Centered site title -->
-        <div class="flex-1 text-center">
-          <a href="index.html" class="font-bold text-white hover:text-red-500 transition animate-fade-in-up text-sm sm:text-lg md:text-xl lg:text-2xl">
-            British Classic Fantasy League 2025 🇬🇧
-          </a>
-        </div>
+    <!-- Burger button (always extreme right) -->
+    <div class="absolute right-4 top-1/2 -translate-y-1/2">
+      <button id="menu-btn" aria-expanded="false" class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
 
-        <!-- Burger + Dropdown -->
-        <div class="md:absolute md:right-4 md:top-1/2 md:-translate-y-1/2 relative">
-          <button id="menu-btn" aria-expanded="false" class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-            </svg>
-            <span class="sr-only">Open menu</span>
-          </button>
+<!-- Dropdown menu (outside transformed parent!) -->
+<div id="mobile-menu" class="fixed top-16 right-4 w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-md shadow-lg z-50 scale-y-0 opacity-0 origin-top transition-transform duration-300 ease-in-out">
+  <nav class="flex flex-col py-2">
+    <a href="index.html" class="px-4 py-2 text-white hover:text-red-500 hover:bg-gray-800 transition">Home</a>
+    <a href="entry.html" class="px-4 py-2 text-white hover:text-red-500 hover:bg-gray-800 transition">League Entry</a>
+    <a href="leaderboard.html" class="px-4 py-2 text-white hover:text-red-500 hover:bg-gray-800 transition">Leaderboard</a>
+    <a href="accuracy_scores.html" class="px-4 py-2 text-white hover:text-red-500 hover:bg-gray-800 transition">Accuracy Scores</a>
+  </nav>
+</div>
 
-          <div id="mobile-menu" class="absolute top-full right-0 mt-2 w-48 bg-gray-900/90 backdrop-blur-sm border border-gray-800 rounded-md shadow-lg transform scale-y-0 opacity-0 origin-top transition-all duration-300 ease-in-out">
-            <nav class="flex flex-col py-2 text-white">
-              <a href="index.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Home</a>
-              <a href="entry.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">League Entry</a>
-              <a href="leaderboard.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Leaderboard</a>
-              <a href="accuracy_scores.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Accuracy Scores</a>
-            </nav>
-          </div>
-        </div>
-      </div>
-    </header>
+<script>
+const menuBtn = document.getElementById('menu-btn');
+const mobileMenu = document.getElementById('mobile-menu');
 
+menuBtn.addEventListener('click', (e) => {
+  const isOpen = mobileMenu.classList.contains('opacity-100');
+  if(isOpen){
+    mobileMenu.classList.remove('opacity-100','scale-y-100');
+    mobileMenu.classList.add('opacity-0','scale-y-0');
+    menuBtn.setAttribute('aria-expanded','false');
+  } else {
+    mobileMenu.classList.remove('opacity-0','scale-y-0');
+    mobileMenu.classList.add('opacity-100','scale-y-100');
+    menuBtn.setAttribute('aria-expanded','true');
+  }
+  e.stopPropagation();
+});
+
+document.addEventListener('click', (e) => {
+  if(!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)){
+    mobileMenu.classList.remove('opacity-100','scale-y-100');
+    mobileMenu.classList.add('opacity-0','scale-y-0');
+    menuBtn.setAttribute('aria-expanded','false');
+  }
+});
+</script>
+    
     <!-- Main content -->
     <main class="pt-20 md:pt-24 animate-fade-in">
       <section class="w-full px-4">
