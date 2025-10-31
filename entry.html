@@ -86,8 +86,8 @@
     
 <section class="w-full flex flex-col items-center mt-8 px-4 relative max-w-2xl mx-auto">
 
-  <!-- Spotify prompt at the TOP -->
-  <div id="spotify-lock" class="flex flex-col items-center justify-center bg-black/80 rounded-xl text-center p-6 mb-6 w-full z-20 transition-all duration-500">
+  <!-- Spotify overlay prompt -->
+  <div id="spotify-lock" class="absolute inset-0 flex flex-col items-center justify-center bg-black/80 rounded-xl text-center p-6 z-20 transition-all duration-500">
     <p class="text-lg font-semibold mb-4">🎧 Listen before you enter!</p>
     <p class="text-sm text-gray-300 mb-4 max-w-md">
       Please open the latest Sabado Sessions Podcast episode on Spotify before entering the league.
@@ -102,8 +102,8 @@
     </a>
   </div>
 
-  <!-- Embedded form (blocked initially) -->
-  <div id="form-container" class="w-full h-[1000px] rounded-xl overflow-hidden border border-gray-700 relative transition-all duration-500 bg-gray-900/20">
+  <!-- Form container (original theme) -->
+  <div id="form-container" class="w-full h-[1000px] rounded-xl overflow-hidden border border-gray-700 relative bg-gray-900/20 transition-all duration-500">
     <iframe
       id="entry-form"
       src=""
@@ -115,7 +115,7 @@
     </iframe>
   </div>
 
-  <!-- Link to open form in new tab -->
+  <!-- Open form in new tab link -->
   <div class="mt-4 text-center">
     <a href="#" id="open-form-tab" class="text-gray-400 underline hover:text-gray-200 pointer-events-none">
       Open the form in a new tab
@@ -175,38 +175,33 @@
   // Initialize menu as hidden (collapsed)
   toggleMenu(false);
 
-const spotifyLink = document.getElementById('spotify-link');
+  const spotifyLink = document.getElementById('spotify-link');
   const spotifyLock = document.getElementById('spotify-lock');
   const formFrame = document.getElementById('entry-form');
-  const formContainer = document.getElementById('form-container');
   const openFormTab = document.getElementById('open-form-tab');
 
   let hasUnlocked = false;
 
   spotifyLink.addEventListener('click', () => {
-    // Unlock the form in-place
+    // Hide the Spotify overlay
     spotifyLock.classList.add('hidden');
 
-    // Restore container theme
-    formContainer.classList.remove('bg-black/80');
-
-    // Load the Google form
-    formFrame.src = 'form.html';
+    // Unlock form in iframe
+    formFrame.src = 'form.html?access=spotify';
     formFrame.classList.remove('opacity-0', 'pointer-events-none');
     formFrame.classList.add('opacity-100');
 
-    // Enable "Open form in new tab"
+    // Enable the "open in new tab" link
     openFormTab.classList.remove('pointer-events-none', 'text-gray-400');
     openFormTab.classList.add('text-white');
 
     hasUnlocked = true;
   });
 
-  // Handle "open form in new tab" click
   openFormTab.addEventListener('click', (e) => {
     e.preventDefault();
     if (hasUnlocked) {
-      window.open('form.html', '_blank', 'noopener,noreferrer');
+      window.open('form.html?access=spotify', '_blank', 'noopener,noreferrer');
     }
   });
   
