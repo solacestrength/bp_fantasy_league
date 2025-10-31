@@ -13,9 +13,9 @@
   .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
   .animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
   </style>
-
   <link rel="stylesheet" href="/assets/css/fix-dropdown.css">
 </head>
+
 <body id="top" class="relative bg-gray-900 text-white font-sans">
   <div class="absolute inset-0 bg-[url('image_entry.jpg')] bg-cover bg-center opacity-45 site-background"></div>
   <div class="absolute inset-0 bg-black/70 site-background-overlay"></div>
@@ -63,35 +63,33 @@
       <!-- Spotify + form section -->
       <section class="w-full flex flex-col items-center mt-8 px-4 relative max-w-2xl mx-auto">
 
-        <!-- Spotify overlay prompt -->
-<div id="spotify-lock" class="absolute inset-0 flex flex-col items-center justify-start pt-6 space-y-4 bg-black/80 rounded-xl text-center p-6 z-20 transition-all duration-500">
-  <p class="text-lg font-semibold">🎧 Listen before you enter!</p>
-  <p class="text-sm text-gray-300 max-w-md">
-    Please open the latest Sabado Sessions Podcast episode on Spotify before entering the league.
-  </p>
-  <a href="https://open.spotify.com/episode/48tCbJuobNKsQ9TwxnEDNh?si=5e7f69a783744356"
-     target="_blank"
-     rel="noopener noreferrer"
-     id="spotify-link"
-     class="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-4 rounded-lg transition">
-     Open Spotify Podcast
-  </a>
-</div>
+        <!-- Spotify overlay -->
+        <div id="spotify-lock" class="absolute inset-0 flex flex-col items-center justify-start pt-6 space-y-4 bg-black/80 rounded-xl text-center p-6 z-20 transition-all duration-500">
+          <p class="text-lg font-semibold">🎧 Listen before you enter!</p>
+          <p class="text-sm text-gray-300 max-w-md">
+            Please open the latest Sabado Sessions Podcast episode on Spotify before entering the league.
+          </p>
+          <a href="https://open.spotify.com/episode/48tCbJuobNKsQ9TwxnEDNh?si=5e7f69a783744356"
+             target="_blank"
+             rel="noopener noreferrer"
+             id="spotify-link"
+             class="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-4 rounded-lg transition">
+             Open Spotify Podcast
+          </a>
+        </div>
 
-<!-- Form container -->
-<div id="form-container" class="relative w-full h-[1000px] rounded-xl overflow-hidden border border-gray-700 bg-gray-900/20 transition-all duration-500">
-
-  <!-- Iframe -->
-  <iframe
-    id="entry-form"
-    src=""
-    class="w-full h-full rounded-xl opacity-0 pointer-events-none transition-opacity duration-500"
-    frameborder="0"
-    marginheight="0"
-    marginwidth="0"
-    title="British Classic Fantasy League entry form">
-  </iframe>
-</div>
+        <!-- Form proxy frame -->
+        <div id="form-container" class="relative w-full h-[1000px] rounded-xl overflow-hidden border border-gray-700 bg-gray-900/20 transition-all duration-500">
+          <iframe
+            id="entry-form"
+            src=""
+            class="w-full h-full rounded-xl opacity-0 pointer-events-none transition-opacity duration-500"
+            frameborder="0"
+            marginheight="0"
+            marginwidth="0"
+            title="British Classic Fantasy League entry form">
+          </iframe>
+        </div>
 
       </section>
 
@@ -109,12 +107,11 @@
     </footer>
   </div>
 
-  <!-- Scripts -->
   <script>
-    // Mobile menu
+    // Mobile menu toggle
     const menuBtn = document.getElementById('menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
-
+    let menuVisible = false;
     function toggleMenu(show) {
       if (show) {
         mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');
@@ -126,41 +123,31 @@
         menuBtn.setAttribute('aria-expanded','false');
       }
     }
-
-    let menuVisible = false;
-    menuBtn.addEventListener('click', (e) => { menuVisible = !menuVisible; toggleMenu(menuVisible); e.stopPropagation(); });
-    document.addEventListener('click', (e) => { if(!mobileMenu.contains(e.target)&&!menuBtn.contains(e.target)){ if(menuVisible){menuVisible=false;toggleMenu(false);} } });
+    menuBtn.addEventListener('click',(e)=>{menuVisible=!menuVisible;toggleMenu(menuVisible);e.stopPropagation();});
+    document.addEventListener('click',(e)=>{if(!mobileMenu.contains(e.target)&&!menuBtn.contains(e.target)){if(menuVisible){menuVisible=false;toggleMenu(false);}}});
     toggleMenu(false);
 
-    // Spotify + form logic
+    // Spotify gate logic
     const spotifyLink = document.getElementById('spotify-link');
     const spotifyLock = document.getElementById('spotify-lock');
     const formFrame = document.getElementById('entry-form');
-    const openFormTab = document.getElementById('open-form-tab');
 
-    let hasUnlocked = false;
-
-    spotifyLink.addEventListener('click', () => {
-      // Hide Spotify overlay
+    // Unlock state check
+    if (localStorage.getItem('formUnlocked') === 'true') {
       spotifyLock.classList.add('hidden');
-
-      // Load Google Form with token
       formFrame.src = 'form.html?access=spotify';
       formFrame.classList.remove('opacity-0','pointer-events-none');
       formFrame.classList.add('opacity-100');
+    }
 
-      // Enable "open in new tab" link
-      openFormTab.classList.remove('pointer-events-none','text-gray-400');
-      openFormTab.classList.add('text-white');
-
-      hasUnlocked = true;
-    });
-
-    openFormTab.addEventListener('click', (e) => {
-      e.preventDefault();
-      if(hasUnlocked){
-        window.open('form.html?access=spotify','_blank','noopener,noreferrer');
-      }
+    spotifyLink.addEventListener('click', () => {
+      setTimeout(() => {
+        spotifyLock.classList.add('hidden');
+        formFrame.src = 'form.html?access=spotify';
+        formFrame.classList.remove('opacity-0','pointer-events-none');
+        formFrame.classList.add('opacity-100');
+        localStorage.setItem('formUnlocked', 'true');
+      }, 5000); // unlock delay (5s)
     });
   </script>
 </body>
