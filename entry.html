@@ -84,40 +84,32 @@
       </p>
     </section>
 
-<section class="w-full flex justify-center mt-8 px-4 relative">
-  <!-- Locked overlay -->
-  <div id="form-lock" class="absolute inset-0 flex flex-col items-center justify-center bg-black/80 rounded-xl text-center p-6 z-20">
+<section class="w-full flex flex-col items-center mt-8 px-4 relative max-w-2xl mx-auto">
+
+  <!-- Spotify prompt at the TOP -->
+  <div id="spotify-lock" class="flex flex-col items-center justify-center bg-black/80 rounded-xl text-center p-6 mb-6 w-full z-20">
     <p class="text-lg font-semibold mb-4">🎧 Listen before you enter!</p>
-    <p class="text-sm text-gray-300 mb-4 max-w-sm">
+    <p class="text-sm text-gray-300 mb-4 max-w-md">
       Please open the latest Sabado Sessions Podcast episode on Spotify before entering the league.
     </p>
 
-    <a href="https://open.spotify.com/episode/48tCbJuobNKsQ9TwxnEDNh?si=5e7f69a783744356"
-       target="_blank"
-       rel="noopener noreferrer"
-       id="spotify-link"
-       class="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-4 rounded-lg transition">
-       Open Spotify Podcast
-    </a>
-
-    <button id="unlock-form"
-      class="mt-4 bg-gray-700 hover:bg-gray-600 text-white text-sm py-2 px-3 rounded transition hidden">
-      I’ve listened — unlock form
+    <button id="spotify-link" class="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-4 rounded-lg transition">
+      Open Spotify Podcast
     </button>
-
-    <p id="hint" class="text-xs text-gray-400 mt-3 hidden">Click the button after you’ve opened Spotify.</p>
   </div>
 
-  <!-- Embedded form -->
-  <iframe
-    id="entry-form"
-    src="https://docs.google.com/forms/d/e/1FAIpQLScYHbHof5DR63qAq-nCedxr90ak8KXB5c02kkyAnl9mdgX9Mg/viewform?embedded=true"
-    class="w-full h-[1000px] rounded-xl border border-gray-700 opacity-30 pointer-events-none transition-opacity duration-500"
-    frameborder="0"
-    marginheight="0"
-    marginwidth="0"
-    title="British Classic Fantasy League entry form">
-  </iframe>
+  <!-- Embedded form (blocked initially) -->
+  <div id="form-container" class="w-full h-[1000px] rounded-xl overflow-hidden border border-gray-700 relative">
+    <iframe
+      id="entry-form"
+      src=""
+      class="w-full h-full opacity-0 pointer-events-none transition-opacity duration-500"
+      frameborder="0"
+      marginheight="0"
+      marginwidth="0"
+      title="British Classic Fantasy League entry form">
+    </iframe>
+  </div>
 </section>
 
   
@@ -173,25 +165,21 @@
   toggleMenu(false);
 
   const spotifyLink = document.getElementById('spotify-link');
-  const unlockBtn = document.getElementById('unlock-form');
-  const hint = document.getElementById('hint');
-  const overlay = document.getElementById('form-lock');
+  const spotifyLock = document.getElementById('spotify-lock');
   const formFrame = document.getElementById('entry-form');
 
-  // Step 1: User clicks the Spotify link
   spotifyLink.addEventListener('click', () => {
-    // Show the unlock button and hint
-    unlockBtn.classList.remove('hidden');
-    hint.classList.remove('hidden');
+    // Open Spotify in a new tab
+    window.open(
+      'https://open.spotify.com/episode/48tCbJuobNKsQ9TwxnEDNh?si=5e7f69a783744356',
+      '_blank',
+      'noopener,noreferrer'
+    );
 
-    // Optional: subtly update overlay text color to draw attention
-    spotifyLink.classList.add('opacity-70');
-  });
-
-  // Step 2: User clicks "I’ve listened"
-  unlockBtn.addEventListener('click', () => {
-    overlay.classList.add('hidden');
-    formFrame.classList.remove('opacity-30', 'pointer-events-none');
+    // Unlock the form immediately
+    spotifyLock.classList.add('hidden');
+    formFrame.src = 'form.html';
+    formFrame.classList.remove('opacity-0', 'pointer-events-none');
     formFrame.classList.add('opacity-100');
     
 </script>
