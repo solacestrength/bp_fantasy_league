@@ -1,19 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <title>Entry Form</title>
+  <style>body{margin:0;background:#111;color:white;}</style>
+</head>
+<body>
   <script>
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('access') === 'spotify') {
-      // Redirect immediately to Google Form
-      window.location.replace('https://docs.google.com/forms/d/e/1FAIpQLScYHbHof5DR63qAq-nCedxr90ak8KXB5c02kkyAnl9mdgX9Mg/viewform');
-    } else {
-      document.write(`
-        <h2 style="color:white; text-align:center; margin-top:50px;">
-          Access denied. Please go through the official site.
-        </h2>
-      `);
+    if (urlParams.get('access') !== 'spotify') {
+      document.body.innerHTML = '<h2 style="text-align:center;margin-top:50px;">Access denied. Please go through the official site.</h2>';
     }
   </script>
-</head>
-<body style="background:black;"></body>
+
+  <iframe src="https://docs.google.com/forms/d/e/1FAIpQLScYHbHof5DR63qAq-nCedxr90ak8KXB5c02kkyAnl9mdgX9Mg/viewform?embedded=true"
+          style="width:100%;height:100vh;border:none;"></iframe>
+</body>
 </html>
