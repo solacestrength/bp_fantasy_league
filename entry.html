@@ -3,200 +3,171 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>League Entry | British Classic Fantasy League 2025 &#x1f1ec;&#x1f1e7</title>
+  <title>League Entry | British Classic Fantasy League 2025 🇬🇧</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
   @keyframes fadeInUp {
-    0% {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
   }
+  .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
+  .animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
+  </style>
 
-  .animate-fade-in-up {
-    animation: fadeInUp 0.8s ease-out forwards;
-  }
-
-  .animate-fade-in {
-    animation: fadeInUp 1s ease-out forwards;
-
-        /* Smooth fade transition for background */
-    .fade-bg {
-      transition: background-color 1s ease-in-out;
-  }
-</style>
-
-<link rel="stylesheet" href="/assets/css/fix-dropdown.css">
+  <link rel="stylesheet" href="/assets/css/fix-dropdown.css">
 </head>
 <body id="top" class="relative bg-gray-900 text-white font-sans">
   <div class="absolute inset-0 bg-[url('image_entry.jpg')] bg-cover bg-center opacity-50 site-background"></div>
   <div class="absolute inset-0 bg-black/70 site-background-overlay"></div>
 
   <div class="relative z-10">
-  <!-- Header is no longer fixed; it sits in normal document flow (relative). -->
-<header class="site-header w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 relative z-50">
-  <div class="w-full flex items-center justify-center px-4 py-3">
-    <!-- Centered site title -->
-    <div class="flex-1 text-center">
-      <a href="index.html" class="font-bold text-white hover:text-red-500 transition animate-fade-in-up text-sm sm:text-lg md:text-xl lg:text-2xl">
-        British Classic Fantasy League 2025 🇬🇧
-      </a>
+    <!-- Header -->
+    <header class="site-header w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 relative z-50">
+      <div class="w-full flex items-center justify-center px-4 py-3">
+        <div class="flex-1 text-center">
+          <a href="index.html" class="font-bold text-white hover:text-red-500 transition animate-fade-in-up text-sm sm:text-lg md:text-xl lg:text-2xl">
+            British Classic Fantasy League 2025 🇬🇧
+          </a>
+        </div>
+        <div class="absolute right-4 top-1/2 -translate-y-1/2">
+          <button id="menu-btn" aria-expanded="false" class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+            <span class="sr-only">Open menu</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="fixed top-16 right-4 w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-md shadow-lg z-50 scale-y-0 opacity-0 origin-top transition-transform duration-300 ease-in-out">
+      <nav class="flex flex-col py-2 text-white">
+        <a href="index.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Home</a>
+        <a href="entry.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">League Entry</a>
+        <a href="leaderboard.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Leaderboard</a>
+        <a href="accuracy_scores.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Accuracy Scores</a>
+      </nav>
     </div>
 
-    <!-- Burger button -->
-    <div class="absolute right-4 top-1/2 -translate-y-1/2">
-      <button id="menu-btn" aria-expanded="false" class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-        </svg>
-        <span class="sr-only">Open menu</span>
-      </button>
+    <!-- Main content -->
+    <main class="mt-6 md:mt-10 animate-fade-in">
+      <section class="max-w-2xl mx-auto text-center mb-6">
+        <p class="text-l"><b>Enter and see where you stack up</b> 🏆</p>
+        <p class="text-sm text-gray-400 mt-2">
+          N.B. You may see a small Google cookie prompt when the form loads.
+          If so, accept or
+          <a href="form.html" target="_blank" rel="noopener noreferrer"
+             id="open-form-tab"
+             class="underline hover:text-gray-300 pointer-events-none text-gray-400">
+            open the form in a new tab
+          </a> after clicking the Spotify link.
+        </p>
+      </section>
+
+      <!-- Spotify + form section -->
+      <section class="w-full flex flex-col items-center mt-8 px-4 relative max-w-2xl mx-auto">
+
+        <!-- Spotify overlay prompt -->
+        <div id="spotify-lock" class="absolute inset-0 flex flex-col items-center justify-center bg-black/80 rounded-xl text-center p-6 z-20 transition-all duration-500">
+          <p class="text-lg font-semibold mb-4">🎧 Listen before you enter!</p>
+          <p class="text-sm text-gray-300 mb-4 max-w-md">
+            Please open the latest Sabado Sessions Podcast episode on Spotify before entering the league.
+          </p>
+          <a href="https://open.spotify.com/episode/48tCbJuobNKsQ9TwxnEDNh?si=5e7f69a783744356"
+             target="_blank"
+             rel="noopener noreferrer"
+             id="spotify-link"
+             class="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-4 rounded-lg transition">
+             Open Spotify Podcast
+          </a>
+        </div>
+
+        <!-- Form container -->
+        <div id="form-container" class="relative w-full h-[1000px] rounded-xl overflow-hidden border border-gray-700 bg-gray-900/20 transition-all duration-500">
+          <!-- Semi-transparent overlay to match theme -->
+          <div class="absolute inset-0 bg-gray-900/40 pointer-events-none rounded-xl"></div>
+
+          <iframe
+            id="entry-form"
+            src=""
+            class="w-full h-full rounded-xl opacity-0 pointer-events-none transition-opacity duration-500"
+            frameborder="0"
+            marginheight="0"
+            marginwidth="0"
+            title="British Classic Fantasy League entry form">
+          </iframe>
+        </div>
+
+      </section>
+
+      <div class="text-center mt-6">
+        <a href="leaderboard.html" class="text-gray-400 underline hover:text-gray-200">View Leaderboard</a>
+      </div>
+    </main>
+
+    <div class="text-center mt-4">
+      <a href="#top" class="text-gray-400 text-sm underline hover:text-gray-200">Back to Top</a>
     </div>
-  </div>
-</header>
 
-<!-- Dropdown menu -->
-<div id="mobile-menu" class="fixed top-16 right-4 w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-md shadow-lg z-50 scale-y-0 opacity-0 origin-top transition-transform duration-300 ease-in-out">
-  <nav class="flex flex-col py-2 text-white">
-    <a href="index.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Home</a>
-    <a href="entry.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">League Entry</a>
-    <a href="leaderboard.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Leaderboard</a>
-    <a href="accuracy_scores.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Accuracy Scores</a>
-  </nav>
-</div>
-
-  <!-- Add consistent space AFTER the header using margin-top on main (not padding for a fixed header) -->
-  <main class="mt-6 md:mt-10 animate-fade-in">
-    <section class="max-w-2xl mx-auto text-center mb-6">
-      <p class="text-l">
-        <b>Enter and see where you stack up</b> 🏆
-      </p>
-            <p class="text-sm text-gray-400">
-        <br><br> N.B. You may see a small Google cookie prompt when the form loads.
-        If so, accept or
-<a href="form.html" target="_blank" rel="noopener noreferrer" class="underline hover:text-gray-300">
-  open the form in a new tab
-</a> after clicking the Spotify link.
-      </p>
-    </section>
-    
-<section class="w-full flex flex-col items-center mt-8 px-4 relative max-w-2xl mx-auto">
-
-  <!-- Spotify overlay prompt -->
-  <div id="spotify-lock" class="absolute inset-0 flex flex-col items-center justify-center bg-black/80 rounded-xl text-center p-6 z-20 transition-all duration-500">
-    <p class="text-lg font-semibold mb-4">🎧 Listen before you enter!</p>
-    <p class="text-sm text-gray-300 mb-4 max-w-md">
-      Please open the latest Sabado Sessions Podcast episode on Spotify before entering the league.
-    </p>
-
-    <a href="https://open.spotify.com/episode/48tCbJuobNKsQ9TwxnEDNh?si=5e7f69a783744356"
-       target="_blank"
-       rel="noopener noreferrer"
-       id="spotify-link"
-       class="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-4 rounded-lg transition">
-       Open Spotify Podcast
-    </a>
+    <footer class="text-center text-gray-500 text-sm mt-16 pb-4">
+      British Classic Fantasy League 2025
+    </footer>
   </div>
 
-  <!-- Form container (original theme) -->
-  <div id="form-container" class="w-full h-[1000px] rounded-xl overflow-hidden border border-gray-700 relative bg-gray-900/20 transition-all duration-500">
-    <iframe
-      id="entry-form"
-      src=""
-      class="w-full h-full opacity-0 pointer-events-none transition-opacity duration-500 rounded-xl"
-      frameborder="0"
-      marginheight="0"
-      marginwidth="0"
-      title="British Classic Fantasy League entry form">
-    </iframe>
-  </div>
+  <!-- Scripts -->
+  <script>
+    // Mobile menu
+    const menuBtn = document.getElementById('menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
 
-    <div class="text-center mt-6">
-      <a href="leaderboard.html" class="text-gray-400 underline hover:text-gray-200">
-        View Leaderboard
-      </a>
-    </div>
-  </main>
-
- <div class="text-center mt-4">
-    <a href="#top" class="text-gray-400 text-sm underline hover:text-gray-200">Back to Top</a>
-  </div>
-
-  <footer class="text-center text-gray-500 text-sm mt-16 pb-4">
-    British Classic Fantasy League 2025
-  </footer>
-
-<script>
-  const menuBtn = document.getElementById('menu-btn');
-  const mobileMenu = document.getElementById('mobile-menu');
-
-  function toggleMenu(show) {
-    if (show) {
-      mobileMenu.classList.remove('scale-y-0', 'opacity-0', 'pointer-events-none');
-      mobileMenu.classList.add('scale-y-100', 'opacity-100');
-      menuBtn.setAttribute('aria-expanded', 'true');
-    } else {
-      mobileMenu.classList.add('scale-y-0', 'opacity-0', 'pointer-events-none');
-      mobileMenu.classList.remove('scale-y-100', 'opacity-100');
-      menuBtn.setAttribute('aria-expanded', 'false');
-    }
-  }
-
-  let menuVisible = false;
-
-  menuBtn.addEventListener('click', (e) => {
-    menuVisible = !menuVisible;
-    toggleMenu(menuVisible);
-    e.stopPropagation();
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
-      if (menuVisible) {
-        menuVisible = false;
-        toggleMenu(false);
+    function toggleMenu(show) {
+      if (show) {
+        mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');
+        mobileMenu.classList.add('scale-y-100','opacity-100');
+        menuBtn.setAttribute('aria-expanded','true');
+      } else {
+        mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');
+        mobileMenu.classList.remove('scale-y-100','opacity-100');
+        menuBtn.setAttribute('aria-expanded','false');
       }
     }
-  });
 
-  // Initialize menu as hidden (collapsed)
-  toggleMenu(false);
+    let menuVisible = false;
+    menuBtn.addEventListener('click', (e) => { menuVisible = !menuVisible; toggleMenu(menuVisible); e.stopPropagation(); });
+    document.addEventListener('click', (e) => { if(!mobileMenu.contains(e.target)&&!menuBtn.contains(e.target)){ if(menuVisible){menuVisible=false;toggleMenu(false);} } });
+    toggleMenu(false);
 
-  const spotifyLink = document.getElementById('spotify-link');
-  const spotifyLock = document.getElementById('spotify-lock');
-  const formFrame = document.getElementById('entry-form');
-  const openFormTab = document.getElementById('open-form-tab');
+    // Spotify + form logic
+    const spotifyLink = document.getElementById('spotify-link');
+    const spotifyLock = document.getElementById('spotify-lock');
+    const formFrame = document.getElementById('entry-form');
+    const openFormTab = document.getElementById('open-form-tab');
 
-  let hasUnlocked = false;
+    let hasUnlocked = false;
 
-  spotifyLink.addEventListener('click', () => {
-    // Hide the Spotify overlay
-    spotifyLock.classList.add('hidden');
+    spotifyLink.addEventListener('click', () => {
+      // Hide Spotify overlay
+      spotifyLock.classList.add('hidden');
 
-    // Unlock form in iframe
-    formFrame.src = 'form.html?access=spotify';
-    formFrame.classList.remove('opacity-0', 'pointer-events-none');
-    formFrame.classList.add('opacity-100');
+      // Load Google Form with token
+      formFrame.src = 'form.html?access=spotify';
+      formFrame.classList.remove('opacity-0','pointer-events-none');
+      formFrame.classList.add('opacity-100');
 
-    // Enable the "open in new tab" link
-    openFormTab.classList.remove('pointer-events-none', 'text-gray-400');
-    openFormTab.classList.add('text-white');
+      // Enable "open in new tab" link
+      openFormTab.classList.remove('pointer-events-none','text-gray-400');
+      openFormTab.classList.add('text-white');
 
-    hasUnlocked = true;
-  });
+      hasUnlocked = true;
+    });
 
-  openFormTab.addEventListener('click', (e) => {
-    e.preventDefault();
-    if (hasUnlocked) {
-      window.open('form.html?access=spotify', '_blank', 'noopener,noreferrer');
-    }
-  });
-  
-</script>
-
+    openFormTab.addEventListener('click', (e) => {
+      e.preventDefault();
+      if(hasUnlocked){
+        window.open('form.html?access=spotify','_blank','noopener,noreferrer');
+      }
+    });
+  </script>
 </body>
 </html>
