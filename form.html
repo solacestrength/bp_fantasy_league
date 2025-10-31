@@ -1,18 +1,39 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Entry Form</title>
-  <style>body{margin:0;background:#111;color:white;}</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fantasy League Entry Form</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('access') !== 'spotify') {
-      document.body.innerHTML = '<h2 style="text-align:center;margin-top:50px;">Access denied. Please go through the official site.</h2>';
-    }
-  </script>
+<body class="bg-gray-900 text-white flex flex-col items-center justify-start min-h-screen pt-6">
 
-  <iframe src="https://docs.google.com/forms/d/e/1FAIpQLScYHbHof5DR63qAq-nCedxr90ak8KXB5c02kkyAnl9mdgX9Mg/viewform?embedded=true"
-          style="width:100%;height:100vh;border:none;"></iframe>
+  <p class="text-sm text-gray-400 text-center mb-4 px-4">
+    If you need to switch Google accounts, the form may open in a new tab.  
+    Please return here after signing in to complete your entry.
+  </p>
+
+  <div class="relative w-full max-w-3xl h-[1000px] rounded-xl overflow-hidden border border-gray-700 bg-gray-900/20">
+    <iframe
+      src="https://docs.google.com/forms/d/e/YOUR_FORM_ID/viewform?embedded=true"
+      class="w-full h-full rounded-xl"
+      frameborder="0"
+      marginheight="0"
+      marginwidth="0"
+      title="Fantasy League Entry Form"
+      id="gForm">
+    </iframe>
+  </div>
+
+  <a href="entry.html" class="mt-4 text-sm text-gray-400 underline hover:text-gray-200">Return to Entry Page</a>
+
+  <script>
+    // gentle reminder if user switches tab for login
+    window.addEventListener('blur', () => {
+      window.addEventListener('focus', () => {
+        alert('If the Google Form opened in a new tab, please return here to finish submitting.');
+      }, { once: true });
+    });
+  </script>
 </body>
 </html>
