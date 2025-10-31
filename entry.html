@@ -83,7 +83,7 @@
 </a> after clicking the Spotify link.
       </p>
     </section>
-
+    
 <section class="w-full flex flex-col items-center mt-8 px-4 relative max-w-2xl mx-auto">
 
   <!-- Spotify prompt at the TOP -->
@@ -93,9 +93,13 @@
       Please open the latest Sabado Sessions Podcast episode on Spotify before entering the league.
     </p>
 
-    <button id="spotify-link" class="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-4 rounded-lg transition">
-      Open Spotify Podcast
-    </button>
+    <a href="https://open.spotify.com/episode/48tCbJuobNKsQ9TwxnEDNh?si=5e7f69a783744356"
+       target="_blank"
+       rel="noopener noreferrer"
+       id="spotify-link"
+       class="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-4 rounded-lg transition">
+       Open Spotify Podcast
+    </a>
   </div>
 
   <!-- Embedded form (blocked initially) -->
@@ -111,6 +115,7 @@
     </iframe>
   </div>
 </section>
+
 
   
     <div class="text-center mt-6">
@@ -168,20 +173,14 @@
   const spotifyLock = document.getElementById('spotify-lock');
   const formFrame = document.getElementById('entry-form');
 
-  spotifyLink.addEventListener('click', () => {
-    // Open Spotify in a new tab
-    window.open(
-      'https://open.spotify.com/episode/48tCbJuobNKsQ9TwxnEDNh?si=5e7f69a783744356',
-      '_blank',
-      'noopener,noreferrer'
-    );
-
+  spotifyLink.addEventListener('click', (event) => {
     // Unlock the form immediately
     spotifyLock.classList.add('hidden');
     formFrame.src = 'form.html';
     formFrame.classList.remove('opacity-0', 'pointer-events-none');
     formFrame.classList.add('opacity-100');
-    
+  });
+  
 </script>
 
 </body>
