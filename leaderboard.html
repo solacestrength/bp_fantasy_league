@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let lastSearchedIndex = -1;
 
   async function loadLeaderboard() {
-    const csvUrl = "YOUR_GOOGLE_SHEET_CSV_URL_HERE"; // Change per page
+    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=2003215108&single=true&output=csv";
     const response = await fetch(csvUrl);
     const text = await response.text();
     const rows = text.trim().split("\n").map(r => r.split(","));
@@ -247,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('scroll', resetInactivityTimer);
   document.addEventListener('input', resetInactivityTimer);
 
-  // --- Search (restored full-table scroll-to behavior) ---
+  // --- Search (scrolls to entrant, no isolation) ---
   searchInput.addEventListener("input", () => {
     const filter = searchInput.value.trim().toLowerCase();
     if (!filter) {
@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadLeaderboard();
 
-  // --- Shared share function (no background highlight) ---
+  // --- Share Function (bold only, no highlight) ---
   async function shareRanking() {
     if (lastSearchedIndex === -1) {
       alert('Please search for your name first.');
@@ -314,19 +314,19 @@ document.addEventListener('DOMContentLoaded', () => {
     snapshotContainer.id = 'snapshot';
     snapshotContainer.className = 'p-6 rounded-lg text-white';
     snapshotContainer.style.width = '600px';
-    snapshotContainer.style.backgroundImage = "url('image_leaderboard_shf.jpg')"; // or image_accuracy.jpg
+    snapshotContainer.style.backgroundImage = "url('image_leaderboard_shf.jpg')";
     snapshotContainer.style.backgroundSize = 'cover';
     snapshotContainer.style.backgroundPosition = 'center';
     snapshotContainer.innerHTML = `
       <div class="bg-black/70 p-4 rounded-lg">
         <h2 class="text-center text-xl font-bold mb-3">British Classic Fantasy League 2025 🇬🇧</h2>
-        <h3 class="text-center text-lg font-semibold mb-2">My Rank</h3>
+        <h3 class="text-center text-lg font-semibold mb-2">My League Position</h3>
         <table class="w-full border-collapse text-sm">
           <thead>
             <tr class="border-b border-gray-600">
               <th class="text-left py-1">Rank</th>
               <th class="text-left py-1">Name</th>
-              <th class="text-right py-1">Points</th>
+              <th class="text-right py-1">Accuracy</th>
             </tr>
           </thead>
           <tbody>${highlightedRows.join('')}</tbody>
@@ -347,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
           await navigator.share({
             title: 'British Classic Fantasy League 2025 🇬🇧',
-            text: 'Check out my position!',
+            text: 'Check out my league position!',
             files: [file]
           });
           return;
