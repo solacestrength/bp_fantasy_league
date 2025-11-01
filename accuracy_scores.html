@@ -304,11 +304,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (end > allRows.length - 1) { start = Math.max(0, allRows.length - 10); end = allRows.length - 1; }
 
     const visibleRows = allRows.slice(start, end + 1);
-    const highlightedRows = visibleRows.map((row,i)=>{
-      const idx=start+i;
-      const rowHtml=row.map(cell=>`<td class='px-3 py-1 text-center'>${cell}</td>`).join('');
-      return idx===matchIndex?`<tr class='bg-red-600/40 font-bold'>${rowHtml}</tr>`:`<tr>${rowHtml}</tr>`;
-    }).join('');
+const highlightedRows = visibleRows.map((row, i) => {
+  const actualIndex = start + i;
+  const rowHtml = row.map(cell => `<td class="px-3 py-1 text-center">${cell}</td>`).join('');
+  return actualIndex === lastSearchedIndex
+    ? `<tr class="font-bold">${rowHtml}</tr>`
+    : `<tr>${rowHtml}</tr>`;
+});
 
     const snapshot=document.createElement('div');
     snapshot.id='snapshot';
