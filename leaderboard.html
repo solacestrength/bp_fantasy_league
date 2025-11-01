@@ -219,17 +219,7 @@
         container.appendChild(btn);
       }
 
-      const searchInput = document.getElementById("searchInput");
-      searchInput.addEventListener("input",()=>{
-        const filter = searchInput.value.toLowerCase();
-        filteredRows = allRows.filter(row=>row.join(" ").toLowerCase().includes(filter));
-        currentPage=1;
-        renderTable();
-      });
-
-      loadLeaderboard();
-
-document.getElementById('shareRankingBtn').addEventListener('click', async () => {
+      document.getElementById('shareRankingBtn').addEventListener('click', async () => {
   const searchInput = document.getElementById('searchInput').value.trim().toLowerCase();
   const rows = Array.from(document.querySelectorAll('#leaderboardBody tr'));
 
@@ -343,6 +333,17 @@ document.getElementById('shareRankingBtn').addEventListener('click', async () =>
     link.href = canvas.toDataURL('image/png');
     link.download = 'my-league-position.png';
     link.click();
+
+      const searchInput = document.getElementById("searchInput");
+      searchInput.addEventListener("input",()=>{
+        const filter = searchInput.value.toLowerCase();
+        filteredRows = allRows.filter(row=>row.join(" ").toLowerCase().includes(filter));
+        currentPage=1;
+        renderTable();
+      });
+
+      loadLeaderboard();
+      
     });
   });
   </script>
