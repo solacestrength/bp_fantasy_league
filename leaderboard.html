@@ -322,13 +322,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const visibleRows = allRows.slice(start, end + 1);
-    const highlightedRows = visibleRows.map((row, i) => {
-      const actualIndex = start + i;
-      const rowHtml = row.map(cell => `<td class="px-3 py-1 text-center">${cell}</td>`).join('');
-      return actualIndex === highlightIndex
-        ? `<tr class="font-bold text-red-400">${rowHtml}</tr>`
-        : `<tr>${rowHtml}</tr>`;
-    });
+const highlightedRows = visibleRows.map((row, i) => {
+  const actualIndex = start + i;
+  const rowHtml = row.map(cell => `<td class="px-3 py-1 text-center">${cell}</td>`).join('');
+  return actualIndex === lastSearchedIndex
+    ? `<tr class="font-bold">${rowHtml}</tr>`
+    : `<tr>${rowHtml}</tr>`;
+});
 
     const snapshotContainer = document.createElement('div');
     snapshotContainer.id = 'snapshot';
