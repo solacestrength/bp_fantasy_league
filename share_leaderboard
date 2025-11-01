@@ -1,0 +1,83 @@
+<script>
+document.getElementById('shareRankingBtn').addEventListener('click', () => {
+  const searchInput = document.getElementById('searchInput').value.trim().toLowerCase();
+  if (!searchInput) {
+    alert('Please search for your name first.');
+    return;
+  }
+
+  const rows = Array.from(document.querySelectorAll('#leaderboard tbody tr'));
+  const index = rows.findIndex(row => row.textContent.toLowerCase().includes(searchInput));
+
+  if (index === -1) {
+    alert('Name not found on the leaderboard.');
+    return;
+  }
+
+  // Always select 10 rows total
+  let start = index - 4;
+  let end = index + 5;
+
+  if (start < 0) {
+    end += -start;
+    start = 0;
+  }
+  if (end > rows.length - 1) {
+    start -= (end - (rows.length - 1));
+    end = rows.length - 1;
+    if (start < 0) start = 0;
+  }
+
+  const selectedRows = rows.slice(start, end + 1);
+
+  // Highlight the matched row by bolding its cells
+  const highlightedRows = selectedRows.map((row, i) => {
+    const actualIndex = start + i;
+    if (actualIndex === index) {
+      const cloned = row.cloneNode(true);
+      cloned.querySelectorAll('td').forEach(td => {
+        td.innerHTML = `<strong>${td.innerHTML}</strong>`;
+      });
+      return cloned.outerHTML;
+    }
+    return row.outerHTML;
+  });
+
+  // Create a temporary hidden container for the snapshot
+  const snapshotContainer = document.createElement('div');
+  snapshotContainer.id = 'snapshot';
+  snapshotContainer.className = 'bg-gray-800 text-white p-4 rounded-lg border border-gray-700';
+  snapshotContainer.innerHTML = `
+    <h3 class="text-center text-lg font-bold mb-2">My League Position</h3>
+    <table class="w-full border-collapse text-sm">
+      <thead>
+        <tr class="border-b border-gray-600">
+          <th class="text-left py-1">Rank</th>
+          <th class="text-left py-1">Name</th>
+          <th class="text-right py-1">Points</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${highlightedRows.join('')}
+      </tbody>
+    </table>
+    <p class="text-xs text-gray-400 text-center mt-2">British Classic Fantasy League 2025</p>
+  `;
+  
+  document.body.appendChild(snapshotContainer);
+  snapshotContainer.style.position = 'absolute';
+  snapshotContainer.style.left = '-9999px';
+
+  html2canvas(snapshotContainer, {
+    backgroundColor: '#111827',
+    scale: 2
+  }).then(canvas => {
+    const image = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.href = image;
+    link.download = `my-league-position.png`;
+    link.click();
+    snapshotContainer.remove();
+  });
+});
+</script>
