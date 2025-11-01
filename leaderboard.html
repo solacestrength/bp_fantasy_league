@@ -219,121 +219,6 @@
         container.appendChild(btn);
       }
 
-      document.getElementById('shareRankingBtn').addEventListener('click', async () => {
-  const searchInput = document.getElementById('searchInput').value.trim().toLowerCase();
-  const rows = Array.from(document.querySelectorAll('#leaderboardBody tr'));
-
-  if (rows.length === 0) {
-    alert('Leaderboard not loaded yet.');
-    return;
-  }
-
-  let index = -1;
-  if (searchInput) {
-    index = rows.findIndex(row => row.textContent.toLowerCase().includes(searchInput));
-    if (index === -1) {
-      alert('Name not found on the leaderboard.');
-      return;
-    }
-  } else {
-    index = 0; // fallback to top of table if no search
-  }
-
-  // Always select 10 rows total
-  let start = index - 4;
-  let end = index + 5;
-  if (start < 0) { end += -start; start = 0; }
-  if (end > rows.length - 1) {
-    start -= (end - (rows.length - 1));
-    end = rows.length - 1;
-    if (start < 0) start = 0;
-  }
-
-  const selectedRows = rows.slice(start, end + 1);
-
-  // Highlight the matched row
-  const highlightedRows = selectedRows.map((row, i) => {
-    const actualIndex = start + i;
-    if (actualIndex === index) {
-      const cloned = row.cloneNode(true);
-      cloned.querySelectorAll('td').forEach(td => {
-        td.innerHTML = `<strong>${td.innerHTML}</strong>`;
-      });
-      return cloned.outerHTML;
-    }
-    return row.outerHTML;
-  });
-
-  // Snapshot container with background + header title
-  const snapshotContainer = document.createElement('div');
-  snapshotContainer.id = 'snapshot';
-  snapshotContainer.className = 'p-6 rounded-lg text-white';
-  snapshotContainer.style.width = '600px';
-  snapshotContainer.style.backgroundImage = "url('image_leaderboard_shf.jpg')";
-  snapshotContainer.style.backgroundSize = 'cover';
-  snapshotContainer.style.backgroundPosition = 'center';
-  snapshotContainer.innerHTML = `
-    <div class="bg-black/70 p-4 rounded-lg">
-      <h2 class="text-center text-xl font-bold mb-3">British Classic Fantasy League 2025 🇬🇧</h2>
-      <h3 class="text-center text-lg font-semibold mb-2">My League Position</h3>
-      <table class="w-full border-collapse text-sm">
-        <thead>
-          <tr class="border-b border-gray-600">
-            <th class="text-left py-1">Rank</th>
-            <th class="text-left py-1">Name</th>
-            <th class="text-right py-1">Points</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${highlightedRows.join('')}
-        </tbody>
-      </table>
-      <p class="text-xs text-gray-300 text-center mt-2">Data from Live Leaderboard</p>
-    </div>
-  `;
-  document.body.appendChild(snapshotContainer);
-  snapshotContainer.style.position = 'absolute';
-  snapshotContainer.style.left = '-9999px';
-
-  // Render snapshot
-  html2canvas(snapshotContainer, {
-    backgroundColor: null,
-    scale: 2
-  }).then(async canvas => {
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-    snapshotContainer.remove();
-
-    const file = new File([blob], 'leaderboard.png', { type: 'image/png' });
-
-    // 1. Try Web Share API with file
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({
-          title: 'British Classic Fantasy League 2025 🇬🇧',
-          text: 'Check out my league position!',
-          files: [file]
-        });
-        return;
-      } catch (err) {
-        console.warn('Share cancelled or failed:', err);
-      }
-    }
-
-    // 2. Fallback: Copy link to clipboard
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      alert('Link copied to clipboard! You can paste it into Instagram, WhatsApp, etc.');
-      return;
-    } catch (err) {
-      console.warn('Clipboard copy failed:', err);
-    }
-
-    // 3. Final fallback: Download image
-    const link = document.createElement('a');
-    link.href = canvas.toDataURL('image/png');
-    link.download = 'my-league-position.png';
-    link.click();
-
       const searchInput = document.getElementById("searchInput");
       searchInput.addEventListener("input",()=>{
         const filter = searchInput.value.toLowerCase();
@@ -343,9 +228,128 @@
       });
 
       loadLeaderboard();
-      
+
+      // Share button logic
+const shareBtn = document.getElementById('shareRankingBtn');
+if (shareBtn) {
+  shareBtn.addEventListener('click', async () => {
+    const searchInput = document.getElementById('searchInput').value.trim().toLowerCase();
+    const rows = Array.from(document.querySelectorAll('#leaderboardBody tr'));
+
+    if (rows.length === 0) {
+      alert('Leaderboard not loaded yet.');
+      return;
+    }
+
+    let index = -1;
+    if (searchInput) {
+      index = rows.findIndex(row => row.textContent.toLowerCase().includes(searchInput));
+      if (index === -1) {
+        alert('Name not found on the leaderboard.');
+        return;
+      }
+    } else {
+      index = 0; // fallback to top of table if no search
+    }
+
+    // Always select 10 rows total
+    let start = index - 4;
+    let end = index + 5;
+    if (start < 0) { end += -start; start = 0; }
+    if (end > rows.length - 1) {
+      start -= (end - (rows.length - 1));
+      end = rows.length - 1;
+      if (start < 0) start = 0;
+    }
+
+    const selectedRows = rows.slice(start, end + 1);
+
+    // Highlight the matched row
+    const highlightedRows = selectedRows.map((row, i) => {
+      const actualIndex = start + i;
+      if (actualIndex === index) {
+        const cloned = row.cloneNode(true);
+        cloned.querySelectorAll('td').forEach(td => {
+          td.innerHTML = `<strong>${td.innerHTML}</strong>`;
+        });
+        return cloned.outerHTML;
+      }
+      return row.outerHTML;
+    });
+
+    // Snapshot container
+    const snapshotContainer = document.createElement('div');
+    snapshotContainer.id = 'snapshot';
+    snapshotContainer.className = 'p-6 rounded-lg text-white';
+    snapshotContainer.style.width = '600px';
+    snapshotContainer.style.backgroundImage = "url('image_leaderboard_shf.jpg')";
+    snapshotContainer.style.backgroundSize = 'cover';
+    snapshotContainer.style.backgroundPosition = 'center';
+    snapshotContainer.innerHTML = `
+      <div class="bg-black/70 p-4 rounded-lg">
+        <h2 class="text-center text-xl font-bold mb-3">British Classic Fantasy League 2025 🇬🇧</h2>
+        <h3 class="text-center text-lg font-semibold mb-2">My League Position</h3>
+        <table class="w-full border-collapse text-sm">
+          <thead>
+            <tr class="border-b border-gray-600">
+              <th class="text-left py-1">Rank</th>
+              <th class="text-left py-1">Name</th>
+              <th class="text-right py-1">Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${highlightedRows.join('')}
+          </tbody>
+        </table>
+        <p class="text-xs text-gray-300 text-center mt-2">Data from Live Leaderboard</p>
+      </div>
+    `;
+    document.body.appendChild(snapshotContainer);
+    snapshotContainer.style.position = 'absolute';
+    snapshotContainer.style.left = '-9999px';
+
+    // Render snapshot
+    html2canvas(snapshotContainer, {
+      backgroundColor: null,
+      scale: 2
+    }).then(async canvas => {
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      snapshotContainer.remove();
+
+      const file = new File([blob], 'leaderboard.png', { type: 'image/png' });
+
+      // 1. Try Web Share API with file
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            title: 'British Classic Fantasy League 2025 🇬🇧',
+            text: 'Check out my league position!',
+            files: [file]
+          });
+          return;
+        } catch (err) {
+          console.warn('Share cancelled or failed:', err);
+        }
+      }
+
+      // 2. Fallback: Copy link to clipboard
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        alert('Link copied to clipboard! You can paste it into Instagram, WhatsApp, etc.');
+        return;
+      } catch (err) {
+        console.warn('Clipboard copy failed:', err);
+      }
+
+      // 3. Final fallback: Download image
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = 'my-league-position.png';
+      link.click();
     });
   });
+}
+
   </script>
   
 </body>
