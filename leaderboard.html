@@ -130,19 +130,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Dropdown toggle ---
   const menuBtn = document.getElementById('menu-btn');
   const mobileMenu = document.getElementById('mobile-menu');
+
   menuBtn.addEventListener('click', (e) => {
     const isOpen = mobileMenu.classList.contains('opacity-100');
-    if (isOpen) {
-      mobileMenu.classList.remove('opacity-100','scale-y-100');
-      mobileMenu.classList.add('opacity-0','scale-y-0');
-      menuBtn.setAttribute('aria-expanded','false');
-    } else {
-      mobileMenu.classList.remove('opacity-0','scale-y-0');
-      mobileMenu.classList.add('opacity-100','scale-y-100');
-      menuBtn.setAttribute('aria-expanded','true');
-    }
+    mobileMenu.classList.toggle('opacity-100', !isOpen);
+    mobileMenu.classList.toggle('scale-y-100', !isOpen);
+    mobileMenu.classList.toggle('opacity-0', isOpen);
+    mobileMenu.classList.toggle('scale-y-0', isOpen);
+    menuBtn.setAttribute('aria-expanded', !isOpen);
     e.stopPropagation();
   });
+
   document.addEventListener('click', (e) => {
     if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
       mobileMenu.classList.remove('opacity-100','scale-y-100');
@@ -151,18 +149,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // --- Leaderboard + Pagination ---
+  // --- Leaderboard setup ---
   const rowsPerPage = 50;
   let allRows = [], filteredRows = [], currentPage = 1;
   let lastSearchedIndex = -1;
 
   async function loadLeaderboard() {
-    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=2003215108&single=true&output=csv";
+    const csvUrl = "YOUR_GOOGLE_SHEET_CSV_URL_HERE"; // Change per page
     const response = await fetch(csvUrl);
     const text = await response.text();
     const rows = text.trim().split("\n").map(r => r.split(","));
     const headerRow = rows.shift();
-    document.getElementById("leaderboardHeader").innerHTML = headerRow.map(h=>`<th class='px-3 py-2'>${h}</th>`).join("");
+    document.getElementById("leaderboardHeader").innerHTML =
+      headerRow.map(h=>`<th class='px-3 py-2'>${h}</th>`).join("");
     allRows = rows;
     filteredRows = [...allRows];
     renderTable();
@@ -201,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
       createPageButton(1,container);
       if (startPage>2) container.insertAdjacentHTML("beforeend","<span class='mx-1'>...</span>");
     }
-    for (let i=startPage;i<=endPage;i++) createPageButton(i,container);
+    for (let i=startPage;i<=endPage;i++) { createPageButton(i,container); }
     if (endPage<totalPages) {
       if (endPage<totalPages-1) container.insertAdjacentHTML("beforeend","<span class='mx-1'>...</span>");
       createPageButton(totalPages,container);
@@ -248,39 +247,49 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('scroll', resetInactivityTimer);
   document.addEventListener('input', resetInactivityTimer);
 
-  // --- Search ---
+  // --- Search (restored full-table scroll-to behavior) ---
   searchInput.addEventListener("input", () => {
     const filter = searchInput.value.trim().toLowerCase();
     if (!filter) {
-      filteredRows = [...allRows];
-      currentPage = 1;
-      renderTable();
       lastSearchedIndex = -1;
       shareFloatingBtn.classList.add("hidden");
       return;
     }
 
     const matchIndex = allRows.findIndex(row => row.join(" ").toLowerCase().includes(filter));
-    lastSearchedIndex = matchIndex;
-    filteredRows = allRows.filter(row => row.join(" ").toLowerCase().includes(filter));
-    currentPage = matchIndex > -1 ? Math.floor(matchIndex / rowsPerPage) + 1 : 1;
-    renderTable();
-
-    if (matchIndex > -1) {
-      shareFloatingBtn.classList.remove("hidden");
-      resetInactivityTimer();
-    } else {
+    if (matchIndex === -1) {
+      lastSearchedIndex = -1;
       shareFloatingBtn.classList.add("hidden");
+      return;
     }
+
+    lastSearchedIndex = matchIndex;
+    currentPage = Math.floor(matchIndex / rowsPerPage) + 1;
+    renderTable();
+    shareFloatingBtn.classList.remove("hidden");
+    resetInactivityTimer();
+
+    setTimeout(() => {
+      const tableBody = document.getElementById("leaderboardBody");
+      const rows = Array.from(tableBody.querySelectorAll("tr"));
+      const rowOnPage = matchIndex % rowsPerPage;
+      const targetRow = rows[rowOnPage];
+      if (targetRow) {
+        targetRow.scrollIntoView({ behavior: "smooth", block: "center" });
+        targetRow.classList.add("highlighted");
+        setTimeout(() => targetRow.classList.remove("highlighted"), 2500);
+      }
+    }, 100);
   });
 
   loadLeaderboard();
 
-  // --- Shared share logic for both buttons ---
+  // --- Shared share function (no background highlight) ---
   async function shareRanking() {
-    const rows = Array.from(document.querySelectorAll('#leaderboardBody tr'));
-    if (rows.length === 0) { alert('Leaderboard not loaded yet.'); return; }
-    if (lastSearchedIndex === -1) { alert('Please search for your name first.'); return; }
+    if (lastSearchedIndex === -1) {
+      alert('Please search for your name first.');
+      return;
+    }
 
     let start = lastSearchedIndex - 4;
     let end = lastSearchedIndex + 5;
@@ -294,23 +303,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const visibleRows = allRows.slice(start, end + 1);
     const highlightedRows = visibleRows.map((row, i) => {
       const actualIndex = start + i;
-      const rowHtml = row.map(cell => `<td class="px-3 py-1 text-center">${cell}</td>`).join('');
-      return actualIndex === lastSearchedIndex
-        ? `<tr class="bg-red-600/40 font-bold">${rowHtml}</tr>`
-        : `<tr>${rowHtml}</tr>`;
+      const rowHtml = row.map(cell => {
+        const cellHtml = actualIndex === lastSearchedIndex ? `<strong>${cell}</strong>` : cell;
+        return `<td class="px-3 py-1 text-center">${cellHtml}</td>`;
+      }).join('');
+      return `<tr>${rowHtml}</tr>`;
     });
 
     const snapshotContainer = document.createElement('div');
     snapshotContainer.id = 'snapshot';
     snapshotContainer.className = 'p-6 rounded-lg text-white';
     snapshotContainer.style.width = '600px';
-    snapshotContainer.style.backgroundImage = "url('image_leaderboard_shf.jpg')";
+    snapshotContainer.style.backgroundImage = "url('image_leaderboard_shf.jpg')"; // or image_accuracy.jpg
     snapshotContainer.style.backgroundSize = 'cover';
     snapshotContainer.style.backgroundPosition = 'center';
     snapshotContainer.innerHTML = `
       <div class="bg-black/70 p-4 rounded-lg">
         <h2 class="text-center text-xl font-bold mb-3">British Classic Fantasy League 2025 🇬🇧</h2>
-        <h3 class="text-center text-lg font-semibold mb-2">My League Position</h3>
+        <h3 class="text-center text-lg font-semibold mb-2">My Rank</h3>
         <table class="w-full border-collapse text-sm">
           <thead>
             <tr class="border-b border-gray-600">
@@ -337,12 +347,13 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
           await navigator.share({
             title: 'British Classic Fantasy League 2025 🇬🇧',
-            text: 'Check out my league position!',
+            text: 'Check out my position!',
             files: [file]
           });
           return;
-        } catch (err) { console.warn('Share cancelled or failed:', err); }
+        } catch (err) { console.warn('Share cancelled:', err); }
       }
+
       try {
         await navigator.clipboard.writeText(window.location.href);
         alert('Link copied to clipboard!');
@@ -355,7 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Attach same function to both buttons
+  // --- Attach both buttons ---
   const shareBtnInline = document.getElementById('shareRankingBtn');
   if (shareBtnInline) shareBtnInline.addEventListener('click', shareRanking);
   shareFloatingBtn.addEventListener('click', shareRanking);
