@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let allRows = [], filteredRows = [], currentPage = 1;
 
   async function loadLeaderboard() {
-    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSuA8YB98ghNeM-cS6Fs1pJNkEBOI0x7WKI4R0vtvAG68mo7PJZYVj2HsdxH3DDqvieaTpe9zUzJcNW/pub?gid=963601969&single=true&output=csv";
+    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=2003215108&single=true&output=csv";
     const response = await fetch(csvUrl);
     const text = await response.text();
     const rows = text.trim().split("\n").map(r => r.split(","));
