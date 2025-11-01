@@ -151,13 +151,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // --- Leaderboard + Pagination ---
+  // --- Leaderboard logic ---
   const rowsPerPage = 50;
   let allRows = [], filteredRows = [], currentPage = 1;
-  let lastSearchedIndex = -1;
+  let searchMatches = [], currentMatchIndex = -1;
+  let inactivityTimer;
 
   async function loadLeaderboard() {
-    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSuA8YB98ghNeM-cS6Fs1pJNkEBOI0x7WKI4R0vtvAG68mo7PJZYVj2HsdxH3DDqvieaTpe9zUzJcNW/pub?gid=1841956952&single=true&output=csv";
+    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=2003215108&single=true&output=csv";
     const response = await fetch(csvUrl);
     const text = await response.text();
     const rows = text.trim().split("\n").map(r => r.split(","));
@@ -173,8 +174,13 @@ document.addEventListener('DOMContentLoaded', () => {
     tableBody.innerHTML = "";
     const start = (currentPage-1)*rowsPerPage;
     const end = start+rowsPerPage;
-    filteredRows.slice(start,end).forEach(row=>{
-      tableBody.insertAdjacentHTML("beforeend",`<tr>${row.map(cell=>`<td class="px-3 py-2 text-center">${cell}</td>`).join('')}</tr>`);
+    filteredRows.slice(start,end).forEach((row,i)=>{
+      const globalIndex = start+i;
+      const isHighlighted = globalIndex === searchMatches[currentMatchIndex];
+      tableBody.insertAdjacentHTML("beforeend", 
+        `<tr class="${isHighlighted?'bg-red-600/40 font-bold highlighted':''}">
+          ${row.map(cell=>`<td class='px-3 py-2 text-center'>${cell}</td>`).join('')}
+        </tr>`);
     });
     renderPagination();
   }
@@ -227,11 +233,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const searchInput = document.getElementById("searchInput");
   const shareFloatingBtn = document.createElement('button');
   shareFloatingBtn.id = 'floatingShareBtn';
-  shareFloatingBtn.textContent = "Share This Ranking";
+  shareFloatingBtn.textContent = "Share My Ranking";
   shareFloatingBtn.className = "hidden fixed bottom-20 right-6 bg-red-600 text-white px-4 py-2 rounded-full shadow-lg z-50 hover:bg-red-700 transition-opacity duration-700 ease-in-out";
   document.body.appendChild(shareFloatingBtn);
 
-  let inactivityTimer;
   function fadeOutShareButton() {
     shareFloatingBtn.classList.add('fade-out');
     setTimeout(() => {
@@ -242,102 +247,105 @@ document.addEventListener('DOMContentLoaded', () => {
   function resetInactivityTimer() {
     clearTimeout(inactivityTimer);
     if (!shareFloatingBtn.classList.contains('hidden')) {
-      inactivityTimer = setTimeout(() => { fadeOutShareButton(); }, 15000);
+      inactivityTimer = setTimeout(() => { fadeOutShareButton(); }, 10000);
     }
   }
   window.addEventListener('scroll', resetInactivityTimer);
   document.addEventListener('input', resetInactivityTimer);
 
-  // --- Search ---
+  // --- Search + Highlight + Enter Navigation ---
   searchInput.addEventListener("input", () => {
     const filter = searchInput.value.trim().toLowerCase();
     if (!filter) {
       filteredRows = [...allRows];
+      searchMatches = [];
+      currentMatchIndex = -1;
       currentPage = 1;
       renderTable();
-      lastSearchedIndex = -1;
       shareFloatingBtn.classList.add("hidden");
       return;
     }
 
-    const matchIndex = allRows.findIndex(row => row.join(" ").toLowerCase().includes(filter));
-    lastSearchedIndex = matchIndex;
-    filteredRows = allRows.filter(row => row.join(" ").toLowerCase().includes(filter));
-    currentPage = matchIndex > -1 ? Math.floor(matchIndex / rowsPerPage) + 1 : 1;
-    renderTable();
+    searchMatches = allRows
+      .map((r,i)=>r.join(" ").toLowerCase().includes(filter)?i:-1)
+      .filter(i=>i!==-1);
+    currentMatchIndex = 0;
 
-    if (matchIndex > -1) {
+    if (searchMatches.length > 0) {
+      const matchIndex = searchMatches[currentMatchIndex];
+      currentPage = Math.floor(matchIndex / rowsPerPage) + 1;
+      renderTable();
       shareFloatingBtn.classList.remove("hidden");
       resetInactivityTimer();
     } else {
+      filteredRows = [...allRows];
+      renderTable();
       shareFloatingBtn.classList.add("hidden");
     }
   });
 
-  loadLeaderboard();
-
-  // --- Shared share logic for both buttons ---
-  async function shareRanking() {
-    const rows = Array.from(document.querySelectorAll('#leaderboardBody tr'));
-    if (rows.length === 0) { alert('Leaderboard not loaded yet.'); return; }
-    if (lastSearchedIndex === -1) { alert('Please search for your name first.'); return; }
-
-    let start = lastSearchedIndex - 4;
-    let end = lastSearchedIndex + 5;
-    if (start < 0) { end += -start; start = 0; }
-    if (end > allRows.length - 1) {
-      start -= (end - (allRows.length - 1));
-      end = allRows.length - 1;
-      if (start < 0) start = 0;
+  searchInput.addEventListener("keydown", e => {
+    if (e.key === "Enter" && searchMatches.length > 0) {
+      currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
+      const matchIndex = searchMatches[currentMatchIndex];
+      currentPage = Math.floor(matchIndex / rowsPerPage) + 1;
+      renderTable();
+      resetInactivityTimer();
     }
+  });
+
+  // --- Share Logic ---
+  async function shareRanking() {
+    if (searchMatches.length === 0) { alert("Please search for your name first."); return; }
+
+    const matchIndex = searchMatches[currentMatchIndex];
+    let start = matchIndex - 4, end = matchIndex + 5;
+    if (start < 0) { end += -start; start = 0; }
+    if (end > allRows.length - 1) { start = Math.max(0, allRows.length - 10); end = allRows.length - 1; }
 
     const visibleRows = allRows.slice(start, end + 1);
-    const highlightedRows = visibleRows.map((row, i) => {
-      const actualIndex = start + i;
-      const rowHtml = row.map(cell => `<td class="px-3 py-1 text-center">${cell}</td>`).join('');
-      return actualIndex === lastSearchedIndex
-        ? `<tr class="bg-red-600/40 font-bold">${rowHtml}</tr>`
-        : `<tr>${rowHtml}</tr>`;
-    });
+    const highlightedRows = visibleRows.map((row,i)=>{
+      const idx=start+i;
+      const rowHtml=row.map(cell=>`<td class='px-3 py-1 text-center'>${cell}</td>`).join('');
+      return idx===matchIndex?`<tr class='bg-red-600/40 font-bold'>${rowHtml}</tr>`:`<tr>${rowHtml}</tr>`;
+    }).join('');
 
-    const snapshotContainer = document.createElement('div');
-    snapshotContainer.id = 'snapshot';
-    snapshotContainer.className = 'p-6 rounded-lg text-white';
-    snapshotContainer.style.width = '600px';
-    snapshotContainer.style.backgroundImage = "url('image_accuracy.jpg')";
-    snapshotContainer.style.backgroundSize = 'cover';
-    snapshotContainer.style.backgroundPosition = 'center';
-    snapshotContainer.innerHTML = `
+    const snapshot=document.createElement('div');
+    snapshot.id='snapshot';
+    snapshot.style.width='600px';
+    snapshot.className='p-6 rounded-lg text-white';
+    snapshot.style.backgroundImage="url('image_leaderboard_shf.jpg')";
+    snapshot.style.backgroundSize='cover';
+    snapshot.style.backgroundPosition='center';
+    snapshot.innerHTML=`
       <div class="bg-black/70 p-4 rounded-lg">
         <h2 class="text-center text-xl font-bold mb-3">British Classic Fantasy League 2025 🇬🇧</h2>
-        <h3 class="text-center text-lg font-semibold mb-2">My Accuracy Rank</h3>
+        <h3 class="text-center text-lg font-semibold mb-2">My League Position</h3>
         <table class="w-full border-collapse text-sm">
-          <thead>
-            <tr class="border-b border-gray-600">
-              <th class="text-left py-1">Rank</th>
-              <th class="text-left py-1">Name</th>
-              <th class="text-right py-1">Points</th>
-            </tr>
-          </thead>
-          <tbody>${highlightedRows.join('')}</tbody>
+          <thead><tr class="border-b border-gray-600">
+            <th class="text-left py-1">Rank</th>
+            <th class="text-left py-1">Name</th>
+            <th class="text-right py-1">Points</th>
+          </tr></thead>
+          <tbody>${highlightedRows}</tbody>
         </table>
-        <p class="text-xs text-gray-300 text-center mt-2">Data from Accuracy Scores</p>
+        <p class="text-xs text-gray-300 text-center mt-2">Data from Live Leaderboard</p>
       </div>
     `;
-    document.body.appendChild(snapshotContainer);
-    snapshotContainer.style.position = 'absolute';
-    snapshotContainer.style.left = '-9999px';
+    document.body.appendChild(snapshot);
+    snapshot.style.position='absolute';
+    snapshot.style.left='-9999px';
 
-    html2canvas(snapshotContainer, { backgroundColor: null, scale: 2 }).then(async canvas => {
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-      snapshotContainer.remove();
-      const file = new File([blob], 'accuracy.png', { type: 'image/png' });
+    html2canvas(snapshot, { backgroundColor: null, scale: 2 }).then(async canvas => {
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+      snapshot.remove();
+      const file = new File([blob], 'leaderboard.png', { type: 'image/png' });
 
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({
             title: 'British Classic Fantasy League 2025 🇬🇧',
-            text: 'Check out my accuracy rank!',
+            text: 'Check out my league position!',
             files: [file]
           });
           return;
@@ -349,16 +357,16 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch {
         const link = document.createElement('a');
         link.href = canvas.toDataURL('image/png');
-        link.download = 'my-accuracy-rank.png';
+        link.download = 'my-league-position.png';
         link.click();
       }
     });
   }
 
-  // Attach same function to both buttons
-  const shareBtnInline = document.getElementById('shareRankingBtn');
-  if (shareBtnInline) shareBtnInline.addEventListener('click', shareRanking);
+  document.getElementById('shareRankingBtn').addEventListener('click', shareRanking);
   shareFloatingBtn.addEventListener('click', shareRanking);
+
+  loadLeaderboard();
 
 });
 </script>
