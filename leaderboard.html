@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Leaderboard + Pagination ---
   const rowsPerPage = 50;
   let allRows = [], filteredRows = [], currentPage = 1;
-  let lastSearchedIndex = -1;
+  let searchMatches = [], currentMatchIndex = -1;
 
   async function loadLeaderboard() {
     const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=2003215108&single=true&output=csv";
@@ -173,8 +173,11 @@ document.addEventListener('DOMContentLoaded', () => {
     tableBody.innerHTML = "";
     const start = (currentPage-1)*rowsPerPage;
     const end = start+rowsPerPage;
-    filteredRows.slice(start,end).forEach(row=>{
-      tableBody.insertAdjacentHTML("beforeend",`<tr>${row.map(cell=>`<td class="px-3 py-2 text-center">${cell}</td>`).join('')}</tr>`);
+    filteredRows.slice(start,end).forEach((row, idx)=>{
+      const globalIndex = start + idx;
+      const isHighlighted = searchMatches.length && searchMatches[currentMatchIndex] === globalIndex;
+      const rowClass = isHighlighted ? "highlighted" : "";
+      tableBody.insertAdjacentHTML("beforeend",`<tr class="${rowClass}">${row.map(cell=>`<td class="px-3 py-2 text-center">${cell}</td>`).join('')}</tr>`);
     });
     renderPagination();
   }
@@ -242,48 +245,75 @@ document.addEventListener('DOMContentLoaded', () => {
   function resetInactivityTimer() {
     clearTimeout(inactivityTimer);
     if (!shareFloatingBtn.classList.contains('hidden')) {
-      inactivityTimer = setTimeout(() => { fadeOutShareButton(); }, 15000);
+      inactivityTimer = setTimeout(() => { fadeOutShareButton(); }, 10000);
     }
   }
   window.addEventListener('scroll', resetInactivityTimer);
   document.addEventListener('input', resetInactivityTimer);
 
-  // --- Search ---
+  // --- Search with highlight cycling ---
   searchInput.addEventListener("input", () => {
     const filter = searchInput.value.trim().toLowerCase();
+    searchMatches = [];
+    currentMatchIndex = -1;
     if (!filter) {
       filteredRows = [...allRows];
       currentPage = 1;
       renderTable();
-      lastSearchedIndex = -1;
       shareFloatingBtn.classList.add("hidden");
       return;
     }
 
-    const matchIndex = allRows.findIndex(row => row.join(" ").toLowerCase().includes(filter));
-    lastSearchedIndex = matchIndex;
-    filteredRows = allRows.filter(row => row.join(" ").toLowerCase().includes(filter));
-    currentPage = matchIndex > -1 ? Math.floor(matchIndex / rowsPerPage) + 1 : 1;
-    renderTable();
+    allRows.forEach((row, idx) => {
+      if (row.join(" ").toLowerCase().includes(filter)) searchMatches.push(idx);
+    });
 
-    if (matchIndex > -1) {
+    if (searchMatches.length > 0) {
+      currentMatchIndex = 0;
+      const matchIdx = searchMatches[currentMatchIndex];
+      currentPage = Math.floor(matchIdx / rowsPerPage) + 1;
+      renderTable();
+      scrollToHighlighted();
       shareFloatingBtn.classList.remove("hidden");
       resetInactivityTimer();
     } else {
+      renderTable();
       shareFloatingBtn.classList.add("hidden");
     }
   });
 
+  searchInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && searchMatches.length > 1) {
+      e.preventDefault();
+      currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
+      const matchIdx = searchMatches[currentMatchIndex];
+      currentPage = Math.floor(matchIdx / rowsPerPage) + 1;
+      renderTable();
+      scrollToHighlighted();
+      shareFloatingBtn.classList.remove("hidden");
+      resetInactivityTimer();
+    }
+  });
+
+  function scrollToHighlighted() {
+    setTimeout(() => {
+      const row = document.querySelector("tr.highlighted");
+      if (row) row.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
+  }
+
   loadLeaderboard();
 
-  // --- Shared share logic for both buttons ---
+  // --- Share function (uses current highlighted match) ---
   async function shareRanking() {
-    const rows = Array.from(document.querySelectorAll('#leaderboardBody tr'));
-    if (rows.length === 0) { alert('Leaderboard not loaded yet.'); return; }
-    if (lastSearchedIndex === -1) { alert('Please search for your name first.'); return; }
+    if (currentMatchIndex === -1 || searchMatches.length === 0) {
+      alert('Please search for your name first.');
+      return;
+    }
 
-    let start = lastSearchedIndex - 4;
-    let end = lastSearchedIndex + 5;
+    const highlightIndex = searchMatches[currentMatchIndex];
+    let start = highlightIndex - 4;
+    let end = highlightIndex + 5;
     if (start < 0) { end += -start; start = 0; }
     if (end > allRows.length - 1) {
       start -= (end - (allRows.length - 1));
@@ -295,8 +325,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const highlightedRows = visibleRows.map((row, i) => {
       const actualIndex = start + i;
       const rowHtml = row.map(cell => `<td class="px-3 py-1 text-center">${cell}</td>`).join('');
-      return actualIndex === lastSearchedIndex
-        ? `<tr class="bg-red-600/40 font-bold">${rowHtml}</tr>`
+      return actualIndex === highlightIndex
+        ? `<tr class="font-bold text-red-400">${rowHtml}</tr>`
         : `<tr>${rowHtml}</tr>`;
     });
 
@@ -355,7 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Attach same function to both buttons
+  // Attach both buttons
   const shareBtnInline = document.getElementById('shareRankingBtn');
   if (shareBtnInline) shareBtnInline.addEventListener('click', shareRanking);
   shareFloatingBtn.addEventListener('click', shareRanking);
@@ -365,10 +395,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <style>
   tr.highlighted {
-    animation: pulse 1.5s ease-in-out 2;
+    background-color: rgba(220, 38, 38, 0.35);
+    animation: pulse 1.5s ease-in-out infinite;
   }
   @keyframes pulse {
-    0%, 100% { background-color: rgba(220, 38, 38, 0.4); }
+    0%, 100% { background-color: rgba(220, 38, 38, 0.35); }
     50% { background-color: rgba(220, 38, 38, 0.1); }
   }
   #floatingShareBtn {
