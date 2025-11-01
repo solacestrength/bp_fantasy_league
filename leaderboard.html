@@ -156,6 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Leaderboard CSV ---
   const rowsPerPage = 50;
   let allRows = [], filteredRows = [], currentPage = 1;
+  let lastSearchedIndex = -1;
 
   async function loadLeaderboard() {
     const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=2003215108&single=true&output=csv";
@@ -224,132 +225,175 @@ document.addEventListener('DOMContentLoaded', () => {
     container.appendChild(btn);
   }
 
+  // --- Enhanced Search + Share Button Reveal ---
   const searchInput = document.getElementById("searchInput");
-  searchInput.addEventListener("input",()=>{
-    const filter = searchInput.value.toLowerCase();
-    filteredRows = allRows.filter(row=>row.join(" ").toLowerCase().includes(filter));
-    currentPage=1;
+  const shareFloatingBtn = document.createElement('button');
+  shareFloatingBtn.id = 'floatingShareBtn';
+  shareFloatingBtn.textContent = "Share This Ranking";
+  shareFloatingBtn.className = "hidden fixed bottom-20 right-6 bg-red-600 text-white px-4 py-2 rounded-full shadow-lg animate-bounce z-50 hover:bg-red-700 transition";
+  document.body.appendChild(shareFloatingBtn);
+
+  searchInput.addEventListener("input", () => {
+    const filter = searchInput.value.trim().toLowerCase();
+
+    if (!filter) {
+      filteredRows = [...allRows];
+      currentPage = 1;
+      renderTable();
+      lastSearchedIndex = -1;
+      shareFloatingBtn.classList.add("hidden");
+      return;
+    }
+
+    const matchIndex = allRows.findIndex(row => row.join(" ").toLowerCase().includes(filter));
+
+    if (matchIndex === -1) {
+      filteredRows = allRows.filter(row => row.join(" ").toLowerCase().includes(filter));
+      currentPage = 1;
+      renderTable();
+      lastSearchedIndex = -1;
+      shareFloatingBtn.classList.add("hidden");
+      return;
+    }
+
+    lastSearchedIndex = matchIndex;
+    currentPage = Math.floor(matchIndex / rowsPerPage) + 1;
     renderTable();
+    shareFloatingBtn.classList.remove("hidden");
+
+    setTimeout(() => {
+      const tableBody = document.getElementById("leaderboardBody");
+      const rows = Array.from(tableBody.querySelectorAll("tr"));
+      const rowOnPage = matchIndex % rowsPerPage;
+      const targetRow = rows[rowOnPage];
+      if (targetRow) {
+        targetRow.scrollIntoView({ behavior: "smooth", block: "center" });
+        targetRow.classList.add("highlighted");
+        setTimeout(() => targetRow.classList.remove("highlighted"), 2500);
+      }
+    }, 100);
   });
 
   loadLeaderboard();
 
-  // --- Share button ---
-  const shareBtn = document.getElementById('shareRankingBtn');
-  if (shareBtn) {
-    shareBtn.addEventListener('click', async () => {
-      const searchInput = document.getElementById('searchInput').value.trim().toLowerCase();
-      const rows = Array.from(document.querySelectorAll('#leaderboardBody tr'));
+  // --- Share Button Logic (now bound to floating button) ---
+  shareFloatingBtn.addEventListener('click', async () => {
+    const rows = Array.from(document.querySelectorAll('#leaderboardBody tr'));
 
-      if (rows.length === 0) {
-        alert('Leaderboard not loaded yet.');
-        return;
-      }
+    if (rows.length === 0) {
+      alert('Leaderboard not loaded yet.');
+      return;
+    }
 
-      let index = -1;
-      if (searchInput) {
-        index = rows.findIndex(row => row.textContent.toLowerCase().includes(searchInput));
-        if (index === -1) {
-          alert('Name not found on the leaderboard.');
-          return;
-        }
-      } else {
-        index = 0;
-      }
+    let index = lastSearchedIndex;
+    if (index === -1) {
+      alert('Please search for your name first.');
+      return;
+    }
 
-      let start = index - 4;
-      let end = index + 5;
-      if (start < 0) { end += -start; start = 0; }
-      if (end > rows.length - 1) {
-        start -= (end - (rows.length - 1));
-        end = rows.length - 1;
-        if (start < 0) start = 0;
-      }
+    let start = index - 4;
+    let end = index + 5;
+    if (start < 0) { end += -start; start = 0; }
+    if (end > allRows.length - 1) {
+      start -= (end - (allRows.length - 1));
+      end = allRows.length - 1;
+      if (start < 0) start = 0;
+    }
 
-      const selectedRows = rows.slice(start, end + 1);
-      const highlightedRows = selectedRows.map((row, i) => {
-        const actualIndex = start + i;
-        if (actualIndex === index) {
-          const cloned = row.cloneNode(true);
-          cloned.querySelectorAll('td').forEach(td => {
-            td.innerHTML = `<strong>${td.innerHTML}</strong>`;
-          });
-          return cloned.outerHTML;
-        }
-        return row.outerHTML;
-      });
+    const visibleRows = allRows.slice(start, end + 1);
+    const highlightedRows = visibleRows.map((row, i) => {
+      const actualIndex = start + i;
+      const rowHtml = row.map(cell => `<td class="px-3 py-1 text-center">${cell}</td>`).join('');
+      return actualIndex === index
+        ? `<tr class="bg-red-600/40 font-bold">${rowHtml}</tr>`
+        : `<tr>${rowHtml}</tr>`;
+    });
 
-      const snapshotContainer = document.createElement('div');
-      snapshotContainer.id = 'snapshot';
-      snapshotContainer.className = 'p-6 rounded-lg text-white';
-      snapshotContainer.style.width = '600px';
-      snapshotContainer.style.backgroundImage = "url('image_leaderboard_shf.jpg')";
-      snapshotContainer.style.backgroundSize = 'cover';
-      snapshotContainer.style.backgroundPosition = 'center';
-      snapshotContainer.innerHTML = `
-        <div class="bg-black/70 p-4 rounded-lg">
-          <h2 class="text-center text-xl font-bold mb-3">British Classic Fantasy League 2025 🇬🇧</h2>
-          <h3 class="text-center text-lg font-semibold mb-2">My League Position</h3>
-          <table class="w-full border-collapse text-sm">
-            <thead>
-              <tr class="border-b border-gray-600">
-                <th class="text-left py-1">Rank</th>
-                <th class="text-left py-1">Name</th>
-                <th class="text-right py-1">Points</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${highlightedRows.join('')}
-            </tbody>
-          </table>
-          <p class="text-xs text-gray-300 text-center mt-2">Data from Live Leaderboard</p>
-        </div>
-      `;
-      document.body.appendChild(snapshotContainer);
-      snapshotContainer.style.position = 'absolute';
-      snapshotContainer.style.left = '-9999px';
+    const snapshotContainer = document.createElement('div');
+    snapshotContainer.id = 'snapshot';
+    snapshotContainer.className = 'p-6 rounded-lg text-white';
+    snapshotContainer.style.width = '600px';
+    snapshotContainer.style.backgroundImage = "url('image_leaderboard_shf.jpg')";
+    snapshotContainer.style.backgroundSize = 'cover';
+    snapshotContainer.style.backgroundPosition = 'center';
+    snapshotContainer.innerHTML = `
+      <div class="bg-black/70 p-4 rounded-lg">
+        <h2 class="text-center text-xl font-bold mb-3">British Classic Fantasy League 2025 🇬🇧</h2>
+        <h3 class="text-center text-lg font-semibold mb-2">My League Position</h3>
+        <table class="w-full border-collapse text-sm">
+          <thead>
+            <tr class="border-b border-gray-600">
+              <th class="text-left py-1">Rank</th>
+              <th class="text-left py-1">Name</th>
+              <th class="text-right py-1">Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${highlightedRows.join('')}
+          </tbody>
+        </table>
+        <p class="text-xs text-gray-300 text-center mt-2">Data from Live Leaderboard</p>
+      </div>
+    `;
+    document.body.appendChild(snapshotContainer);
+    snapshotContainer.style.position = 'absolute';
+    snapshotContainer.style.left = '-9999px';
 
-      html2canvas(snapshotContainer, {
-        backgroundColor: null,
-        scale: 2
-      }).then(async canvas => {
-        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-        snapshotContainer.remove();
+    html2canvas(snapshotContainer, { backgroundColor: null, scale: 2 }).then(async canvas => {
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      snapshotContainer.remove();
 
-        const file = new File([blob], 'leaderboard.png', { type: 'image/png' });
+      const file = new File([blob], 'leaderboard.png', { type: 'image/png' });
 
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              title: 'British Classic Fantasy League 2025 🇬🇧',
-              text: 'Check out my league position!',
-              files: [file]
-            });
-            return;
-          } catch (err) {
-            console.warn('Share cancelled or failed:', err);
-          }
-        }
-
-        // 2. Fallback: Copy link to clipboard
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
-          await navigator.clipboard.writeText(window.location.href);
-          alert('Link copied to clipboard! You can paste it into Instagram, WhatsApp, etc.');
+          await navigator.share({
+            title: 'British Classic Fantasy League 2025 🇬🇧',
+            text: 'Check out my league position!',
+            files: [file]
+          });
           return;
         } catch (err) {
-          console.warn('Clipboard copy failed:', err);
+          console.warn('Share cancelled or failed:', err);
         }
+      }
 
-        // 3. Final fallback: Download image
-        const link = document.createElement('a');
-        link.href = canvas.toDataURL('image/png');
-        link.download = 'my-league-position.png';
-        link.click();
-      }); // closes html2canvas.then(...)
-    });   // closes shareBtn.addEventListener(...)
-  }       // closes the if (shareBtn) guard
-});       // closes DOMContentLoaded
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        alert('Link copied to clipboard! You can paste it into Instagram, WhatsApp, etc.');
+        return;
+      } catch (err) {
+        console.warn('Clipboard copy failed:', err);
+      }
+
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = 'my-league-position.png';
+      link.click();
+    });
+  });
+});
 </script>
+
+<style>
+  tr.highlighted {
+    animation: pulse 1.5s ease-in-out 2;
+  }
+  @keyframes pulse {
+    0%, 100% { background-color: rgba(220, 38, 38, 0.4); }
+    50% { background-color: rgba(220, 38, 38, 0.1); }
+  }
+  #floatingShareBtn {
+    transition: all 0.3s ease-in-out;
+  }
+  #floatingShareBtn.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  #floatingShareBtn:not(.hidden) {
+    opacity: 1;
+  }
+</style>
   
 </body>
 </html>
