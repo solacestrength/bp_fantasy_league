@@ -296,73 +296,77 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Share Logic ---
   async function shareRanking() {
-    if (searchMatches.length === 0) { alert("Please search for your name first."); return; }
-
-    const matchIndex = searchMatches[currentMatchIndex];
-    let start = matchIndex - 4, end = matchIndex + 5;
-    if (start < 0) { end += -start; start = 0; }
-    if (end > allRows.length - 1) { start = Math.max(0, allRows.length - 10); end = allRows.length - 1; }
-
-    const visibleRows = allRows.slice(start, end + 1);
-const highlightedRows = visibleRows.map((row, i) => {
-  const actualIndex = start + i;
-  const rowHtml = row.map(cell => `<td class="px-3 py-1 text-center">${cell}</td>`).join('');
-  return actualIndex === lastSearchedIndex
-    ? `<tr class="font-bold">${rowHtml}</tr>`
-    : `<tr>${rowHtml}</tr>`;
-
-    const snapshot=document.createElement('div');
-    snapshot.id='snapshot';
-    snapshot.style.width='600px';
-    snapshot.className='p-6 rounded-lg text-white';
-    snapshot.style.backgroundImage="url('image_accuracy.jpg')";
-    snapshot.style.backgroundSize='cover';
-    snapshot.style.backgroundPosition='center';
-    snapshot.innerHTML=`
-      <div class="bg-black/70 p-4 rounded-lg">
-        <h2 class="text-center text-xl font-bold mb-3">British Classic Fantasy League 2025 🇬🇧</h2>
-        <h3 class="text-center text-lg font-semibold mb-2">My Accuracy Score</h3>
-        <table class="w-full border-collapse text-sm">
-          <thead><tr class="border-b border-gray-600">
-            <th class="text-left py-1">Rank</th>
-            <th class="text-left py-1">Name</th>
-            <th class="text-right py-1">Points</th>
-          </tr></thead>
-          <tbody>${highlightedRows}</tbody>
-        </table>
-        <p class="text-xs text-gray-300 text-center mt-2">Data from Accuracy Scores</p>
-      </div>
-    `;
-    document.body.appendChild(snapshot);
-    snapshot.style.position='absolute';
-    snapshot.style.left='-9999px';
-
-    html2canvas(snapshot, { backgroundColor: null, scale: 2 }).then(async canvas => {
-      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-      snapshot.remove();
-      const file = new File([blob], 'accuracy.png', { type: 'image/png' });
-
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            title: 'British Classic Fantasy League 2025 🇬🇧',
-            text: 'Check out my accuracy score!',
-            files: [file]
-          });
-          return;
-        } catch (err) { console.warn('Share cancelled or failed:', err); }
-      }
-      try {
-        await navigator.clipboard.writeText(window.location.href);
-        alert('Link copied to clipboard!');
-      } catch {
-        const link = document.createElement('a');
-        link.href = canvas.toDataURL('image/png');
-        link.download = 'my-accuracy-score.png';
-        link.click();
-      }
-    });
+  if (searchMatches.length === 0) { 
+    alert("Please search for your name first."); 
+    return; 
   }
+
+  const matchIndex = searchMatches[currentMatchIndex];
+  let start = matchIndex - 4, end = matchIndex + 5;
+  if (start < 0) { end += -start; start = 0; }
+  if (end > allRows.length - 1) { start = Math.max(0, allRows.length - 10); end = allRows.length - 1; }
+
+  const visibleRows = allRows.slice(start, end + 1);
+  const highlightedRows = visibleRows.map((row, i) => {
+    const actualIndex = start + i;
+    const rowHtml = row.map(cell => `<td class="px-3 py-1 text-center">${cell}</td>`).join('');
+    return actualIndex === matchIndex
+      ? `<tr class="font-bold">${rowHtml}</tr>`
+      : `<tr>${rowHtml}</tr>`;
+  });
+
+  const snapshot = document.createElement('div');
+  snapshot.id = 'snapshot';
+  snapshot.style.width = '600px';
+  snapshot.className = 'p-6 rounded-lg text-white';
+  snapshot.style.backgroundImage = "url('image_accuracy.jpg')";
+  snapshot.style.backgroundSize = 'cover';
+  snapshot.style.backgroundPosition = 'center';
+  snapshot.innerHTML = `
+    <div class="bg-black/70 p-4 rounded-lg">
+      <h2 class="text-center text-xl font-bold mb-3">British Classic Fantasy League 2025 🇬🇧</h2>
+      <h3 class="text-center text-lg font-semibold mb-2">My Accuracy Score</h3>
+      <table class="w-full border-collapse text-sm">
+        <thead><tr class="border-b border-gray-600">
+          <th class="text-left py-1">Rank</th>
+          <th class="text-left py-1">Name</th>
+          <th class="text-right py-1">Points</th>
+        </tr></thead>
+        <tbody>${highlightedRows.join('')}</tbody>
+      </table>
+      <p class="text-xs text-gray-300 text-center mt-2">Data from Accuracy Scores</p>
+    </div>
+  `;
+  document.body.appendChild(snapshot);
+  snapshot.style.position = 'absolute';
+  snapshot.style.left = '-9999px';
+
+  html2canvas(snapshot, { backgroundColor: null, scale: 2 }).then(async canvas => {
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    snapshot.remove();
+    const file = new File([blob], 'accuracy.png', { type: 'image/png' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          title: 'British Classic Fantasy League 2025 🇬🇧',
+          text: 'Check out my accuracy score!',
+          files: [file]
+        });
+        return;
+      } catch (err) { console.warn('Share cancelled or failed:', err); }
+    }
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      alert('Link copied to clipboard!');
+    } catch {
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = 'my-accuracy-score.png';
+      link.click();
+    }
+  });
+}
 
   document.getElementById('shareRankingBtn').addEventListener('click', shareRanking);
   shareFloatingBtn.addEventListener('click', shareRanking);
