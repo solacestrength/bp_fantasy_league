@@ -130,7 +130,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Dropdown toggle ---
   const menuBtn = document.getElementById('menu-btn');
   const mobileMenu = document.getElementById('mobile-menu');
-
   menuBtn.addEventListener('click', (e) => {
     const isOpen = mobileMenu.classList.contains('opacity-100');
     if (isOpen) {
@@ -144,7 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     e.stopPropagation();
   });
-
   document.addEventListener('click', (e) => {
     if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
       mobileMenu.classList.remove('opacity-100','scale-y-100');
@@ -153,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // --- Leaderboard CSV ---
+  // --- Leaderboard + Pagination ---
   const rowsPerPage = 50;
   let allRows = [], filteredRows = [], currentPage = 1;
   let lastSearchedIndex = -1;
@@ -203,7 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
       createPageButton(1,container);
       if (startPage>2) container.insertAdjacentHTML("beforeend","<span class='mx-1'>...</span>");
     }
-    for (let i=startPage;i<=endPage;i++) { createPageButton(i,container); }
+    for (let i=startPage;i<=endPage;i++) createPageButton(i,container);
     if (endPage<totalPages) {
       if (endPage<totalPages-1) container.insertAdjacentHTML("beforeend","<span class='mx-1'>...</span>");
       createPageButton(totalPages,container);
@@ -234,7 +232,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.body.appendChild(shareFloatingBtn);
 
   let inactivityTimer;
-
   function fadeOutShareButton() {
     shareFloatingBtn.classList.add('fade-out');
     setTimeout(() => {
@@ -242,23 +239,18 @@ document.addEventListener('DOMContentLoaded', () => {
       shareFloatingBtn.classList.remove('fade-out');
     }, 700);
   }
-
   function resetInactivityTimer() {
     clearTimeout(inactivityTimer);
     if (!shareFloatingBtn.classList.contains('hidden')) {
-      inactivityTimer = setTimeout(() => {
-        fadeOutShareButton();
-      }, 15000);
+      inactivityTimer = setTimeout(() => { fadeOutShareButton(); }, 15000);
     }
   }
-
   window.addEventListener('scroll', resetInactivityTimer);
   document.addEventListener('input', resetInactivityTimer);
 
-  // --- Search Logic ---
+  // --- Search ---
   searchInput.addEventListener("input", () => {
     const filter = searchInput.value.trim().toLowerCase();
-
     if (!filter) {
       filteredRows = [...allRows];
       currentPage = 1;
@@ -269,54 +261,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const matchIndex = allRows.findIndex(row => row.join(" ").toLowerCase().includes(filter));
-
-    if (matchIndex === -1) {
-      filteredRows = allRows.filter(row => row.join(" ").toLowerCase().includes(filter));
-      currentPage = 1;
-      renderTable();
-      lastSearchedIndex = -1;
-      shareFloatingBtn.classList.add("hidden");
-      return;
-    }
-
     lastSearchedIndex = matchIndex;
-    currentPage = Math.floor(matchIndex / rowsPerPage) + 1;
+    filteredRows = allRows.filter(row => row.join(" ").toLowerCase().includes(filter));
+    currentPage = matchIndex > -1 ? Math.floor(matchIndex / rowsPerPage) + 1 : 1;
     renderTable();
-    shareFloatingBtn.classList.remove("hidden");
-    resetInactivityTimer();
 
-    setTimeout(() => {
-      const tableBody = document.getElementById("leaderboardBody");
-      const rows = Array.from(tableBody.querySelectorAll("tr"));
-      const rowOnPage = matchIndex % rowsPerPage;
-      const targetRow = rows[rowOnPage];
-      if (targetRow) {
-        targetRow.scrollIntoView({ behavior: "smooth", block: "center" });
-        targetRow.classList.add("highlighted");
-        setTimeout(() => targetRow.classList.remove("highlighted"), 2500);
-      }
-    }, 100);
+    if (matchIndex > -1) {
+      shareFloatingBtn.classList.remove("hidden");
+      resetInactivityTimer();
+    } else {
+      shareFloatingBtn.classList.add("hidden");
+    }
   });
 
   loadLeaderboard();
 
-  // --- Share Button Logic ---
-  shareFloatingBtn.addEventListener('click', async () => {
+  // --- Shared share logic for both buttons ---
+  async function shareRanking() {
     const rows = Array.from(document.querySelectorAll('#leaderboardBody tr'));
+    if (rows.length === 0) { alert('Leaderboard not loaded yet.'); return; }
+    if (lastSearchedIndex === -1) { alert('Please search for your name first.'); return; }
 
-    if (rows.length === 0) {
-      alert('Leaderboard not loaded yet.');
-      return;
-    }
-
-    let index = lastSearchedIndex;
-    if (index === -1) {
-      alert('Please search for your name first.');
-      return;
-    }
-
-    let start = index - 4;
-    let end = index + 5;
+    let start = lastSearchedIndex - 4;
+    let end = lastSearchedIndex + 5;
     if (start < 0) { end += -start; start = 0; }
     if (end > allRows.length - 1) {
       start -= (end - (allRows.length - 1));
@@ -328,7 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const highlightedRows = visibleRows.map((row, i) => {
       const actualIndex = start + i;
       const rowHtml = row.map(cell => `<td class="px-3 py-1 text-center">${cell}</td>`).join('');
-      return actualIndex === index
+      return actualIndex === lastSearchedIndex
         ? `<tr class="bg-red-600/40 font-bold">${rowHtml}</tr>`
         : `<tr>${rowHtml}</tr>`;
     });
@@ -352,9 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <th class="text-right py-1">Points</th>
             </tr>
           </thead>
-          <tbody>
-            ${highlightedRows.join('')}
-          </tbody>
+          <tbody>${highlightedRows.join('')}</tbody>
         </table>
         <p class="text-xs text-gray-300 text-center mt-2">Data from Accuracy Scores</p>
       </div>
@@ -366,7 +331,6 @@ document.addEventListener('DOMContentLoaded', () => {
     html2canvas(snapshotContainer, { backgroundColor: null, scale: 2 }).then(async canvas => {
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
       snapshotContainer.remove();
-
       const file = new File([blob], 'accuracy.png', { type: 'image/png' });
 
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -377,25 +341,25 @@ document.addEventListener('DOMContentLoaded', () => {
             files: [file]
           });
           return;
-        } catch (err) {
-          console.warn('Share cancelled or failed:', err);
-        }
+        } catch (err) { console.warn('Share cancelled or failed:', err); }
       }
-
       try {
         await navigator.clipboard.writeText(window.location.href);
-        alert('Link copied to clipboard! You can paste it into Instagram, WhatsApp, etc.');
-        return;
-      } catch (err) {
-        console.warn('Clipboard copy failed:', err);
+        alert('Link copied to clipboard!');
+      } catch {
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = 'my-accuracy-rank.png';
+        link.click();
       }
-
-      const link = document.createElement('a');
-      link.href = canvas.toDataURL('image/png');
-      link.download = 'my-accuracy-rank.png';
-      link.click();
     });
-  });
+  }
+
+  // Attach same function to both buttons
+  const shareBtnInline = document.getElementById('shareRankingBtn');
+  if (shareBtnInline) shareBtnInline.addEventListener('click', shareRanking);
+  shareFloatingBtn.addEventListener('click', shareRanking);
+
 });
 </script>
 
