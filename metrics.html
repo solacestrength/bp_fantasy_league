@@ -14,10 +14,6 @@
   <link rel="stylesheet" href="/assets/css/fix-dropdown.css" />
 
   <style>
-    @keyframes fadeInUp { 0% {opacity:0;transform:translateY(10px);} 100% {opacity:1;transform:translateY(0);} }
-    .animate-fade-in-up {animation: fadeInUp 0.8s ease-out forwards;}
-    .animate-fade-in {animation: fadeInUp 1s ease-out forwards;}
-
     body {background:#0b0b0b;color:#f1f1f1;font-family:'Inter',sans-serif;}
     select {background:#1f1f1f;border:1px solid #333;}
     canvas {max-width:100%;height:auto!important;}
@@ -37,7 +33,6 @@
 </head>
 
 <body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
-  <!-- Background -->
   <div class="absolute inset-0 bg-[url('bc25_logo.jpg')] bg-cover bg-center opacity-35"></div>
   <div class="absolute inset-0 bg-black/70"></div>
 
@@ -46,7 +41,7 @@
     <header class="site-header w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 relative z-50">
       <div class="w-full flex items-center justify-center px-4 py-3">
         <div class="flex-1 text-center">
-          <a href="index.html" class="font-bold text-white hover:text-red-500 transition animate-fade-in-up text-sm sm:text-lg md:text-xl lg:text-2xl">
+          <a href="index.html" class="font-bold text-white hover:text-red-500 transition text-sm sm:text-lg md:text-xl lg:text-2xl">
             British Classic Fantasy League 2025 🇬🇧
           </a>
         </div>
@@ -60,7 +55,7 @@
       </div>
     </header>
 
-    <!-- Dropdown menu -->
+    <!-- Dropdown -->
     <div id="mobile-menu" class="fixed top-16 right-4 w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-md shadow-lg z-50 scale-y-0 opacity-0 origin-top transition-transform duration-300 ease-in-out pointer-events-none">
       <nav class="flex flex-col py-2 text-white">
         <a href="index.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Home</a>
@@ -72,7 +67,7 @@
     </div>
 
     <!-- MAIN CONTENT -->
-    <main class="max-w-5xl mx-auto p-6 space-y-8 mt-6 animate-fade-in">
+    <main class="max-w-5xl mx-auto p-6 space-y-8 mt-6">
       <section class="text-center">
         <h2 class="text-xl font-semibold mb-1">Prediction Trends by Weight Class</h2>
         <p class="text-gray-400 text-sm">Explore who users predicted to win and how totals were distributed.</p>
@@ -125,25 +120,21 @@
       </div>
     </main>
 
-    <!-- Footer -->
     <div class="flex justify-center mt-8">
       <a href="index.html" class="bg-gray-800/60 border border-gray-700 text-gray-200 font-semibold px-6 py-3 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-base">Home</a>
-    </div>
-    <div class="flex justify-center mt-4">
-      <a href="#top" class="bg-gray-800/60 border border-gray-700 text-gray-300 font-semibold px-5 py-2 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-sm">Back to Top</a>
     </div>
     <footer class="text-center text-gray-500 text-sm py-4 bg-transparent">Sponsored by the Sabado Sessions Podcast</footer>
   </div>
 
   <script>
-    // Menu Toggle
+    // MENU
     const menuBtn=document.getElementById('menu-btn'),mobileMenu=document.getElementById('mobile-menu');
     function toggleMenu(show){if(show){mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');mobileMenu.classList.add('scale-y-100','opacity-100');}else{mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');mobileMenu.classList.remove('scale-y-100','opacity-100');}}
     let menuVisible=false;menuBtn.addEventListener('click',e=>{menuVisible=!menuVisible;toggleMenu(menuVisible);e.stopPropagation();});
     document.addEventListener('click',e=>{if(!mobileMenu.contains(e.target)&&!menuBtn.contains(e.target)){if(menuVisible){menuVisible=false;toggleMenu(false);}}});
     toggleMenu(false);
 
-    // Metrics Setup
+    // DATA + CHARTS
     Chart.register(ChartDataLabels);
     const SHEET_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
     let allData=[],charts={};
@@ -166,7 +157,6 @@
         options:{
           plugins:{
             title:{display:true,text:[`Share of Votes`,`Total Votes – ${t}`],color:'#ccc',font:{weight:'bold',size:14}},
-            // Small square legend markers
             legend:{position:'bottom',labels:{color:'#ccc',boxWidth:10,boxHeight:10}},
             datalabels:{color:'#fff',font:{weight:'bold',size:11},formatter:x=>{const p=(x/t)*100;return p>=3?`${p.toFixed(1)}%`:'';},anchor:'center',align:'center'}
           }
@@ -186,79 +176,70 @@
       });
     }
 
-    // Robust share: use image snapshot of the actual chart canvas
+    // SHARE EXPORT
     async function shareChart(id,g){
       const srcCanvas=document.getElementById(id);
-      // Ensure Chart.js has finished a layout frame
       await new Promise(requestAnimationFrame);
-
       const s=document.getElementById(g==='F'?'womenSelect':'menSelect');
       const w=s.value;
-      const title=`British Classic Fantasy League 2025 – ${g==='F'?'Women':'Men'} ${w}kg`;
+      const titleMain='British Classic Fantasy League 2025 🇬🇧';
+      const titleSub=`${w}kg ${g==='F'?'Women':'Men'}`;
       const fn=`metrics_${g}_${w}_${id.includes('Donut')?'donut':'hist'}.png`;
 
-      // Convert chart canvas to image to avoid DPR/size issues
-      const dataURL = srcCanvas.toDataURL('image/png'); // full-resolution snapshot
-      const img = new Image();
-      img.src = dataURL;
-      await img.decode();
+      const dataURL=srcCanvas.toDataURL('image/png');
+      const img=new Image();img.src=dataURL;await img.decode();
 
-      // Build export wrapper (auto-size vertically, no forced square)
-      const wrapper=document.createElement('div');
-      wrapper.style.position='relative';
-      wrapper.style.display='flex';
-      wrapper.style.alignItems='center';
-      wrapper.style.justifyContent='center';
-      wrapper.style.backgroundImage="url('bc25_logo.jpg')";
-      wrapper.style.backgroundSize='cover';
-      wrapper.style.backgroundPosition='center';
-      wrapper.style.padding='30px';
-      wrapper.style.borderRadius='12px';
-
-      // Inner card
       const card=document.createElement('div');
-      card.style.background='rgba(0,0,0,0.85)';
-      card.style.padding='20px';
-      card.style.borderRadius='12px';
+      card.style.background='rgba(0,0,0,0.88)';
+      card.style.backgroundImage="url('bc25_logo.jpg')";
+      card.style.backgroundSize='cover';
+      card.style.backgroundPosition='center';
+      card.style.padding='24px';
+      card.style.borderRadius='16px';
       card.style.textAlign='center';
       card.style.color='#fff';
-      card.style.maxWidth='1000px';
+      card.style.fontFamily="'Inter', sans-serif";
+      card.style.maxWidth='960px';
+      card.style.margin='0 auto';
       card.style.boxSizing='border-box';
 
-      const h2=document.createElement('h2');
-      h2.textContent=title;
-      h2.style.fontSize='22px';
-      h2.style.fontWeight='700';
-      h2.style.margin='0 0 12px 0';
+      const header=document.createElement('h2');
+      header.textContent=titleMain;
+      header.style.fontSize='20px';
+      header.style.fontWeight='700';
+      header.style.margin='0 0 4px 0';
 
-      // Insert the image version of the chart
-      // Fit nicely: cap width but preserve aspect
-      img.style.maxWidth='900px';
-      img.style.width='100%';
+      const sub=document.createElement('p');
+      sub.textContent=titleSub;
+      sub.style.fontSize='16px';
+      sub.style.color='#ddd';
+      sub.style.margin='0 0 14px 0';
+
+      img.style.maxWidth='100%';
       img.style.height='auto';
+      img.style.borderRadius='8px';
       img.style.display='block';
-      img.style.margin='0 auto';
+      img.style.margin='0 auto 12px auto';
 
-      const p=document.createElement('p');
-      p.style.fontSize='13px';
-      p.style.color='#aaa';
-      p.style.marginTop='12px';
-      p.style.lineHeight='1.4';
-      p.innerHTML = `Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast`;
+      const credit=document.createElement('p');
+      credit.style.fontSize='13px';
+      credit.style.color='#aaa';
+      credit.style.lineHeight='1.5';
+      credit.innerHTML='Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-      card.appendChild(h2);
+      card.appendChild(header);
+      card.appendChild(sub);
       card.appendChild(img);
-      card.appendChild(p);
-      wrapper.appendChild(card);
-      document.body.appendChild(wrapper);
+      card.appendChild(credit);
+      document.body.appendChild(card);
 
-      const snapshot=await html2canvas(wrapper,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
-      wrapper.remove();
+      const snapshot=await html2canvas(card,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
+      card.remove();
 
       const blob=await new Promise(r=>snapshot.toBlob(r,'image/png'));
       const file=new File([blob],fn,{type:'image/png'});
       if(navigator.canShare&&navigator.canShare({files:[file]})){
-        await navigator.share({title,text:'Check out these British Classic Fantasy League stats!',files:[file]});
+        await navigator.share({title:text='Check out these British Classic Fantasy League stats!',files:[file]});
       }else{
         const link=document.createElement('a');
         link.href=snapshot.toDataURL('image/png');
