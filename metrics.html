@@ -251,23 +251,31 @@
         type:'doughnut',
         data:{labels:donutLabels,datasets:[{data:donutValues,backgroundColor:donutColors,borderWidth:1,borderColor:'#111'}]},
         options:{
-          plugins:{
-            legend:{position:'bottom',labels:{color:'#ccc'}},
-            datalabels:{
-              color:'#fff',font:{weight:'bold',size:11},
-              formatter:(v)=>{const pct=(v/totalPredictions)*100;return pct>=3?`${pct.toFixed(1)}%`:'';},
-              anchor:'center',align:'center',clip:false
-            },
-            tooltip:{
-              callbacks:{
-                label:(ctx)=>{
-                  const val=ctx.parsed;const pct=((val/totalPredictions)*100).toFixed(1);
-                  return `${ctx.label}: ${pct}% (${val})`;
-                }
-              }
-            }
-          }
-        },
+  plugins:{
+    title:{
+      display:true,
+      text:'Share of Votes',
+      color:'#ccc',
+      font:{size:14,weight:'bold'},
+      padding:{bottom:10}
+    },
+    legend:{position:'bottom',labels:{color:'#ccc'}},
+    datalabels:{
+      color:'#fff',font:{weight:'bold',size:11},
+      formatter:(v)=>{const pct=(v/totalPredictions)*100;return pct>=3?`${pct.toFixed(1)}%`:'';},
+      anchor:'center',align:'center',clip:false
+    },
+    tooltip:{
+      callbacks:{
+        label:(ctx)=>{
+          const val=ctx.parsed;const pct=((val/totalPredictions)*100).toFixed(1);
+          return `${ctx.label}: ${pct}% (${val})`;
+        }
+      }
+    }
+  }
+},
+
         plugins:[ChartDataLabels]
       });
 
