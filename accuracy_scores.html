@@ -322,9 +322,18 @@ document.addEventListener('DOMContentLoaded', () => {
   snapshot.style.backgroundImage = "url('image_accuracy.jpg')";
   snapshot.style.backgroundSize = 'cover';
   snapshot.style.backgroundPosition = 'center';
-  snapshot.style.opacity = '0.35';
   snapshot.innerHTML = `
-    <div class="bg-black/70 p-4 rounded-lg">
+  <div style="
+    position: absolute;
+    inset: 0;
+    background-image: url('image_accuracy.jpg');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.45;
+    border-radius: 12px;
+    z-index: 0;
+  "></div>
+     <div style="position: relative; z-index: 1;" class="bg-black/70 p-4 rounded-lg">
       <h2 class="text-center text-xl font-bold mb-3">British Classic Fantasy League 2025 🇬🇧</h2>
       <h3 class="text-center text-lg font-semibold mb-2">My Accuracy Score</h3>
       <table class="w-full border-collapse text-sm">
