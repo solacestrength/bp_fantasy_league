@@ -119,7 +119,7 @@
       </div>
     </main>
 
-         <!-- View Leaderboard Button Container -->
+     <!-- View Leaderboard Button Container -->
       <div class="flex justify-center mt-8">
         <a href="leaderboard.html"
            class="bg-gray-800/60 border border-gray-700 text-gray-200 font-semibold px-6 py-3 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-base">
@@ -146,127 +146,8 @@
     document.addEventListener('click',e=>{if(!mobileMenu.contains(e.target)&&!menuBtn.contains(e.target)){if(menuVisible){menuVisible=false;toggleMenu(false);}}});
     toggleMenu(false);
 
-    // ===============  CHARTS / DATA  ===============
+    // DATA + CHARTS
     Chart.register(ChartDataLabels);
-
-    // Global export flag (toggled during share)
-    window.__EXPORT_MODE__ = false;
-
-    // Plugin: Smart leader lines for small donut slices + outside percentage labels
-    const DonutLeaderLinesPlugin = {
-      id: 'donutLeaderLines',
-      afterDatasetsDraw(chart, args, pluginOptions) {
-        if (chart.config.type !== 'doughnut') return;
-        const {ctx, chartArea, data} = chart;
-        const ds = chart.data.datasets[0];
-        if (!ds || !ds.data || !ds.data.length) return;
-
-        const meta = chart.getDatasetMeta(0);
-        const total = ds.data.reduce((a,b)=>a + (Number(b)||0), 0);
-        if (!total) return;
-
-        const isExport = !!window.__EXPORT_MODE__;
-        const pctThreshold = 0.05; // 5% threshold for external labels
-        const baseOffset = isExport ? 16 : 20;  // radial offset for label point
-        const lineLen    = isExport ? 18 : 22;  // leader line length in px
-        const textPad    = 6;                   // gap from line end to text
-        const font = (isExport ? 11 : 12) + 'px Inter, sans-serif';
-        const textColor = 'rgba(255,255,255,0.9)';
-        const lineColor = 'rgba(255,255,255,0.7)';
-        const lineWidth = 1;
-
-        // Avoid overlaps: keep separate y-buckets per side
-        const placedLeft = [];
-        const placedRight = [];
-        const minYGap = isExport ? 12 : 14;
-
-        ctx.save();
-        ctx.font = font;
-        ctx.textBaseline = 'middle';
-        ctx.strokeStyle = lineColor;
-        ctx.fillStyle = textColor;
-        ctx.lineWidth = lineWidth;
-
-        // helper to push y away if overlapping with previous labels on that side
-        function resolveY(y, sideArray) {
-          if (sideArray.length === 0) { sideArray.push(y); return y; }
-          let adjusted = y;
-          // Simple repel: ensure at least minYGap from any placed
-          let safe = false, attempts = 0;
-          while (!safe && attempts < 50) {
-            safe = true;
-            for (const py of sideArray) {
-              if (Math.abs(adjusted - py) < minYGap) { safe = false; adjusted += (adjusted < py ? -1 : 1) * (minYGap - Math.abs(adjusted - py)); }
-            }
-            attempts++;
-          }
-          sideArray.push(adjusted);
-          return adjusted;
-        }
-
-        // Draw labels for small slices only; big slices handled by datalabels center text
-        ds.data.forEach((val, i) => {
-          const v = Number(val) || 0;
-          if (v <= 0) return;
-          const pct = v / total;
-          if (pct >= pctThreshold) return; // center label will show
-
-          const arc = meta.data[i];
-          if (!arc) return;
-
-          // Mid angle
-          const start = arc.startAngle, end = arc.endAngle;
-          const mid = (start + end) / 2;
-
-          const cx = arc.x, cy = arc.y;
-          const rOuter = arc.outerRadius;
-          const rLabel = rOuter + baseOffset;
-
-          // Base point at the donut edge in the slice direction
-          const edgeX = cx + Math.cos(mid) * rOuter;
-          const edgeY = cy + Math.sin(mid) * rOuter;
-
-          // Slightly angled leader line (short diagonal) then a small outward extension
-          const dirX = Math.cos(mid), dirY = Math.sin(mid);
-
-          // First segment (diagonal)
-          let p1x = edgeX + dirX * (lineLen * 0.6);
-          let p1y = edgeY + dirY * (lineLen * 0.6);
-
-          // Second segment (slight outward, angled more horizontally)
-          const onRight = Math.cos(mid) >= 0;
-          const horiz = onRight ? 1 : -1;
-          let p2x = p1x + horiz * (lineLen * 0.4);
-          let p2y = p1y + dirY * (lineLen * 0.2);
-
-          // Candidate label anchor
-          let lx = p2x + horiz * textPad;
-          let ly = p2y;
-
-          // Resolve Y to avoid overlaps on each side
-          ly = resolveY(ly, onRight ? placedRight : placedLeft);
-
-          // Draw leader line
-          ctx.beginPath();
-          ctx.moveTo(edgeX, edgeY);
-          ctx.lineTo(p1x, p1y);
-          ctx.lineTo(p2x, p2y + (ly - p2y)); // shift end vertically if needed
-          ctx.stroke();
-
-          // Draw percentage text (outside)
-          const percentTxt = (pct * 100).toFixed(1) + '%';
-          const textX = onRight ? (p2x + textPad) : (p2x - textPad);
-          const alignedX = onRight ? textX : textX - ctx.measureText(percentTxt).width;
-          ctx.fillText(percentTxt, alignedX, ly);
-        });
-
-        ctx.restore();
-      }
-    };
-
-    // Register plugin globally
-    Chart.register(DonutLeaderLinesPlugin);
-
     const SHEET_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
     let allData=[],charts={};
 
@@ -277,8 +158,6 @@
 
     function renderCharts(g,w){
       const f=allData.filter(r=>r.Gender===g&&r.Class===w);if(!f.length)return;
-
-      // --- DONUT ---
       const counts={};f.forEach(r=>counts[r.Athlete]=(counts[r.Athlete]||0)+1);
       const l=Object.keys(counts),v=Object.values(counts),t=v.reduce((a,b)=>a+b,0);
       const colors=['#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'];
@@ -288,69 +167,29 @@
         type:'doughnut',
         data:{labels:l,datasets:[{data:v,backgroundColor:cset,borderColor:'#111',borderWidth:1,hoverOffset:8}]},
         options:{
-          animation: window.__EXPORT_MODE__ ? false : {duration:500},
           plugins:{
             title:{display:true,text:[`Share of Votes`,`Total Votes – ${t}`],color:'#ccc',font:{weight:'bold',size:14}},
             legend:{position:'bottom',labels:{color:'#ccc',boxWidth:10,boxHeight:10}},
-            // Center labels for big slices only; small ones handled by our plugin as outside labels
-            datalabels:{
-              color:'#fff',
-              font:{weight:'bold',size:11},
-              formatter:(value,ctx)=>{
-                const total = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+(+b||0),0);
-                const pct = (+value||0)/total;
-                return pct >= 0.05 ? (pct*100).toFixed(1)+'%' : '';
-              },
-              anchor:'center',
-              align:'center',
-              clip:false
-            }
+            datalabels:{color:'#fff',font:{weight:'bold',size:11},formatter:x=>{const p=(x/t)*100;return p>=3?`${p.toFixed(1)}%`:'';},anchor:'center',align:'center'}
           }
         },
         plugins:[ChartDataLabels]
       });
 
-      // --- HISTOGRAM ---
       const totals=f.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v));if(!totals.length)return;
-      const N=totals.length,min=Math.min(...totals),max=Math.max(...totals),bins=Math.round(Math.sqrt(N))||1,bw=(max-min)/bins||1,h=Array(bins).fill(0);
+      const N=totals.length,min=Math.min(...totals),max=Math.max(...totals),bins=Math.round(Math.sqrt(N)),bw=(max-min)/bins,h=Array(bins).fill(0);
       totals.forEach(v=>{const i=Math.min(Math.floor((v-min)/bw),bins-1);h[i]++;});
       const lbls=Array.from({length:bins},(_,i)=>`${(min+i*bw).toFixed(0)}–${(min+(i+1)*bw).toFixed(0)}`),hid=g==='F'?'womenHist':'menHist';
       if(charts[hid])charts[hid].destroy();
       charts[hid]=new Chart(document.getElementById(hid),{
         type:'bar',
         data:{labels:lbls,datasets:[{label:'Predicted Totals',data:h,backgroundColor:'#3b82f6',borderRadius:5}]},
-        options:{
-          animation: window.__EXPORT_MODE__ ? false : {duration:500},
-          scales:{
-            x:{ticks:{color:'#ccc',font:{size:10}},title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:11,weight:'bold'}}},
-            y:{beginAtZero:true,ticks:{color:'#ccc',font:{size:10}},title:{display:true,text:'Frequency',color:'#ccc',font:{size:11,weight:'bold'}}}
-          },
-          plugins:{
-            legend:{display:false},
-            // ALWAYS show bar values above bars
-            datalabels:{
-              color:'#fff',
-              anchor:'end',
-              align:'end',
-              offset: -2,
-              font:{size:11,weight:'bold'},
-              formatter:(v)=> v
-            }
-          }
-        },
-        plugins:[ChartDataLabels]
+        options:{scales:{x:{ticks:{color:'#ccc',font:{size:10}},title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:11,weight:'bold'}}},y:{beginAtZero:true,ticks:{color:'#ccc',font:{size:10}},title:{display:true,text:'Frequency',color:'#ccc',font:{size:11,weight:'bold'}}}},plugins:{legend:{display:false}}}
       });
     }
 
-    // SHARE EXPORT (dimmed background only; charts remain bright)
+    // SHARE EXPORT with dimmed background image (not charts)
     async function shareChart(id,g){
-      // Switch to export mode for crisp layout (no animations, tighter spacing)
-      window.__EXPORT_MODE__ = true;
-
-      // Force a re-render with export mode
-      const chartObj = charts[id];
-      if (chartObj) chartObj.update();
-
       const srcCanvas=document.getElementById(id);
       await new Promise(requestAnimationFrame);
       const s=document.getElementById(g==='F'?'womenSelect':'menSelect');
@@ -359,11 +198,9 @@
       const titleSub=`${w}kg ${g==='F'?'Women':'Men'}`;
       const fn=`metrics_${g}_${w}_${id.includes('Donut')?'donut':'hist'}.png`;
 
-      // Snapshot chart to image (avoids DPR issues)
       const dataURL=srcCanvas.toDataURL('image/png');
       const img=new Image();img.src=dataURL;await img.decode();
 
-      // Export card (only dark container captured)
       const card=document.createElement('div');
       card.style.backgroundImage="linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)), url('bc25_logo.jpg')";
       card.style.backgroundSize='cover';
@@ -383,19 +220,16 @@
       header.style.fontSize='18px'; // single line
       header.style.fontWeight='700';
       header.style.margin='0 0 4px 0';
-
       const sub=document.createElement('p');
       sub.textContent=titleSub;
       sub.style.fontSize='16px';
       sub.style.color='#ddd';
       sub.style.margin='0 0 14px 0';
-
       img.style.maxWidth='100%';
       img.style.height='auto';
       img.style.borderRadius='8px';
       img.style.display='block';
       img.style.margin='0 auto 12px auto';
-
       const credit=document.createElement('p');
       credit.style.fontSize='13px';
       credit.style.color='#aaa';
@@ -407,10 +241,6 @@
 
       const snapshot=await html2canvas(card,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
       card.remove();
-
-      // Reset export mode & rerender charts back to interactive
-      window.__EXPORT_MODE__ = false;
-      if (chartObj) chartObj.update();
 
       const blob=await new Promise(r=>snapshot.toBlob(r,'image/png'));
       const file=new File([blob],fn,{type:'image/png'});
