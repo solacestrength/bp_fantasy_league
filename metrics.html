@@ -19,12 +19,10 @@
     canvas {max-width:100%;height:auto!important;}
     .chart-container {max-width:600px;margin:0 auto;}
     @media(min-width:1024px){.chart-container{max-width:500px;}}
-
     .collapsible-content{max-height:0;overflow:hidden;opacity:0;transition:max-height .5s ease,opacity .4s ease;}
     .collapsible-content.open{opacity:1;max-height:1000px;}
     .arrow{transition:transform .4s ease;}
     .arrow.rotate{transform:rotate(180deg);}
-
     .share-btn{background-color:#dc2626;display:flex;align-items:center;justify-content:center;
       border-radius:.5rem;height:36px;width:36px;transition:background-color .2s ease;}
     .share-btn:hover{background-color:#ef4444;}
@@ -33,6 +31,7 @@
 </head>
 
 <body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
+  <!-- Background -->
   <div class="absolute inset-0 bg-[url('bc25_logo.jpg')] bg-cover bg-center opacity-35"></div>
   <div class="absolute inset-0 bg-black/70"></div>
 
@@ -120,9 +119,6 @@
       </div>
     </main>
 
-    <div class="flex justify-center mt-8">
-      <a href="index.html" class="bg-gray-800/60 border border-gray-700 text-gray-200 font-semibold px-6 py-3 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-base">Home</a>
-    </div>
     <footer class="text-center text-gray-500 text-sm py-4 bg-transparent">Sponsored by the Sabado Sessions Podcast</footer>
   </div>
 
@@ -176,7 +172,7 @@
       });
     }
 
-    // SHARE EXPORT
+    // SHARE EXPORT (with faded background overlay)
     async function shareChart(id,g){
       const srcCanvas=document.getElementById(id);
       await new Promise(requestAnimationFrame);
@@ -189,8 +185,11 @@
       const dataURL=srcCanvas.toDataURL('image/png');
       const img=new Image();img.src=dataURL;await img.decode();
 
+      // Container card
       const card=document.createElement('div');
-      card.style.background='rgba(0,0,0,0.88)';
+      card.style.position='relative';
+      card.style.overflow='hidden';
+      card.style.background='rgba(0,0,0,0.9)';
       card.style.backgroundImage="url('bc25_logo.jpg')";
       card.style.backgroundSize='cover';
       card.style.backgroundPosition='center';
@@ -203,34 +202,37 @@
       card.style.margin='0 auto';
       card.style.boxSizing='border-box';
 
+      // Background dim overlay
+      const overlay=document.createElement('div');
+      overlay.style.position='absolute';
+      overlay.style.inset='0';
+      overlay.style.backgroundColor='rgba(0,0,0,0.75)';
+      overlay.style.pointerEvents='none';
+      card.appendChild(overlay);
+
+      // Text and chart
       const header=document.createElement('h2');
       header.textContent=titleMain;
       header.style.fontSize='20px';
       header.style.fontWeight='700';
       header.style.margin='0 0 4px 0';
-
       const sub=document.createElement('p');
       sub.textContent=titleSub;
       sub.style.fontSize='16px';
       sub.style.color='#ddd';
       sub.style.margin='0 0 14px 0';
-
       img.style.maxWidth='100%';
       img.style.height='auto';
       img.style.borderRadius='8px';
       img.style.display='block';
       img.style.margin='0 auto 12px auto';
-
       const credit=document.createElement('p');
       credit.style.fontSize='13px';
       credit.style.color='#aaa';
       credit.style.lineHeight='1.5';
       credit.innerHTML='Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-      card.appendChild(header);
-      card.appendChild(sub);
-      card.appendChild(img);
-      card.appendChild(credit);
+      overlay.after(header,sub,img,credit);
       document.body.appendChild(card);
 
       const snapshot=await html2canvas(card,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
@@ -239,7 +241,7 @@
       const blob=await new Promise(r=>snapshot.toBlob(r,'image/png'));
       const file=new File([blob],fn,{type:'image/png'});
       if(navigator.canShare&&navigator.canShare({files:[file]})){
-        await navigator.share({title:text='Check out these British Classic Fantasy League stats!',files:[file]});
+        await navigator.share({title:'British Classic Fantasy League 2025',text:'Check out these British Classic Fantasy League stats!',files:[file]});
       }else{
         const link=document.createElement('a');
         link.href=snapshot.toDataURL('image/png');
