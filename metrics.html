@@ -23,20 +23,34 @@
     }
     .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
     .animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
+
     body { background-color: #0b0b0b; color: #f1f1f1; font-family: 'Inter', sans-serif; }
     select { background-color: #1f1f1f; border: 1px solid #333; }
     canvas { max-width: 100%; height: auto !important; }
+
     .chart-container { max-width: 600px; margin: 0 auto; }
-    @media (min-width: 1024px) {
-      .chart-container { max-width: 500px; }
+    @media (min-width: 1024px) { .chart-container { max-width: 500px; } }
+
+    /* Collapsible animations */
+    .collapsible-content {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.5s ease, opacity 0.4s ease;
     }
+    .collapsible-content.open {
+      opacity: 1;
+      max-height: 1000px;
+    }
+    .arrow { transition: transform 0.4s ease; }
+    .arrow.rotate { transform: rotate(180deg); }
   </style>
 </head>
 
 <body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
 
   <!-- Background -->
-  <div class="absolute inset-0 bg-[url('bc25_logo.jpg')] bg-center bg-contain bg-no-repeat opacity-10"></div>
+  <div class="absolute inset-0 bg-[url('bc25_logo.jpg')] bg-cover bg-center opacity-35"></div>
   <div class="absolute inset-0 bg-black/70"></div>
 
   <div class="relative z-10 flex flex-col flex-grow">
@@ -88,8 +102,13 @@
 
       <!-- WOMEN -->
       <div class="bg-black/60 rounded-lg p-4">
-        <button onclick="toggleSection('women')" class="w-full text-left text-lg font-bold">Women ▼</button>
-        <div id="women" class="hidden mt-4">
+        <button onclick="toggleSection('women')" class="flex items-center justify-between w-full text-left text-lg font-bold">
+          <span>Women</span>
+          <svg id="arrow-women" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        <div id="women" class="collapsible-content mt-4 open">
           <select id="womenSelect" class="p-2 rounded mb-4 text-sm"></select>
           <div class="chart-container">
             <canvas id="womenDonut"></canvas>
@@ -102,8 +121,13 @@
 
       <!-- MEN -->
       <div class="bg-black/60 rounded-lg p-4">
-        <button onclick="toggleSection('men')" class="w-full text-left text-lg font-bold">Men ▼</button>
-        <div id="men" class="hidden mt-4">
+        <button onclick="toggleSection('men')" class="flex items-center justify-between w-full text-left text-lg font-bold">
+          <span>Men</span>
+          <svg id="arrow-men" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        <div id="men" class="collapsible-content mt-4">
           <select id="menSelect" class="p-2 rounded mb-4 text-sm"></select>
           <div class="chart-container">
             <canvas id="menDonut"></canvas>
@@ -176,16 +200,23 @@
     let allData = [];
     let charts = {};
 
+    // Toggle collapsible with arrow animation
     function toggleSection(id) {
-      document.getElementById(id).classList.toggle('hidden');
+      const content = document.getElementById(id);
+      const arrow = document.getElementById(`arrow-${id}`);
+      const isOpen = content.classList.toggle('open');
+      arrow.classList.toggle('rotate', isOpen);
     }
 
+    // Fetch and initialize
     Papa.parse(SHEET_URL, {
       download: true,
       header: true,
       complete: function(res) {
         allData = res.data;
         setupDropdowns();
+        // auto-open women section on load
+        document.getElementById('arrow-women').classList.add('rotate');
       }
     });
 
@@ -201,11 +232,12 @@
       });
     }
 
+    // Render both charts
     function renderCharts(gender, weightClass) {
       const filtered = allData.filter(r => r.Gender === gender && r.Class === weightClass);
       if (!filtered.length) return;
 
-      // DONUT
+      // DONUT CHART
       const counts = {};
       filtered.forEach(r => counts[r.Athlete] = (counts[r.Athlete] || 0) + 1);
       const donutLabels = Object.keys(counts);
@@ -253,7 +285,20 @@
       charts[histId]=new Chart(document.getElementById(histId),{
         type:'bar',
         data:{labels,datasets:[{label:'Predicted Totals',data:histCounts,backgroundColor:'#3b82f6'}]},
-        options:{scales:{x:{ticks:{color:'#ccc'}},y:{beginAtZero:true,ticks:{color:'#ccc'}}},plugins:{legend:{display:false}}}
+        options:{
+          scales:{
+            x:{
+              ticks:{color:'#ccc'},
+              title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:13,weight:'bold'}}
+            },
+            y:{
+              beginAtZero:true,
+              ticks:{color:'#ccc'},
+              title:{display:true,text:'Frequency',color:'#ccc',font:{size:13,weight:'bold'}}
+            }
+          },
+          plugins:{legend:{display:false}}
+        }
       });
     }
   </script>
