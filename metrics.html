@@ -14,21 +14,21 @@
   <link rel="stylesheet" href="/assets/css/fix-dropdown.css" />
 
   <style>
-    @keyframes fadeInUp {
-      0% {opacity:0;transform:translateY(10px);}
-      100% {opacity:1;transform:translateY(0);}
-    }
+    @keyframes fadeInUp { 0% {opacity:0;transform:translateY(10px);} 100% {opacity:1;transform:translateY(0);} }
     .animate-fade-in-up {animation: fadeInUp 0.8s ease-out forwards;}
     .animate-fade-in {animation: fadeInUp 1s ease-out forwards;}
+
     body {background:#0b0b0b;color:#f1f1f1;font-family:'Inter',sans-serif;}
     select {background:#1f1f1f;border:1px solid #333;}
     canvas {max-width:100%;height:auto!important;}
     .chart-container {max-width:600px;margin:0 auto;}
     @media(min-width:1024px){.chart-container{max-width:500px;}}
+
     .collapsible-content{max-height:0;overflow:hidden;opacity:0;transition:max-height .5s ease,opacity .4s ease;}
     .collapsible-content.open{opacity:1;max-height:1000px;}
     .arrow{transition:transform .4s ease;}
     .arrow.rotate{transform:rotate(180deg);}
+
     .share-btn{background-color:#dc2626;display:flex;align-items:center;justify-content:center;
       border-radius:.5rem;height:36px;width:36px;transition:background-color .2s ease;}
     .share-btn:hover{background-color:#ef4444;}
@@ -88,13 +88,13 @@
           <select id="womenSelect" class="p-2 rounded mb-4 text-sm"></select>
           <div class="chart-container">
             <div class="flex justify-end mb-1">
-              <button class="share-btn" onclick="shareChart('womenDonut','F')"><img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon"/></button>
+              <button class="share-btn" onclick="shareChart('womenDonut','F')"><img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/></button>
             </div>
             <canvas id="womenDonut"></canvas>
           </div>
           <div class="chart-container mt-6">
             <div class="flex justify-end mb-1">
-              <button class="share-btn" onclick="shareChart('womenHist','F')"><img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon"/></button>
+              <button class="share-btn" onclick="shareChart('womenHist','F')"><img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/></button>
             </div>
             <canvas id="womenHist"></canvas>
           </div>
@@ -111,13 +111,13 @@
           <select id="menSelect" class="p-2 rounded mb-4 text-sm"></select>
           <div class="chart-container">
             <div class="flex justify-end mb-1">
-              <button class="share-btn" onclick="shareChart('menDonut','M')"><img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon"/></button>
+              <button class="share-btn" onclick="shareChart('menDonut','M')"><img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/></button>
             </div>
             <canvas id="menDonut"></canvas>
           </div>
           <div class="chart-container mt-6">
             <div class="flex justify-end mb-1">
-              <button class="share-btn" onclick="shareChart('menHist','M')"><img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon"/></button>
+              <button class="share-btn" onclick="shareChart('menHist','M')"><img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/></button>
             </div>
             <canvas id="menHist"></canvas>
           </div>
@@ -125,7 +125,7 @@
       </div>
     </main>
 
-    <!-- Footer buttons -->
+    <!-- Footer -->
     <div class="flex justify-center mt-8">
       <a href="index.html" class="bg-gray-800/60 border border-gray-700 text-gray-200 font-semibold px-6 py-3 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-base">Home</a>
     </div>
@@ -136,13 +136,14 @@
   </div>
 
   <script>
-    // Menu
+    // Menu Toggle
     const menuBtn=document.getElementById('menu-btn'),mobileMenu=document.getElementById('mobile-menu');
     function toggleMenu(show){if(show){mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');mobileMenu.classList.add('scale-y-100','opacity-100');}else{mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');mobileMenu.classList.remove('scale-y-100','opacity-100');}}
     let menuVisible=false;menuBtn.addEventListener('click',e=>{menuVisible=!menuVisible;toggleMenu(menuVisible);e.stopPropagation();});
     document.addEventListener('click',e=>{if(!mobileMenu.contains(e.target)&&!menuBtn.contains(e.target)){if(menuVisible){menuVisible=false;toggleMenu(false);}}});
     toggleMenu(false);
 
+    // Metrics Setup
     Chart.register(ChartDataLabels);
     const SHEET_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
     let allData=[],charts={};
@@ -159,27 +160,50 @@
       const colors=['#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'];
       const cset=l.map((_,i)=>colors[i%colors.length]),id=g==='F'?'womenDonut':'menDonut';
       if(charts[id])charts[id].destroy();
-      charts[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{labels:l,datasets:[{data:v,backgroundColor:cset,borderColor:'#111',borderWidth:1,hoverOffset:8}]},
-        options:{plugins:{title:{display:true,text:[`Share of Votes`,`Total Votes – ${t}`],color:'#ccc',font:{weight:'bold',size:14}},legend:{position:'bottom',labels:{color:'#ccc'}},datalabels:{color:'#fff',font:{weight:'bold',size:11},formatter:x=>{const p=(x/t)*100;return p>=3?`${p.toFixed(1)}%`:'';},anchor:'center',align:'center'}}},plugins:[ChartDataLabels]});
+      charts[id]=new Chart(document.getElementById(id),{
+        type:'doughnut',
+        data:{labels:l,datasets:[{data:v,backgroundColor:cset,borderColor:'#111',borderWidth:1,hoverOffset:8}]},
+        options:{
+          plugins:{
+            title:{display:true,text:[`Share of Votes`,`Total Votes – ${t}`],color:'#ccc',font:{weight:'bold',size:14}},
+            // Small square legend markers
+            legend:{position:'bottom',labels:{color:'#ccc',boxWidth:10,boxHeight:10}},
+            datalabels:{color:'#fff',font:{weight:'bold',size:11},formatter:x=>{const p=(x/t)*100;return p>=3?`${p.toFixed(1)}%`:'';},anchor:'center',align:'center'}
+          }
+        },
+        plugins:[ChartDataLabels]
+      });
 
       const totals=f.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v));if(!totals.length)return;
       const N=totals.length,min=Math.min(...totals),max=Math.max(...totals),bins=Math.round(Math.sqrt(N)),bw=(max-min)/bins,h=Array(bins).fill(0);
       totals.forEach(v=>{const i=Math.min(Math.floor((v-min)/bw),bins-1);h[i]++;});
       const lbls=Array.from({length:bins},(_,i)=>`${(min+i*bw).toFixed(0)}–${(min+(i+1)*bw).toFixed(0)}`),hid=g==='F'?'womenHist':'menHist';
       if(charts[hid])charts[hid].destroy();
-      charts[hid]=new Chart(document.getElementById(hid),{type:'bar',data:{labels:lbls,datasets:[{label:'Predicted Totals',data:h,backgroundColor:'#3b82f6',borderRadius:5}]},
-        options:{scales:{x:{ticks:{color:'#ccc',font:{size:10}},title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:11,weight:'bold'}}},
-                        y:{beginAtZero:true,ticks:{color:'#ccc',font:{size:10}},title:{display:true,text:'Frequency',color:'#ccc',font:{size:11,weight:'bold'}}}},
-                 plugins:{legend:{display:false}}}});
+      charts[hid]=new Chart(document.getElementById(hid),{
+        type:'bar',
+        data:{labels:lbls,datasets:[{label:'Predicted Totals',data:h,backgroundColor:'#3b82f6',borderRadius:5}]},
+        options:{scales:{x:{ticks:{color:'#ccc',font:{size:10}},title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:11,weight:'bold'}}},y:{beginAtZero:true,ticks:{color:'#ccc',font:{size:10}},title:{display:true,text:'Frequency',color:'#ccc',font:{size:11,weight:'bold'}}}},plugins:{legend:{display:false}}}
+      });
     }
 
+    // Robust share: use image snapshot of the actual chart canvas
     async function shareChart(id,g){
-      const canvas=document.getElementById(id);
+      const srcCanvas=document.getElementById(id);
+      // Ensure Chart.js has finished a layout frame
+      await new Promise(requestAnimationFrame);
+
       const s=document.getElementById(g==='F'?'womenSelect':'menSelect');
       const w=s.value;
       const title=`British Classic Fantasy League 2025 – ${g==='F'?'Women':'Men'} ${w}kg`;
       const fn=`metrics_${g}_${w}_${id.includes('Donut')?'donut':'hist'}.png`;
 
+      // Convert chart canvas to image to avoid DPR/size issues
+      const dataURL = srcCanvas.toDataURL('image/png'); // full-resolution snapshot
+      const img = new Image();
+      img.src = dataURL;
+      await img.decode();
+
+      // Build export wrapper (auto-size vertically, no forced square)
       const wrapper=document.createElement('div');
       wrapper.style.position='relative';
       wrapper.style.display='flex';
@@ -190,21 +214,47 @@
       wrapper.style.backgroundPosition='center';
       wrapper.style.padding='30px';
       wrapper.style.borderRadius='12px';
-      wrapper.innerHTML=`
-        <div style="background:rgba(0,0,0,0.85);padding:20px;border-radius:12px;text-align:center;color:white;">
-          <h2 style="font-size:22px;font-weight:700;margin-bottom:12px;">${title}</h2>
-          <canvas id="cloneCanvas"></canvas>
-          <p style="font-size:13px;color:#aaa;margin-top:12px;line-height:1.4;">
-            Data from tinyurl.com/britishclassicfl-metrics<br><br>
-            Sponsored by the Sabado Sessions Podcast
-          </p>
-        </div>`;
-      document.body.appendChild(wrapper);
-      const ctx=wrapper.querySelector('#cloneCanvas').getContext('2d');
-      ctx.drawImage(canvas,0,0,canvas.width,canvas.height);
 
-      const snapshot=await html2canvas(wrapper,{backgroundColor:null,scale:2,useCORS:true});
+      // Inner card
+      const card=document.createElement('div');
+      card.style.background='rgba(0,0,0,0.85)';
+      card.style.padding='20px';
+      card.style.borderRadius='12px';
+      card.style.textAlign='center';
+      card.style.color='#fff';
+      card.style.maxWidth='1000px';
+      card.style.boxSizing='border-box';
+
+      const h2=document.createElement('h2');
+      h2.textContent=title;
+      h2.style.fontSize='22px';
+      h2.style.fontWeight='700';
+      h2.style.margin='0 0 12px 0';
+
+      // Insert the image version of the chart
+      // Fit nicely: cap width but preserve aspect
+      img.style.maxWidth='900px';
+      img.style.width='100%';
+      img.style.height='auto';
+      img.style.display='block';
+      img.style.margin='0 auto';
+
+      const p=document.createElement('p');
+      p.style.fontSize='13px';
+      p.style.color='#aaa';
+      p.style.marginTop='12px';
+      p.style.lineHeight='1.4';
+      p.innerHTML = `Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast`;
+
+      card.appendChild(h2);
+      card.appendChild(img);
+      card.appendChild(p);
+      wrapper.appendChild(card);
+      document.body.appendChild(wrapper);
+
+      const snapshot=await html2canvas(wrapper,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
       wrapper.remove();
+
       const blob=await new Promise(r=>snapshot.toBlob(r,'image/png'));
       const file=new File([blob],fn,{type:'image/png'});
       if(navigator.canShare&&navigator.canShare({files:[file]})){
