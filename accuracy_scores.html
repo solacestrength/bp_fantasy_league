@@ -322,7 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
   snapshot.style.backgroundImage = "url('image_accuracy.jpg')";
   snapshot.style.backgroundSize = 'cover';
   snapshot.style.backgroundPosition = 'center';
-  snapshot.innerHTML = `
+snapshot.innerHTML = `
   <div style="
     position: absolute;
     inset: 0;
@@ -333,20 +333,26 @@ document.addEventListener('DOMContentLoaded', () => {
     border-radius: 12px;
     z-index: 0;
   "></div>
-     <div style="position: relative; z-index: 1;" class="bg-black/70 p-4 pb-8 rounded-lg">
+
+  <div style="position: relative; z-index: 1;"
+       class="bg-black/70 px-4 pt-4 pb-12 rounded-lg flex flex-col justify-between min-h-[100%]">
+    <div>
       <h2 class="text-center text-xl font-bold mb-3">British Classic Fantasy League 2025 🇬🇧</h2>
-      <h3 class="text-center text-lg font-semibold mb-2">My Accuracy Score</h3>
+      <h3 class="text-center text-lg font-semibold mb-3">My Accuracy Score</h3>
       <table class="w-full border-collapse text-sm">
-        <thead><tr class="border-b border-gray-600">
-          <th class="text-left py-1">Rank</th>
-          <th class="text-left py-1">Name</th>
-          <th class="text-right py-1">Accuracy</th>
-        </tr></thead>
+        <thead>
+          <tr class="border-b border-gray-600">
+            <th class="text-left py-1">Rank</th>
+            <th class="text-left py-1">Name</th>
+            <th class="text-right py-1">Accuracy</th>
+          </tr>
+        </thead>
         <tbody>${highlightedRows.join('')}</tbody>
       </table>
-      <p class="text-xs text-gray-300 text-center mt-4">Data from tinyurl.com/britishclassicfl/accuracy_scores</p>
     </div>
-  `;
+    <p class="text-xs text-gray-300 text-center mt-6">Data from tinyurl.com/britishclassicfl/accuracy_scores</p>
+  </div>
+`;
   document.body.appendChild(snapshot);
   snapshot.style.position = 'absolute';
   snapshot.style.left = '-9999px';
