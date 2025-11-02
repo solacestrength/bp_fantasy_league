@@ -3,43 +3,61 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>British Classic Fantasy League — Metrics</title>
+  <title>Metrics | British Classic Fantasy League 2025 🇬🇧</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- Chart.js + Plugins -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
-  <!-- Tailwind CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <!-- Optional local CSS fix -->
+  <link rel="stylesheet" href="/assets/css/fix-dropdown.css">
 
   <style>
-    body {
-      background-color: #0b0b0b;
-      color: #f1f1f1;
-      font-family: 'Inter', sans-serif;
+    @keyframes fadeInUp {
+      0% { opacity: 0; transform: translateY(10px); }
+      100% { opacity: 1; transform: translateY(0); }
     }
-    select {
-      background-color: #1f1f1f;
-      border: 1px solid #333;
-    }
-    canvas {
-      max-width: 100%;
+    .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
+    .animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
+    body { background-color: #0b0b0b; color: #f1f1f1; font-family: 'Inter', sans-serif; }
+    select { background-color: #1f1f1f; border: 1px solid #333; }
+    canvas { max-width: 100%; height: auto !important; }
+    .chart-container { max-width: 600px; margin: 0 auto; }
+    @media (min-width: 1024px) {
+      .chart-container { max-width: 500px; }
     }
   </style>
 </head>
 
-<body class="bg-gray-900 text-gray-100">
-  <!-- HEADER -->
-  <header class="p-4 bg-black/70 flex justify-between items-center">
-    <h1 class="font-bold text-lg">British Classic Fantasy League 2025 🇬🇧</h1>
-  </header>
+<body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
 
-          <!-- Burger button -->
+  <!-- Background -->
+  <div class="absolute inset-0 bg-[url('bc25_logo.jpg')] bg-center bg-contain bg-no-repeat opacity-10"></div>
+  <div class="absolute inset-0 bg-black/70"></div>
+
+  <div class="relative z-10 flex flex-col flex-grow">
+    <!-- Header -->
+    <header class="site-header w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 relative z-50">
+      <div class="w-full flex items-center justify-center px-4 py-3">
+        <div class="flex-1 text-center">
+          <a href="index.html"
+             class="font-bold text-white hover:text-red-500 transition animate-fade-in-up text-sm sm:text-lg md:text-xl lg:text-2xl">
+             British Classic Fantasy League 2025 🇬🇧
+          </a>
+        </div>
+
+        <!-- Burger button -->
         <div class="absolute right-4 top-1/2 -translate-y-1/2">
-          <button id="menu-btn" aria-expanded="false" class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          <button id="menu-btn" aria-expanded="false"
+                  class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none"
+                 viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 6h16M4 12h16M4 18h16"/>
             </svg>
             <span class="sr-only">Open menu</span>
           </button>
@@ -47,8 +65,11 @@
       </div>
     </header>
 
-    <!-- Dropdown menu (fixed outside transformed parent) -->
-    <div id="mobile-menu" class="fixed top-16 right-4 w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-md shadow-lg z-50 scale-y-0 opacity-0 origin-top transition-transform duration-300 ease-in-out">
+    <!-- Dropdown menu -->
+    <div id="mobile-menu"
+         class="fixed top-16 right-4 w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-800
+                rounded-md shadow-lg z-50 scale-y-0 opacity-0 origin-top
+                transition-transform duration-300 ease-in-out pointer-events-none">
       <nav class="flex flex-col py-2 text-white">
         <a href="index.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Home</a>
         <a href="entry.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">League Entry</a>
@@ -58,66 +79,107 @@
       </nav>
     </div>
 
-  <!-- MAIN CONTENT -->
-  <main class="max-w-5xl mx-auto p-6 space-y-8">
-    <section class="text-center">
-      <h2 class="text-xl font-semibold mb-1">Prediction Trends by Weight Class</h2>
-      <p class="text-gray-400 text-sm">Explore who users predicted to win and how totals were distributed.</p>
-    </section>
+    <!-- MAIN CONTENT -->
+    <main class="max-w-5xl mx-auto p-6 space-y-8 mt-6 animate-fade-in">
+      <section class="text-center">
+        <h2 class="text-xl font-semibold mb-1">Prediction Trends by Weight Class</h2>
+        <p class="text-gray-400 text-sm">Explore who users predicted to win and how totals were distributed.</p>
+      </section>
 
-    <!-- WOMEN -->
-    <div class="bg-black/60 rounded-lg p-4">
-      <button onclick="toggleSection('women')" class="w-full text-left text-lg font-bold">Women ▼</button>
-      <div id="women" class="hidden mt-4">
-        <select id="womenSelect" class="p-2 rounded mb-4 text-sm"></select>
-        <canvas id="womenDonut" height="180"></canvas>
-        <canvas id="womenHist" height="220" class="mt-6"></canvas>
+      <!-- WOMEN -->
+      <div class="bg-black/60 rounded-lg p-4">
+        <button onclick="toggleSection('women')" class="w-full text-left text-lg font-bold">Women ▼</button>
+        <div id="women" class="hidden mt-4">
+          <select id="womenSelect" class="p-2 rounded mb-4 text-sm"></select>
+          <div class="chart-container">
+            <canvas id="womenDonut"></canvas>
+          </div>
+          <div class="chart-container mt-6">
+            <canvas id="womenHist"></canvas>
+          </div>
+        </div>
       </div>
+
+      <!-- MEN -->
+      <div class="bg-black/60 rounded-lg p-4">
+        <button onclick="toggleSection('men')" class="w-full text-left text-lg font-bold">Men ▼</button>
+        <div id="men" class="hidden mt-4">
+          <select id="menSelect" class="p-2 rounded mb-4 text-sm"></select>
+          <div class="chart-container">
+            <canvas id="menDonut"></canvas>
+          </div>
+          <div class="chart-container mt-6">
+            <canvas id="menHist"></canvas>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Navigation buttons -->
+    <div class="flex justify-center mt-8">
+      <a href="index.html"
+         class="bg-gray-800/60 border border-gray-700 text-gray-200 font-semibold px-6 py-3 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-base">
+         Home
+      </a>
     </div>
 
-    <!-- MEN -->
-    <div class="bg-black/60 rounded-lg p-4">
-      <button onclick="toggleSection('men')" class="w-full text-left text-lg font-bold">Men ▼</button>
-      <div id="men" class="hidden mt-4">
-        <select id="menSelect" class="p-2 rounded mb-4 text-sm"></select>
-        <canvas id="menDonut" height="180"></canvas>
-        <canvas id="menHist" height="220" class="mt-6"></canvas>
-      </div>
+    <div class="flex justify-center mt-4">
+      <a href="#top"
+         class="bg-gray-800/60 border border-gray-700 text-gray-300 font-semibold px-5 py-2 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
+         Back to Top
+      </a>
     </div>
-  </main>
 
-<!-- Home Button Container -->
-<div class="flex justify-center mt-8">
-  <a href="index.html"
-     class="bg-gray-800/60 border border-gray-700 text-gray-200 font-semibold px-6 py-3 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-base">
-     Home
-  </a>
-</div>
+    <footer class="text-center text-gray-500 text-sm py-4 bg-transparent">
+      Sponsored by the Sabado Sessions Podcast
+    </footer>
+  </div>
 
-<!-- Back to Top Button Container -->
-<div class="flex justify-center mt-4">
-  <a href="#top"
-     class="bg-gray-800/60 border border-gray-700 text-gray-300 font-semibold px-5 py-2 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
-     Back to Top
-  </a>
-</div>
+  <!-- MENU SCRIPT -->
+  <script>
+    const menuBtn = document.getElementById('menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
 
-<footer class="text-center text-gray-500 text-sm py-4 bg-transparent">Sponsored by the Sabado Sessions Podcast</footer>
+    function toggleMenu(show) {
+      if (show) {
+        mobileMenu.classList.remove('scale-y-0', 'opacity-0', 'pointer-events-none');
+        mobileMenu.classList.add('scale-y-100', 'opacity-100');
+        menuBtn.setAttribute('aria-expanded', 'true');
+      } else {
+        mobileMenu.classList.add('scale-y-0', 'opacity-0', 'pointer-events-none');
+        mobileMenu.classList.remove('scale-y-100', 'opacity-100');
+        menuBtn.setAttribute('aria-expanded', 'false');
+      }
+    }
 
-  <!-- JAVASCRIPT -->
+    let menuVisible = false;
+    menuBtn.addEventListener('click', (e) => {
+      menuVisible = !menuVisible;
+      toggleMenu(menuVisible);
+      e.stopPropagation();
+    });
+    document.addEventListener('click', (e) => {
+      if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+        if (menuVisible) {
+          menuVisible = false;
+          toggleMenu(false);
+        }
+      }
+    });
+    toggleMenu(false);
+  </script>
+
+  <!-- METRICS SCRIPT -->
   <script>
     Chart.register(ChartDataLabels);
-
     const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
     let allData = [];
     let charts = {};
 
-    // Toggle visibility
     function toggleSection(id) {
       document.getElementById(id).classList.toggle('hidden');
     }
 
-    // Fetch + parse data
     Papa.parse(SHEET_URL, {
       download: true,
       header: true,
@@ -127,12 +189,11 @@
       }
     });
 
-    // Build dropdowns for Women / Men
     function setupDropdowns() {
       const genders = ['F', 'M'];
       genders.forEach(g => {
         const data = allData.filter(r => r.Gender === g);
-        const classes = [...new Set(data.map(r => r.Class))].sort((a,b) => parseFloat(a)-parseFloat(b));
+        const classes = [...new Set(data.map(r => r.Class))].sort((a,b)=>parseFloat(a)-parseFloat(b));
         const select = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
         select.innerHTML = classes.map(c => `<option value="${c}">${c}kg</option>`).join('');
         select.onchange = () => renderCharts(g, select.value);
@@ -140,106 +201,59 @@
       });
     }
 
-    // Render charts dynamically
     function renderCharts(gender, weightClass) {
       const filtered = allData.filter(r => r.Gender === gender && r.Class === weightClass);
       if (!filtered.length) return;
 
-      // --- DONUT CHART ---
+      // DONUT
       const counts = {};
       filtered.forEach(r => counts[r.Athlete] = (counts[r.Athlete] || 0) + 1);
-
       const donutLabels = Object.keys(counts);
       const donutValues = Object.values(counts);
-      const totalPredictions = donutValues.reduce((a, b) => a + b, 0);
-      const donutColors = donutLabels.map((_, i) => `hsl(${i * 45}, 70%, 55%)`);
-
-      const donutId = gender === 'F' ? 'womenDonut' : 'menDonut';
+      const totalPredictions = donutValues.reduce((a,b)=>a+b,0);
+      const donutColors = donutLabels.map((_,i)=>`hsl(${i*45},70%,55%)`);
+      const donutId = gender==='F'?'womenDonut':'menDonut';
       if (charts[donutId]) charts[donutId].destroy();
 
       charts[donutId] = new Chart(document.getElementById(donutId), {
-        type: 'doughnut',
-        data: {
-          labels: donutLabels,
-          datasets: [{
-            data: donutValues,
-            backgroundColor: donutColors,
-            borderWidth: 1,
-            borderColor: '#111'
-          }]
-        },
-        options: {
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: { color: '#ccc' }
+        type:'doughnut',
+        data:{labels:donutLabels,datasets:[{data:donutValues,backgroundColor:donutColors,borderWidth:1,borderColor:'#111'}]},
+        options:{
+          plugins:{
+            legend:{position:'bottom',labels:{color:'#ccc'}},
+            datalabels:{
+              color:'#fff',font:{weight:'bold',size:11},
+              formatter:(v)=>{const pct=(v/totalPredictions)*100;return pct>=3?`${pct.toFixed(1)}%`:'';},
+              anchor:'center',align:'center',clip:false
             },
-            datalabels: {
-              color: '#fff',
-              font: { weight: 'bold', size: 11 },
-              formatter: (value) => {
-                const pct = (value / totalPredictions) * 100;
-                return pct >= 3 ? `${pct.toFixed(1)}%` : '';
-              },
-              anchor: 'center',
-              align: 'center',
-              clip: false
-            },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  const value = context.parsed;
-                  const percent = ((value / totalPredictions) * 100).toFixed(1);
-                  return `${context.label}: ${percent}% (${value})`;
+            tooltip:{
+              callbacks:{
+                label:(ctx)=>{
+                  const val=ctx.parsed;const pct=((val/totalPredictions)*100).toFixed(1);
+                  return `${ctx.label}: ${pct}% (${val})`;
                 }
               }
             }
           }
         },
-        plugins: [ChartDataLabels]
+        plugins:[ChartDataLabels]
       });
 
-      // --- HISTOGRAM ---
-      const totals = filtered.map(r => parseFloat(r.PredictedTotal)).filter(v => !isNaN(v));
-      const N = totals.length;
-      if (N === 0) return;
-
-      const min = Math.min(...totals), max = Math.max(...totals);
-      const bins = Math.round(Math.sqrt(N));
-      const binWidth = (max - min) / bins;
-      const histCounts = Array(bins).fill(0);
-
-      totals.forEach(v => {
-        const idx = Math.min(Math.floor((v - min) / binWidth), bins - 1);
-        histCounts[idx]++;
-      });
-
-      const labels = Array.from({length: bins}, (_, i) =>
-        `${(min + i * binWidth).toFixed(0)}–${(min + (i + 1) * binWidth).toFixed(0)}`
-      );
-
-      const histId = gender === 'F' ? 'womenHist' : 'menHist';
-      if (charts[histId]) charts[histId].destroy();
-
-      charts[histId] = new Chart(document.getElementById(histId), {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Predicted Totals',
-            data: histCounts,
-            backgroundColor: '#3b82f6'
-          }]
-        },
-        options: {
-          scales: {
-            x: { ticks: { color: '#ccc' } },
-            y: { beginAtZero: true, ticks: { color: '#ccc' } }
-          },
-          plugins: {
-            legend: { display: false }
-          }
-        }
+      // HISTOGRAM
+      const totals=filtered.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v));
+      const N=totals.length;if(N===0)return;
+      const min=Math.min(...totals),max=Math.max(...totals);
+      const bins=Math.round(Math.sqrt(N));
+      const binWidth=(max-min)/bins;
+      const histCounts=Array(bins).fill(0);
+      totals.forEach(v=>{const i=Math.min(Math.floor((v-min)/binWidth),bins-1);histCounts[i]++;});
+      const labels=Array.from({length:bins},(_,i)=>`${(min+i*binWidth).toFixed(0)}–${(min+(i+1)*binWidth).toFixed(0)}`);
+      const histId=gender==='F'?'womenHist':'menHist';
+      if(charts[histId])charts[histId].destroy();
+      charts[histId]=new Chart(document.getElementById(histId),{
+        type:'bar',
+        data:{labels,datasets:[{label:'Predicted Totals',data:histCounts,backgroundColor:'#3b82f6'}]},
+        options:{scales:{x:{ticks:{color:'#ccc'}},y:{beginAtZero:true,ticks:{color:'#ccc'}}},plugins:{legend:{display:false}}}
       });
     }
   </script>
