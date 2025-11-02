@@ -172,7 +172,7 @@
       });
     }
 
-    // SHARE EXPORT (with faded background overlay)
+    // SHARE EXPORT with dimmed background image (not charts)
     async function shareChart(id,g){
       const srcCanvas=document.getElementById(id);
       await new Promise(requestAnimationFrame);
@@ -185,14 +185,11 @@
       const dataURL=srcCanvas.toDataURL('image/png');
       const img=new Image();img.src=dataURL;await img.decode();
 
-      // Container card
       const card=document.createElement('div');
-      card.style.position='relative';
-      card.style.overflow='hidden';
-      card.style.background='rgba(0,0,0,0.9)';
-      card.style.backgroundImage="url('bc25_logo.jpg')";
+      card.style.backgroundImage="linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)), url('bc25_logo.jpg')";
       card.style.backgroundSize='cover';
       card.style.backgroundPosition='center';
+      card.style.backgroundBlendMode='darken';
       card.style.padding='24px';
       card.style.borderRadius='16px';
       card.style.textAlign='center';
@@ -202,15 +199,6 @@
       card.style.margin='0 auto';
       card.style.boxSizing='border-box';
 
-      // Background dim overlay
-      const overlay=document.createElement('div');
-      overlay.style.position='absolute';
-      overlay.style.inset='0';
-      overlay.style.backgroundColor='rgba(0,0,0,0.75)';
-      overlay.style.pointerEvents='none';
-      card.appendChild(overlay);
-
-      // Text and chart
       const header=document.createElement('h2');
       header.textContent=titleMain;
       header.style.fontSize='20px';
@@ -232,7 +220,7 @@
       credit.style.lineHeight='1.5';
       credit.innerHTML='Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-      overlay.after(header,sub,img,credit);
+      card.append(header,sub,img,credit);
       document.body.appendChild(card);
 
       const snapshot=await html2canvas(card,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
