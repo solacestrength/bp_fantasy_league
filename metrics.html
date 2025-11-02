@@ -219,101 +219,89 @@
       if (!filtered.length) return;
 
       // --- DONUT ---
-      const counts = {};
-      filtered.forEach(r => counts[r.Athlete]=(counts[r.Athlete]||0)+1);
-      const donutLabels = Object.keys(counts), donutValues = Object.values(counts);
-      const totalPredictions = donutValues.reduce((a,b)=>a+b,0);
-      const donutColors = donutLabels.map((_,i)=>`hsl(${i*45},75%,50%)`);
-      const donutId = gender==='F'?'womenDonut':'menDonut';
-      if (charts[donutId]) charts[donutId].destroy();
+      // --- DONUT ---
+const counts = {};
+filtered.forEach(r => counts[r.Athlete] = (counts[r.Athlete] || 0) + 1);
+const donutLabels = Object.keys(counts);
+const donutValues = Object.values(counts);
+const totalPredictions = donutValues.reduce((a,b)=>a+b,0);
+const donutPalette = [
+  '#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6',
+  '#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'
+];
+const donutColors = donutLabels.map((_,i)=>donutPalette[i % donutPalette.length]);
+const donutId = gender==='F'?'womenDonut':'menDonut';
+if (charts[donutId]) charts[donutId].destroy();
 
-      charts[donutId] = new Chart(document.getElementById(donutId), {
-        type:'doughnut',
-        data:{
-          labels:donutLabels,
-          datasets:[{
-            data:donutValues,
-            backgroundColor:function(ctx){
-              const {chart,dataIndex} = ctx;
-              const area = chart.chartArea;
-              if (!area) return donutColors[dataIndex];
-              return makeGradient(chart.ctx, area, donutColors[dataIndex]);
-            },
-            borderColor:'#111',
-            borderWidth:1,
-            hoverOffset:8
-          }]
-        },
-        options:{
-          layout:{padding:10},
-          plugins:{
-            title:{display:true,text:'Share of Votes',color:'#ccc',font:{size:14,weight:'bold'},padding:{bottom:10}},
-            legend:{position:'bottom',labels:{color:'#ccc'}},
-            datalabels:{
-              color:'#fff',font:{weight:'bold',size:11},
-              formatter:(v)=>{const pct=(v/totalPredictions)*100;return pct>=3?`${pct.toFixed(1)}%`:'';},
-              anchor:'center',align:'center'
-            },
-            tooltip:{
-              callbacks:{
-                label:(ctx)=>{
-                  const val=ctx.parsed;const pct=((val/totalPredictions)*100).toFixed(1);
-                  return `${ctx.label}: ${pct}% (${val})`;
-                }
-              }
-            }
-          },
-          elements:{
-            arc:{shadowBlur:15,shadowColor:'rgba(0,0,0,0.5)'}
+charts[donutId] = new Chart(document.getElementById(donutId), {
+  type:'doughnut',
+  data:{
+    labels:donutLabels,
+    datasets:[{
+      data:donutValues,
+      backgroundColor:donutColors,
+      borderColor:'#111',
+      borderWidth:1,
+      hoverOffset:8
+    }]
+  },
+  options:{
+    layout:{padding:10},
+    plugins:{
+      title:{display:true,text:'Share of Votes',color:'#ccc',font:{size:14,weight:'bold'},padding:{bottom:10}},
+      legend:{position:'bottom',labels:{color:'#ccc'}},
+      datalabels:{
+        color:'#fff',font:{weight:'bold',size:11},
+        formatter:(v)=>{const pct=(v/totalPredictions)*100;return pct>=3?`${pct.toFixed(1)}%`:'';},
+        anchor:'center',align:'center'
+      },
+      tooltip:{
+        callbacks:{
+          label:(ctx)=>{
+            const val=ctx.parsed;const pct=((val/totalPredictions)*100).toFixed(1);
+            return `${ctx.label}: ${pct}% (${val})`;
           }
-        },
-        plugins:[ChartDataLabels]
-      });
-
-      // --- HISTOGRAM ---
-      const totals = filtered.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v));
-      const N=totals.length;if(N===0)return;
-      const min=Math.min(...totals),max=Math.max(...totals);
-      const bins=Math.round(Math.sqrt(N));
-      const binWidth=(max-min)/bins;
-      const histCounts=Array(bins).fill(0);
-      totals.forEach(v=>{const i=Math.min(Math.floor((v-min)/binWidth),bins-1);histCounts[i]++;});
-      const labels=Array.from({length:bins},(_,i)=>`${(min+i*binWidth).toFixed(0)}–${(min+(i+1)*binWidth).toFixed(0)}`);
-      const histId=gender==='F'?'womenHist':'menHist';
-      if(charts[histId])charts[histId].destroy();
-
-      charts[histId]=new Chart(document.getElementById(histId),{
-        type:'bar',
-        data:{
-          labels,
-          datasets:[{
-            label:'Predicted Totals',
-            data:histCounts,
-            backgroundColor:function(ctx){
-              const chart=ctx.chart;const area=chart.chartArea;
-              if(!area)return'#3b82f6';
-              const grad=chart.ctx.createLinearGradient(0,area.bottom,0,area.top);
-              grad.addColorStop(0,'#1e3a8a');
-              grad.addColorStop(0.5,'#2563eb');
-              grad.addColorStop(1,'#60a5fa');
-              return grad;
-            },
-            borderRadius:5,
-            hoverBorderColor:'#fff',
-            hoverBorderWidth:2
-          }]
-        },
-        options:{
-          scales:{
-            x:{ticks:{color:'#ccc'},
-               title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:13,weight:'bold'}}},
-            y:{beginAtZero:true,ticks:{color:'#ccc'},
-               title:{display:true,text:'Frequency',color:'#ccc',font:{size:13,weight:'bold'}}}
-          },
-          plugins:{legend:{display:false}},
-          elements:{bar:{borderWidth:0,shadowBlur:10,shadowColor:'rgba(0,0,0,0.5)'}}
         }
-      });
+      }
+    }
+  },
+  plugins:[ChartDataLabels]
+});
+
+// --- HISTOGRAM ---
+const totals = filtered.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v));
+const N=totals.length;if(N===0)return;
+const min=Math.min(...totals),max=Math.max(...totals);
+const bins=Math.round(Math.sqrt(N));
+const binWidth=(max-min)/bins;
+const histCounts=Array(bins).fill(0);
+totals.forEach(v=>{const i=Math.min(Math.floor((v-min)/binWidth),bins-1);histCounts[i]++;});
+const labels=Array.from({length:bins},(_,i)=>`${(min+i*binWidth).toFixed(0)}–${(min+(i+1)*binWidth).toFixed(0)}`);
+const histId=gender==='F'?'womenHist':'menHist';
+if(charts[histId])charts[histId].destroy();
+charts[histId]=new Chart(document.getElementById(histId),{
+  type:'bar',
+  data:{
+    labels,
+    datasets:[{
+      label:'Predicted Totals',
+      data:histCounts,
+      backgroundColor:'#3b82f6',
+      borderRadius:5,
+      hoverBorderColor:'#fff',
+      hoverBorderWidth:2
+    }]
+  },
+  options:{
+    scales:{
+      x:{ticks:{color:'#ccc'},
+         title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:13,weight:'bold'}}},
+      y:{beginAtZero:true,ticks:{color:'#ccc'},
+         title:{display:true,text:'Frequency',color:'#ccc',font:{size:13,weight:'bold'}}}
+    },
+    plugins:{legend:{display:false}}
+  }
+});
     }
   </script>
 </body>
