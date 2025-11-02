@@ -334,40 +334,44 @@ document.addEventListener('DOMContentLoaded', () => {
   snapshot.style.backgroundPosition = 'center';
 snapshot.innerHTML = `
   <div style="
-    position: absolute;
-    inset: 0;
-    background-image: url('image_leaderboard_shf.jpg');
-    background-size: cover;
-    background-position: center;
-    opacity: 0.45;
+    position: relative;
+    width: 600px;
     border-radius: 12px;
-    z-index: 0;
-  "></div>
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  ">
+    <!-- Background image -->
+    <div style="
+      position: absolute;
+      inset: 0;
+      background-image: url('image_leaderboard_shf.jpg');
+      background-size: cover;
+      background-position: center;
+      opacity: 0.45;
+      z-index: 0;
+    "></div>
 
-  <div style="position: relative; z-index: 1;"
-       class="bg-black/70 px-4 pt-4 pb-12 rounded-lg flex flex-col justify-between min-h-[100%]">
-    <div>
+    <!-- Foreground content -->
+    <div style="position: relative; z-index: 1;"
+         class="bg-black/70 p-4 pb-8 rounded-lg">
       <h2 class="text-center text-xl font-bold mb-3">British Classic Fantasy League 2025 🇬🇧</h2>
-      <h3 class="text-center text-lg font-semibold mb-3">My League Ranking</h3>
+      <h3 class="text-center text-lg font-semibold mb-2">My League Ranking</h3>
       <table class="w-full border-collapse text-sm">
-        <thead>
-          <tr class="border-b border-gray-600">
-            <th class="text-left py-1">Rank</th>
-            <th class="text-left py-1">Name</th>
-            <th class="text-right py-1">Points</th>
-          </tr>
-        </thead>
+        <thead><tr class="border-b border-gray-600">
+          <th class="text-left py-1">Rank</th>
+          <th class="text-left py-1">Name</th>
+          <th class="text-right py-1">Points</th>
+        </tr></thead>
         <tbody>${highlightedRows.join('')}</tbody>
       </table>
+      <p class="text-xs text-gray-300 text-center mt-4 mb-1">Data from tinyurl.com/britishclassicfl/leaderboard</p>
     </div>
-    <p class="text-xs text-gray-300 text-center mt-6">Data from tinyurl.com/britishclassicfl/leaderboard</p>
   </div>
 `;
-  document.body.appendChild(snapshot);
-  snapshot.style.position = 'relative';
-  snapshot.style.left = '-9999px';
 
-  html2canvas(snapshot, { backgroundColor: null, scale: 2 }).then(async canvas => {
+  html2canvas(snapshot, { backgroundColor: null, scale: 2, useCORS: true, scrollY: -window.scrollY, }).then(async canvas => {
     const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
     snapshot.remove();
     const file = new File([blob], 'league_ranking.png', { type: 'image/png' });
