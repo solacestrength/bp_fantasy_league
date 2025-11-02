@@ -13,7 +13,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
-  <!-- Optional local CSS fix -->
   <link rel="stylesheet" href="/assets/css/fix-dropdown.css">
 
   <style>
@@ -31,17 +30,9 @@
     .chart-container { max-width: 600px; margin: 0 auto; }
     @media (min-width: 1024px) { .chart-container { max-width: 500px; } }
 
-    /* Collapsible animations */
-    .collapsible-content {
-      max-height: 0;
-      overflow: hidden;
-      opacity: 0;
-      transition: max-height 0.5s ease, opacity 0.4s ease;
-    }
-    .collapsible-content.open {
-      opacity: 1;
-      max-height: 1000px;
-    }
+    .collapsible-content { max-height: 0; overflow: hidden; opacity: 0;
+      transition: max-height 0.5s ease, opacity 0.4s ease; }
+    .collapsible-content.open { opacity: 1; max-height: 1000px; }
     .arrow { transition: transform 0.4s ease; }
     .arrow.rotate { transform: rotate(180deg); }
   </style>
@@ -63,11 +54,8 @@
              British Classic Fantasy League 2025 🇬🇧
           </a>
         </div>
-
-        <!-- Burger button -->
         <div class="absolute right-4 top-1/2 -translate-y-1/2">
-          <button id="menu-btn" aria-expanded="false"
-                  class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
+          <button id="menu-btn" aria-expanded="false" class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none"
                  viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -139,68 +127,48 @@
       </div>
     </main>
 
-    <!-- Navigation buttons -->
     <div class="flex justify-center mt-8">
       <a href="index.html"
          class="bg-gray-800/60 border border-gray-700 text-gray-200 font-semibold px-6 py-3 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-base">
          Home
       </a>
     </div>
-
     <div class="flex justify-center mt-4">
       <a href="#top"
          class="bg-gray-800/60 border border-gray-700 text-gray-300 font-semibold px-5 py-2 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
          Back to Top
       </a>
     </div>
-
     <footer class="text-center text-gray-500 text-sm py-4 bg-transparent">
       Sponsored by the Sabado Sessions Podcast
     </footer>
   </div>
 
-  <!-- MENU SCRIPT -->
   <script>
+    /* ===== MENU ===== */
     const menuBtn = document.getElementById('menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
-
     function toggleMenu(show) {
       if (show) {
         mobileMenu.classList.remove('scale-y-0', 'opacity-0', 'pointer-events-none');
         mobileMenu.classList.add('scale-y-100', 'opacity-100');
-        menuBtn.setAttribute('aria-expanded', 'true');
       } else {
         mobileMenu.classList.add('scale-y-0', 'opacity-0', 'pointer-events-none');
         mobileMenu.classList.remove('scale-y-100', 'opacity-100');
-        menuBtn.setAttribute('aria-expanded', 'false');
       }
     }
-
     let menuVisible = false;
-    menuBtn.addEventListener('click', (e) => {
-      menuVisible = !menuVisible;
-      toggleMenu(menuVisible);
-      e.stopPropagation();
-    });
-    document.addEventListener('click', (e) => {
-      if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
-        if (menuVisible) {
-          menuVisible = false;
-          toggleMenu(false);
-        }
-      }
+    menuBtn.addEventListener('click', e => { menuVisible = !menuVisible; toggleMenu(menuVisible); e.stopPropagation(); });
+    document.addEventListener('click', e => {
+      if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) { if (menuVisible) { menuVisible = false; toggleMenu(false); } }
     });
     toggleMenu(false);
-  </script>
 
-  <!-- METRICS SCRIPT -->
-  <script>
+    /* ===== METRICS ===== */
     Chart.register(ChartDataLabels);
     const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
-    let allData = [];
-    let charts = {};
+    let allData = [], charts = {};
 
-    // Toggle collapsible with arrow animation
     function toggleSection(id) {
       const content = document.getElementById(id);
       const arrow = document.getElementById(`arrow-${id}`);
@@ -208,79 +176,102 @@
       arrow.classList.toggle('rotate', isOpen);
     }
 
-    // Fetch and initialize
+    /* --- Helpers for gradient and color shading --- */
+    function shadeColor(color, percent) {
+      const f=parseInt(color.slice(1),16),t=percent<0?0:255,p=Math.abs(percent)/100;
+      const R=f>>16,G=f>>8&0x00FF,B=f&0x0000FF;
+      return "#" + (0x1000000+
+        (Math.round((t-R)*p)+R)*0x10000+
+        (Math.round((t-G)*p)+G)*0x100+
+        (Math.round((t-B)*p)+B)).toString(16).slice(1);
+    }
+
+    function makeGradient(ctx, area, color) {
+      const grad = ctx.createLinearGradient(0, area.bottom, 0, area.top);
+      grad.addColorStop(0, shadeColor(color, -25));
+      grad.addColorStop(0.5, color);
+      grad.addColorStop(1, shadeColor(color, 25));
+      return grad;
+    }
+
     Papa.parse(SHEET_URL, {
-      download: true,
-      header: true,
+      download: true, header: true,
       complete: function(res) {
         allData = res.data;
         setupDropdowns();
-        // auto-open women section on load
         document.getElementById('arrow-women').classList.add('rotate');
       }
     });
 
     function setupDropdowns() {
-      const genders = ['F', 'M'];
-      genders.forEach(g => {
+      ['F','M'].forEach(g => {
         const data = allData.filter(r => r.Gender === g);
         const classes = [...new Set(data.map(r => r.Class))].sort((a,b)=>parseFloat(a)-parseFloat(b));
-        const select = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
-        select.innerHTML = classes.map(c => `<option value="${c}">${c}kg</option>`).join('');
+        const select = document.getElementById(g==='F'?'womenSelect':'menSelect');
+        select.innerHTML = classes.map(c=>`<option value="${c}">${c}kg</option>`).join('');
         select.onchange = () => renderCharts(g, select.value);
         renderCharts(g, classes[0]);
       });
     }
 
-    // Render both charts
     function renderCharts(gender, weightClass) {
-      const filtered = allData.filter(r => r.Gender === gender && r.Class === weightClass);
+      const filtered = allData.filter(r => r.Gender===gender && r.Class===weightClass);
       if (!filtered.length) return;
 
-      // DONUT CHART
+      // --- DONUT ---
       const counts = {};
-      filtered.forEach(r => counts[r.Athlete] = (counts[r.Athlete] || 0) + 1);
-      const donutLabels = Object.keys(counts);
-      const donutValues = Object.values(counts);
+      filtered.forEach(r => counts[r.Athlete]=(counts[r.Athlete]||0)+1);
+      const donutLabels = Object.keys(counts), donutValues = Object.values(counts);
       const totalPredictions = donutValues.reduce((a,b)=>a+b,0);
-      const donutColors = donutLabels.map((_,i)=>`hsl(${i*45},70%,55%)`);
+      const donutColors = donutLabels.map((_,i)=>`hsl(${i*45},75%,50%)`);
       const donutId = gender==='F'?'womenDonut':'menDonut';
       if (charts[donutId]) charts[donutId].destroy();
 
       charts[donutId] = new Chart(document.getElementById(donutId), {
         type:'doughnut',
-        data:{labels:donutLabels,datasets:[{data:donutValues,backgroundColor:donutColors,borderWidth:1,borderColor:'#111'}]},
+        data:{
+          labels:donutLabels,
+          datasets:[{
+            data:donutValues,
+            backgroundColor:function(ctx){
+              const {chart,dataIndex} = ctx;
+              const area = chart.chartArea;
+              if (!area) return donutColors[dataIndex];
+              return makeGradient(chart.ctx, area, donutColors[dataIndex]);
+            },
+            borderColor:'#111',
+            borderWidth:1,
+            hoverOffset:8
+          }]
+        },
         options:{
-  plugins:{
-    title:{
-      display:true,
-      text:'Share of Votes',
-      color:'#ccc',
-      font:{size:14,weight:'bold'},
-      padding:{bottom:10}
-    },
-    legend:{position:'bottom',labels:{color:'#ccc'}},
-    datalabels:{
-      color:'#fff',font:{weight:'bold',size:11},
-      formatter:(v)=>{const pct=(v/totalPredictions)*100;return pct>=3?`${pct.toFixed(1)}%`:'';},
-      anchor:'center',align:'center',clip:false
-    },
-    tooltip:{
-      callbacks:{
-        label:(ctx)=>{
-          const val=ctx.parsed;const pct=((val/totalPredictions)*100).toFixed(1);
-          return `${ctx.label}: ${pct}% (${val})`;
-        }
-      }
-    }
-  }
-},
-
+          layout:{padding:10},
+          plugins:{
+            title:{display:true,text:'Share of Votes',color:'#ccc',font:{size:14,weight:'bold'},padding:{bottom:10}},
+            legend:{position:'bottom',labels:{color:'#ccc'}},
+            datalabels:{
+              color:'#fff',font:{weight:'bold',size:11},
+              formatter:(v)=>{const pct=(v/totalPredictions)*100;return pct>=3?`${pct.toFixed(1)}%`:'';},
+              anchor:'center',align:'center'
+            },
+            tooltip:{
+              callbacks:{
+                label:(ctx)=>{
+                  const val=ctx.parsed;const pct=((val/totalPredictions)*100).toFixed(1);
+                  return `${ctx.label}: ${pct}% (${val})`;
+                }
+              }
+            }
+          },
+          elements:{
+            arc:{shadowBlur:15,shadowColor:'rgba(0,0,0,0.5)'}
+          }
+        },
         plugins:[ChartDataLabels]
       });
 
-      // HISTOGRAM
-      const totals=filtered.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v));
+      // --- HISTOGRAM ---
+      const totals = filtered.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v));
       const N=totals.length;if(N===0)return;
       const min=Math.min(...totals),max=Math.max(...totals);
       const bins=Math.round(Math.sqrt(N));
@@ -290,22 +281,37 @@
       const labels=Array.from({length:bins},(_,i)=>`${(min+i*binWidth).toFixed(0)}–${(min+(i+1)*binWidth).toFixed(0)}`);
       const histId=gender==='F'?'womenHist':'menHist';
       if(charts[histId])charts[histId].destroy();
+
       charts[histId]=new Chart(document.getElementById(histId),{
         type:'bar',
-        data:{labels,datasets:[{label:'Predicted Totals',data:histCounts,backgroundColor:'#3b82f6'}]},
+        data:{
+          labels,
+          datasets:[{
+            label:'Predicted Totals',
+            data:histCounts,
+            backgroundColor:function(ctx){
+              const chart=ctx.chart;const area=chart.chartArea;
+              if(!area)return'#3b82f6';
+              const grad=chart.ctx.createLinearGradient(0,area.bottom,0,area.top);
+              grad.addColorStop(0,'#1e3a8a');
+              grad.addColorStop(0.5,'#2563eb');
+              grad.addColorStop(1,'#60a5fa');
+              return grad;
+            },
+            borderRadius:5,
+            hoverBorderColor:'#fff',
+            hoverBorderWidth:2
+          }]
+        },
         options:{
           scales:{
-            x:{
-              ticks:{color:'#ccc'},
-              title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:13,weight:'bold'}}
-            },
-            y:{
-              beginAtZero:true,
-              ticks:{color:'#ccc'},
-              title:{display:true,text:'Frequency',color:'#ccc',font:{size:13,weight:'bold'}}
-            }
+            x:{ticks:{color:'#ccc'},
+               title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:13,weight:'bold'}}},
+            y:{beginAtZero:true,ticks:{color:'#ccc'},
+               title:{display:true,text:'Frequency',color:'#ccc',font:{size:13,weight:'bold'}}}
           },
-          plugins:{legend:{display:false}}
+          plugins:{legend:{display:false}},
+          elements:{bar:{borderWidth:0,shadowBlur:10,shadowColor:'rgba(0,0,0,0.5)'}}
         }
       });
     }
