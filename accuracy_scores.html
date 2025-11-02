@@ -134,7 +134,10 @@
     <footer class="text-center text-gray-500 text-sm mt-16 pb-4">Sponsored by the Sabado Sessions Podcast</footer>
   </div>
 
+  <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const rowsPerPage = 50;
@@ -146,7 +149,8 @@
         const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSuA8YB98ghNeM-cS6Fs1pJNkEBOI0x7WKI4R0vtvAG68mo7PJZYVj2HsdxH3DDqvieaTpe9zUzJcNW/pub?gid=1841956952&single=true&output=csv";
         const response = await fetch(csvUrl);
         const text = await response.text();
-        const rows = text.trim().split("\\n").map(r => r.split(","));
+        const parsed = Papa.parse(text.trim(), { skipEmptyLines: true });
+        const rows = parsed.data;
         headerRow = rows.shift();
         const idx = headerRow.findIndex(h => h.trim().toLowerCase() === 'name');
         nameColIdx = idx >= 0 ? idx : 1;
@@ -166,8 +170,11 @@
           const globalIndex = start + idx;
           const isHighlighted = searchMatches.length && searchMatches[currentMatchIndex] === globalIndex;
           const rowClass = isHighlighted ? "pulse-row" : "";
-          const tds = row.map(cell => `<td class='px-3 py-2 text-center'>${cell}</td>`).join('');
-          tbody.insertAdjacentHTML("beforeend", `<tr class='${rowClass}'>${tds}</tr>`);
+          const tds = row.map((cell, i) => {
+            const alignClass = i === 2 ? 'text-right pr-4' : 'text-center';
+            return `<td class="px-3 py-2 ${alignClass}">${cell}</td>`;
+          }).join('');
+          tbody.insertAdjacentHTML("beforeend", `<tr class="${rowClass}">${tds}</tr>`);
         });
       }
 
