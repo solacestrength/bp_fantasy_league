@@ -35,6 +35,29 @@
     .collapsible-content.open { opacity: 1; max-height: 1000px; }
     .arrow { transition: transform 0.4s ease; }
     .arrow.rotate { transform: rotate(180deg); }
+
+    .chart-actions {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+    .chart-btn {
+      background-color: rgba(31,31,31,0.7);
+      border: 1px solid #333;
+      color: #ccc;
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 0.4rem 0.9rem;
+      border-radius: 0.75rem;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(4px);
+    }
+    .chart-btn:hover {
+      background-color: rgba(55,55,55,0.85);
+      color: #f87171;
+      transform: scale(1.05);
+    }
   </style>
 </head>
 
@@ -100,9 +123,17 @@
           <select id="womenSelect" class="p-2 rounded mb-4 text-sm"></select>
           <div class="chart-container">
             <canvas id="womenDonut"></canvas>
+            <div class="chart-actions">
+              <button class="chart-btn" onclick="downloadChart('womenDonut')">Download</button>
+              <button class="chart-btn" onclick="copyChart('womenDonut')">Copy</button>
+            </div>
           </div>
           <div class="chart-container mt-6">
             <canvas id="womenHist"></canvas>
+            <div class="chart-actions">
+              <button class="chart-btn" onclick="downloadChart('womenHist')">Download</button>
+              <button class="chart-btn" onclick="copyChart('womenHist')">Copy</button>
+            </div>
           </div>
         </div>
       </div>
@@ -119,9 +150,17 @@
           <select id="menSelect" class="p-2 rounded mb-4 text-sm"></select>
           <div class="chart-container">
             <canvas id="menDonut"></canvas>
+            <div class="chart-actions">
+              <button class="chart-btn" onclick="downloadChart('menDonut')">Download</button>
+              <button class="chart-btn" onclick="copyChart('menDonut')">Copy</button>
+            </div>
           </div>
           <div class="chart-container mt-6">
             <canvas id="menHist"></canvas>
+            <div class="chart-actions">
+              <button class="chart-btn" onclick="downloadChart('menHist')">Download</button>
+              <button class="chart-btn" onclick="copyChart('menHist')">Copy</button>
+            </div>
           </div>
         </div>
       </div>
@@ -196,6 +235,7 @@
       });
     }
 
+    /* --- Chart rendering --- */
     function renderCharts(gender, weightClass) {
       const filtered = allData.filter(r => r.Gender===gender && r.Class===weightClass);
       if (!filtered.length) return;
@@ -231,13 +271,10 @@
           plugins:{
             title:{
               display:true,
-              text:['Share of Votes', `Total Votes - ${totalPredictions}`],
+              text:['Share of Votes', `Total Votes – ${totalPredictions}`],
               color:'#ccc',
               font:{weight:'bold',size:14},
               padding:{bottom:10},
-            },
-            subtitle:{
-              display:false
             },
             legend:{position:'bottom',labels:{color:'#ccc'}},
             datalabels:{
@@ -290,6 +327,26 @@
                title:{display:true,text:'Frequency',color:'#ccc',font:{size:13,weight:'bold'}}}
           },
           plugins:{legend:{display:false}}
+        }
+      });
+    }
+
+    /* --- Share & Download functions --- */
+    function downloadChart(id) {
+      const link = document.createElement('a');
+      link.download = `${id}.png`;
+      link.href = document.getElementById(id).toDataURL('image/png', 1.0);
+      link.click();
+    }
+
+    async function copyChart(id) {
+      const canvas = document.getElementById(id);
+      canvas.toBlob(async blob => {
+        try {
+          await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+          alert('Chart copied to clipboard!');
+        } catch (err) {
+          alert('Copy failed — please try downloading instead.');
         }
       });
     }
