@@ -27,15 +27,24 @@
       border-radius:.5rem;height:36px;width:36px;transition:background-color .2s ease;}
     .share-btn:hover{background-color:#ef4444;}
     .share-icon{filter:invert(1);height:18px;width:18px;}
+
+    /* Fade-in animation (same as homepage) */
+    @keyframes fadeInUp {
+      0% {opacity: 0; transform: translateY(10px);}
+      100% {opacity: 1; transform: translateY(0);}
+    }
+    .animate-fade-in-up {animation: fadeInUp 0.8s ease-out forwards;}
+    .animate-fade-in {animation: fadeInUp 1s ease-out forwards;}
   </style>
 </head>
 
 <body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
+
   <!-- Background -->
   <div class="absolute inset-0 bg-[url('bc25_logo.jpg')] bg-cover bg-center opacity-45"></div>
   <div class="absolute inset-0 bg-black/70"></div>
 
-  <div class="relative z-10 flex flex-col flex-grow">
+  <div class="relative z-10 flex flex-col flex-grow animate-fade-in">
     <!-- Header -->
     <header class="site-header w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 relative z-50">
       <div class="w-full flex items-center justify-center px-4 py-3">
@@ -66,29 +75,37 @@
     </div>
 
     <!-- MAIN CONTENT -->
-    <main class="max-w-5xl mx-auto p-6 space-y-8 mt-6">
+    <main class="max-w-5xl mx-auto p-6 space-y-8 mt-6 animate-fade-in-up">
       <section class="text-center">
         <h2 class="text-xl font-semibold mb-1">Prediction Trends by Weight Class</h2>
-        <p class="text-gray-400 text-sm">Explore how the predicted winners and totals are distributed for a given weight class. Sample size = number of entrants 📊</p>
+        <p class="text-gray-400 text-sm">
+          Explore how the predicted winners and totals are distributed for a given weight class. Sample size = number of entrants 📊
+        </p>
       </section>
 
       <!-- WOMEN -->
       <div class="bg-black/60 rounded-lg p-4">
         <button onclick="toggleSection('women')" class="flex items-center justify-between w-full text-left text-lg font-bold">
           <span>Women</span>
-          <svg id="arrow-women" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <svg id="arrow-women" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
         </button>
-        <div id="women" class="collapsible-content mt-4 open">
+        <div id="women" class="collapsible-content mt-4">
           <select id="womenSelect" class="p-2 rounded mb-4 text-sm"></select>
           <div class="chart-container">
             <div class="flex justify-end mb-1">
-              <button class="share-btn" onclick="shareChart('womenDonut','F')"><img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/></button>
+              <button class="share-btn" onclick="shareChart('womenDonut','F')">
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>
+              </button>
             </div>
             <canvas id="womenDonut"></canvas>
           </div>
           <div class="chart-container mt-6">
             <div class="flex justify-end mb-1">
-              <button class="share-btn" onclick="shareChart('womenHist','F')"><img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/></button>
+              <button class="share-btn" onclick="shareChart('womenHist','F')">
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>
+              </button>
             </div>
             <canvas id="womenHist"></canvas>
           </div>
@@ -99,19 +116,25 @@
       <div class="bg-black/60 rounded-lg p-4">
         <button onclick="toggleSection('men')" class="flex items-center justify-between w-full text-left text-lg font-bold">
           <span>Men</span>
-          <svg id="arrow-men" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <svg id="arrow-men" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
         </button>
         <div id="men" class="collapsible-content mt-4">
           <select id="menSelect" class="p-2 rounded mb-4 text-sm"></select>
           <div class="chart-container">
             <div class="flex justify-end mb-1">
-              <button class="share-btn" onclick="shareChart('menDonut','M')"><img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/></button>
+              <button class="share-btn" onclick="shareChart('menDonut','M')">
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>
+              </button>
             </div>
             <canvas id="menDonut"></canvas>
           </div>
           <div class="chart-container mt-6">
             <div class="flex justify-end mb-1">
-              <button class="share-btn" onclick="shareChart('menHist','M')"><img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/></button>
+              <button class="share-btn" onclick="shareChart('menHist','M')">
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>
+              </button>
             </div>
             <canvas id="menHist"></canvas>
           </div>
@@ -119,23 +142,21 @@
       </div>
     </main>
 
-     <!-- View Leaderboard Button Container -->
-      <div class="flex justify-center mt-8">
-        <a href="leaderboard.html"
-           class="bg-gray-800/60 border border-gray-700 text-gray-200 font-semibold px-6 py-3 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-base">
-           View Leaderboard
-        </a>
-      </div>
+    <!-- Buttons -->
+    <div class="flex justify-center mt-8">
+      <a href="leaderboard.html" class="bg-gray-800/60 border border-gray-700 text-gray-200 font-semibold px-6 py-3 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-base">
+        View Leaderboard
+      </a>
+    </div>
+    <div class="flex justify-center mt-4">
+      <a href="#top" class="bg-gray-800/60 border border-gray-700 text-gray-300 font-semibold px-5 py-2 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
+        Back to Top
+      </a>
+    </div>
 
-      <!-- Back to Top Button Container -->
-      <div class="flex justify-center mt-4">
-        <a href="#top"
-           class="bg-gray-800/60 border border-gray-700 text-gray-300 font-semibold px-5 py-2 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
-           Back to Top
-        </a>
-      </div>
-
-    <footer class="text-center text-gray-500 text-sm py-4 bg-transparent">Sponsored by the Sabado Sessions Podcast</footer>
+    <footer class="text-center text-gray-500 text-sm py-4 bg-transparent">
+      Sponsored by the Sabado Sessions Podcast
+    </footer>
   </div>
 
   <script>
@@ -146,18 +167,43 @@
     document.addEventListener('click',e=>{if(!mobileMenu.contains(e.target)&&!menuBtn.contains(e.target)){if(menuVisible){menuVisible=false;toggleMenu(false);}}});
     toggleMenu(false);
 
-    // DATA + CHARTS
+    // CHART DATA
     Chart.register(ChartDataLabels);
     const SHEET_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
     let allData=[],charts={};
 
-    function toggleSection(id){const c=document.getElementById(id),a=document.getElementById(`arrow-${id}`);const open=c.classList.toggle('open');a.classList.toggle('rotate',open);}
-    Papa.parse(SHEET_URL,{download:true,header:true,complete:r=>{allData=r.data;setupDropdowns();document.getElementById('arrow-women').classList.add('rotate');}});
+    function toggleSection(id){
+      const c=document.getElementById(id);
+      const a=document.getElementById(`arrow-${id}`);
+      const open=c.classList.toggle('open');
+      a.classList.toggle('rotate',open);
+    }
 
-    function setupDropdowns(){['F','M'].forEach(g=>{const d=allData.filter(r=>r.Gender===g);const classes=[...new Set(d.map(r=>r.Class))].sort((a,b)=>parseFloat(a)-parseFloat(b));const s=document.getElementById(g==='F'?'womenSelect':'menSelect');s.innerHTML=classes.map(c=>`<option value="${c}">${c}kg</option>`).join('');s.onchange=()=>renderCharts(g,s.value);renderCharts(g,classes[0]);});}
+    Papa.parse(SHEET_URL,{
+      download:true,
+      header:true,
+      complete:r=>{
+        allData=r.data;
+        setupDropdowns();
+      }
+    });
+
+    function setupDropdowns(){
+      ['F','M'].forEach(g=>{
+        const d=allData.filter(r=>r.Gender===g);
+        const classes=[...new Set(d.map(r=>r.Class))].sort((a,b)=>parseFloat(a)-parseFloat(b));
+        const s=document.getElementById(g==='F'?'womenSelect':'menSelect');
+        s.innerHTML=classes.map(c=>`<option value="${c}">${c}kg</option>`).join('');
+        s.onchange=()=>renderCharts(g,s.value);
+        renderCharts(g,classes[0]);
+      });
+    }
 
     function renderCharts(g,w){
-      const f=allData.filter(r=>r.Gender===g&&r.Class===w);if(!f.length)return;
+      const f=allData.filter(r=>r.Gender===g&&r.Class===w);
+      if(!f.length)return;
+
+      // DONUT
       const counts={};f.forEach(r=>counts[r.Athlete]=(counts[r.Athlete]||0)+1);
       const l=Object.keys(counts),v=Object.values(counts),t=v.reduce((a,b)=>a+b,0);
       const colors=['#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'];
@@ -165,7 +211,7 @@
       if(charts[id])charts[id].destroy();
       charts[id]=new Chart(document.getElementById(id),{
         type:'doughnut',
-        data:{labels:l,datasets:[{data:v,backgroundColor:cset,borderColor:'#111',borderWidth:1,hoverOffset:8}]},
+        data:{labels:l,datasets:[{data:v,backgroundColor:cset,borderColor:'#111',borderWidth:1}]},
         options:{
           plugins:{
             title:{display:true,text:[`Share of Votes`,`Total Votes – ${t}`],color:'#ccc',font:{weight:'bold',size:14}},
@@ -176,7 +222,9 @@
         plugins:[ChartDataLabels]
       });
 
-      const totals=f.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v));if(!totals.length)return;
+      // HISTOGRAM
+      const totals=f.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v));
+      if(!totals.length)return;
       const N=totals.length,min=Math.min(...totals),max=Math.max(...totals),bins=Math.round(Math.sqrt(N)),bw=(max-min)/bins,h=Array(bins).fill(0);
       totals.forEach(v=>{const i=Math.min(Math.floor((v-min)/bw),bins-1);h[i]++;});
       const lbls=Array.from({length:bins},(_,i)=>`${(min+i*bw).toFixed(0)}–${(min+(i+1)*bw).toFixed(0)}`),hid=g==='F'?'womenHist':'menHist';
@@ -184,11 +232,17 @@
       charts[hid]=new Chart(document.getElementById(hid),{
         type:'bar',
         data:{labels:lbls,datasets:[{label:'Predicted Totals',data:h,backgroundColor:'#3b82f6',borderRadius:5}]},
-        options:{scales:{x:{ticks:{color:'#ccc',font:{size:10}},title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:11,weight:'bold'}}},y:{beginAtZero:true,ticks:{color:'#ccc',font:{size:10}},title:{display:true,text:'Frequency',color:'#ccc',font:{size:11,weight:'bold'}}}},plugins:{legend:{display:false}}}
+        options:{
+          scales:{
+            x:{ticks:{color:'#ccc',font:{size:10}},title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:11,weight:'bold'}}},
+            y:{beginAtZero:true,ticks:{color:'#ccc',font:{size:10}},title:{display:true,text:'Frequency',color:'#ccc',font:{size:11,weight:'bold'}}}
+          },
+          plugins:{legend:{display:false}}
+        }
       });
     }
 
-    // SHARE EXPORT with dimmed background image (not charts)
+    // SHARE EXPORT (unchanged)
     async function shareChart(id,g){
       const srcCanvas=document.getElementById(id);
       await new Promise(requestAnimationFrame);
@@ -217,7 +271,7 @@
 
       const header=document.createElement('h2');
       header.textContent=titleMain;
-      header.style.fontSize='18px'; // single line
+      header.style.fontSize='18px';
       header.style.fontWeight='700';
       header.style.margin='0 0 4px 0';
       const sub=document.createElement('p');
@@ -245,7 +299,11 @@
       const blob=await new Promise(r=>snapshot.toBlob(r,'image/png'));
       const file=new File([blob],fn,{type:'image/png'});
       if(navigator.canShare&&navigator.canShare({files:[file]})){
-        await navigator.share({title:'British Classic Fantasy League 2025',text:'Check out these British Classic Fantasy League stats!',files:[file]});
+        await navigator.share({
+          title:'British Classic Fantasy League 2025',
+          text:'Check out these British Classic Fantasy League stats!',
+          files:[file]
+        });
       }else{
         const link=document.createElement('a');
         link.href=snapshot.toDataURL('image/png');
