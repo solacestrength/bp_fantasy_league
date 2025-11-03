@@ -28,13 +28,13 @@
     .share-btn:hover{background-color:#ef4444;}
     .share-icon{filter:invert(1);height:18px;width:18px;}
 
-    /* Fade-in animation (same as homepage) */
+    /* Fade-in animation */
     @keyframes fadeInUp {
-      0% {opacity: 0; transform: translateY(10px);}
-      100% {opacity: 1; transform: translateY(0);}
+      0% {opacity:0;transform:translateY(10px);}
+      100% {opacity:1;transform:translateY(0);}
     }
-    .animate-fade-in-up {animation: fadeInUp 0.8s ease-out forwards;}
-    .animate-fade-in {animation: fadeInUp 1s ease-out forwards;}
+    .animate-fade-in-up {animation:fadeInUp 0.8s ease-out forwards;}
+    .animate-fade-in {animation:fadeInUp 1s ease-out forwards;}
   </style>
 </head>
 
@@ -79,8 +79,7 @@
       <section class="text-center">
         <h2 class="text-xl font-semibold mb-1">Metrics Dashboard</h2>
         <p class="text-gray-400 text-sm">
-          Explore how the predicted winners and totals are distributed for a given weight class. Sample size = number of entrants.
-          User note - any labels that appear from tapping bars or chart sections will also be visible in your shared images 📊
+          Explore how the predicted winners and totals are distributed for a given weight class. Sample size = number of entrants 📊
         </p>
       </section>
 
@@ -215,20 +214,8 @@
         data:{labels:l,datasets:[{data:v,backgroundColor:cset,borderColor:'#111',borderWidth:1}]},
         options:{
           plugins:{
-            title:{
-              display:true,
-              text:'Share of Votes',
-              color:'#ccc',
-              font:{weight:'bold',size:15},
-              padding:{bottom:0}
-            },
-            subtitle:{
-              display:true,
-              text:`Total Votes – ${t}`,
-              color:'#aaa',
-              font:{size:12,weight:'normal'},
-              padding:{top:1,bottom:6}
-            },
+            title:{display:true,text:'Share of Votes',color:'#ccc',font:{weight:'bold',size:14},padding:{bottom:2}},
+            subtitle:{display:true,text:`Total Votes – ${t}`,color:'#aaa',font:{weight:'normal',size:12},padding:{top:1,bottom:6}},
             legend:{position:'bottom',labels:{color:'#ccc',boxWidth:10,boxHeight:10}},
             datalabels:{color:'#fff',font:{weight:'bold',size:11},formatter:x=>{const p=(x/t)*100;return p>=3?`${p.toFixed(1)}%`:'';},anchor:'center',align:'center'}
           }
@@ -256,7 +243,7 @@
       });
     }
 
-    // SHARE EXPORT (same behaviour)
+    // SHARE EXPORT
     async function shareChart(id,g){
       const srcCanvas=document.getElementById(id);
       await new Promise(requestAnimationFrame);
@@ -283,6 +270,14 @@
       card.style.margin='0 auto';
       card.style.boxSizing='border-box';
 
+      // Ensure background logo fully visible for donut exports
+      if(id.includes('Donut')){
+        card.style.minHeight='600px';
+        card.style.display='flex';
+        card.style.flexDirection='column';
+        card.style.justifyContent='center';
+      }
+
       const header=document.createElement('h2');
       header.textContent=titleMain;
       header.style.fontSize='18px';
@@ -293,6 +288,7 @@
       sub.style.fontSize='16px';
       sub.style.color='#ddd';
       sub.style.margin='0 0 14px 0';
+      img.style.maxWidth='100%';
       img.style.maxWidth='100%';
       img.style.height='auto';
       img.style.borderRadius='8px';
