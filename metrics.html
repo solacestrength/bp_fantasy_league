@@ -274,18 +274,19 @@
   card.style.margin = '0 auto';
   card.style.boxSizing = 'border-box';
 
-  // ✅ Ensure donut charts have consistent export frame (to show full logo)
-  const isDonut = id.includes('Donut');
-  if (isDonut) {
-    card.style.width = '1000px';
-    card.style.height = '1000px';
-    card.style.maxWidth = '1000px';
-    card.style.maxHeight = '1000px';
-    card.style.display = 'flex';
-    card.style.flexDirection = 'column';
-    card.style.alignItems = 'center';
-    card.style.justifyContent = 'center';
-  }
+// ✅ Improved donut export layout — preserve full image and all text
+const isDonut = id.includes('Donut');
+if (isDonut) {
+  // Use a responsive square base that scales with device width
+  card.style.width = 'min(95vw, 950px)';
+  card.style.aspectRatio = '1 / 1'; // keep square shape without cutting text
+  card.style.padding = '32px 28px';
+  card.style.display = 'flex';
+  card.style.flexDirection = 'column';
+  card.style.alignItems = 'center';
+  card.style.justifyContent = 'space-between';
+  card.style.boxSizing = 'border-box';
+}
 
   // 🧩 Header and subheader
   const header = document.createElement('h2');
