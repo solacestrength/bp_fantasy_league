@@ -245,107 +245,90 @@
     }
 
     // SHARE EXPORT
-    async function shareChart(id, g) {
-  const srcCanvas = document.getElementById(id);
-  await new Promise(requestAnimationFrame);
-  const s = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
-  const w = s.value;
-  const titleMain = 'British Classic Fantasy League 2025 🇬🇧';
-  const titleSub = `${w}kg ${g === 'F' ? 'Women' : 'Men'}`;
-  const fn = `metrics_${g}_${w}_${id.includes('Donut') ? 'donut' : 'hist'}.png`;
+    async function shareChart(id,g){
+      const srcCanvas=document.getElementById(id);
+      await new Promise(requestAnimationFrame);
+      const s=document.getElementById(g==='F'?'womenSelect':'menSelect');
+      const w=s.value;
+      const titleMain='British Classic Fantasy League 2025 🇬🇧';
+      const titleSub=`${w}kg ${g==='F'?'Women':'Men'}`;
+      const fn=`metrics_${g}_${w}_${id.includes('Donut')?'donut':'hist'}.png`;
 
-  const dataURL = srcCanvas.toDataURL('image/png');
-  const img = new Image();
-  img.src = dataURL;
-  await img.decode();
+      const dataURL=srcCanvas.toDataURL('image/png');
+      const img=new Image();img.src=dataURL;await img.decode();
 
-  // ✅ Create the export card first
-  const card = document.createElement('div');
-  card.style.backgroundImage = "linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)), url('bc25_logo.jpg')";
-  card.style.backgroundSize = 'cover';
-  card.style.backgroundPosition = 'center';
-  card.style.backgroundBlendMode = 'darken';
-  card.style.padding = '24px';
-  card.style.borderRadius = '16px';
-  card.style.textAlign = 'center';
-  card.style.color = '#fff';
-  card.style.fontFamily = "'Inter', sans-serif";
-  card.style.maxWidth = '960px';
-  card.style.margin = '0 auto';
-  card.style.boxSizing = 'border-box';
+      const card=document.createElement('div');
+      card.style.backgroundImage="linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)), url('bc25_logo.jpg')";
+      card.style.backgroundSize='cover';
+      card.style.backgroundPosition='center';
+      card.style.backgroundBlendMode='darken';
+      card.style.padding='24px';
+      card.style.borderRadius='16px';
+      card.style.textAlign='center';
+      card.style.color='#fff';
+      card.style.fontFamily="'Inter', sans-serif";
+      card.style.maxWidth='960px';
+      card.style.margin='0 auto';
+      card.style.boxSizing='border-box';
 
-// ✅ Improved donut export layout — preserve full image and all text
-const isDonut = id.includes('Donut');
-if (isDonut) {
-  // Use a responsive square base that scales with device width
-  card.style.width = 'min(95vw, 950px)';
-  card.style.aspectRatio = '1 / 1'; // keep square shape without cutting text
-  card.style.padding = '32px 28px';
-  card.style.display = 'flex';
-  card.style.flexDirection = 'column';
-  card.style.alignItems = 'center';
-  card.style.justifyContent = 'space-between';
-  card.style.boxSizing = 'border-box';
-}
+      // Ensure background logo fully visible for donut exports
+      if(id.includes('Donut')){
+        card.style.minHeight='600px';
+        card.style.display='flex';
+        card.style.flexDirection='column';
+        card.style.justifyContent='center';
+      }
 
-  // 🧩 Header and subheader
-  const header = document.createElement('h2');
-  header.textContent = titleMain;
-  header.style.fontSize = '18px';
-  header.style.fontWeight = '700';
-  header.style.margin = '0 0 2px 0';
+      const header=document.createElement('h2');
+      header.textContent=titleMain;
+      header.style.fontSize='18px';
+      header.style.fontWeight='700';
+      header.style.margin='0 0 4px 0';
+      const sub=document.createElement('p');
+      sub.textContent=titleSub;
+      sub.style.fontSize='16px';
+      sub.style.color='#ddd';
+      sub.style.margin='0 0 14px 0';
+      img.style.maxWidth='100%';
+      img.style.maxWidth='100%';
+      img.style.height='auto';
+      img.style.borderRadius='8px';
+      img.style.display='block';
+      img.style.margin='0 auto 12px auto';
 
-  const sub = document.createElement('p');
-  sub.textContent = titleSub;
-  sub.style.fontSize = '16px';
-  sub.style.color = '#ddd';
-  sub.style.margin = '0 0 12px 0';
+      const credit=document.createElement('p');
+      credit.style.fontSize='13px';
+      credit.style.color='#aaa';
+      credit.style.lineHeight='1.5';
+      credit.innerHTML='Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-  // 🧩 Chart image
-  img.style.maxWidth = '100%';
-  img.style.height = 'auto';
-  img.style.borderRadius = '8px';
-  img.style.display = 'block';
-  img.style.margin = '0 auto 12px auto';
+      card.append(header, sub, img, credit);
+      document.body.appendChild(card);
 
-  // 🧩 Credits footer
-  const credit = document.createElement('p');
-  credit.style.fontSize = '13px';
-  credit.style.color = '#aaa';
-  credit.style.lineHeight = '1.5';
-  credit.innerHTML = 'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
+      const snapshot=await html2canvas(card,{
+        backgroundColor:null,
+        scale:2,
+        useCORS:true,
+        scrollY:0
+      });
+      card.remove();
 
-  // 🧩 Assemble card
-  card.append(header, sub, img, credit);
-  document.body.appendChild(card);
+      const blob=await new Promise(r=>snapshot.toBlob(r,'image/png'));
+      const file=new File([blob],fn,{type:'image/png'});
 
-  // 🖼️ Capture the export snapshot
-  const snapshot = await html2canvas(card, {
-    backgroundColor: null,
-    scale: 2,
-    useCORS: true,
-    scrollY: 0
-  });
-  card.remove();
-
-  // 📁 Prepare export/share
-  const blob = await new Promise(r => snapshot.toBlob(r, 'image/png'));
-  const file = new File([blob], fn, { type: 'image/png' });
-
-  // 📲 Share if possible, else download
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    await navigator.share({
-      title: 'British Classic Fantasy League 2025',
-      text: 'Check out these British Classic Fantasy League stats!',
-      files: [file]
-    });
-  } else {
-    const link = document.createElement('a');
-    link.href = snapshot.toDataURL('image/png');
-    link.download = fn;
-    link.click();
-  }
-}
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        await navigator.share({
+          title:'British Classic Fantasy League 2025',
+          text:'Check out these British Classic Fantasy League stats!',
+          files:[file]
+        });
+      } else {
+        const link=document.createElement('a');
+        link.href=snapshot.toDataURL('image/png');
+        link.download=fn;
+        link.click();
+      }
+    }
   </script>
 </body>
 </html>
