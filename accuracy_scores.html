@@ -134,10 +134,10 @@
       const m=searchMatches[currentMatchIndex];let start,end;if(m<10){start=0;end=9;}else{start=m-4;end=m+5;if(start<0){end+=-start;start=0;}if(end>allRows.length-1){start=Math.max(0,allRows.length-10);end=allRows.length-1;}}
       const v=allRows.slice(start,end+1);
       const rowsHtml=v.map((r,i)=>{const ai=start+i;return `<tr style="${ai===m?'font-weight:bold;':''}">${r.map(c=>`<td class='px-3 py-1 text-center'>${c}</td>`).join('')}</tr>`;}).join('');
-      const qrURL=`https://api.qrserver.com/v1/create-qr-code/?size=55x55&data=${encodeURIComponent(window.location.href)}`;const qrImg=new Image();qrImg.crossOrigin="anonymous";qrImg.src=qrURL;
+      const qrURL=`https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
       qrImg.onload=()=>{const snap=document.createElement('div');snap.style.width='600px';snap.style.borderRadius='16px';snap.style.overflow='hidden';snap.style.position='relative';snap.style.boxShadow='0 10px 30px rgba(0,0,0,.35)';snap.style.backgroundImage="url('image_accuracy.jpg')";snap.style.backgroundSize='cover';snap.style.backgroundPosition='center';
         snap.innerHTML=`<div style="background:rgba(0,0,0,.55);padding:18px;position:relative;">
-        <img src="${qrImg.src}" style="position:absolute;top:20px;right:20px;width:38px;height:38px;border-radius:4px;"/>
+        <img src="${qrImg.src}" style="position:absolute;top:20px;right:20px;width:52px;height:52px;border-radius:5px;"/>
         <h2 style="text-align:center;font-size:20px;font-weight:700;margin-bottom:4px;">British Classic Fantasy League 2025 🇬🇧</h2>
         <h3 style="text-align:center;font-size:16px;font-weight:600;margin-bottom:4px;">My Accuracy Score</h3>
         <p style="text-align:center;font-size:11px;opacity:0.9;margin-bottom:10px;">Entry Count – ${allRows.length}</p>
