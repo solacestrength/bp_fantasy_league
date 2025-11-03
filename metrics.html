@@ -214,7 +214,27 @@
         data:{labels:l,datasets:[{data:v,backgroundColor:cset,borderColor:'#111',borderWidth:1}]},
         options:{
           plugins:{
-            title:{display:true,text:[`Share of Votes`,`Total Votes – ${t}`],color:'#ccc',font:{weight:'bold',size:14}},
+            title:{
+              display:true,
+              text:[`Share of Votes`,`Total Votes – ${t}`],
+              color:'#ccc',
+              font:{
+                size:14,
+                weight:'bold'
+              },
+              padding:{bottom:10},
+              // Subtitle style tweak
+              position:'top',
+              fullSize:true,
+              font:{
+                size:14,
+                weight:'bold'
+              },
+              // Add custom styling to subtitle line
+              labels:{
+                color:'#bbb'
+              }
+            },
             legend:{position:'bottom',labels:{color:'#ccc',boxWidth:10,boxHeight:10}},
             datalabels:{color:'#fff',font:{weight:'bold',size:11},formatter:x=>{const p=(x/t)*100;return p>=3?`${p.toFixed(1)}%`:'';},anchor:'center',align:'center'}
           }
@@ -280,10 +300,11 @@
       sub.style.color='#ddd';
       sub.style.margin='0 0 14px 0';
       img.style.maxWidth='100%';
-      img.style.height='auto';
+            img.style.height='auto';
       img.style.borderRadius='8px';
       img.style.display='block';
       img.style.margin='0 auto 12px auto';
+
       const credit=document.createElement('p');
       credit.style.fontSize='13px';
       credit.style.color='#aaa';
