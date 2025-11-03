@@ -341,10 +341,13 @@ const visibleRows = allRows.slice(start, end + 1);
             <h2 style="text-align:center; font-size:20px; font-weight:700; margin-bottom:4px;">
               British Classic Fantasy League 2025 🇬🇧
             </h2>
-            <h3 style="text-align:center; font-size:16px; font-weight:600; margin-bottom:12px;">
-              My Accuracy Score
-            </h3>
-            <table class="w-full text-sm" style="table-layout: fixed; border-collapse: collapse;">
+            <h3 style="text-align:center; font-size:16px; font-weight:600; margin-bottom:4px;">
+  My Accuracy Score
+</h3>
+<p style="text-align:center; font-size:12px; color:#d1d5db; opacity:0.9; margin-bottom:12px;">
+  Entry Count – ${allRows.length}
+</p>
+<table class="w-full text-sm" style="table-layout: fixed; border-collapse: collapse;">
               <colgroup>${headerRow.map(() => '<col>').join('')}</colgroup>
               <thead>
                 <tr>${headerRow.map(h => `<th class="py-1 px-3 text-center font-semibold">${h}</th>`).join('')}</tr>
