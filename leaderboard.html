@@ -288,10 +288,19 @@
       async function shareRanking() {
         if (searchMatches.length === 0) { alert("Please search for your name first."); return; }
         const matchIndex = searchMatches[currentMatchIndex];
-        let start = matchIndex - 4, end = matchIndex + 5;
-        if (start < 0) { end += -start; start = 0; }
-        if (end > allRows.length - 1) { start = Math.max(0, allRows.length - 10); end = allRows.length - 1; }
-        const visibleRows = allRows.slice(start, end + 1);
+        let start, end;
+if (matchIndex < 10) {
+  // Top 10 snapshot
+  start = 0;
+  end = 9;
+} else {
+  // Normal ±4 snapshot
+  start = matchIndex - 4;
+  end = matchIndex + 5;
+  if (start < 0) { end += -start; start = 0; }
+  if (end > allRows.length - 1) { start = Math.max(0, allRows.length - 10); end = allRows.length - 1; }
+}
+const visibleRows = allRows.slice(start, end + 1);
 
         const rowsHtml = visibleRows.map((row, i) => {
           const actualIndex = start + i;
