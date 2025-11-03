@@ -13,24 +13,42 @@
     }
     .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
     .animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
-    #floatingShareBtn { opacity: 0; pointer-events: none; transition: opacity 0.7s ease-in-out; }
-    #floatingShareBtn:not(.hidden) { opacity: 1; pointer-events: auto; }
-    #floatingShareBtn.fade-out { opacity: 0; pointer-events: none; }
 
+    #floatingShareBtn {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.7s ease-in-out;
+    }
+    #floatingShareBtn:not(.hidden) {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #floatingShareBtn.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* --- Pulse highlight effect for full row --- */
     @keyframes pulse-row-red {
-      0% { background-color: rgba(239,68,68,0.3); }
-      50% { background-color: rgba(239,68,68,0.15); }
+      0%   { background-color: rgba(239,68,68,0.3); }
+      50%  { background-color: rgba(239,68,68,0.15); }
       100% { background-color: rgba(239,68,68,0.3); }
     }
-    .pulse-row { animation: pulse-row-red 1.2s ease-in-out 1; background-color: rgba(239,68,68,0.3); font-weight: bold; }
+    .pulse-row {
+      animation: pulse-row-red 1.2s ease-in-out 1;
+      background-color: rgba(239,68,68,0.3);
+      font-weight: bold;
+    }
   </style>
 </head>
 
-<body class="relative bg-gray-900 text-white font-sans" id="top">
+<body class="relative bg-gray-900 text-white font-sans">
+  <!-- Background -->
   <div class="site-background absolute inset-0 bg-[url('image_leaderboard_shf.jpg')] bg-cover bg-center opacity-45"></div>
   <div class="site-background-overlay absolute inset-0 bg-black/70"></div>
 
   <div class="relative z-10">
+    <!-- Header -->
     <header class="site-header w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 relative z-50">
       <div class="w-full flex items-center justify-center px-4 py-3">
         <div class="flex-1 text-center">
@@ -40,15 +58,19 @@
           </a>
         </div>
         <div class="absolute right-4 top-1/2 -translate-y-1/2">
-          <button id="menu-btn" aria-expanded="false" class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
+          <button id="menu-btn" aria-expanded="false"
+            class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 6h16M4 12h16M4 18h16" />
             </svg>
+            <span class="sr-only">Open menu</span>
           </button>
         </div>
       </div>
     </header>
 
+    <!-- Dropdown menu -->
     <div id="mobile-menu"
       class="fixed top-16 right-4 w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-md shadow-lg z-50 scale-y-0 opacity-0 origin-top transition-transform duration-300 ease-in-out">
       <nav class="flex flex-col py-2 text-white">
@@ -60,94 +82,289 @@
       </nav>
     </div>
 
+    <!-- Main content -->
     <main class="pt-20 md:pt-24 animate-fade-in">
       <section class="w-full px-4">
-        <div class="w-full max-w-3xl lg:max-w-4xl mx-auto bg-gray-800/60 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-gray-700">
+        <div
+          class="w-full max-w-3xl lg:max-w-4xl mx-auto bg-gray-800/60 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-gray-700">
+          <!-- Leaderboard header -->
           <div class="w-full mt-10 mb-6 flex flex-col sm:grid sm:grid-cols-3 items-center">
             <div class="hidden sm:block"></div>
-            <h2 class="text-2xl font-bold text-white text-center">Live Leaderboard</h2>
+            <h2 class="text-2xl font-bold text-white text-center sm:text-center">Live Leaderboard</h2>
             <div class="flex items-center space-x-2 mt-3 sm:mt-0 sm:justify-self-end">
-              <button id="shareRankingBtn" class="bg-red-600 hover:bg-red-500 text-white rounded-lg flex items-center justify-center" style="height:32px;width:32px;">
-                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="w-4 h-4 invert" />
+              <button id="shareRankingBtn"
+                class="bg-red-600 hover:bg-red-500 text-white rounded-lg flex items-center justify-center"
+                style="height: 32px; width: 32px;" aria-label="Share Ranking">
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
+                  alt="Share Icon" class="w-4 h-4 invert" />
               </button>
               <div class="relative">
                 <input type="text" id="searchInput" placeholder="Search"
-                       class="bg-gray-700/60 text-white placeholder-gray-400 text-sm rounded-lg pl-8 pr-2 py-1 focus:ring-2 focus:ring-red-500"
-                       style="width:calc(11ch + 12px);height:32px;">
+                  class="bg-gray-700/60 text-white placeholder-gray-400 text-sm rounded-lg pl-8 pr-2 py-1 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  style="width: calc(11ch + 12px); height: 32px;" />
                 <svg xmlns="http://www.w3.org/2000/svg"
-                     class="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
-                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  class="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none"
+                  viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z"/>
+                    d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z" />
                 </svg>
               </div>
             </div>
           </div>
 
+          <!-- Leaderboard table -->
           <div class="overflow-x-auto rounded-xl border border-gray-700">
             <table id="leaderboardTable" class="min-w-full text-sm text-gray-200 text-center">
-              <thead class="bg-gray-700 text-gray-100"><tr id="leaderboardHeader"></tr></thead>
+              <thead class="bg-gray-700 text-gray-100">
+                <tr id="leaderboardHeader"></tr>
+              </thead>
               <tbody id="leaderboardBody" class="divide-y divide-gray-700"></tbody>
             </table>
           </div>
+
           <div id="paginationContainer" class="flex justify-center items-center mt-4 flex-wrap text-sm text-gray-300"></div>
           <p class="text-xs text-gray-500 text-center mt-3">Data auto-updates from Google Sheets</p>
         </div>
       </section>
 
-      <div class="flex justify-center mt-8">
-        <a href="accuracy_scores.html" class="bg-gray-800/60 border border-gray-700 text-gray-200 font-semibold px-6 py-3 rounded-xl hover:bg-gray-700/70 hover:text-red-400 transition text-base">
-          View Accuracy Scores
-        </a>
-      </div>
-      <div class="flex justify-center mt-4">
-        <a href="#top" class="bg-gray-800/60 border border-gray-700 text-gray-300 font-semibold px-5 py-2 rounded-xl hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
-          Back to Top
-        </a>
-      </div>
-      <footer class="text-center text-gray-500 text-sm mt-16 pb-4">Sponsored by the Sabado Sessions Podcast</footer>
-    </main>
+<!-- View Leaderboard Button Container -->
+<div class="flex justify-center mt-8">
+  <a href="accuracy_scores.html"
+     class="bg-gray-800/60 border border-gray-700 text-gray-200 font-semibold px-6 py-3 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-base">
+     View Accuracy Scores
+  </a>
+</div>
+
+<!-- Back to Top Button Container -->
+<div class="flex justify-center mt-4">
+  <a href="#top"
+     class="bg-gray-800/60 border border-gray-700 text-gray-300 font-semibold px-5 py-2 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
+     Back to Top
+  </a>
+</div>
+
+    <footer class="text-center text-gray-500 text-sm mt-16 pb-4">Sponsored by the Sabado Sessions Podcast</footer>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const menuBtn=document.getElementById('menu-btn');const mobileMenu=document.getElementById('mobile-menu');
-    menuBtn.addEventListener('click',e=>{const o=mobileMenu.classList.contains('opacity-100');mobileMenu.classList.toggle('opacity-100',!o);mobileMenu.classList.toggle('opacity-0',o);mobileMenu.classList.toggle('scale-y-100',!o);mobileMenu.classList.toggle('scale-y-0',o);menuBtn.setAttribute('aria-expanded',!o);e.stopPropagation();});
-    document.addEventListener('click',e=>{if(!mobileMenu.contains(e.target)&&!menuBtn.contains(e.target)){mobileMenu.classList.remove('opacity-100','scale-y-100');mobileMenu.classList.add('opacity-0','scale-y-0');menuBtn.setAttribute('aria-expanded','false');}});
-    const rowsPerPage=50;let allRows=[],filteredRows=[],currentPage=1,searchMatches=[],currentMatchIndex=-1,headerRow=[];
-    async function loadLeaderboard(){
-      const csvUrl="https://docs.google.com/spreadsheets/d/e/2PACX-1vSuA8YB98ghNeM-cS6Fs1pJNkEBOI0x7WKI4R0vtvAG68mo7PJZYVj2HsdxH3DDqvieaTpe9zUzJcNW/pub?gid=963601969&single=true&output=csv";
-      const r=await fetch(csvUrl);const t=await r.text();const rows=t.trim().split("\n").map(r=>r.split(","));headerRow=rows.shift();
-      document.getElementById("leaderboardHeader").innerHTML=headerRow.map(h=>`<th class='px-3 py-2 text-center'>${h}</th>`).join("");
-      allRows=rows;filteredRows=[...allRows];renderTable();}
-    function renderTable(){const b=document.getElementById("leaderboardBody");b.innerHTML="";const s=(currentPage-1)*rowsPerPage;const e=s+rowsPerPage;
-      filteredRows.slice(s,e).forEach((row,i)=>{const gi=s+i;const hi=searchMatches.length&&searchMatches[currentMatchIndex]===gi;const rc=hi?"pulse-row":"";b.insertAdjacentHTML("beforeend",`<tr class="${rc}">${row.map(c=>`<td class="px-3 py-2 text-center">${c}</td>`).join('')}</tr>`);});}
-    const searchInput=document.getElementById("searchInput");
-    searchInput.addEventListener("input",()=>{const f=searchInput.value.trim().toLowerCase();searchMatches=[];currentMatchIndex=-1;if(!f){filteredRows=[...allRows];currentPage=1;renderTable();return;}
-      allRows.forEach((row,i)=>{if(row.join(" ").toLowerCase().includes(f))searchMatches.push(i);});if(searchMatches.length>0){currentMatchIndex=0;currentPage=Math.floor(searchMatches[0]/rowsPerPage)+1;renderTable();}});
-    async function shareRanking(){
-      if(searchMatches.length===0){alert("Please search for your name first.");return;}
-      const m=searchMatches[currentMatchIndex];let start,end;if(m<10){start=0;end=9;}else{start=m-4;end=m+5;if(start<0){end+=-start;start=0;}if(end>allRows.length-1){start=Math.max(0,allRows.length-10);end=allRows.length-1;}}
-      const v=allRows.slice(start,end+1);
-      const rowsHtml=v.map((r,i)=>{const ai=start+i;return `<tr style="${ai===m?'font-weight:bold;':''}">${r.map(c=>`<td class='px-3 py-1 text-center'>${c}</td>`).join('')}</tr>`;}).join('');
-      const qrURL=`https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
-      qrImg.onload=()=>{const snap=document.createElement('div');snap.id='snapshot';snap.style.width='600px';snap.style.borderRadius='16px';snap.style.overflow='hidden';snap.style.position='relative';snap.style.boxShadow='0 10px 30px rgba(0,0,0,.35)';snap.style.backgroundImage="url('image_leaderboard_shf.jpg')";snap.style.backgroundSize='cover';snap.style.backgroundPosition='center';
-        snap.innerHTML=`<div style="background:rgba(0,0,0,.55);padding:18px;position:relative;">
-        <img src="${qrImg.src}" style="position:absolute;top:20px;right:20px;width:52px;height:52px;border-radius:5px;"/>
-        <h2 class="text-center text-xl font-bold mb-1">British Classic Fantasy League 2025 🇬🇧</h2>
-        <h3 class="text-center text-base font-semibold mb-1">My League Ranking</h3>
-        <p class="text-center text-xs text-gray-300 mb-3" style="opacity:0.9;">Entry Count – ${allRows.length}</p>
-        <table class="w-full text-sm" style="table-layout:fixed;border-collapse:collapse;">
-        <thead><tr>${headerRow.map(h=>`<th class='py-1 px-3 text-center font-semibold'>${h}</th>`).join('')}</tr></thead><tbody>${rowsHtml}</tbody></table>
-        <p class="text-xs text-gray-300 text-center mt-4">Data from tinyurl.com/britishclassicfl-leaderboard<br/><br/>Sponsored by the Sabado Sessions Podcast</p></div>`;
-        document.body.appendChild(snap);
-        html2canvas(snap,{backgroundColor:null,scale:2,useCORS:true,scrollY:0}).then(async c=>{const b=await new Promise(r=>c.toBlob(r,'image/png'));snap.remove();const f=new File([b],'league_ranking.png',{type:'image/png'});
-        if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({title:'British Classic Fantasy League 2025 🇬🇧',text:'Check out my league ranking!',files:[f]});return;}catch{}}
-        const link=document.createElement('a');link.href=c.toDataURL('image/png');link.download='my-league-ranking.png';link.click();});};}
-    document.getElementById('shareRankingBtn').addEventListener('click',shareRanking);
-    loadLeaderboard();
-  });
+    document.addEventListener('DOMContentLoaded', () => {
+      const menuBtn = document.getElementById('menu-btn');
+      const mobileMenu = document.getElementById('mobile-menu');
+      menuBtn.addEventListener('click', (e) => {
+        const isOpen = mobileMenu.classList.contains('opacity-100');
+        mobileMenu.classList.toggle('opacity-100', !isOpen);
+        mobileMenu.classList.toggle('opacity-0', isOpen);
+        mobileMenu.classList.toggle('scale-y-100', !isOpen);
+        mobileMenu.classList.toggle('scale-y-0', isOpen);
+        menuBtn.setAttribute('aria-expanded', !isOpen);
+        e.stopPropagation();
+      });
+      document.addEventListener('click', (e) => {
+        if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+          mobileMenu.classList.remove('opacity-100', 'scale-y-100');
+          mobileMenu.classList.add('opacity-0', 'scale-y-0');
+          menuBtn.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      const rowsPerPage = 50;
+      let allRows = [], filteredRows = [], currentPage = 1;
+      let searchMatches = [], currentMatchIndex = -1;
+      let headerRow = [], nameColIdx = 1;
+
+      async function loadLeaderboard() {
+        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSuA8YB98ghNeM-cS6Fs1pJNkEBOI0x7WKI4R0vtvAG68mo7PJZYVj2HsdxH3DDqvieaTpe9zUzJcNW/pub?gid=963601969&single=true&output=csv";
+        const response = await fetch(csvUrl);
+        const text = await response.text();
+        const rows = text.trim().split("\n").map(r => r.split(","));
+        headerRow = rows.shift();
+        const idx = headerRow.findIndex(h => h.trim().toLowerCase() === 'name');
+        nameColIdx = idx >= 0 ? idx : 1;
+        document.getElementById("leaderboardHeader").innerHTML =
+          headerRow.map(h => `<th class='px-3 py-2 text-center'>${h}</th>`).join("");
+        allRows = rows;
+        filteredRows = [...allRows];
+        renderTable();
+      }
+
+      function renderTable() {
+        const tableBody = document.getElementById("leaderboardBody");
+        tableBody.innerHTML = "";
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        filteredRows.slice(start, end).forEach((row, idx) => {
+          const globalIndex = start + idx;
+          const isHighlighted = searchMatches.length && searchMatches[currentMatchIndex] === globalIndex;
+          const rowClass = isHighlighted ? "pulse-row" : "";
+          const tds = row.map(cell => `<td class="px-3 py-2 text-center">${cell}</td>`).join('');
+          tableBody.insertAdjacentHTML("beforeend", `<tr class="${rowClass}">${tds}</tr>`);
+        });
+        renderPagination();
+      }
+
+      function renderPagination() {
+        const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+        const container = document.getElementById("paginationContainer");
+        container.innerHTML = "";
+        if (totalPages <= 1) return;
+        const prevBtn = document.createElement("button");
+        prevBtn.textContent = "« Prev";
+        prevBtn.className = "px-2 py-1 mx-1 bg-gray-700/60 rounded hover:bg-gray-600";
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; renderTable(); } };
+        container.appendChild(prevBtn);
+        const maxButtons = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+        let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+        if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
+        if (startPage > 1) { createPageButton(1, container); if (startPage > 2) container.insertAdjacentHTML("beforeend", "<span class='mx-1'>...</span>"); }
+        for (let i = startPage; i <= endPage; i++) createPageButton(i, container);
+        if (endPage < totalPages) { if (endPage < totalPages - 1) container.insertAdjacentHTML("beforeend", "<span class='mx-1'>...</span>"); createPageButton(totalPages, container); }
+        const nextBtn = document.createElement("button");
+        nextBtn.textContent = "Next »";
+        nextBtn.className = "px-2 py-1 mx-1 bg-gray-700/60 rounded hover:bg-gray-600";
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; renderTable(); } };
+        container.appendChild(nextBtn);
+      }
+
+      function createPageButton(page, container) {
+        const btn = document.createElement("button");
+        btn.textContent = page;
+        btn.className = `px-2 py-1 mx-1 rounded ${page === currentPage ? "bg-red-600 text-white" : "bg-gray-700/60 hover:bg-gray-600"}`;
+        btn.onclick = () => { currentPage = page; renderTable(); };
+        container.appendChild(btn);
+      }
+
+      const searchInput = document.getElementById("searchInput");
+      const shareFloatingBtn = document.createElement('button');
+      shareFloatingBtn.id = 'floatingShareBtn';
+      shareFloatingBtn.textContent = "Share My Ranking";
+      shareFloatingBtn.className = "hidden fixed bottom-20 right-6 bg-red-600 text-white px-4 py-2 rounded-full shadow-lg z-50 hover:bg-red-700 transition-opacity duration-700 ease-in-out";
+      document.body.appendChild(shareFloatingBtn);
+
+      let inactivityTimer;
+      function fadeOutShareButton() {
+        shareFloatingBtn.classList.add('fade-out');
+        setTimeout(() => {
+          shareFloatingBtn.classList.add('hidden');
+          shareFloatingBtn.classList.remove('fade-out');
+        }, 700);
+      }
+      function resetInactivityTimer() {
+        clearTimeout(inactivityTimer);
+        if (!shareFloatingBtn.classList.contains('hidden')) {
+          inactivityTimer = setTimeout(() => { fadeOutShareButton(); }, 10000);
+        }
+      }
+      window.addEventListener('scroll', resetInactivityTimer);
+      document.addEventListener('input', resetInactivityTimer);
+
+      searchInput.addEventListener("input", () => {
+        const filter = searchInput.value.trim().toLowerCase();
+        searchMatches = [];
+        currentMatchIndex = -1;
+        if (!filter) { filteredRows = [...allRows]; currentPage = 1; renderTable(); shareFloatingBtn.classList.add("hidden"); return; }
+        allRows.forEach((row, idx) => { if (row.join(" ").toLowerCase().includes(filter)) searchMatches.push(idx); });
+        if (searchMatches.length > 0) {
+          currentMatchIndex = 0;
+          const matchIdx = searchMatches[currentMatchIndex];
+          currentPage = Math.floor(matchIdx / rowsPerPage) + 1;
+          renderTable(); shareFloatingBtn.classList.remove("hidden"); resetInactivityTimer();
+        } else { renderTable(); shareFloatingBtn.classList.add("hidden"); }
+      });
+
+      searchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && searchMatches.length > 1) {
+          e.preventDefault();
+          currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
+          const matchIdx = searchMatches[currentMatchIndex];
+          currentPage = Math.floor(matchIdx / rowsPerPage) + 1;
+          renderTable(); shareFloatingBtn.classList.remove("hidden"); resetInactivityTimer();
+        }
+      });
+
+      async function shareRanking() {
+        if (searchMatches.length === 0) { alert("Please search for your name first."); return; }
+        const matchIndex = searchMatches[currentMatchIndex];
+        let start, end;
+if (matchIndex < 10) {
+  // Top 10 snapshot
+  start = 0;
+  end = 9;
+} else {
+  // Normal ±4 snapshot
+  start = matchIndex - 4;
+  end = matchIndex + 5;
+  if (start < 0) { end += -start; start = 0; }
+  if (end > allRows.length - 1) { start = Math.max(0, allRows.length - 10); end = allRows.length - 1; }
+}
+const visibleRows = allRows.slice(start, end + 1);
+
+        const rowsHtml = visibleRows.map((row, i) => {
+          const actualIndex = start + i;
+          const isMatch = actualIndex === matchIndex;
+          return `<tr style="${isMatch ? 'font-weight:bold;' : ''}">${row.map(cell => `<td class='px-3 py-1 text-center'>${cell}</td>`).join('')}</tr>`;
+        }).join('');
+
+        const snapshot = document.createElement('div');
+        snapshot.id = 'snapshot';
+        snapshot.style.width = '600px';
+        snapshot.style.borderRadius = '16px';
+        snapshot.style.overflow = 'hidden';
+        snapshot.style.position = 'relative';
+        snapshot.style.boxShadow = '0 10px 30px rgba(0,0,0,.35)';
+        snapshot.style.backgroundImage = "url('image_leaderboard_shf.jpg')";
+        snapshot.style.backgroundSize = 'cover';
+        snapshot.style.backgroundPosition = 'center';
+        snapshot.innerHTML = `
+          <div style="background: rgba(0,0,0,.55); padding: 18px 18px 14px;">
+            <h2 class="text-center text-xl font-bold mb-1">British Classic Fantasy League 2025 🇬🇧</h2>
+            <h3 class="text-center text-base font-semibold mb-1">My League Ranking</h3>
+<p class="text-center text-xs text-gray-300 mb-3" style="opacity:0.9;">
+  Entry Count – ${allRows.length}
+</p>
+<table class="w-full text-sm" style="table-layout: fixed; border-collapse: collapse;">
+              <colgroup>${headerRow.map(() => '<col>').join('')}</colgroup>
+              <thead><tr>${headerRow.map(h => `<th class='py-1 px-3 text-center font-semibold'>${h}</th>`).join('')}</tr></thead>
+              <tbody>${rowsHtml}</tbody>
+            </table>
+            <p class="text-xs text-gray-300 text-center mt-4">Data from tinyurl.com/britishclassicfl-leaderboard<br /><br /> Sponsored by the Sabado Sessions Podcast</p>
+          </div>
+        `;
+        document.body.appendChild(snapshot);
+
+        html2canvas(snapshot, { backgroundColor: null, scale: 2, useCORS: true, scrollY: 0 }).then(async canvas => {
+          const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+          snapshot.remove();
+          const file = new File([blob], 'league_ranking.png', { type: 'image/png' });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+              await navigator.share({
+                title: 'British Classic Fantasy League 2025 🇬🇧',
+                text: 'Check out my league ranking!',
+                files: [file]
+              });
+              return;
+            } catch {}
+          }
+          try {
+            await navigator.clipboard.writeText(window.location.href);
+            alert('Link copied to clipboard!');
+          } catch {
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = 'my-league-ranking.png';
+            link.click();
+          }
+        });
+      }
+
+      document.getElementById('shareRankingBtn').addEventListener('click', shareRanking);
+      shareFloatingBtn.addEventListener('click', shareRanking);
+      loadLeaderboard();
+    });
   </script>
 </body>
 </html>
