@@ -254,6 +254,15 @@
       const titleSub=`${w}kg ${g==='F'?'Women':'Men'}`;
       const fn=`metrics_${g}_${w}_${id.includes('Donut')?'donut':'hist'}.png`;
 
+      // If exporting a donut chart, enforce square export frame
+const isDonut = id.includes('Donut');
+if (isDonut) {
+  card.style.width = '1000px';
+  card.style.height = '1000px';
+  card.style.maxWidth = '1000px';
+  card.style.maxHeight = '1000px';
+}
+
       const dataURL=srcCanvas.toDataURL('image/png');
       const img=new Image();img.src=dataURL;await img.decode();
 
