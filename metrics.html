@@ -11,10 +11,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-
-  <!-- ✅ Browser-safe QR code library (same as leaderboard) -->
-  <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
-
+  <!-- ✅ Correct QR library (matches leaderboard behaviour) -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
   <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
 
   <style>
@@ -31,9 +29,13 @@
       border-radius:.5rem;height:36px;width:36px;transition:background-color .2s ease;}
     .share-btn:hover{background-color:#ef4444;}
     .share-icon{filter:invert(1);height:18px;width:18px;}
-    @keyframes fadeInUp {0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:translateY(0);}}
-    .animate-fade-in-up{animation:fadeInUp .8s ease-out forwards;}
-    .animate-fade-in{animation:fadeInUp 1s ease-out forwards;}
+
+    @keyframes fadeInUp {
+      0% {opacity:0;transform:translateY(10px);}
+      100% {opacity:1;transform:translateY(0);}
+    }
+    .animate-fade-in-up {animation:fadeInUp 0.8s ease-out forwards;}
+    .animate-fade-in {animation:fadeInUp 1s ease-out forwards;}
   </style>
 </head>
 
@@ -166,7 +168,7 @@
     document.addEventListener('click',e=>{if(!mobileMenu.contains(e.target)&&!menuBtn.contains(e.target)){if(menuVisible){menuVisible=false;toggleMenu(false);}}});
     toggleMenu(false);
 
-    // CHART LOGIC
+    // CHARTS
     Chart.register(ChartDataLabels);
     const SHEET_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
     let allData=[],charts={};
@@ -190,6 +192,7 @@
       const f=allData.filter(r=>r.Gender===g&&r.Class===w);
       if(!f.length)return;
 
+      // DONUT
       const counts={};f.forEach(r=>counts[r.Athlete]=(counts[r.Athlete]||0)+1);
       const l=Object.keys(counts),v=Object.values(counts),t=v.reduce((a,b)=>a+b,0);
       const colors=['#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'];
@@ -209,6 +212,7 @@
         plugins:[ChartDataLabels]
       });
 
+      // HISTOGRAM
       const totals=f.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v));
       if(!totals.length)return;
       const N=totals.length,min=Math.min(...totals),max=Math.max(...totals),bins=Math.round(Math.sqrt(N)),bw=(max-min)/bins,h=Array(bins).fill(0);
@@ -232,7 +236,7 @@
       });
     }
 
-    // SHARE EXPORT + QR WATERMARK (no popup + visible QR)
+    // SHARE EXPORT + QR WATERMARK
     async function shareChart(id,g){
       const srcCanvas=document.getElementById(id);
       await new Promise(requestAnimationFrame);
@@ -266,7 +270,7 @@
       header.style.fontWeight='700';
       header.style.margin='0 0 4px 0';
 
-      const sub=document.createElement('p');
+            const sub=document.createElement('p');
       sub.textContent=titleSub;
       sub.style.fontSize='16px';
       sub.style.color='#ddd';
@@ -278,33 +282,37 @@
       img.style.display='block';
       img.style.margin='0 auto 12px auto';
 
-      const credit=document.createElement('p');
-      credit.style.fontSize='13px';
-      credit.style.color='#aaa';
-      credit.style.lineHeight='1.5';
-      credit.innerHTML='Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
-
-      const qrCanvas=document.createElement('div');
-      qrCanvas.style.position='absolute';
-      qrCanvas.style.bottom='18px';
-      qrCanvas.style.left='18px';
-      qrCanvas.style.width='75px';
-      qrCanvas.style.height='75px';
-      qrCanvas.style.zIndex='10';
-      qrCanvas.style.background='rgba(0,0,0,0.4)';
-      qrCanvas.style.borderRadius='8px';
-      qrCanvas.style.opacity='0.9';
-
-      new QRCode(qrCanvas, {
-        text: 'https://solacestrength.github.io/britishclassicfl/metrics.html',
-        width: 75,
-        height: 75,
-        colorDark: '#ffffff',
-        colorLight: 'rgba(0,0,0,0)',
-        correctLevel: QRCode.CorrectLevel.H
+      // ✅ Create sharp, scannable QR (leaderboard-quality)
+      const qrDiv=document.createElement('div');
+      qrDiv.style.position='absolute';
+      qrDiv.style.bottom='22px';
+      qrDiv.style.left='22px';
+      qrDiv.style.width='65px';
+      qrDiv.style.height='65px';
+      qrDiv.style.zIndex='10';
+      qrDiv.style.background='#000';
+      qrDiv.style.borderRadius='6px';
+      qrDiv.style.padding='6px';
+      qrDiv.style.boxSizing='border-box';
+      new QRCode(qrDiv,{
+        text:'https://solacestrength.github.io/britishclassicfl/metrics.html',
+        width:65,
+        height:65,
+        colorDark:'#ffffff',
+        colorLight:'#000000',
+        correctLevel:QRCode.CorrectLevel.H
       });
 
-      card.append(header, sub, img, credit, qrCanvas);
+      // Footer text
+      const credit=document.createElement('p');
+      credit.style.fontSize='12px';
+      credit.style.color='#ccc';
+      credit.style.lineHeight='1.5';
+      credit.style.marginTop='12px';
+      credit.innerHTML='Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
+
+      // Add all components in order
+      card.append(header, sub, img, qrDiv, credit);
       document.body.appendChild(card);
 
       const snapshot=await html2canvas(card,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
@@ -313,6 +321,7 @@
       const blob=await new Promise(r=>snapshot.toBlob(r,'image/png'));
       const file=new File([blob],fn,{type:'image/png'});
 
+      // ✅ No confirmation popup, direct share or fallback download
       if(navigator.canShare&&navigator.canShare({files:[file]})){
         await navigator.share({
           title:'British Classic Fantasy League 2025',
