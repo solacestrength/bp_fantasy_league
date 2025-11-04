@@ -18,16 +18,17 @@
     body {background:#0b0b0b;color:#f1f1f1;font-family:'Inter',sans-serif;}
     select {background:#1f1f1f;border:1px solid #333;}
     canvas {max-width:100%;height:auto!important;}
-    .chart-container {max-width:600px;margin:0 auto;}
-    @media(min-width:1024px){.chart-container{max-width:500px;}}
+    .chart-container {max-width:600px;margin:0 auto;position:relative;}
 
-    /* ✅ Fix mobile donut aspect ratio */
-    @media(max-width:1023px){
-      #womenDonut, #menDonut {
-        width:100%!important;
-        height:auto!important;
-        aspect-ratio:1/1!important;
-      }
+    /* Balanced chart heights */
+    @media (min-width:1024px){
+      .chart-container{max-width:500px;}
+      #womenDonut, #menDonut {height:375px !important;} /* slightly taller donut */
+      #womenHist, #menHist {height:395px !important;}   /* slightly shorter histogram */
+    }
+    @media (max-width:1023px){
+      #womenDonut, #menDonut {height:336px !important;} /* +12% taller donut */
+      #womenHist, #menHist {height:390px !important;}   /* -15% shorter histogram */
     }
 
     .collapsible-content{max-height:0;overflow:hidden;opacity:0;
@@ -40,22 +41,17 @@
     .share-btn:hover{background-color:#ef4444;}
     .share-icon{filter:invert(1);height:18px;width:18px;}
 
-    @keyframes fadeInUp {
-      0%{opacity:0;transform:translateY(10px);}
-      100%{opacity:1;transform:translateY(0);}
-    }
+    @keyframes fadeInUp {0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:translateY(0);}}
     .animate-fade-in-up{animation:fadeInUp 0.8s ease-out forwards;}
     .animate-fade-in{animation:fadeInUp 1s ease-out forwards;}
   </style>
 </head>
 
 <body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
-  <!-- Background -->
   <div class="absolute inset-0 bg-[url('bc25_logo.jpg')] bg-cover bg-center opacity-45"></div>
   <div class="absolute inset-0 bg-black/70"></div>
 
   <div class="relative z-10 flex flex-col flex-grow animate-fade-in">
-    <!-- Header -->
     <header class="site-header w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 relative z-50">
       <div class="w-full flex items-center justify-center px-4 py-3">
         <div class="flex-1 text-center">
@@ -77,7 +73,6 @@
       </div>
     </header>
 
-    <!-- Dropdown -->
     <div id="mobile-menu"
       class="fixed top-16 right-4 w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-md shadow-lg z-50 scale-y-0 opacity-0 origin-top transition-transform duration-300 ease-in-out pointer-events-none">
       <nav class="flex flex-col py-2 text-white">
@@ -89,7 +84,6 @@
       </nav>
     </div>
 
-    <!-- MAIN CONTENT -->
     <main class="max-w-5xl mx-auto p-6 space-y-8 mt-6 animate-fade-in-up">
       <section class="text-center">
         <h2 class="text-xl font-semibold mb-1">Metrics Dashboard</h2>
@@ -175,9 +169,7 @@
   </div>
 
   <script src="assets/js/metrics-script.js"></script>
-  
   <script>// ======= MENU =======
-// ======= MENU =======
 const menuBtn = document.getElementById('menu-btn');
 const mobileMenu = document.getElementById('mobile-menu');
 function toggleMenu(show){
@@ -189,50 +181,39 @@ function toggleMenu(show){
     mobileMenu.classList.remove('scale-y-100','opacity-100');
   }
 }
-let menuVisible = false;
-menuBtn.addEventListener('click', e => { menuVisible = !menuVisible; toggleMenu(menuVisible); e.stopPropagation(); });
-document.addEventListener('click', e => {
-  if(!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)){
-    if(menuVisible){ menuVisible = false; toggleMenu(false); }
-  }
-});
+let menuVisible=false;
+menuBtn.addEventListener('click',e=>{menuVisible=!menuVisible;toggleMenu(menuVisible);e.stopPropagation();});
+document.addEventListener('click',e=>{if(!mobileMenu.contains(e.target)&&!menuBtn.contains(e.target)){if(menuVisible){menuVisible=false;toggleMenu(false);}}});
 toggleMenu(false);
 
-
-// ======= CHARTS: DATA + RENDERING =======
+// ======= CHART SETUP =======
 Chart.register(ChartDataLabels);
 
 const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
 let allData = [];
 const charts = {};
 
-// Desktop-aware sizes (≈ 75% bigger on desktop)
 function sizing() {
   const desktop = window.matchMedia('(min-width: 1024px)').matches;
   return {
-    // Donut
-    donutTitle: desktop ? 22 : 12,
-    donutSubtitle: desktop ? 18 : 10,
-    donutLegend: desktop ? 28 : 12,
-    donutPercent: desktop ? 16 : 10,
-
-    // Histogram
-    histTitle: desktop ? 22 : 12,
-    histSubtitle: desktop ? 18 : 10,
-    axisTitle: desktop ? 18 : 11,
-    axisTick: desktop ? 14 : 10,
-    histBarLabel: desktop ? 12 : 8,
-
-    // Export card
+    donutTitle: desktop ? 22 : 14,
+    donutSubtitle: desktop ? 18 : 12,
+    donutLegend: desktop ? 18 : 12,
+    donutPercent: desktop ? 16 : 12,
+    histTitle: desktop ? 22 : 14,
+    histSubtitle: desktop ? 18 : 12,
+    axisTitle: desktop ? 18 : 12,
+    axisTick: desktop ? 14 : 11,
+    histBarLabel: desktop ? 12 : 10,
     exportWidth: desktop ? 1024 : 780,
     qrSize: desktop ? 96 : 72,
     creditFont: desktop ? 18 : 13,
-    headerFont: desktop ? 32 : 18,
+    headerFont: desktop ? 32 : 20,
     subFont: desktop ? 26 : 16
   };
 }
 
-// Load CSV and initialize dropdowns
+// ======= LOAD DATA =======
 Papa.parse(SHEET_URL, {
   download: true,
   header: true,
@@ -253,53 +234,64 @@ function setupDropdowns(){
   });
 }
 
+// ======= RENDER CHARTS =======
 function renderCharts(g, w){
   const s = sizing();
   const donutId = g==='F'?'womenDonut':'menDonut';
   const histId  = g==='F'?'womenHist':'menHist';
-
   const rows = allData.filter(r=>r.Gender===g && r.Class===w);
   if(!rows.length) return;
 
-  // ----- DONUT -----
+  // --- DONUT ---
   const counts = {};
   rows.forEach(r => counts[r.Athlete] = (counts[r.Athlete]||0) + 1);
   const labels = Object.keys(counts);
   const data   = Object.values(counts);
   const totalVotes = data.reduce((a,b)=>a+b,0);
-
-  const palette = ['#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'];
-  const colors = labels.map((_,i)=>palette[i%palette.length]);
+  const colors = ['#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'];
 
   if(charts[donutId]) charts[donutId].destroy();
   charts[donutId] = new Chart(document.getElementById(donutId),{
     type:'doughnut',
-    data:{ labels, datasets:[{ data, backgroundColor: colors, borderColor:'#111', borderWidth:1 }]},
+    data:{ labels, datasets:[{ data, backgroundColor:colors, borderColor:'#111', borderWidth:1 }]},
     options:{
-      maintainAspectRatio:true,
+      maintainAspectRatio:false,
+      aspectRatio:1.05, // slightly taller donut (no squash)
+      cutout:'55%',
       plugins:{
         title:{ display:true, text:'Share of Votes', color:'#ccc', font:{ weight:'bold', size:s.donutTitle }, padding:{ bottom:2 }},
-        subtitle:{ display:true, text:`Total Votes – ${totalVotes}`, color:'#aaa', font:{ weight:'normal', size:s.donutSubtitle }, padding:{ top:1, bottom:6 }},
-        legend:{ position:'bottom', labels:{ color:'#ccc', boxWidth:10, boxHeight:10, font:{ size:s.donutLegend, weight:'normal' } } },
+        subtitle:{ display:true, text:`Total Votes – ${totalVotes}`, color:'#aaa', font:{ weight:'normal', size:s.donutSubtitle }, padding:{ top:1,bottom:6 }},
+        legend:{ position:'bottom', labels:{ color:'#ccc', boxWidth:10, boxHeight:10, font:{ size:s.donutLegend, weight:'normal' } }},
         datalabels:{
           color:'#fff', font:{ weight:'bold', size:s.donutPercent },
-          formatter: (v,ctx)=>{ const p=(v/totalVotes)*100; return p>=3?`${p.toFixed(1)}%`:''; },
+          formatter:(v)=>{const p=(v/totalVotes)*100;return p>=3?`${p.toFixed(1)}%`:'';},
           anchor:'center', align:'center', clamp:true
         }
-      },
-      cutout:'55%'
+      }
     },
     plugins:[ChartDataLabels]
   });
 
-  // ----- HISTOGRAM -----
-  const totalsRaw = rows.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v)&&v>0);
+  // --- HISTOGRAM ---
+  const totalsRaw = rows.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v) && v>0);
   if(!totalsRaw.length){
     if(charts[histId]) charts[histId].destroy();
-    charts[histId] = new Chart(document.getElementById(histId),{
+    charts[histId] = new Chart(document.getElementById(histId), {
       type:'bar',
-      data:{labels:[],datasets:[{data:[]}]},
-      options:{plugins:{title:{display:true,text:'Distribution of Predicted Winning Totals',color:'#ccc',font:{size:s.histTitle,weight:'bold'}},subtitle:{display:true,text:`Total Votes – 0`,color:'#aaa',font:{size:s.histSubtitle}},legend:{display:false}}}
+      data:{ labels:[], datasets:[{ data:[] }]},
+      options:{
+        plugins:{
+          title:{ display:true, text:'Distribution of Predicted Winning Totals', color:'#ccc', font:{ size:s.histTitle, weight:'bold' }},
+          subtitle:{ display:true, text:`Total Votes – 0`, color:'#aaa', font:{ size:s.histSubtitle }},
+          legend:{ display:false }
+        },
+        scales:{
+          x:{ ticks:{ color:'#ccc', font:{ size:s.axisTick }},
+              title:{ display:true, text:'Predicted Total (kg)', color:'#ccc', font:{ size:s.axisTitle, weight:'bold' }}},
+          y:{ ticks:{ color:'#ccc', font:{ size:s.axisTick }},
+              title:{ display:true, text:'Frequency', color:'#ccc', font:{ size:s.axisTitle, weight:'bold' }}}
+        }
+      }
     });
     return;
   }
@@ -314,77 +306,61 @@ function renderCharts(g, w){
   totalsRaw.forEach(v => {
     let i = Math.floor((v - min) / bw);
     if(i >= bins) i = bins - 1;
-    if(i < 0) i = 0;
     countsHist[i]++;
   });
-
-  const binLabels = Array.from({length:bins}, (_,i)=>{
-    const a = (min + i*bw);
-    const b = (min + (i+1)*bw);
-    return `${a.toFixed(0)}–${b.toFixed(0)}`;
-  });
-
-  // ✅ Smart y-axis scaling
-  const nonZeroBins = countsHist.filter(v=>v>0);
-  const minBin = nonZeroBins.length ? Math.min(...nonZeroBins) : 0;
-  const maxBin = nonZeroBins.length ? Math.max(...nonZeroBins) : 0;
+  const binLabels = Array.from({length:bins},(_,i)=>`${(min+i*bw).toFixed(0)}–${(min+(i+1)*bw).toFixed(0)}`);
 
   if(charts[histId]) charts[histId].destroy();
   charts[histId] = new Chart(document.getElementById(histId),{
     type:'bar',
     data:{ labels:binLabels, datasets:[{ data:countsHist, backgroundColor:'#3b82f6', borderRadius:5 }]},
     options:{
-      maintainAspectRatio:true,
+      maintainAspectRatio:false,
+      aspectRatio:0.85, // reduced height slightly
       plugins:{
         title:{ display:true, text:'Distribution of Predicted Winning Totals', color:'#ccc', font:{ size:s.histTitle, weight:'bold' }, padding:{ bottom:2 }},
-        subtitle:{ display:true, text:`Total Votes – ${N}`, color:'#aaa', font:{ weight:'normal', size:s.histSubtitle }, padding:{ top:1, bottom:6 }},
+        subtitle:{ display:true, text:`Total Votes – ${N}`, color:'#aaa', font:{ size:s.histSubtitle, weight:'normal' }, padding:{ top:1, bottom:6 }},
         legend:{ display:false },
         datalabels:{
-          anchor:'center', align:'center', color:'#fff',
-          font:{ weight:'normal', size:s.histBarLabel },
+          anchor:'center', align:'center', color:'#fff', font:{ weight:'normal', size:s.histBarLabel },
           formatter:v=>v>0?v:''
         }
       },
       scales:{
         x:{ ticks:{ color:'#ccc', font:{ size:s.axisTick }},
             title:{ display:true, text:'Predicted Total (kg)', color:'#ccc', font:{ size:s.axisTitle, weight:'bold' }}},
-        y:{ beginAtZero:false,
-            min:Math.max(0,Math.floor(minBin/2)),
-            max:Math.ceil(maxBin*1.1),
-            ticks:{ color:'#ccc', font:{ size:s.axisTick }},
-            title:{ display:true, text:'Frequency', color:'#ccc', font:{ size:s.axisTitle, weight:'bold' }}}
+        y:{ beginAtZero:true, ticks:{ color:'#ccc', font:{ size:s.axisTick }},
+            title:{ display:true, text:'Frequency', color:'#ccc', font:{ size:s.axisTitle, weight:'bold' }},
+            suggestedMax: Math.max(...countsHist)*1.15 }
       }
     },
     plugins:[ChartDataLabels]
   });
 }
 
-
 // ======= COLLAPSIBLE SECTIONS =======
 function toggleSection(id){
-  const content=document.getElementById(id);
-  const arrow=document.getElementById(`arrow-${id}`);
-  const isOpen=content.classList.toggle('open');
-  arrow.classList.toggle('rotate',isOpen);
+  const c=document.getElementById(id);
+  const a=document.getElementById(`arrow-${id}`);
+  const open=c.classList.toggle('open');
+  a.classList.toggle('rotate',open);
 }
 
-
 // ======= SHARE / EXPORT =======
-async function shareChart(id, g){
-  const s=sizing();
-  const srcCanvas=document.getElementById(id);
+async function shareChart(id, g) {
+  const s = sizing();
+  const srcCanvas = document.getElementById(id);
   await new Promise(requestAnimationFrame);
 
-  const sel=document.getElementById(g==='F'?'womenSelect':'menSelect');
-  const w=sel.value;
-  const isDonut=id.includes('Donut');
-  const isMobile=!window.matchMedia('(min-width:1024px)').matches;
-  const titleMain='British Classic Fantasy League 2025 🇬🇧';
-  const titleSub=`${w}kg ${g==='F'?'Women':'Men'}`;
-  const fileName=`metrics_${g}_${w}_${isDonut?'donut':'hist'}.png`;
+  const sel = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
+  const w = sel.value;
+  const titleMain = 'British Classic Fantasy League 2025 🇬🇧';
+  const titleSub = `${w}kg ${g === 'F' ? 'Women' : 'Men'}`;
+  const isDonut = id.includes('Donut');
+  const fileName = `metrics_${g}_${w}_${isDonut ? 'donut' : 'hist'}.png`;
+  const isMobile = window.innerWidth < 768;
 
-  // Card container
-  const card=document.createElement('div');
+  const card = document.createElement('div');
   card.style.position='relative';
   card.style.width=s.exportWidth+'px';
   card.style.borderRadius='16px';
@@ -394,60 +370,56 @@ async function shareChart(id, g){
   card.style.backgroundSize='cover';
   card.style.backgroundPosition='center';
   card.style.boxShadow='0 10px 25px rgba(0,0,0,0.35)';
-  card.style.minHeight=isDonut
-    ? (isMobile ? '900px':'850px')
-    : (isMobile ? '920px':'780px'); // ✅ taller mobile histogram
+  // Adjust export height balance
+  card.style.minHeight=isDonut?(isMobile?'900px':'850px'):(isMobile?'860px':'780px');
 
-  // Overlay
   const overlay=document.createElement('div');
   overlay.style.position='absolute';
   overlay.style.inset='0';
   overlay.style.background='rgba(0,0,0,0.65)';
   card.appendChild(overlay);
 
-  // Inner
   const inner=document.createElement('div');
   inner.style.position='relative';
-  inner.style.padding='24px';
+  inner.style.padding=isDonut?(isMobile?'34px 24px 28px':'30px 28px 26px'):(isMobile?'42px 28px 26px':'36px 28px 24px');
   inner.style.textAlign='center';
   inner.style.color='#fff';
-  inner.style.fontFamily="'Inter', sans-serif";
+  inner.style.fontFamily="'Inter',sans-serif";
   inner.style.zIndex='2';
 
   const header=document.createElement('h2');
   header.textContent=titleMain;
-  header.style.fontSize=s.headerFont+'px';
+  header.style.fontSize=isMobile?s.headerFont*1.5+'px':s.headerFont*1.25+'px';
   header.style.fontWeight='700';
   header.style.margin='0 0 4px 0';
 
   const sub=document.createElement('p');
   sub.textContent=titleSub;
-  sub.style.fontSize=s.subFont+'px';
+  sub.style.fontSize=isMobile?s.subFont*1.5+'px':s.subFont*1.25+'px';
   sub.style.fontWeight='700';
   sub.style.color='#ddd';
   sub.style.margin='0 0 14px 0';
 
-  // Chart image
   const dataURL=srcCanvas.toDataURL('image/png');
   const img=new Image();
   img.src=dataURL;
   img.style.display='block';
-  img.style.margin='0 auto 14px auto';
   img.style.borderRadius='8px';
-  img.style.width=isDonut?'86%':'90%';
+  img.style.margin=isDonut?'0 auto 20px auto':'0 auto 10px auto';
+  img.style.width=isDonut?(isMobile?'80%':'70%'):(isMobile?'96%':'93%');
   img.style.height='auto';
   await img.decode();
 
   const credit=document.createElement('p');
-  credit.style.fontSize=s.creditFont+'px';
+  credit.style.fontSize=isMobile?s.creditFont*1.25+'px':s.creditFont*1.15+'px';
   credit.style.color='#ccc';
   credit.style.lineHeight='1.5';
-  credit.style.margin='8px 0 0 0';
+  credit.style.marginTop='8px';
   credit.innerHTML='Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-  const qrSize=s.qrSize;
   const qr=new Image();
   qr.crossOrigin='anonymous';
+  const qrSize=isMobile?s.qrSize*1.1:s.qrSize*1.25;
   qr.src=`https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent('https://solacestrength.github.io/britishclassicfl/metrics.html')}`;
   qr.style.position='absolute';
   qr.style.bottom='18px';
@@ -457,8 +429,8 @@ async function shareChart(id, g){
   qr.style.borderRadius='6px';
   qr.style.opacity='0.95';
 
-  inner.append(header,sub,img,credit);
-  card.append(inner,qr);
+  inner.append(header, sub, img, credit);
+  card.append(inner, qr);
   document.body.appendChild(card);
 
   const canvas=await html2canvas(card,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
@@ -467,14 +439,10 @@ async function shareChart(id, g){
   const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));
   const file=new File([blob],fileName,{type:'image/png'});
 
-  if(navigator.canShare && navigator.canShare({files:[file]})){
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
     try{
-      await navigator.share({
-        title:'British Classic Fantasy League 2025',
-        text:'Check out these British Classic Fantasy League stats!',
-        files:[file]
-      });
-    }catch(e){/* ignored */}
+      await navigator.share({title:'British Classic Fantasy League 2025',text:'Check out these British Classic Fantasy League stats!',files:[file]});
+    }catch(e){}
   }else{
     const link=document.createElement('a');
     link.href=canvas.toDataURL('image/png');
