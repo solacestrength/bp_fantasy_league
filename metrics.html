@@ -11,8 +11,11 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <!-- ✅ Correct global QRCode version -->
+  <!-- ✅ Robust QRCode global definition -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script>
+    window.QRCode = window.QRCode || QRCode; // ensures availability globally
+  </script>
   <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
 
   <style>
@@ -29,11 +32,7 @@
       border-radius:.5rem;height:36px;width:36px;transition:background-color .2s ease;}
     .share-btn:hover{background-color:#ef4444;}
     .share-icon{filter:invert(1);height:18px;width:18px;}
-
-    @keyframes fadeInUp {
-      0% {opacity:0;transform:translateY(10px);}
-      100% {opacity:1;transform:translateY(0);}
-    }
+    @keyframes fadeInUp {0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:translateY(0);}}
     .animate-fade-in-up {animation:fadeInUp 0.8s ease-out forwards;}
     .animate-fade-in {animation:fadeInUp 1s ease-out forwards;}
   </style>
@@ -45,7 +44,6 @@
   <div class="absolute inset-0 bg-black/70"></div>
 
   <div class="relative z-10 flex flex-col flex-grow animate-fade-in">
-    <!-- Header -->
     <header class="site-header w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 relative z-50">
       <div class="w-full flex items-center justify-center px-4 py-3">
         <div class="flex-1 text-center">
@@ -63,7 +61,6 @@
       </div>
     </header>
 
-    <!-- Dropdown -->
     <div id="mobile-menu" class="fixed top-16 right-4 w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-md shadow-lg z-50 scale-y-0 opacity-0 origin-top transition-transform duration-300 ease-in-out pointer-events-none">
       <nav class="flex flex-col py-2 text-white">
         <a href="index.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Home</a>
@@ -143,7 +140,6 @@
       </div>
     </main>
 
-    <!-- Buttons -->
     <div class="flex justify-center mt-8">
       <a href="leaderboard.html" class="bg-gray-800/60 border border-gray-700 text-gray-200 font-semibold px-6 py-3 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-base">
         View Leaderboard
@@ -161,14 +157,14 @@
   </div>
 
   <script>
-    // MENU
+    // MENU TOGGLE
     const menuBtn=document.getElementById('menu-btn'),mobileMenu=document.getElementById('mobile-menu');
     function toggleMenu(show){if(show){mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');mobileMenu.classList.add('scale-y-100','opacity-100');}else{mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');mobileMenu.classList.remove('scale-y-100','opacity-100');}}
     let menuVisible=false;menuBtn.addEventListener('click',e=>{menuVisible=!menuVisible;toggleMenu(menuVisible);e.stopPropagation();});
     document.addEventListener('click',e=>{if(!mobileMenu.contains(e.target)&&!menuBtn.contains(e.target)){if(menuVisible){menuVisible=false;toggleMenu(false);}}});
     toggleMenu(false);
 
-    // CHART DATA
+    // CHARTS
     Chart.register(ChartDataLabels);
     const SHEET_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
     let allData=[],charts={};
@@ -244,8 +240,8 @@
             datalabels:{
               color:'#fff',
               font:{weight:'bold',size:11},
-              anchor:'end',
-              align:'top',
+              anchor:'center', // inside bars
+              align:'center',
               formatter:v=>v>0?v:''
             }
           }
@@ -254,7 +250,7 @@
       });
     }
 
-    // SHARE EXPORT + QR CODE WATERMARK
+    // SHARE EXPORT
     async function shareChart(id,g){
       const srcCanvas=document.getElementById(id);
       await new Promise(requestAnimationFrame);
@@ -273,7 +269,7 @@
       card.style.backgroundSize='cover';
       card.style.backgroundPosition='center';
       card.style.backgroundBlendMode='darken';
-      card.style.padding='24px';
+            card.style.padding='24px';
       card.style.borderRadius='16px';
       card.style.textAlign='center';
       card.style.color='#fff';
@@ -282,55 +278,85 @@
       card.style.margin='0 auto';
       card.style.boxSizing='border-box';
 
+      // Header
       const header=document.createElement('h2');
       header.textContent=titleMain;
       header.style.fontSize='18px';
       header.style.fontWeight='700';
       header.style.margin='0 0 4px 0';
+
       const sub=document.createElement('p');
       sub.textContent=titleSub;
       sub.style.fontSize='16px';
       sub.style.color='#ddd';
       sub.style.margin='0 0 14px 0';
+
+      // Chart image
       img.style.maxWidth='100%';
       img.style.height='auto';
       img.style.borderRadius='8px';
       img.style.display='block';
       img.style.margin='0 auto 12px auto';
+
+      // Credit text
       const credit=document.createElement('p');
       credit.style.fontSize='13px';
       credit.style.color='#aaa';
       credit.style.lineHeight='1.5';
       credit.innerHTML='Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-      // QR watermark
+      // ✅ QR Code watermark
       const qrCanvas=document.createElement('canvas');
-      qrCanvas.width=75; qrCanvas.height=75;
-      qrCanvas.style.position='absolute'; qrCanvas.style.bottom='18px'; qrCanvas.style.left='18px';
-      qrCanvas.style.opacity='0.85'; qrCanvas.style.borderRadius='8px'; qrCanvas.style.pointerEvents='none';
-      await QRCode.toCanvas(qrCanvas,'https://britishclassicfantasyleague.github.io/metrics.html',{
-        width:75,margin:1,color:{dark:'#ffffff',light:'rgba(0,0,0,0)'}
-      });
+      qrCanvas.width=75;
+      qrCanvas.height=75;
+      qrCanvas.style.position='absolute';
+      qrCanvas.style.bottom='18px';
+      qrCanvas.style.left='18px';
+      qrCanvas.style.opacity='0.85';
+      qrCanvas.style.borderRadius='8px';
+      qrCanvas.style.pointerEvents='none';
 
-      card.append(header,sub,img,credit,qrCanvas);
+      // Ensure QRCode is available
+      if (typeof window.QRCode !== 'undefined') {
+        await QRCode.toCanvas(qrCanvas, 'https://britishclassicfantasyleague.github.io/metrics.html', {
+          width: 75,
+          margin: 1,
+          color: { dark: '#ffffff', light: 'rgba(0,0,0,0)' }
+        });
+      } else {
+        console.error('QRCode library not available.');
+      }
+
+      // Assemble export card
+      card.append(header, sub, img, credit, qrCanvas);
       document.body.appendChild(card);
 
-      const snapshot=await html2canvas(card,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
+      // Snapshot export
+      const snapshot = await html2canvas(card, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+        scrollY: 0
+      });
       card.remove();
 
-      const blob=await new Promise(r=>snapshot.toBlob(r,'image/png'));
-      const file=new File([blob],fn,{type:'image/png'});
+      const blob = await new Promise(r => snapshot.toBlob(r, 'image/png'));
+      const file = new File([blob], fn, { type: 'image/png' });
 
-      try{
-        if(/Mobi|Android/i.test(navigator.userAgent)&&navigator.canShare&&navigator.canShare({files:[file]})){
-          await navigator.share({title:'British Classic Fantasy League 2025',text:'Check out these stats!',files:[file]});
-        }else{
-          const link=document.createElement('a');
-          link.href=snapshot.toDataURL('image/png');
-          link.download=fn;
-          link.click();
+      // ✅ Share logic (no forced download)
+      try {
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: 'British Classic Fantasy League 2025',
+            text: 'Check out these British Classic Fantasy League stats!',
+            files: [file]
+          });
+        } else {
+          alert('Sharing is not supported on this browser. Try on a mobile device instead.');
         }
-      }catch(err){console.error('Share failed:',err);}
+      } catch (err) {
+        console.error('Share failed:', err);
+      }
     }
   </script>
 </body>
