@@ -168,7 +168,7 @@
   </div>
 
   <script>
-    // MENU
+    // --- MENU ---
     const menuBtn = document.getElementById('menu-btn'),
           mobileMenu = document.getElementById('mobile-menu');
 
@@ -200,7 +200,21 @@
 
     toggleMenu(false);
 
-    // CHART DATA
+    // --- CSS fallback if fix-dropdown.css missing ---
+    fetch('/assets/css/fix-dropdown.css').catch(() => {
+      const style = document.createElement('style');
+      style.textContent = `
+        select {background-color:#1f1f1f;border:1px solid #333;color:#f1f1f1;padding:4px;border-radius:6px;}
+      `;
+      document.head.appendChild(style);
+    });
+
+    // --- QRCode safety check ---
+    if (typeof window.QRCode === 'undefined' && typeof QRCode !== 'undefined') {
+      window.QRCode = QRCode;
+    }
+
+    // --- CHART LOGIC ---
     Chart.register(ChartDataLabels);
     const SHEET_URL =
       'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
@@ -247,45 +261,15 @@
       if (charts[id]) charts[id].destroy();
       charts[id] = new Chart(document.getElementById(id), {
         type: 'doughnut',
-        data: {
-          labels: l,
-          datasets: [{
-            data: v,
-            backgroundColor: cset,
-            borderColor: '#111',
-            borderWidth: 1
-          }]
-        },
+        data: { labels: l, datasets: [{ data: v, backgroundColor: cset, borderColor: '#111', borderWidth: 1 }] },
         options: {
           plugins: {
-            title: {
-              display: true,
-              text: 'Share of Votes',
-              color: '#ccc',
-              font: { weight: 'bold', size: 14 },
-              padding: { bottom: 2 }
-            },
-            subtitle: {
-              display: true,
-              text: `Total Votes – ${t}`,
-              color: '#aaa',
-              font: { weight: 'normal', size: 12 },
-              padding: { top: 1, bottom: 6 }
-            },
-            legend: {
-              position: 'bottom',
-              labels: { color: '#ccc', boxWidth: 10, boxHeight: 10 }
-            },
-            datalabels: {
-              color: '#fff',
-              font: { weight: 'bold', size: 11 },
-              formatter: x => {
-                const p = (x / t) * 100;
-                return p >= 3 ? `${p.toFixed(1)}%` : '';
-              },
-              anchor: 'center',
-              align: 'center'
-            }
+            title: { display: true, text: 'Share of Votes', color: '#ccc', font: { weight: 'bold', size: 14 }, padding: { bottom: 2 } },
+            subtitle: { display: true, text: `Total Votes – ${t}`, color: '#aaa', font: { weight: 'normal', size: 12 }, padding: { top: 1, bottom: 6 } },
+            legend: { position: 'bottom', labels: { color: '#ccc', boxWidth: 10, boxHeight: 10 } },
+            datalabels: { color: '#fff', font: { weight: 'bold', size: 11 }, formatter: x => {
+              const p = (x / t) * 100; return p >= 3 ? `${p.toFixed(1)}%` : '';
+            }, anchor: 'center', align: 'center' }
           }
         },
         plugins: [ChartDataLabels]
@@ -296,46 +280,24 @@
       if (!totals.length) return;
       const N = totals.length, min = Math.min(...totals), max = Math.max(...totals),
             bins = Math.round(Math.sqrt(N)), bw = (max - min) / bins, h = Array(bins).fill(0);
-      totals.forEach(v => {
-        const i = Math.min(Math.floor((v - min) / bw), bins - 1);
-        h[i]++;
-      });
-      const lbls = Array.from({ length: bins }, (_, i) =>
-        `${(min + i * bw).toFixed(0)}–${(min + (i + 1) * bw).toFixed(0)}`
-      ), hid = g === 'F' ? 'womenHist' : 'menHist';
+      totals.forEach(v => { const i = Math.min(Math.floor((v - min) / bw), bins - 1); h[i]++; });
+      const lbls = Array.from({ length: bins }, (_, i) => `${(min + i * bw).toFixed(0)}–${(min + (i + 1) * bw).toFixed(0)}`),
+            hid = g === 'F' ? 'womenHist' : 'menHist';
 
       if (charts[hid]) charts[hid].destroy();
       charts[hid] = new Chart(document.getElementById(hid), {
         type: 'bar',
-        data: {
-          labels: lbls,
-          datasets: [{
-            label: 'Predicted Totals',
-            data: h,
-            backgroundColor: '#3b82f6',
-            borderRadius: 5
-          }]
-        },
+        data: { labels: lbls, datasets: [{ label: 'Predicted Totals', data: h, backgroundColor: '#3b82f6', borderRadius: 5 }] },
         options: {
           scales: {
-            x: {
-              ticks: { color: '#ccc', font: { size: 10 } },
-              title: { display: true, text: 'Predicted Total (kg)', color: '#ccc', font: { size: 11, weight: 'bold' } }
-            },
-            y: {
-              beginAtZero: true,
-              ticks: { color: '#ccc', font: { size: 10 } },
-              title: { display: true, text: 'Frequency', color: '#ccc', font: { size: 11, weight: 'bold' } }
-            }
+            x: { ticks: { color: '#ccc', font: { size: 10 } }, title: { display: true, text: 'Predicted Total (kg)', color: '#ccc', font: { size: 11, weight: 'bold' } } },
+            y: { beginAtZero: true, ticks: { color: '#ccc', font: { size: 10 } }, title: { display: true, text: 'Frequency', color: '#ccc', font: { size: 11, weight: 'bold' } } }
           },
           plugins: {
             legend: { display: false },
             datalabels: {
-              color: '#fff',
-              font: { weight: 'bold', size: 11 },
-              anchor: 'center',
-              align: 'center',
-              formatter: v => v > 0 ? v : ''
+              color: '#fff', font: { weight: 'bold', size: 11 },
+              anchor: 'center', align: 'center', formatter: v => v > 0 ? v : ''
             }
           }
         },
@@ -343,10 +305,10 @@
       });
     }
 
-    // SHARE EXPORT + QR CODE (Leaderboards-style)
+    // --- SHARE EXPORT + QR CODE WATERMARK ---
     async function shareChart(id, g) {
       if (typeof window.QRCode === 'undefined') {
-        alert('QR code library not loaded');
+        alert('QR code library not loaded yet. Please refresh and try again.');
         return;
       }
 
@@ -376,7 +338,6 @@
       card.style.margin = '0 auto';
       card.style.boxSizing = 'border-box';
 
-      // Title and image
       const header = document.createElement('h2');
       header.textContent = titleMain;
       header.style.fontSize = '18px';
@@ -395,14 +356,13 @@
       img.style.display = 'block';
       img.style.margin = '0 auto 12px auto';
 
-      // Credit
       const credit = document.createElement('p');
       credit.style.fontSize = '13px';
       credit.style.color = '#aaa';
       credit.style.lineHeight = '1.5';
       credit.innerHTML = 'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-      // QR Code (Leaderboard style)
+      // ✅ Correct live QR link
       const qrCanvas = document.createElement('canvas');
       qrCanvas.width = 75;
       qrCanvas.height = 75;
@@ -413,7 +373,7 @@
       qrCanvas.style.borderRadius = '8px';
       qrCanvas.style.pointerEvents = 'none';
 
-      await QRCode.toCanvas(qrCanvas, 'https://britishclassicfantasyleague.github.io/metrics.html', {
+      await QRCode.toCanvas(qrCanvas, 'https://solacestrength.github.io/britishclassicfl/metrics.html', {
         width: 75,
         margin: 1,
         color: { dark: '#ffffff', light: 'rgba(0,0,0,0)' }
