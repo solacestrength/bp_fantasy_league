@@ -292,7 +292,7 @@
     a.classList.toggle('rotate',o);
   }
 
-  // ======= SHARE / EXPORT =======
+  // ======= SHARE / EXPORT (Final Fixed Aspect Ratio) =======
 async function shareChart(id, g) {
   const s = sizing();
   const src = document.getElementById(id);
@@ -315,8 +315,9 @@ async function shareChart(id, g) {
   card.style.backgroundPosition = 'center';
   card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
 
-  // ✅ EXACT height parity between donut and histogram
-  card.style.minHeight = isMobile ? '900px' : '860px';
+  // ✅ Hard-set exact export height (match donut)
+  const fixedHeight = isMobile ? 1934 : 1720;
+  card.style.height = fixedHeight + 'px';
 
   const overlay = document.createElement('div');
   overlay.style.position = 'absolute';
@@ -326,9 +327,7 @@ async function shareChart(id, g) {
 
   const inner = document.createElement('div');
   inner.style.position = 'relative';
-  inner.style.padding = isDonut
-    ? '36px 28px 36px 28px'
-    : '36px 28px 36px 28px'; // ✅ same padding for balance
+  inner.style.padding = '36px 28px 36px 28px';
   inner.style.textAlign = 'center';
   inner.style.color = '#fff';
   inner.style.fontFamily = "'Inter', sans-serif";
@@ -353,8 +352,9 @@ async function shareChart(id, g) {
   await img.decode();
   img.style.display = 'block';
   img.style.margin = '0 auto 20px';
-  img.style.width = isDonut ? (isMobile ? '80%' : '70%') : (isMobile ? '95%' : '93%');
+  img.style.width = isDonut ? (isMobile ? '80%' : '70%') : (isMobile ? '94%' : '92%');
   img.style.borderRadius = '8px';
+  img.style.maxHeight = isDonut ? 'unset' : '72%'; // ✅ histogram slightly shorter internally
 
   const credit = document.createElement('p');
   credit.style.fontSize = isMobile ? s.creditFont * 1.25 + 'px' : s.creditFont * 1.15 + 'px';
@@ -380,15 +380,16 @@ async function shareChart(id, g) {
   card.append(inner, qr);
   document.body.appendChild(card);
 
-  // ✅ html2canvas fix — capture only visible area
-  const rect = card.getBoundingClientRect();
+  // ✅ Explicit render region (no extra padding captured)
   const canvas = await html2canvas(card, {
     backgroundColor: null,
     scale: 2,
     useCORS: true,
     scrollY: 0,
-    height: rect.height,
-    width: rect.width,
+    height: fixedHeight,
+    width: s.exportWidth,
+    windowWidth: s.exportWidth,
+    windowHeight: fixedHeight,
   });
 
   card.remove();
