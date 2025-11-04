@@ -236,7 +236,7 @@
       });
     }
 
-    // SHARE EXPORT + QR WATERMARK (final version)
+    // SHARE EXPORT + QR WATERMARK (final tuned version)
 async function shareChart(id, g) {
   const srcCanvas = document.getElementById(id);
   await new Promise(requestAnimationFrame);
@@ -249,7 +249,7 @@ async function shareChart(id, g) {
   // Create snapshot container
   const card = document.createElement('div');
   card.style.position = 'relative';
-  card.style.width = '780px'; // ✅ fixed width for consistent scaling
+  card.style.width = '780px';
   card.style.borderRadius = '16px';
   card.style.overflow = 'hidden';
   card.style.margin = '0 auto';
@@ -258,14 +258,14 @@ async function shareChart(id, g) {
   card.style.backgroundPosition = 'center';
   card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
 
-  // Overlay for dark fade
+  // Dark overlay
   const overlay = document.createElement('div');
   overlay.style.position = 'absolute';
   overlay.style.inset = 0;
-  overlay.style.background = 'rgba(0,0,0,0.65)'; // ✅ dim background only
+  overlay.style.background = 'rgba(0,0,0,0.65)';
   card.appendChild(overlay);
 
-  // Inner container (text + chart)
+  // Inner container
   const inner = document.createElement('div');
   inner.style.position = 'relative';
   inner.style.padding = '24px';
@@ -274,17 +274,18 @@ async function shareChart(id, g) {
   inner.style.fontFamily = "'Inter', sans-serif";
   inner.style.zIndex = '2';
 
+  // Header titles
   const header = document.createElement('h2');
   header.textContent = titleMain;
-  header.style.fontSize = '18px';
+  header.style.fontSize = '20px';
   header.style.fontWeight = '700';
-  header.style.margin = '0 0 4px 0';
+  header.style.margin = '0 0 2px 0';
 
   const sub = document.createElement('p');
   sub.textContent = titleSub;
   sub.style.fontSize = '16px';
   sub.style.color = '#ddd';
-  sub.style.margin = '0 0 14px 0';
+  sub.style.margin = '0 0 12px 0';
 
   // Chart image
   const dataURL = srcCanvas.toDataURL('image/png');
@@ -297,7 +298,7 @@ async function shareChart(id, g) {
   img.style.margin = '0 auto 14px auto';
   await img.decode();
 
-  // Bottom credits
+  // Footer credits
   const credit = document.createElement('p');
   credit.style.fontSize = '13px';
   credit.style.color = '#ccc';
@@ -307,25 +308,25 @@ async function shareChart(id, g) {
     'Data from tinyurl.com/britishclassicfl-metrics<br><br>' +
     'Sponsored by the Sabado Sessions Podcast';
 
-  // ✅ Leaderboard-style QR (scannable PNG)
-  const qrURL = `https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${encodeURIComponent('https://solacestrength.github.io/britishclassicfl/metrics.html')}`;
+  // ✅ Leaderboard-style scannable QR
+  const qrURL = `https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent('https://solacestrength.github.io/britishclassicfl/metrics.html')}&color=000000&bgcolor=FFFFFF`;
   const qrImg = new Image();
   qrImg.src = qrURL;
   qrImg.crossOrigin = 'anonymous';
   qrImg.style.position = 'absolute';
-  qrImg.style.bottom = '18px';
+  qrImg.style.bottom = '16px';
   qrImg.style.left = '18px';
-  qrImg.style.width = '60px';
-  qrImg.style.height = '60px';
+  qrImg.style.width = '75px';
+  qrImg.style.height = '75px';
   qrImg.style.borderRadius = '6px';
-  qrImg.style.opacity = '0.9'; // ✅ strong contrast, no blur
+  qrImg.style.opacity = '1';
   qrImg.style.background = 'transparent';
 
   inner.append(header, sub, img, credit);
   card.append(inner, qrImg);
   document.body.appendChild(card);
 
-  // Capture snapshot
+  // Render export
   const snapshot = await html2canvas(card, {
     backgroundColor: null,
     scale: 2,
@@ -338,7 +339,7 @@ async function shareChart(id, g) {
   const blob = await new Promise(r => snapshot.toBlob(r, 'image/png'));
   const file = new File([blob], fn, { type: 'image/png' });
 
-  // Share logic — no confirmation popup
+  // Share logic (no popup)
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try {
       await navigator.share({
@@ -350,7 +351,6 @@ async function shareChart(id, g) {
       console.warn('Share cancelled or unsupported', e);
     }
   } else {
-    // Fallback: download image
     const link = document.createElement('a');
     link.href = snapshot.toDataURL('image/png');
     link.download = fn;
