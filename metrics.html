@@ -226,11 +226,11 @@
       data:{labels,datasets:[{data,backgroundColor:colors,borderColor:'#111',borderWidth:1}]},
       options:{
         maintainAspectRatio:false,
-        aspectRatio:1, // perfect circle, fixes stretch
-        cutout:'55%',
+        aspectRatio:1, // perfectly circular, prevents squash
+        cutout:'57%',  // slightly smaller inner radius for better balance
         plugins:{
-          title:{display:true,text:'Share of Votes',color:'#ccc',font:{weight:'bold',size:s.donutTitle}},
-          subtitle:{display:true,text:`Total Votes – ${total}`,color:'#aaa',font:{size:s.donutSubtitle}},
+          title:{display:true,text:'Share of Votes',color:'#ccc',font:{weight:'bold',size:s.donutTitle},padding:{bottom:4}},
+          subtitle:{display:true,text:`Total Votes – ${total}`,color:'#aaa',font:{size:s.donutSubtitle},padding:{top:2,bottom:10}},
           legend:{position:'bottom',labels:{color:'#ccc',boxWidth:10,boxHeight:10,font:{size:s.donutLegend}}},
           datalabels:{color:'#fff',font:{weight:'bold',size:s.donutPercent},formatter:v=>{
             const p=(v/total)*100;return p>=3?`${p.toFixed(1)}%`:'';},anchor:'center',align:'center',clamp:true}
@@ -242,8 +242,10 @@
     if(!vals.length){
       if(charts[histId])charts[histId].destroy();
       charts[histId]=new Chart(document.getElementById(histId),{type:'bar',data:{labels:[],datasets:[{data:[]}]},options:{
-        plugins:{title:{display:true,text:'Distribution of Predicted Winning Totals',color:'#ccc',font:{size:s.histTitle,weight:'bold'}},
-        subtitle:{display:true,text:`Total Votes – 0`,color:'#aaa',font:{size:s.histSubtitle}},legend:{display:false}}}});
+        plugins:{
+          title:{display:true,text:'Distribution of Predicted Winning Totals',color:'#ccc',font:{size:s.histTitle,weight:'bold'},padding:{bottom:4}},
+          subtitle:{display:true,text:`Total Votes – 0`,color:'#aaa',font:{size:s.histSubtitle},padding:{top:2,bottom:10}},
+          legend:{display:false}}}});
       return;
     }
 
@@ -252,12 +254,12 @@
     const bw=(max-min)/bins||1;const countsH=Array(bins).fill(0);
     vals.forEach(v=>{let i=Math.floor((v-min)/bw);if(i>=bins)i=bins-1;if(i<0)i=0;countsH[i]++;});
     const labelsH=Array.from({length:bins},(_,i)=>`${(min+i*bw).toFixed(0)}–${(min+(i+1)*bw).toFixed(0)}`);
-    
+
     const minCount=Math.min(...countsH),maxCount=Math.max(...countsH);
     const yMin=Math.floor(minCount/2);
     const range=maxCount-yMin;
     const step=Math.max(1,Math.round(range/4));
-    const yMax=yMin+step*5;
+    const yMax=Math.ceil(maxCount/step)*step; // ✅ nearest multiple above max
 
     if(charts[histId])charts[histId].destroy();
     charts[histId]=new Chart(document.getElementById(histId),{
@@ -265,10 +267,10 @@
       data:{labels:labelsH,datasets:[{data:countsH,backgroundColor:'#3b82f6',borderRadius:5}]},
       options:{
         maintainAspectRatio:false,
-        aspectRatio:0.9,
+        aspectRatio:0.92, // tall but not extreme
         plugins:{
-          title:{display:true,text:'Distribution of Predicted Winning Totals',color:'#ccc',font:{size:s.histTitle,weight:'bold'}},
-          subtitle:{display:true,text:`Total Votes – ${N}`,color:'#aaa',font:{size:s.histSubtitle}},
+          title:{display:true,text:'Distribution of Predicted Winning Totals',color:'#ccc',font:{size:s.histTitle,weight:'bold'},padding:{bottom:4}},
+          subtitle:{display:true,text:`Total Votes – ${N}`,color:'#aaa',font:{size:s.histSubtitle},padding:{top:2,bottom:10}},
           legend:{display:false},
           datalabels:{anchor:'center',align:'center',color:'#fff',font:{weight:'normal',size:s.histBarLabel},formatter:v=>v>0?v:''}
         },
@@ -290,7 +292,7 @@
     a.classList.toggle('rotate',o);
   }
 
- // ======= SHARE / EXPORT =======
+  // ======= SHARE / EXPORT =======
 async function shareChart(id, g) {
   const s = sizing();
   const src = document.getElementById(id);
@@ -409,6 +411,6 @@ async function shareChart(id, g) {
     link.click();
   }
 }
-  </script>
+</script>
 </body>
 </html>
