@@ -203,8 +203,8 @@
         data:{labels:l,datasets:[{data:v,backgroundColor:cset,borderColor:'#111',borderWidth:1}]},
         options:{
           plugins:{
-            title:{display:true,text:'Share of Votes',color:'#ccc',font:{weight:'bold',size:10},padding:{bottom:2}},
-            subtitle:{display:true,text:`Total Votes – ${t}`,color:'#aaa',font:{weight:'normal',size:8},padding:{top:1,bottom:6}},
+            title:{display:true,text:'Share of Votes',color:'#ccc',font:{weight:'bold',size:12},padding:{bottom:2}},
+            subtitle:{display:true,text:`Total Votes – ${t}`,color:'#aaa',font:{weight:'normal',size:10},padding:{top:1,bottom:6}},
             legend:{position:'bottom',labels:{color:'#ccc',boxWidth:8,boxHeight:8}, font:{weight:'normal',size:8}},
             datalabels:{color:'#fff',font:{weight:'bold',size:8},formatter:x=>{const p=(x/t)*100;return p>=3?`${p.toFixed(1)}%`:'';},anchor:'center',align:'center'}
           }
@@ -282,7 +282,8 @@ async function shareChart(id, g) {
 
   const sub = document.createElement('p');
   sub.textContent = titleSub;
-  sub.style.fontSize = '24px';
+  sub.style.fontSize = '25px';
+  sub.style.fontWeight = '650';
   sub.style.color = '#ddd';
   sub.style.margin = '0 0 14px 0';
 
@@ -299,7 +300,7 @@ async function shareChart(id, g) {
 
   // Bottom credits
   const credit = document.createElement('p');
-  credit.style.fontSize = '17px';
+  credit.style.fontSize = '15px';
   credit.style.color = '#ccc';
   credit.style.lineHeight = '1.5';
   credit.style.marginTop = '8px';
