@@ -315,10 +315,8 @@ async function shareChart(id, g) {
   card.style.backgroundPosition = 'center';
   card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
 
-  // ✅ Match donut export proportions
-  card.style.minHeight = isDonut
-    ? (isMobile ? '920px' : '860px')
-    : (isMobile ? '820px' : '820px');
+  // ✅ EXACT height parity between donut and histogram
+  card.style.minHeight = isMobile ? '900px' : '860px';
 
   const overlay = document.createElement('div');
   overlay.style.position = 'absolute';
@@ -330,9 +328,7 @@ async function shareChart(id, g) {
   inner.style.position = 'relative';
   inner.style.padding = isDonut
     ? '36px 28px 36px 28px'
-    : isMobile
-      ? '48px 28px 32px 28px' // slightly higher start for histo content
-      : '40px 28px 36px 28px';
+    : '36px 28px 36px 28px'; // ✅ same padding for balance
   inner.style.textAlign = 'center';
   inner.style.color = '#fff';
   inner.style.fontFamily = "'Inter', sans-serif";
@@ -349,7 +345,7 @@ async function shareChart(id, g) {
   sub.style.fontSize = isMobile ? s.subFont * 1.5 + 'px' : s.subFont * 1.25 + 'px';
   sub.style.fontWeight = '700';
   sub.style.color = '#ddd';
-  sub.style.margin = '0 0 14px 0';
+  sub.style.margin = '0 0 16px 0';
 
   const dataURL = src.toDataURL('image/png');
   const img = new Image();
@@ -384,16 +380,22 @@ async function shareChart(id, g) {
   card.append(inner, qr);
   document.body.appendChild(card);
 
+  // ✅ html2canvas fix — capture only visible area
+  const rect = card.getBoundingClientRect();
   const canvas = await html2canvas(card, {
     backgroundColor: null,
     scale: 2,
     useCORS: true,
     scrollY: 0,
+    height: rect.height,
+    width: rect.width,
   });
+
   card.remove();
 
   const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
   const file = new File([blob], fn, { type: 'image/png' });
+
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try {
       await navigator.share({
