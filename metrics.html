@@ -11,7 +11,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <!-- ✅ Use UMD version of QRCode so window.QRCode is available -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.umd.min.js"></script>
   <link rel="stylesheet" href="/assets/css/fix-dropdown.css" />
 
   <style>
@@ -83,7 +84,7 @@
         </p>
       </section>
 
-      <!-- WOMEN -->
+            <!-- WOMEN -->
       <div class="bg-black/60 rounded-lg p-4">
         <button onclick="toggleSection('women')" class="flex items-center justify-between w-full text-left text-lg font-bold">
           <span>Women</span>
@@ -245,6 +246,11 @@
 
     // SHARE EXPORT + QR CODE WATERMARK
     async function shareChart(id,g){
+      if (typeof QRCode === 'undefined') {
+        console.error('QRCode library not loaded');
+        return;
+      }
+
       const srcCanvas=document.getElementById(id);
       await new Promise(requestAnimationFrame);
       const s=document.getElementById(g==='F'?'womenSelect':'menSelect');
@@ -271,16 +277,18 @@
       card.style.margin='0 auto';
       card.style.boxSizing='border-box';
 
-      // Title + chart
+          // Title + chart
       const header=document.createElement('h2');
       header.textContent=titleMain;
       header.style.fontSize='18px';
       header.style.fontWeight='700';
       header.style.margin='0 0 4px 0';
+
       const sub=document.createElement('p');
       sub.textContent=titleSub;
       sub.style.fontSize='16px';
-            sub.style.margin='0 0 14px 0';
+      sub.style.color='#ddd';
+      sub.style.margin='0 0 14px 0';
 
       img.style.maxWidth='100%';
       img.style.height='auto';
@@ -295,7 +303,7 @@
       credit.style.lineHeight='1.5';
       credit.innerHTML='Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-      // Generate QR Code watermark
+      // ✅ Generate QR Code watermark
       const qrCanvas=document.createElement('canvas');
       qrCanvas.width=75;
       qrCanvas.height=75;
@@ -304,6 +312,7 @@
       qrCanvas.style.left='18px';
       qrCanvas.style.opacity='0.85';
       qrCanvas.style.borderRadius='8px';
+      qrCanvas.style.pointerEvents='none'; // prevent interference
 
       await QRCode.toCanvas(qrCanvas, 'https://britishclassicfantasyleague.github.io/metrics.html', {
         width: 75,
@@ -318,30 +327,30 @@
       card.append(header, sub, img, credit, qrCanvas);
       document.body.appendChild(card);
 
-      // Snapshot export
-      const snapshot=await html2canvas(card,{
-        backgroundColor:null,
-        scale:2,
-        useCORS:true,
-        scrollY:0
+      // ✅ Snapshot export
+      const snapshot = await html2canvas(card, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+        scrollY: 0
       });
       card.remove();
 
       // Convert to downloadable/shareable image
-      const blob=await new Promise(r=>snapshot.toBlob(r,'image/png'));
-      const file=new File([blob],fn,{type:'image/png'});
+      const blob = await new Promise(r => snapshot.toBlob(r, 'image/png'));
+      const file = new File([blob], fn, { type: 'image/png' });
 
-      // Native share or download fallback
-      if(navigator.canShare && navigator.canShare({files:[file]})){
+      // ✅ Native share or download fallback
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
-          title:'British Classic Fantasy League 2025',
-          text:'Check out these British Classic Fantasy League stats!',
-          files:[file]
+          title: 'British Classic Fantasy League 2025',
+          text: 'Check out these British Classic Fantasy League stats!',
+          files: [file]
         });
       } else {
-        const link=document.createElement('a');
-        link.href=snapshot.toDataURL('image/png');
-        link.download=fn;
+        const link = document.createElement('a');
+        link.href = snapshot.toDataURL('image/png');
+        link.download = fn;
         link.click();
       }
     }
