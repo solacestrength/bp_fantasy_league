@@ -11,8 +11,17 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <!-- ✅ QRCode static include (reliable on GitHub Pages) -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+  <!-- ✅ Force QRCode global attach -->
+  <script>
+    (function() {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
+      s.onload = () => { window.QRCode = window.QRCode || QRCode; };
+      s.onerror = () => console.error('Failed to load QRCode library');
+      document.head.appendChild(s);
+    })();
+  </script>
 
   <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
 
@@ -239,6 +248,12 @@
 
     // SHARE EXPORT + QR WATERMARK
     async function shareChart(id,g){
+      // ✅ Wait until QRCode script is ready
+      for(let i=0;i<20&&typeof window.QRCode==='undefined';i++){
+        await new Promise(r=>setTimeout(r,100));
+      }
+      if(!window.QRCode){console.error('QRCode still not loaded');return;}
+
       const srcCanvas=document.getElementById(id);
       await new Promise(requestAnimationFrame);
       const s=document.getElementById(g==='F'?'womenSelect':'menSelect');
@@ -289,7 +304,7 @@
       credit.style.lineHeight='1.5';
       credit.innerHTML='Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-      // QR watermark
+      // ✅ QR watermark
       const qrCanvas=document.createElement('canvas');
       qrCanvas.width=75;
       qrCanvas.height=75;
