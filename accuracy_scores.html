@@ -302,91 +302,114 @@
       });
 
       /* --- Export snapshot --- */
-      async function shareScore() {
-        if (searchMatches.length === 0) { alert("Please search for your name first."); return; }
-        const matchIndex = searchMatches[currentMatchIndex];
-        let start, end;
-if (matchIndex < 10) {
-  // Top 10 snapshot
-  start = 0;
-  end = 9;
-} else {
-  // Normal ±4 snapshot
-  start = matchIndex - 4;
-  end = matchIndex + 5;
-  if (start < 0) { end += -start; start = 0; }
-  if (end > allRows.length - 1) { start = Math.max(0, allRows.length - 10); end = allRows.length - 1; }
-}
-const visibleRows = allRows.slice(start, end + 1);
+async function shareScore() {
+  if (searchMatches.length === 0) { 
+    alert("Please search for your name first."); 
+    return; 
+  }
 
-        const rowsHtml = visibleRows.map((row, i) => {
-          const actualIndex = start + i;
-          const isMatch = actualIndex === matchIndex;
-          return `<tr style="${isMatch ? 'font-weight:bold;' : ''}">
-            ${row.map(cell => `<td class='px-3 py-1 text-center'>${cell}</td>`).join('')}
-          </tr>`;
-        }).join('');
+  const matchIndex = searchMatches[currentMatchIndex];
+  let start, end;
 
-        const snapshot = document.createElement('div');
-        snapshot.style.width = '600px';
-        snapshot.style.borderRadius = '16px';
-        snapshot.style.overflow = 'hidden';
-        snapshot.style.position = 'relative';
-        snapshot.style.boxShadow = '0 10px 30px rgba(0,0,0,.35)';
-        snapshot.style.backgroundImage = "url('image_accuracy.jpg')";
-        snapshot.style.backgroundSize = 'cover';
-        snapshot.style.backgroundPosition = 'center';
-        snapshot.innerHTML = `
-          <div style="background: rgba(0,0,0,.55); padding: 18px 18px 14px;">
-            <h2 style="text-align:center; font-size:20px; font-weight:700; margin-bottom:4px;">
-              British Classic Fantasy League 2025 🇬🇧
-            </h2>
-            <h3 style="text-align:center; font-size:16px; font-weight:600; margin-bottom:4px;">
-  My Accuracy Score
-</h3>
-<p style="text-align:center; font-size:12px; color:#d1d5db; opacity:0.9; margin-bottom:12px;">
-  Entry Count – ${allRows.length}
-</p>
-<table class="w-full text-sm" style="table-layout: fixed; border-collapse: collapse;">
-              <colgroup>${headerRow.map(() => '<col>').join('')}</colgroup>
-              <thead>
-                <tr>${headerRow.map(h => `<th class="py-1 px-3 text-center font-semibold">${h}</th>`).join('')}</tr>
-              </thead>
-              <tbody>${rowsHtml}</tbody>
-            </table>
-            <p class="text-xs text-gray-300 text-center mt-4">
-              Data from tinyurl.com/britishclassicfl-accuracy<br /><br /> Sponsored by the Sabado Sessions Podcast
-            </p>
-          </div>
-        `;
-        document.body.appendChild(snapshot);
+  // --- Top 10 logic ---
+  if (matchIndex < 10) {
+    start = 0;
+    end = 9;
+  } else {
+    start = matchIndex - 4;
+    end = matchIndex + 5;
+    if (start < 0) { end += -start; start = 0; }
+    if (end > allRows.length - 1) { 
+      start = Math.max(0, allRows.length - 10); 
+      end = allRows.length - 1; 
+    }
+  }
 
-        html2canvas(snapshot, { backgroundColor: null, scale: 2, useCORS: true, scrollY: 0 })
-          .then(async canvas => {
-            const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-            snapshot.remove();
-            const file = new File([blob], 'accuracy_score.png', { type: 'image/png' });
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-              try {
-                await navigator.share({
-                  title: 'My Accuracy Score',
-                  text: 'Check out my accuracy score!',
-                  files: [file]
-                });
-                return;
-              } catch {}
-            }
-            try {
-              await navigator.clipboard.writeText(window.location.href);
-              alert('Link copied to clipboard!');
-            } catch {
-              const link = document.createElement('a');
-              link.href = canvas.toDataURL('image/png');
-              link.download = 'my-accuracy-score.png';
-              link.click();
-            }
-          });
-      }
+  const visibleRows = allRows.slice(start, end + 1);
+  const rowsHtml = visibleRows.map((row, i) => {
+    const actualIndex = start + i;
+    const isMatch = actualIndex === matchIndex;
+    return `<tr style="${isMatch ? 'font-weight:bold;' : ''}">
+      ${row.map(cell => `<td class='px-3 py-1 text-center'>${cell}</td>`).join('')}
+    </tr>`;
+  }).join('');
+
+  // --- Create snapshot ---
+  const snapshot = document.createElement('div');
+  snapshot.style.width = '600px';
+  snapshot.style.borderRadius = '16px';
+  snapshot.style.overflow = 'hidden';
+  snapshot.style.position = 'relative';
+  snapshot.style.boxShadow = '0 10px 30px rgba(0,0,0,.35)';
+  snapshot.style.backgroundImage = "url('image_accuracy.jpg')";
+  snapshot.style.backgroundSize = 'cover';
+  snapshot.style.backgroundPosition = 'center';
+
+  // --- Load QR ---
+  const qrURL = `https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
+  const qrImg = new Image();
+  qrImg.crossOrigin = "anonymous";
+  qrImg.src = qrURL;
+
+  qrImg.onload = () => {
+    snapshot.innerHTML = `
+      <div style="background: rgba(0,0,0,.55); padding: 18px 18px 14px; position: relative;">
+        <img src="${qrImg.src}" alt="QR Code"
+             style="position:absolute; bottom:16px; left:18px; width:52px; height:52px; border-radius:6px;" />
+        <h2 style="text-align:center; font-size:20px; font-weight:700; margin-bottom:4px;">
+          British Classic Fantasy League 2025 🇬🇧
+        </h2>
+        <h3 style="text-align:center; font-size:16px; font-weight:600; margin-bottom:4px;">
+          My Accuracy Score
+        </h3>
+        <p style="text-align:center; font-size:12px; color:#d1d5db; opacity:0.9; margin-bottom:12px;">
+          Entry Count – ${allRows.length}
+        </p>
+        <table class="w-full text-sm" style="table-layout: fixed; border-collapse: collapse;">
+          <colgroup>${headerRow.map(() => '<col>').join('')}</colgroup>
+          <thead>
+            <tr>${headerRow.map(h => `<th class="py-1 px-3 text-center font-semibold">${h}</th>`).join('')}</tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+        <p class="text-xs text-gray-300 text-center mt-4">
+          Data from tinyurl.com/britishclassicfl-accuracy<br /><br />
+          Sponsored by the Sabado Sessions Podcast
+        </p>
+      </div>
+    `;
+
+    document.body.appendChild(snapshot);
+
+    html2canvas(snapshot, { backgroundColor: null, scale: 2, useCORS: true, scrollY: 0 })
+      .then(async canvas => {
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+        snapshot.remove();
+        const file = new File([blob], 'accuracy_score.png', { type: 'image/png' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              title: 'My Accuracy Score',
+              text: 'Check out my accuracy score!',
+              files: [file]
+            });
+            return;
+          } catch {}
+        }
+
+        try {
+          await navigator.clipboard.writeText(window.location.href);
+          alert('Link copied to clipboard!');
+        } catch {
+          const link = document.createElement('a');
+          link.href = canvas.toDataURL('image/png');
+          link.download = 'my-accuracy-score.png';
+          link.click();
+        }
+      });
+  }; // ✅ closes qrImg.onload
+} // ✅ closes shareScore
 
       document.getElementById('shareRankingBtn').addEventListener('click', shareScore);
       shareFloatingBtn.addEventListener('click', shareScore);
