@@ -206,7 +206,7 @@
             title:{display:true,text:'Share of Votes',color:'#ccc',font:{weight:'bold',size:12},padding:{bottom:2}},
             subtitle:{display:true,text:`Total Votes – ${t}`,color:'#aaa',font:{weight:'normal',size:10},padding:{top:1,bottom:6}},
             legend:{position:'bottom',labels:{color:'#ccc',boxWidth:8,boxHeight:8}, font:{weight:'normal',size:8}},
-            datalabels:{color:'#fff',font:{weight:'bold',size:8},formatter:x=>{const p=(x/t)*100;return p>=3?`${p.toFixed(1)}%`:'';},anchor:'center',align:'center'}
+            datalabels:{color:'#fff',font:{weight:'bold',size:10},formatter:x=>{const p=(x/t)*100;return p>=3?`${p.toFixed(1)}%`:'';},anchor:'center',align:'center'}
           }
         },
         plugins:[ChartDataLabels]
