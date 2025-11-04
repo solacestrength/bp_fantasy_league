@@ -11,23 +11,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-
-  <!-- ✅ QRCode must be loaded synchronously and attached to window -->
-  <script>
-    window.QRCodeReady = new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.umd.min.js";
-      script.onload = () => {
-        if (typeof window.QRCode !== 'undefined') resolve(window.QRCode);
-        else if (typeof QRCode !== 'undefined') {
-          window.QRCode = QRCode;
-          resolve(window.QRCode);
-        } else reject(new Error('QRCode failed to load.'));
-      };
-      script.onerror = () => reject(new Error('QRCode script failed to load.'));
-      document.head.appendChild(script);
-    });
-  </script>
+  <!-- ✅ QRCode static include (reliable on GitHub Pages) -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 
   <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
 
@@ -176,7 +161,6 @@
     </footer>
   </div>
 
-  <!-- ✅ SCRIPT SECTION -->
   <script>
     // MENU
     const menuBtn=document.getElementById('menu-btn'),mobileMenu=document.getElementById('mobile-menu');
@@ -185,7 +169,7 @@
     document.addEventListener('click',e=>{if(!mobileMenu.contains(e.target)&&!menuBtn.contains(e.target)){if(menuVisible){menuVisible=false;toggleMenu(false);}}});
     toggleMenu(false);
 
-    // CHARTS
+    // CHART LOGIC
     Chart.register(ChartDataLabels);
     const SHEET_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
     let allData=[],charts={};
@@ -255,8 +239,7 @@
 
     // SHARE EXPORT + QR WATERMARK
     async function shareChart(id,g){
-      const QR=await window.QRCodeReady.catch(err=>{console.error('QRCode library not loaded.',err);alert('QR generator not ready yet. Please wait a second and try again.');});
-      if(!QR)return;
+      if(typeof QRCode==='undefined'){alert('QR code generator not loaded yet — please reload the page.');return;}
 
       const srcCanvas=document.getElementById(id);
       await new Promise(requestAnimationFrame);
