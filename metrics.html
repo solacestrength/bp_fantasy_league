@@ -304,7 +304,6 @@ async function shareChart(id, g) {
   const isMobile = window.innerWidth < 768;
   const fn = `metrics_${g}_${w}_${isDonut ? 'donut' : 'hist'}.png`;
 
-  // 🔧 unified aspect ratio fix — match donut & histogram exports
   const card = document.createElement('div');
   card.style.position = 'relative';
   card.style.width = s.exportWidth + 'px';
@@ -312,16 +311,14 @@ async function shareChart(id, g) {
   card.style.overflow = 'hidden';
   card.style.margin = '0 auto';
   card.style.backgroundImage = "url('bc25_logo.jpg')";
-  card.style.backgroundSize = 'cover'; // ✅ keep cover, no letterbox
+  card.style.backgroundSize = 'cover';
   card.style.backgroundPosition = 'center';
   card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
+
+  // ✅ Match donut export proportions
   card.style.minHeight = isDonut
-    ? isMobile
-      ? '920px'
-      : '860px'
-    : isMobile
-      ? '870px' // ✅ shorter + balanced histogram export
-      : '820px';
+    ? (isMobile ? '920px' : '860px')
+    : (isMobile ? '820px' : '820px');
 
   const overlay = document.createElement('div');
   overlay.style.position = 'absolute';
@@ -334,7 +331,7 @@ async function shareChart(id, g) {
   inner.style.padding = isDonut
     ? '36px 28px 36px 28px'
     : isMobile
-      ? '50px 28px 36px 28px' // ✅ more top padding for histos to balance composition
+      ? '48px 28px 32px 28px' // slightly higher start for histo content
       : '40px 28px 36px 28px';
   inner.style.textAlign = 'center';
   inner.style.color = '#fff';
