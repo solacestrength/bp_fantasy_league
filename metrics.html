@@ -11,6 +11,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <link rel="stylesheet" href="/assets/css/fix-dropdown.css" />
 
   <style>
@@ -28,7 +29,6 @@
     .share-btn:hover{background-color:#ef4444;}
     .share-icon{filter:invert(1);height:18px;width:18px;}
 
-    /* Fade-in animation */
     @keyframes fadeInUp {
       0% {opacity:0;transform:translateY(10px);}
       100% {opacity:1;transform:translateY(0);}
@@ -39,7 +39,6 @@
 </head>
 
 <body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
-
   <!-- Background -->
   <div class="absolute inset-0 bg-[url('bc25_logo.jpg')] bg-cover bg-center opacity-45"></div>
   <div class="absolute inset-0 bg-black/70"></div>
@@ -244,7 +243,7 @@
       });
     }
 
-    // SHARE EXPORT
+    // SHARE EXPORT + QR CODE WATERMARK
     async function shareChart(id,g){
       const srcCanvas=document.getElementById(id);
       await new Promise(requestAnimationFrame);
@@ -258,6 +257,7 @@
       const img=new Image();img.src=dataURL;await img.decode();
 
       const card=document.createElement('div');
+      card.style.position='relative';
       card.style.backgroundImage="linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)), url('bc25_logo.jpg')";
       card.style.backgroundSize='cover';
       card.style.backgroundPosition='center';
@@ -271,14 +271,7 @@
       card.style.margin='0 auto';
       card.style.boxSizing='border-box';
 
-      // Ensure background logo fully visible for donut exports
-      if(id.includes('Donut')){
-        card.style.minHeight='600px';
-        card.style.display='flex';
-        card.style.flexDirection='column';
-        card.style.justifyContent='center';
-      }
-
+      // Title + chart
       const header=document.createElement('h2');
       header.textContent=titleMain;
       header.style.fontSize='18px';
@@ -287,24 +280,45 @@
       const sub=document.createElement('p');
       sub.textContent=titleSub;
       sub.style.fontSize='16px';
-      sub.style.color='#ddd';
-      sub.style.margin='0 0 14px 0';
-      img.style.maxWidth='100%';
+            sub.style.margin='0 0 14px 0';
+
       img.style.maxWidth='100%';
       img.style.height='auto';
       img.style.borderRadius='8px';
       img.style.display='block';
       img.style.margin='0 auto 12px auto';
 
+      // Credit text
       const credit=document.createElement('p');
       credit.style.fontSize='13px';
       credit.style.color='#aaa';
       credit.style.lineHeight='1.5';
       credit.innerHTML='Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-      card.append(header, sub, img, credit);
+      // Generate QR Code watermark
+      const qrCanvas=document.createElement('canvas');
+      qrCanvas.width=75;
+      qrCanvas.height=75;
+      qrCanvas.style.position='absolute';
+      qrCanvas.style.bottom='18px';
+      qrCanvas.style.left='18px';
+      qrCanvas.style.opacity='0.85';
+      qrCanvas.style.borderRadius='8px';
+
+      await QRCode.toCanvas(qrCanvas, 'https://britishclassicfantasyleague.github.io/metrics.html', {
+        width: 75,
+        margin: 1,
+        color: {
+          dark: '#ffffff',
+          light: 'rgba(0,0,0,0)'
+        }
+      });
+
+      // Combine elements
+      card.append(header, sub, img, credit, qrCanvas);
       document.body.appendChild(card);
 
+      // Snapshot export
       const snapshot=await html2canvas(card,{
         backgroundColor:null,
         scale:2,
@@ -313,9 +327,11 @@
       });
       card.remove();
 
+      // Convert to downloadable/shareable image
       const blob=await new Promise(r=>snapshot.toBlob(r,'image/png'));
       const file=new File([blob],fn,{type:'image/png'});
 
+      // Native share or download fallback
       if(navigator.canShare && navigator.canShare({files:[file]})){
         await navigator.share({
           title:'British Classic Fantasy League 2025',
