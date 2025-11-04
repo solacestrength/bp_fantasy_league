@@ -170,244 +170,233 @@
     </footer>
   </div>
 
-  <script>
-    // --- MENU ---
-    const menuBtn = document.getElementById('menu-btn'),
-          mobileMenu = document.getElementById('mobile-menu');
+<script>
+  // MENU
+  const menuBtn = document.getElementById('menu-btn');
+  const mobileMenu = document.getElementById('mobile-menu');
 
-    function toggleMenu(show) {
-      if (show) {
-        mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');
-        mobileMenu.classList.add('scale-y-100','opacity-100');
-      } else {
-        mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');
-        mobileMenu.classList.remove('scale-y-100','opacity-100');
+  function toggleMenu(show) {
+    if (show) {
+      mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');
+      mobileMenu.classList.add('scale-y-100','opacity-100');
+    } else {
+      mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');
+      mobileMenu.classList.remove('scale-y-100','opacity-100');
+    }
+  }
+
+  let menuVisible = false;
+  menuBtn.addEventListener('click', e => {
+    menuVisible = !menuVisible;
+    toggleMenu(menuVisible);
+    e.stopPropagation();
+  });
+  document.addEventListener('click', e => {
+    if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+      if (menuVisible) {
+        menuVisible = false;
+        toggleMenu(false);
       }
     }
+  });
+  toggleMenu(false);
 
-    let menuVisible = false;
-    menuBtn.addEventListener('click', e => {
-      menuVisible = !menuVisible;
-      toggleMenu(menuVisible);
-      e.stopPropagation();
+  // CHARTS
+  Chart.register(ChartDataLabels);
+  const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
+  let allData = [], charts = {};
+
+  function toggleSection(id) {
+    const c = document.getElementById(id);
+    const a = document.getElementById(`arrow-${id}`);
+    const open = c.classList.toggle('open');
+    a.classList.toggle('rotate', open);
+  }
+
+  Papa.parse(SHEET_URL, {
+    download: true,
+    header: true,
+    complete: r => {
+      allData = r.data;
+      setupDropdowns();
+    }
+  });
+
+  function setupDropdowns() {
+    ['F','M'].forEach(g => {
+      const d = allData.filter(r => r.Gender === g);
+      const classes = [...new Set(d.map(r => r.Class))].sort((a,b)=>parseFloat(a)-parseFloat(b));
+      const s = document.getElementById(g==='F'?'womenSelect':'menSelect');
+      s.innerHTML = classes.map(c=>`<option value="${c}">${c}kg</option>`).join('');
+      s.onchange = ()=>renderCharts(g, s.value);
+      renderCharts(g, classes[0]);
     });
+  }
 
-    document.addEventListener('click', e => {
-      if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
-        if (menuVisible) {
-          menuVisible = false;
-          toggleMenu(false);
+  function renderCharts(g,w) {
+    const f = allData.filter(r=>r.Gender===g && r.Class===w);
+    if (!f.length) return;
+
+    // DONUT
+    const counts = {}; f.forEach(r => counts[r.Athlete]=(counts[r.Athlete]||0)+1);
+    const l = Object.keys(counts), v = Object.values(counts), t = v.reduce((a,b)=>a+b,0);
+    const colors = ['#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'];
+    const cset = l.map((_,i)=>colors[i%colors.length]), id = g==='F'?'womenDonut':'menDonut';
+    if (charts[id]) charts[id].destroy();
+    charts[id] = new Chart(document.getElementById(id), {
+      type: 'doughnut',
+      data: {labels:l, datasets:[{data:v, backgroundColor:cset, borderColor:'#111', borderWidth:1}]},
+      options: {
+        plugins: {
+          title:{display:true,text:'Share of Votes',color:'#ccc',font:{weight:'bold',size:14},padding:{bottom:2}},
+          subtitle:{display:true,text:`Total Votes – ${t}`,color:'#aaa',font:{weight:'normal',size:12},padding:{top:1,bottom:6}},
+          legend:{position:'bottom',labels:{color:'#ccc',boxWidth:10,boxHeight:10}},
+          datalabels:{color:'#fff',font:{weight:'bold',size:11},formatter:x=>{const p=(x/t)*100;return p>=3?`${p.toFixed(1)}%`:'';},anchor:'center',align:'center'}
         }
-      }
+      },
+      plugins:[ChartDataLabels]
     });
 
-    toggleMenu(false);
-
-    // --- CSS fallback if fix-dropdown.css missing ---
-    fetch('/assets/css/fix-dropdown.css').catch(() => {
-      const style = document.createElement('style');
-      style.textContent = `
-        select {background-color:#1f1f1f;border:1px solid #333;color:#f1f1f1;padding:4px;border-radius:6px;}
-      `;
-      document.head.appendChild(style);
-    });
-
-    // --- QRCode safety check ---
-    if (typeof window.QRCode === 'undefined' && typeof QRCode !== 'undefined') {
-      window.QRCode = QRCode;
-    }
-
-    // --- CHART LOGIC ---
-    Chart.register(ChartDataLabels);
-    const SHEET_URL =
-      'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
-    let allData = [], charts = {};
-
-    function toggleSection(id) {
-      const c = document.getElementById(id);
-      const a = document.getElementById(`arrow-${id}`);
-      const open = c.classList.toggle('open');
-      a.classList.toggle('rotate', open);
-    }
-
-    Papa.parse(SHEET_URL, {
-      download: true,
-      header: true,
-      complete: r => {
-        allData = r.data;
-        setupDropdowns();
-      }
-    });
-
-    function setupDropdowns() {
-      ['F', 'M'].forEach(g => {
-        const d = allData.filter(r => r.Gender === g);
-        const classes = [...new Set(d.map(r => r.Class))].sort((a, b) => parseFloat(a) - parseFloat(b));
-        const s = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
-        s.innerHTML = classes.map(c => `<option value="${c}">${c}kg</option>`).join('');
-        s.onchange = () => renderCharts(g, s.value);
-        renderCharts(g, classes[0]);
-      });
-    }
-
-    function renderCharts(g, w) {
-      const f = allData.filter(r => r.Gender === g && r.Class === w);
-      if (!f.length) return;
-
-      // DONUT
-      const counts = {};
-      f.forEach(r => counts[r.Athlete] = (counts[r.Athlete] || 0) + 1);
-      const l = Object.keys(counts), v = Object.values(counts), t = v.reduce((a, b) => a + b, 0);
-      const colors = ['#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'];
-      const cset = l.map((_, i) => colors[i % colors.length]), id = g === 'F' ? 'womenDonut' : 'menDonut';
-
-      if (charts[id]) charts[id].destroy();
-      charts[id] = new Chart(document.getElementById(id), {
-        type: 'doughnut',
-        data: { labels: l, datasets: [{ data: v, backgroundColor: cset, borderColor: '#111', borderWidth: 1 }] },
-        options: {
-          plugins: {
-            title: { display: true, text: 'Share of Votes', color: '#ccc', font: { weight: 'bold', size: 14 }, padding: { bottom: 2 } },
-            subtitle: { display: true, text: `Total Votes – ${t}`, color: '#aaa', font: { weight: 'normal', size: 12 }, padding: { top: 1, bottom: 6 } },
-            legend: { position: 'bottom', labels: { color: '#ccc', boxWidth: 10, boxHeight: 10 } },
-            datalabels: { color: '#fff', font: { weight: 'bold', size: 11 }, formatter: x => {
-              const p = (x / t) * 100; return p >= 3 ? `${p.toFixed(1)}%` : '';
-            }, anchor: 'center', align: 'center' }
-          }
+    // HISTOGRAM
+    const totals = f.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v));
+    if (!totals.length) return;
+    const N=totals.length,min=Math.min(...totals),max=Math.max(...totals),
+          bins=Math.round(Math.sqrt(N)),bw=(max-min)/bins,h=Array(bins).fill(0);
+    totals.forEach(v=>{const i=Math.min(Math.floor((v-min)/bw),bins-1);h[i]++;});
+    const lbls=Array.from({length:bins},(_,i)=>`${(min+i*bw).toFixed(0)}–${(min+(i+1)*bw).toFixed(0)}`),
+          hid=g==='F'?'womenHist':'menHist';
+    if (charts[hid]) charts[hid].destroy();
+    charts[hid]=new Chart(document.getElementById(hid),{
+      type:'bar',
+      data:{labels:lbls,datasets:[{label:'Predicted Totals',data:h,backgroundColor:'#3b82f6',borderRadius:5}]},
+      options:{
+        scales:{
+          x:{ticks:{color:'#ccc',font:{size:10}},title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:11,weight:'bold'}}},
+          y:{beginAtZero:true,ticks:{color:'#ccc',font:{size:10}},title:{display:true,text:'Frequency',color:'#ccc',font:{size:11,weight:'bold'}}}
         },
-        plugins: [ChartDataLabels]
-      });
-
-      // HISTOGRAM
-      const totals = f.map(r => parseFloat(r.PredictedTotal)).filter(v => !isNaN(v));
-      if (!totals.length) return;
-      const N = totals.length, min = Math.min(...totals), max = Math.max(...totals),
-            bins = Math.round(Math.sqrt(N)), bw = (max - min) / bins, h = Array(bins).fill(0);
-      totals.forEach(v => { const i = Math.min(Math.floor((v - min) / bw), bins - 1); h[i]++; });
-      const lbls = Array.from({ length: bins }, (_, i) => `${(min + i * bw).toFixed(0)}–${(min + (i + 1) * bw).toFixed(0)}`),
-            hid = g === 'F' ? 'womenHist' : 'menHist';
-
-      if (charts[hid]) charts[hid].destroy();
-      charts[hid] = new Chart(document.getElementById(hid), {
-        type: 'bar',
-        data: { labels: lbls, datasets: [{ label: 'Predicted Totals', data: h, backgroundColor: '#3b82f6', borderRadius: 5 }] },
-        options: {
-          scales: {
-            x: { ticks: { color: '#ccc', font: { size: 10 } }, title: { display: true, text: 'Predicted Total (kg)', color: '#ccc', font: { size: 11, weight: 'bold' } } },
-            y: { beginAtZero: true, ticks: { color: '#ccc', font: { size: 10 } }, title: { display: true, text: 'Frequency', color: '#ccc', font: { size: 11, weight: 'bold' } } }
-          },
-          plugins: {
-            legend: { display: false },
-            datalabels: {
-              color: '#fff', font: { weight: 'bold', size: 11 },
-              anchor: 'center', align: 'center', formatter: v => v > 0 ? v : ''
-            }
+        plugins:{
+          legend:{display:false},
+          datalabels:{
+            anchor:'center',
+            align:'center',
+            color:'#fff',
+            font:{weight:'bold',size:11},
+            formatter:(v)=>v>0?v:''
           }
-        },
-        plugins: [ChartDataLabels]
-      });
-    }
-
-    // --- SHARE EXPORT + QR CODE WATERMARK ---
-    async function shareChart(id, g) {
-      if (typeof window.QRCode === 'undefined') {
-        alert('QR code library not loaded yet. Please refresh and try again.');
-        return;
-      }
-
-      const srcCanvas = document.getElementById(id);
-      await new Promise(requestAnimationFrame);
-      const s = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
-      const w = s.value;
-      const titleMain = 'British Classic Fantasy League 2025 🇬🇧';
-      const titleSub = `${w}kg ${g === 'F' ? 'Women' : 'Men'}`;
-      const fn = `metrics_${g}_${w}_${id.includes('Donut') ? 'donut' : 'hist'}.png`;
-
-      const dataURL = srcCanvas.toDataURL('image/png');
-      const img = new Image(); img.src = dataURL; await img.decode();
-
-      const card = document.createElement('div');
-      card.style.position = 'relative';
-      card.style.backgroundImage = "url('bc25_logo.jpg')";
-      card.style.backgroundSize = 'cover';
-      card.style.backgroundPosition = 'center';
-      card.style.backgroundColor = 'rgba(0,0,0,0.7)';
-      card.style.padding = '24px';
-      card.style.borderRadius = '16px';
-      card.style.textAlign = 'center';
-      card.style.color = '#fff';
-      card.style.fontFamily = "'Inter', sans-serif";
-      card.style.maxWidth = '960px';
-      card.style.margin = '0 auto';
-      card.style.boxSizing = 'border-box';
-
-      const header = document.createElement('h2');
-      header.textContent = titleMain;
-      header.style.fontSize = '18px';
-      header.style.fontWeight = '700';
-      header.style.margin = '0 0 4px 0';
-
-      const sub = document.createElement('p');
-      sub.textContent = titleSub;
-      sub.style.fontSize = '16px';
-      sub.style.color = '#ddd';
-      sub.style.margin = '0 0 14px 0';
-
-      img.style.maxWidth = '100%';
-      img.style.height = 'auto';
-      img.style.borderRadius = '8px';
-      img.style.display = 'block';
-      img.style.margin = '0 auto 12px auto';
-
-      const credit = document.createElement('p');
-      credit.style.fontSize = '13px';
-      credit.style.color = '#aaa';
-      credit.style.lineHeight = '1.5';
-      credit.innerHTML = 'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
-
-      // ✅ Correct live QR link
-      const qrCanvas = document.createElement('canvas');
-      qrCanvas.width = 75;
-      qrCanvas.height = 75;
-      qrCanvas.style.position = 'absolute';
-      qrCanvas.style.bottom = '18px';
-      qrCanvas.style.left = '18px';
-      qrCanvas.style.opacity = '0.85';
-      qrCanvas.style.borderRadius = '8px';
-      qrCanvas.style.pointerEvents = 'none';
-
-      await QRCode.toCanvas(qrCanvas, 'https://solacestrength.github.io/britishclassicfl/metrics.html', {
-        width: 75,
-        margin: 1,
-        color: { dark: '#ffffff', light: 'rgba(0,0,0,0)' }
-      });
-
-      card.append(header, sub, img, credit, qrCanvas);
-      document.body.appendChild(card);
-
-      const snapshot = await html2canvas(card, {
-        backgroundColor: null,
-        scale: 2,
-        useCORS: true,
-        scrollY: 0
-      });
-      card.remove();
-
-      const blob = await new Promise(r => snapshot.toBlob(r, 'image/png'));
-      const file = new File([blob], fn, { type: 'image/png' });
-
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        if (confirm('Share this chart image?')) {
-          await navigator.share({
-            title: 'British Classic Fantasy League 2025',
-            text: 'Check out these British Classic Fantasy League stats!',
-            files: [file]
-          });
         }
-      } else {
-        alert('Sharing not supported on this device.');
-      }
+      },
+      plugins:[ChartDataLabels]
+    });
+  }
+
+  // SHARE EXPORT + QR WATERMARK
+  async function shareChart(id,g) {
+    // ✅ Ensure QRCode is available
+    if (typeof window.QRCode === 'undefined') {
+      alert('QR generator not ready yet. Please wait a second and try again.');
+      console.error('QRCode library not loaded.');
+      return;
     }
-  </script>
+
+    const srcCanvas=document.getElementById(id);
+    await new Promise(requestAnimationFrame);
+    const s=document.getElementById(g==='F'?'womenSelect':'menSelect');
+    const w=s.value;
+    const titleMain='British Classic Fantasy League 2025 🇬🇧';
+    const titleSub=`${w}kg ${g==='F'?'Women':'Men'}`;
+    const fn=`metrics_${g}_${w}_${id.includes('Donut')?'donut':'hist'}.png`;
+
+    const dataURL=srcCanvas.toDataURL('image/png');
+    const img=new Image(); img.src=dataURL; await img.decode();
+
+    const card=document.createElement('div');
+    card.style.position='relative';
+    card.style.backgroundImage="linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)), url('bc25_logo.jpg')";
+    card.style.backgroundSize='cover';
+    card.style.backgroundPosition='center';
+    card.style.backgroundBlendMode='darken';
+    card.style.padding='24px';
+    card.style.borderRadius='16px';
+    card.style.textAlign='center';
+    card.style.color='#fff';
+    card.style.fontFamily="'Inter', sans-serif";
+    card.style.maxWidth='960px';
+    card.style.margin='0 auto';
+    card.style.boxSizing='border-box';
+
+    const header=document.createElement('h2');
+    header.textContent=titleMain;
+    header.style.fontSize='18px';
+    header.style.fontWeight='700';
+    header.style.margin='0 0 4px 0';
+
+    const sub=document.createElement('p');
+    sub.textContent=titleSub;
+    sub.style.fontSize='16px';
+    sub.style.color='#ddd';
+    sub.style.margin='0 0 14px 0';
+
+    img.style.maxWidth='100%';
+    img.style.height='auto';
+    img.style.borderRadius='8px';
+    img.style.display='block';
+    img.style.margin='0 auto 12px auto';
+
+    const credit=document.createElement('p');
+    credit.style.fontSize='13px';
+    credit.style.color='#aaa';
+    credit.style.lineHeight='1.5';
+    credit.innerHTML='Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
+
+    // ✅ Add QR watermark (same style as leaderboard)
+    const qrCanvas=document.createElement('canvas');
+    qrCanvas.width=75;
+    qrCanvas.height=75;
+    qrCanvas.style.position='absolute';
+    qrCanvas.style.bottom='18px';
+    qrCanvas.style.left='18px';
+    qrCanvas.style.opacity='0.35';
+    qrCanvas.style.borderRadius='8px';
+    qrCanvas.style.pointerEvents='none';
+
+    await QRCode.toCanvas(qrCanvas, 'https://solacestrength.github.io/britishclassicfl/metrics.html', {
+      width: 75,
+      margin: 1,
+      color: {dark:'#ffffff',light:'rgba(0,0,0,0)'}
+    });
+
+    card.append(header, sub, img, credit, qrCanvas);
+    document.body.appendChild(card);
+
+    const snapshot = await html2canvas(card, {
+      backgroundColor: null,
+      scale: 2,
+      useCORS: true,
+      scrollY: 0
+    });
+    card.remove();
+
+    const blob = await new Promise(r=>snapshot.toBlob(r,'image/png'));
+    const file = new File([blob], fn, {type:'image/png'});
+
+    // ✅ Mobile-safe share trigger
+    if (navigator.canShare && navigator.canShare({files:[file]})) {
+      const confirmed = confirm('Share this chart? Tap OK to open your device’s share options.');
+      if (confirmed) {
+        await navigator.share({
+          title:'British Classic Fantasy League 2025',
+          text:'Check out these British Classic Fantasy League stats!',
+          files:[file]
+        });
+      }
+    } else {
+      const link=document.createElement('a');
+      link.href=snapshot.toDataURL('image/png');
+      link.download=fn;
+      link.click();
+    }
+  }
+</script>
+
 </body>
 </html>
