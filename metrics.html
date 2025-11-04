@@ -20,17 +20,15 @@
     canvas {max-width:100%;height:auto!important;}
     .chart-container {max-width:600px;margin:0 auto;position:relative;}
 
-    /* Desktop-specific chart scaling */
+    /* Balanced chart heights */
     @media (min-width:1024px){
       .chart-container{max-width:500px;}
-      #womenDonut, #menDonut {height:340px !important;}
-      #womenHist, #menHist {height:440px !important;}
+      #womenDonut, #menDonut {height:375px !important;} /* slightly taller donut */
+      #womenHist, #menHist {height:395px !important;}   /* slightly shorter histogram */
     }
-
-    /* Mobile-specific chart scaling */
     @media (max-width:1023px){
-      #womenDonut, #menDonut {height:300px !important;}
-      #womenHist, #menHist {height:460px !important;}
+      #womenDonut, #menDonut {height:336px !important;} /* +12% taller donut */
+      #womenHist, #menHist {height:390px !important;}   /* -15% shorter histogram */
     }
 
     .collapsible-content{max-height:0;overflow:hidden;opacity:0;
@@ -50,12 +48,10 @@
 </head>
 
 <body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
-  <!-- Background -->
   <div class="absolute inset-0 bg-[url('bc25_logo.jpg')] bg-cover bg-center opacity-45"></div>
   <div class="absolute inset-0 bg-black/70"></div>
 
   <div class="relative z-10 flex flex-col flex-grow animate-fade-in">
-    <!-- Header -->
     <header class="site-header w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 relative z-50">
       <div class="w-full flex items-center justify-center px-4 py-3">
         <div class="flex-1 text-center">
@@ -77,7 +73,6 @@
       </div>
     </header>
 
-    <!-- Dropdown -->
     <div id="mobile-menu"
       class="fixed top-16 right-4 w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-md shadow-lg z-50 scale-y-0 opacity-0 origin-top transition-transform duration-300 ease-in-out pointer-events-none">
       <nav class="flex flex-col py-2 text-white">
@@ -89,7 +84,6 @@
       </nav>
     </div>
 
-    <!-- MAIN CONTENT -->
     <main class="max-w-5xl mx-auto p-6 space-y-8 mt-6 animate-fade-in-up">
       <section class="text-center">
         <h2 class="text-xl font-semibold mb-1">Metrics Dashboard</h2>
@@ -158,7 +152,6 @@
       </div>
     </main>
 
-    <!-- Buttons -->
     <div class="flex justify-center mt-8">
       <a href="leaderboard.html" class="bg-gray-800/60 border border-gray-700 text-gray-200 font-semibold px-6 py-3 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-base">
         View Leaderboard
@@ -176,8 +169,7 @@
   </div>
 
   <script src="assets/js/metrics-script.js"></script>
-  <script>
-    // ======= MENU =======
+  <script>// ======= MENU =======
 const menuBtn = document.getElementById('menu-btn');
 const mobileMenu = document.getElementById('mobile-menu');
 function toggleMenu(show){
@@ -208,13 +200,11 @@ function sizing() {
     donutSubtitle: desktop ? 18 : 12,
     donutLegend: desktop ? 18 : 12,
     donutPercent: desktop ? 16 : 12,
-
     histTitle: desktop ? 22 : 14,
     histSubtitle: desktop ? 18 : 12,
     axisTitle: desktop ? 18 : 12,
     axisTick: desktop ? 14 : 11,
     histBarLabel: desktop ? 12 : 10,
-
     exportWidth: desktop ? 1024 : 780,
     qrSize: desktop ? 96 : 72,
     creditFont: desktop ? 18 : 13,
@@ -266,7 +256,7 @@ function renderCharts(g, w){
     data:{ labels, datasets:[{ data, backgroundColor:colors, borderColor:'#111', borderWidth:1 }]},
     options:{
       maintainAspectRatio:false,
-      aspectRatio:1.0,
+      aspectRatio:1.05, // slightly taller donut (no squash)
       cutout:'55%',
       plugins:{
         title:{ display:true, text:'Share of Votes', color:'#ccc', font:{ weight:'bold', size:s.donutTitle }, padding:{ bottom:2 }},
@@ -326,7 +316,7 @@ function renderCharts(g, w){
     data:{ labels:binLabels, datasets:[{ data:countsHist, backgroundColor:'#3b82f6', borderRadius:5 }]},
     options:{
       maintainAspectRatio:false,
-      aspectRatio:0.8,
+      aspectRatio:0.85, // reduced height slightly
       plugins:{
         title:{ display:true, text:'Distribution of Predicted Winning Totals', color:'#ccc', font:{ size:s.histTitle, weight:'bold' }, padding:{ bottom:2 }},
         subtitle:{ display:true, text:`Total Votes – ${N}`, color:'#aaa', font:{ size:s.histSubtitle, weight:'normal' }, padding:{ top:1, bottom:6 }},
@@ -341,7 +331,7 @@ function renderCharts(g, w){
             title:{ display:true, text:'Predicted Total (kg)', color:'#ccc', font:{ size:s.axisTitle, weight:'bold' }}},
         y:{ beginAtZero:true, ticks:{ color:'#ccc', font:{ size:s.axisTick }},
             title:{ display:true, text:'Frequency', color:'#ccc', font:{ size:s.axisTitle, weight:'bold' }},
-            suggestedMax: Math.max(...countsHist)*1.2 }
+            suggestedMax: Math.max(...countsHist)*1.15 }
       }
     },
     plugins:[ChartDataLabels]
@@ -356,7 +346,7 @@ function toggleSection(id){
   a.classList.toggle('rotate',open);
 }
 
-// ======= SHARE / EXPORT (matches leaderboard logic) =======
+// ======= SHARE / EXPORT =======
 async function shareChart(id, g) {
   const s = sizing();
   const srcCanvas = document.getElementById(id);
@@ -380,7 +370,8 @@ async function shareChart(id, g) {
   card.style.backgroundSize='cover';
   card.style.backgroundPosition='center';
   card.style.boxShadow='0 10px 25px rgba(0,0,0,0.35)';
-  card.style.minHeight=isDonut?(isMobile?'950px':'880px'):(isMobile?'900px':'820px');
+  // Adjust export height balance
+  card.style.minHeight=isDonut?(isMobile?'900px':'850px'):(isMobile?'860px':'780px');
 
   const overlay=document.createElement('div');
   overlay.style.position='absolute';
