@@ -12,8 +12,8 @@
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
-<!-- ✅ Correct browser-ready library -->
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+  <!-- ✅ Browser-safe QR code library (same as leaderboard) -->
+  <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
 
   <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
 
@@ -31,13 +31,9 @@
       border-radius:.5rem;height:36px;width:36px;transition:background-color .2s ease;}
     .share-btn:hover{background-color:#ef4444;}
     .share-icon{filter:invert(1);height:18px;width:18px;}
-
-    @keyframes fadeInUp {
-      0% {opacity:0;transform:translateY(10px);}
-      100% {opacity:1;transform:translateY(0);}
-    }
-    .animate-fade-in-up {animation:fadeInUp 0.8s ease-out forwards;}
-    .animate-fade-in {animation:fadeInUp 1s ease-out forwards;}
+    @keyframes fadeInUp {0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:translateY(0);}}
+    .animate-fade-in-up{animation:fadeInUp .8s ease-out forwards;}
+    .animate-fade-in{animation:fadeInUp 1s ease-out forwards;}
   </style>
 </head>
 
@@ -240,12 +236,6 @@
 
     // SHARE EXPORT + QR WATERMARK
     async function shareChart(id,g){
-      // ✅ Wait until QRCode script is ready
-      for(let i=0;i<20&&typeof window.QRCode==='undefined';i++){
-        await new Promise(r=>setTimeout(r,100));
-      }
-      if(!window.QRCode){console.error('QRCode still not loaded');return;}
-
       const srcCanvas=document.getElementById(id);
       await new Promise(requestAnimationFrame);
       const s=document.getElementById(g==='F'?'womenSelect':'menSelect');
@@ -296,7 +286,7 @@
       credit.style.lineHeight='1.5';
       credit.innerHTML='Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-      // ✅ QR watermark
+      // ✅ QR watermark (bottom-left)
       const qrCanvas=document.createElement('canvas');
       qrCanvas.width=75;
       qrCanvas.height=75;
@@ -307,26 +297,39 @@
       qrCanvas.style.borderRadius='8px';
       qrCanvas.style.pointerEvents='none';
 
-      await QRCode.toCanvas(qrCanvas,'https://solacestrength.github.io/britishclassicfl/metrics.html',{width:75,margin:1,color:{dark:'#ffffff',light:'rgba(0,0,0,0)'}});
+      // generate QR directly
+      new QRCode(qrCanvas, {
+        text: 'https://solacestrength.github.io/britishclassicfl/metrics.html',
+        width: 75,
+        height: 75,
+        colorDark: '#ffffff',
+        colorLight: 'rgba(0,0,0,0)',
+        correctLevel: QRCode.CorrectLevel.H
+      });
 
-      card.append(header,sub,img,credit,qrCanvas);
+      card.append(header, sub, img, credit, qrCanvas);
       document.body.appendChild(card);
 
-      const snapshot=await html2canvas(card,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
+      const snapshot = await html2canvas(card, { backgroundColor: null, scale: 2, useCORS: true, scrollY: 0 });
       card.remove();
 
-      const blob=await new Promise(r=>snapshot.toBlob(r,'image/png'));
-      const file=new File([blob],fn,{type:'image/png'});
+      const blob = await new Promise(r => snapshot.toBlob(r, 'image/png'));
+      const file = new File([blob], fn, { type: 'image/png' });
 
-      if(navigator.canShare&&navigator.canShare({files:[file]})){
-        const confirmed=confirm('Share this chart? Tap OK to open your device’s share options.');
-        if(confirmed){
-          await navigator.share({title:'British Classic Fantasy League 2025',text:'Check out these British Classic Fantasy League stats!',files:[file]});
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        const confirmed = confirm('Share this chart? Tap OK to open your device’s share options.');
+        if (confirmed) {
+          await navigator.share({
+            title: 'British Classic Fantasy League 2025',
+            text: 'Check out these British Classic Fantasy League stats!',
+            files: [file]
+          });
         }
-      }else{
-        const link=document.createElement('a');
-        link.href=snapshot.toDataURL('image/png');
-        link.download=fn;
+      } else {
+        // fallback download
+        const link = document.createElement('a');
+        link.href = snapshot.toDataURL('image/png');
+        link.download = fn;
         link.click();
       }
     }
