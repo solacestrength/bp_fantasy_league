@@ -11,8 +11,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <!-- ✅ Correct QR library (matches leaderboard behaviour) -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+
   <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
 
   <style>
@@ -160,22 +159,33 @@
     </footer>
   </div>
 
+  <!-- Scripts -->
   <script>
-    // MENU
     const menuBtn=document.getElementById('menu-btn'),mobileMenu=document.getElementById('mobile-menu');
     function toggleMenu(show){if(show){mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');mobileMenu.classList.add('scale-y-100','opacity-100');}else{mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');mobileMenu.classList.remove('scale-y-100','opacity-100');}}
     let menuVisible=false;menuBtn.addEventListener('click',e=>{menuVisible=!menuVisible;toggleMenu(menuVisible);e.stopPropagation();});
     document.addEventListener('click',e=>{if(!mobileMenu.contains(e.target)&&!menuBtn.contains(e.target)){if(menuVisible){menuVisible=false;toggleMenu(false);}}});
     toggleMenu(false);
 
-    // CHARTS
     Chart.register(ChartDataLabels);
     const SHEET_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
     let allData=[],charts={};
 
-    function toggleSection(id){const c=document.getElementById(id),a=document.getElementById(`arrow-${id}`);const open=c.classList.toggle('open');a.classList.toggle('rotate',open);}
+    function toggleSection(id){
+      const c=document.getElementById(id);
+      const a=document.getElementById(`arrow-${id}`);
+      const open=c.classList.toggle('open');
+      a.classList.toggle('rotate',open);
+    }
 
-    Papa.parse(SHEET_URL,{download:true,header:true,complete:r=>{allData=r.data;setupDropdowns();}});
+    Papa.parse(SHEET_URL,{
+      download:true,
+      header:true,
+      complete:r=>{
+        allData=r.data;
+        setupDropdowns();
+      }
+    });
 
     function setupDropdowns(){
       ['F','M'].forEach(g=>{
@@ -192,7 +202,6 @@
       const f=allData.filter(r=>r.Gender===g&&r.Class===w);
       if(!f.length)return;
 
-      // DONUT
       const counts={};f.forEach(r=>counts[r.Athlete]=(counts[r.Athlete]||0)+1);
       const l=Object.keys(counts),v=Object.values(counts),t=v.reduce((a,b)=>a+b,0);
       const colors=['#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'];
@@ -212,7 +221,6 @@
         plugins:[ChartDataLabels]
       });
 
-      // HISTOGRAM
       const totals=f.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v));
       if(!totals.length)return;
       const N=totals.length,min=Math.min(...totals),max=Math.max(...totals),bins=Math.round(Math.sqrt(N)),bw=(max-min)/bins,h=Array(bins).fill(0);
@@ -236,127 +244,99 @@
       });
     }
 
-    // SHARE EXPORT + QR WATERMARK (final tuned version)
-async function shareChart(id, g) {
-  const srcCanvas = document.getElementById(id);
-  await new Promise(requestAnimationFrame);
-  const s = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
-  const w = s.value;
-  const titleMain = 'British Classic Fantasy League 2025 🇬🇧';
-  const titleSub = `${w}kg ${g === 'F' ? 'Women' : 'Men'}`;
-  const fn = `metrics_${g}_${w}_${id.includes('Donut') ? 'donut' : 'hist'}.png`;
+    // SHARE EXPORT (North Star layout + scannable QR)
+    async function shareChart(id,g){
+      const srcCanvas=document.getElementById(id);
+      await new Promise(requestAnimationFrame);
+      const s=document.getElementById(g==='F'?'womenSelect':'menSelect');
+      const w=s.value;
+      const titleMain='British Classic Fantasy League 2025 🇬🇧';
+      const titleSub=`${w}kg ${g==='F'?'Women':'Men'}`;
+      const fn=`metrics_${g}_${w}_${id.includes('Donut')?'donut':'hist'}.png`;
 
-  // Create snapshot container
-  const card = document.createElement('div');
-  card.style.position = 'relative';
-  card.style.width = '780px';
-  card.style.borderRadius = '16px';
-  card.style.overflow = 'hidden';
-  card.style.margin = '0 auto';
-  card.style.backgroundImage = "url('bc25_logo.jpg')";
-  card.style.backgroundSize = 'cover';
-  card.style.backgroundPosition = 'center';
-  card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
+      const img=new Image();img.src=srcCanvas.toDataURL('image/png');await img.decode();
 
-  // Dark overlay
-  const overlay = document.createElement('div');
-  overlay.style.position = 'absolute';
-  overlay.style.inset = 0;
-  overlay.style.background = 'rgba(0,0,0,0.65)';
-  card.appendChild(overlay);
+      const card=document.createElement('div');
+      card.style.position='relative';
+      card.style.backgroundImage="linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)), url('bc25_logo.jpg')";
+      card.style.backgroundSize='cover';
+      card.style.backgroundPosition='center';
+      card.style.padding='24px';
+      card.style.borderRadius='16px';
+      card.style.textAlign='center';
+      card.style.color='#fff';
+      card.style.fontFamily="'Inter', sans-serif";
+      card.style.maxWidth='960px';
+      card.style.margin='0 auto';
+      card.style.boxSizing='border-box';
 
-  // Inner container
-  const inner = document.createElement('div');
-  inner.style.position = 'relative';
-  inner.style.padding = '24px';
-  inner.style.textAlign = 'center';
-  inner.style.color = '#fff';
-  inner.style.fontFamily = "'Inter', sans-serif";
-  inner.style.zIndex = '2';
+      const header=document.createElement('h2');
+      header.textContent=titleMain;
+      header.style.fontSize='18px';
+      header.style.fontWeight='700';
+      header.style.margin='0 0 4px 0';
+      header.style.lineHeight='1.3';
 
-  // Header titles
-  const header = document.createElement('h2');
-  header.textContent = titleMain;
-  header.style.fontSize = '20px';
-  header.style.fontWeight = '700';
-  header.style.margin = '0 0 2px 0';
+      const sub=document.createElement('p');
+      sub.textContent=titleSub;
+      sub.style.fontSize='16px';
+      sub.style.color='#ddd';
+      sub.style.margin='0 0 14px 0';
+      sub.style.lineHeight='1.3';
 
-  const sub = document.createElement('p');
-  sub.textContent = titleSub;
-  sub.style.fontSize = '16px';
-  sub.style.color = '#ddd';
-  sub.style.margin = '0 0 12px 0';
+      img.style.maxWidth='100%';
+      img.style.height='auto';
+      img.style.borderRadius='8px';
+      img.style.display='block';
+      img.style.margin='0 auto 12px auto';
 
-  // Chart image
-  const dataURL = srcCanvas.toDataURL('image/png');
-  const img = new Image();
-  img.src = dataURL;
-  img.style.width = '100%';
-  img.style.height = 'auto';
-  img.style.borderRadius = '8px';
-  img.style.display = 'block';
-  img.style.margin = '0 auto 14px auto';
-  await img.decode();
+      const credit=document.createElement('p');
+      credit.style.fontSize='13px';
+      credit.style.color='#aaa';
+      credit.style.lineHeight='1.5';
+      credit.innerHTML='Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-  // Footer credits
-  const credit = document.createElement('p');
-  credit.style.fontSize = '13px';
-  credit.style.color = '#ccc';
-  credit.style.lineHeight = '1.5';
-  credit.style.marginTop = '8px';
-  credit.innerHTML =
-    'Data from tinyurl.com/britishclassicfl-metrics<br><br>' +
-    'Sponsored by the Sabado Sessions Podcast';
+      // ✅ QR watermark (Leaderboard-style, same size and scannable)
+      const qrImg=new Image();
+      qrImg.crossOrigin="anonymous";
+      qrImg.src=`https://api.qrserver.com/v1/create-qr-code/?size=65x65&data=${encodeURIComponent('https://solacestrength.github.io/britishclassicfl/metrics.html')}&color=000000&bgcolor=FFFFFF`;
+      qrImg.style.position='absolute';
+      qrImg.style.bottom='18px';
+      qrImg.style.left='18px';
+      qrImg.style.width='65px';
+      qrImg.style.height='65px';
+      qrImg.style.borderRadius='6px';
+      qrImg.style.opacity='0.9';
+      qrImg.style.background='transparent';
 
-  // ✅ Leaderboard-style scannable QR
-  const qrURL = `https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent('https://solacestrength.github.io/britishclassicfl/metrics.html')}&color=000000&bgcolor=FFFFFF`;
-  const qrImg = new Image();
-  qrImg.src = qrURL;
-  qrImg.crossOrigin = 'anonymous';
-  qrImg.style.position = 'absolute';
-  qrImg.style.bottom = '16px';
-  qrImg.style.left = '18px';
-  qrImg.style.width = '75px';
-  qrImg.style.height = '75px';
-  qrImg.style.borderRadius = '6px';
-  qrImg.style.opacity = '1';
-  qrImg.style.background = 'transparent';
+      card.append(header,sub,img,credit,qrImg);
+      document.body.appendChild(card);
 
-  inner.append(header, sub, img, credit);
-  card.append(inner, qrImg);
-  document.body.appendChild(card);
+      // Generate export snapshot
+      const snapshot=await html2canvas(card,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
+      card.remove();
 
-  // Render export
-  const snapshot = await html2canvas(card, {
-    backgroundColor: null,
-    scale: 2,
-    useCORS: true,
-    scrollY: 0
-  });
+      const blob=await new Promise(r=>snapshot.toBlob(r,'image/png'));
+      const file=new File([blob],fn,{type:'image/png'});
 
-  card.remove();
+      // ✅ Share on supported devices; else download fallback
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        try{
+          await navigator.share({
+            title:'British Classic Fantasy League 2025',
+            text:'Check out these British Classic Fantasy League stats!',
+            files:[file]
+          });
+          return;
+        }catch(e){console.warn('Share cancelled or not supported',e);}
+      }
 
-  const blob = await new Promise(r => snapshot.toBlob(r, 'image/png'));
-  const file = new File([blob], fn, { type: 'image/png' });
-
-  // Share logic (no popup)
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try {
-      await navigator.share({
-        title: 'British Classic Fantasy League 2025',
-        text: 'Check out these British Classic Fantasy League stats!',
-        files: [file]
-      });
-    } catch (e) {
-      console.warn('Share cancelled or unsupported', e);
+      // Fallback: download image
+      const link=document.createElement('a');
+      link.href=snapshot.toDataURL('image/png');
+      link.download=fn;
+      link.click();
     }
-  } else {
-    const link = document.createElement('a');
-    link.href = snapshot.toDataURL('image/png');
-    link.download = fn;
-    link.click();
-  }
-}
   </script>
 </body>
 </html>
