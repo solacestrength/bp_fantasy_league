@@ -87,7 +87,6 @@
       <section class="w-full px-4">
         <div
           class="w-full max-w-3xl lg:max-w-4xl mx-auto bg-gray-800/60 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-gray-700">
-          
           <!-- Leaderboard header -->
           <div class="w-full mt-10 mb-6 flex flex-col sm:grid sm:grid-cols-3 items-center">
             <div class="hidden sm:block"></div>
@@ -128,215 +127,148 @@
         </div>
       </section>
 
-      <!-- Buttons -->
-      <div class="flex justify-center mt-8">
-        <a href="accuracy_scores.html"
-          class="bg-gray-800/60 border border-gray-700 text-gray-200 font-semibold px-6 py-3 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-base">
-          View Accuracy Scores
-        </a>
-      </div>
+<!-- View Leaderboard Button Container -->
+<div class="flex justify-center mt-8">
+  <a href="accuracy_scores.html"
+     class="bg-gray-800/60 border border-gray-700 text-gray-200 font-semibold px-6 py-3 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-base">
+     View Accuracy Scores
+  </a>
+</div>
 
-      <div class="flex justify-center mt-4">
-        <a href="#top"
-          class="bg-gray-800/60 border border-gray-700 text-gray-300 font-semibold px-5 py-2 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
-          Back to Top
-        </a>
-      </div>
+<!-- Back to Top Button Container -->
+<div class="flex justify-center mt-4">
+  <a href="#top"
+     class="bg-gray-800/60 border border-gray-700 text-gray-300 font-semibold px-5 py-2 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
+     Back to Top
+  </a>
+</div>
 
-      <footer class="text-center text-gray-500 text-sm mt-16 pb-4">Sponsored by the Sabado Sessions Podcast</footer>
-    </main>
+    <footer class="text-center text-gray-500 text-sm mt-16 pb-4">Sponsored by the Sabado Sessions Podcast</footer>
   </div>
 
-  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      /* --- Menu toggle --- */
-      const menuBtn = document.getElementById('menu-btn');
-      const mobileMenu = document.getElementById('mobile-menu');
-      menuBtn.addEventListener('click', (e) => {
-        const isOpen = mobileMenu.classList.contains('opacity-100');
-        mobileMenu.classList.toggle('opacity-100', !isOpen);
-        mobileMenu.classList.toggle('opacity-0', isOpen);
-        mobileMenu.classList.toggle('scale-y-100', !isOpen);
-        mobileMenu.classList.toggle('scale-y-0', isOpen);
-        menuBtn.setAttribute('aria-expanded', !isOpen);
-        e.stopPropagation();
-      });
-      document.addEventListener('click', (e) => {
-        if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
-          mobileMenu.classList.remove('opacity-100', 'scale-y-100');
-          mobileMenu.classList.add('opacity-0', 'scale-y-0');
-          menuBtn.setAttribute('aria-expanded', 'false');
-        }
-      });
-
-      /* --- Leaderboard logic --- */
-      const rowsPerPage = 50;
-      let allRows = [], filteredRows = [], currentPage = 1;
-      let searchMatches = [], currentMatchIndex = -1;
-      let headerRow = [];
-
-      async function loadLeaderboard() {
-        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSuA8YB98ghNeM-cS6Fs1pJNkEBOI0x7WKI4R0vtvAG68mo7PJZYVj2HsdxH3DDqvieaTpe9zUzJcNW/pub?gid=963601969&single=true&output=csv";
-        const response = await fetch(csvUrl);
-        const text = await response.text();
-        const rows = text.trim().split("\n").map(r => r.split(","));
-        headerRow = rows.shift();
-        allRows = rows;
-        filteredRows = [...allRows];
-        renderTable();
-      }
-
-      function renderTable() {
-        const body = document.getElementById("leaderboardBody");
-        body.innerHTML = "";
-        const start = (currentPage - 1) * rowsPerPage;
-        const end = start + rowsPerPage;
-        filteredRows.slice(start, end).forEach((row, idx) => {
-          const gIdx = start + idx;
-          const highlighted = searchMatches.length && searchMatches[currentMatchIndex] === gIdx;
-          const rowClass = highlighted ? "pulse-row" : "";
-          body.insertAdjacentHTML("beforeend", `<tr class="${rowClass}">${row.map(c => `<td class='px-3 py-2 text-center'>${c}</td>`).join("")}</tr>`);
-        });
-      }
-
-      /* --- Floating Share button --- */
-      const searchInput = document.getElementById("searchInput");
-      const shareFloatingBtn = document.createElement('button');
-      shareFloatingBtn.id = 'floatingShareBtn';
-      shareFloatingBtn.textContent = "Share My Ranking";
-      shareFloatingBtn.className = "hidden fixed bottom-20 right-6 bg-red-600 text-white px-4 py-2 rounded-full shadow-lg z-50 hover:bg-red-700 transition-opacity duration-700 ease-in-out";
-      document.body.appendChild(shareFloatingBtn);
-
-      let inactivityTimer;
-      function fadeOutShareButton() {
-        shareFloatingBtn.classList.add('fade-out');
-        setTimeout(() => {
-          shareFloatingBtn.classList.add('hidden');
-          shareFloatingBtn.classList.remove('fade-out');
-        }, 700);
-      }
-      function resetInactivityTimer() {
-        clearTimeout(inactivityTimer);
-        if (!shareFloatingBtn.classList.contains('hidden')) {
-          inactivityTimer = setTimeout(() => fadeOutShareButton(), 10000);
-        }
-      }
-      window.addEventListener('scroll', resetInactivityTimer);
-      document.addEventListener('input', resetInactivityTimer);
-
-      /* --- Search logic --- */
-      searchInput.addEventListener("input", () => {
-        const filter = searchInput.value.trim().toLowerCase();
-        searchMatches = [];
-        currentMatchIndex = -1;
-        if (!filter) { filteredRows = [...allRows]; currentPage = 1; renderTable(); shareFloatingBtn.classList.add("hidden"); return; }
-        allRows.forEach((row, idx) => { if (row.join(" ").toLowerCase().includes(filter)) searchMatches.push(idx); });
-        if (searchMatches.length > 0) {
-          currentMatchIndex = 0;
-          currentPage = Math.floor(searchMatches[currentMatchIndex] / rowsPerPage) + 1;
-          renderTable(); shareFloatingBtn.classList.remove("hidden"); resetInactivityTimer();
-        } else { renderTable(); shareFloatingBtn.classList.add("hidden"); }
-      });
-
-      searchInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && searchMatches.length > 1) {
-          e.preventDefault();
-          currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
-          currentPage = Math.floor(searchMatches[currentMatchIndex] / rowsPerPage) + 1;
-          renderTable(); shareFloatingBtn.classList.remove("hidden"); resetInactivityTimer();
-        }
-      });
-
-      /* --- Share function --- */
-      async function shareRanking() {
-        if (searchMatches.length === 0) { alert("Please search for your name first."); return; }
-        const matchIndex = searchMatches[currentMatchIndex];
-        let start = matchIndex < 10 ? 0 : matchIndex - 4;
-        let end = matchIndex < 10 ? 9 : matchIndex + 5;
-        if (start < 0) { end += -start; start = 0; }
-        if (end > allRows.length - 1) { start = Math.max(0, allRows.length - 10); end = allRows.length - 1; }
-        const visibleRows = allRows.slice(start, end + 1);
-
-        const rowsHtml = visibleRows.map((row, i) => {
-          const actualIdx = start + i;
-          const isMatch = actualIdx === matchIndex;
-          return `<tr style="${isMatch ? 'font-weight:bold;' : ''}">${row.map(c => `<td class='px-3 py-1 text-center'>${c}</td>`).join('')}</tr>`;
-        }).join('');
-
-        const snapshot = document.createElement('div');
-        Object.assign(snapshot.style, {
-          width: '600px', borderRadius: '16px', overflow: 'hidden',
-          position: 'relative', boxShadow: '0 10px 30px rgba(0,0,0,.35)',
-          backgroundImage: "url('image_leaderboard_shf.jpg')",
-          backgroundSize: 'cover', backgroundPosition: 'center'
-        });
-
-        const qrURL = `https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
-        const qrImg = new Image(); qrImg.crossOrigin = "anonymous"; qrImg.src = qrURL;
-
-        qrImg.onload = () => {
-          snapshot.innerHTML = `
-            <div style="background: rgba(0,0,0,.55); padding: 18px; position: relative;">
-              <img src="${qrImg.src}" style="position:absolute; bottom:16px; left:18px; width:52px; height:52px; border-radius:6px;" />
-              <h2 class="text-center text-xl font-bold mb-1">British Classic Fantasy League 2025 🇬🇧</h2>
-              <h3 class="text-center text-base font-semibold mb-1">My League Ranking</h3>
-              <p class="text-center text-xs text-gray-300 mb-3" style="opacity:0.9;">Entry Count – ${allRows.length}</p>
-              <table class="w-full text-sm" style="table-layout: fixed; border-collapse: collapse;">
-                <thead><tr>${headerRow.map(h => `<th class='py-1 px-3 text-center font-semibold'>${h}</th>`).join('')}</tr></thead>
-                <tbody>${rowsHtml}</tbody>
-              </table>
-              <p class="text-xs text-gray-300 text-center mt-4">
-                Data from tinyurl.com/britishclassicfl-leaderboard<br /><br /> Sponsored by the Sabado Sessions Podcast
-              </p>
-            </div>`;
-
-          document.body.appendChild(snapshot);
-          html2canvas(snapshot, { backgroundColor: null, scale: 2, useCORS: true, scrollY: 0 })
-            .then(async canvas => {
-              const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-              snapshot.remove();
-              const file = new File([blob], 'league_ranking.png', { type: 'image/png' });
-
-              const performShare = async () => {
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                  try {
-                    await navigator.share({ title: 'British Classic Fantasy League 2025 🇬🇧', text: 'Check out my league ranking!', files: [file] });
-                                        return;
-                  } catch (err) {
-                    console.warn('Share cancelled or failed:', err);
-                  }
-                }
-
-                // Fallbacks
-                try {
-                  await navigator.clipboard.writeText(window.location.href);
-                  alert('Link copied to clipboard!');
-                } catch {
-                  const link = document.createElement('a');
-                  link.href = canvas.toDataURL('image/png');
-                  link.download = 'my-league-ranking.png';
-                  link.click();
-                }
-              };
-
-              // ✅ Desktop-safe confirm step
-              if (confirm('Snapshot ready! Click OK to open share options.')) {
-                await performShare();
-              }
-            });
-        };
-      }
-
-      // Attach both share triggers
-      document.getElementById('shareRankingBtn').addEventListener('click', shareRanking);
-      shareFloatingBtn.addEventListener('click', shareRanking);
-
-      // Load leaderboard data
-      loadLeaderboard();
+  document.addEventListener('DOMContentLoaded', () => {
+    const menuBtn = document.getElementById('menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    menuBtn.addEventListener('click', e => {
+      const open = mobileMenu.classList.contains('opacity-100');
+      mobileMenu.classList.toggle('opacity-100', !open);
+      mobileMenu.classList.toggle('opacity-0', open);
+      mobileMenu.classList.toggle('scale-y-100', !open);
+      mobileMenu.classList.toggle('scale-y-0', open);
+      menuBtn.setAttribute('aria-expanded', !open);
+      e.stopPropagation();
     });
+    document.addEventListener('click', e => {
+      if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+        mobileMenu.classList.remove('opacity-100', 'scale-y-100');
+        mobileMenu.classList.add('opacity-0', 'scale-y-0');
+        menuBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    const rowsPerPage = 50;
+    let allRows = [], filteredRows = [], currentPage = 1;
+    let searchMatches = [], currentMatchIndex = -1, headerRow = [];
+
+    async function loadLeaderboard() {
+      const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSuA8YB98ghNeM-cS6Fs1pJNkEBOI0x7WKI4R0vtvAG68mo7PJZYVj2HsdxH3DDqvieaTpe9zUzJcNW/pub?gid=963601969&single=true&output=csv";
+      const res = await fetch(csvUrl);
+      const text = await res.text();
+      const rows = text.trim().split("\n").map(r => r.split(","));
+      headerRow = rows.shift();
+      document.getElementById("leaderboardHeader").innerHTML = headerRow.map(h => `<th class='px-3 py-2 text-center'>${h}</th>`).join("");
+      allRows = rows;
+      filteredRows = [...allRows];
+      renderTable();
+    }
+
+    function renderTable() {
+      const body = document.getElementById("leaderboardBody");
+      body.innerHTML = "";
+      const start = (currentPage - 1) * rowsPerPage;
+      const end = start + rowsPerPage;
+      filteredRows.slice(start, end).forEach((row, idx) => {
+        const globalIndex = start + idx;
+        const highlight = searchMatches.length && searchMatches[currentMatchIndex] === globalIndex;
+        const rowClass = highlight ? "pulse-row" : "";
+        body.insertAdjacentHTML("beforeend", `<tr class="${rowClass}">${row.map(c => `<td class='px-3 py-2 text-center'>${c}</td>`).join('')}</tr>`);
+      });
+    }
+
+    const searchInput = document.getElementById("searchInput");
+    const shareFloatingBtn = document.createElement('button');
+    shareFloatingBtn.id = 'floatingShareBtn';
+    shareFloatingBtn.textContent = "Share My Ranking";
+    shareFloatingBtn.className = "hidden fixed bottom-20 right-6 bg-red-600 text-white px-4 py-2 rounded-full shadow-lg z-50 hover:bg-red-700 transition-opacity";
+    document.body.appendChild(shareFloatingBtn);
+
+    searchInput.addEventListener("input", () => {
+      const f = searchInput.value.trim().toLowerCase();
+      searchMatches = [];
+      if (!f) { filteredRows = [...allRows]; renderTable(); shareFloatingBtn.classList.add("hidden"); return; }
+      allRows.forEach((r, i) => { if (r.join(" ").toLowerCase().includes(f)) searchMatches.push(i); });
+      if (searchMatches.length > 0) { currentMatchIndex = 0; renderTable(); shareFloatingBtn.classList.remove("hidden"); }
+      else { renderTable(); shareFloatingBtn.classList.add("hidden"); }
+    });
+
+    async function shareRanking() {
+      if (searchMatches.length === 0) { alert("Search your name first."); return; }
+      const match = searchMatches[currentMatchIndex];
+      let start = Math.max(0, match - 4), end = Math.min(allRows.length - 1, match + 5);
+      const visible = allRows.slice(start, end + 1);
+      const rowsHtml = visible.map((r, i) => {
+        const idx = start + i;
+        const bold = idx === match ? "font-weight:bold;" : "";
+        return `<tr style="${bold}">${r.map(c => `<td class='px-3 py-1 text-center'>${c}</td>`).join('')}</tr>`;
+      }).join('');
+
+      const snapshot = document.createElement('div');
+      snapshot.style.width = '600px';
+      snapshot.style.borderRadius = '16px';
+      snapshot.style.overflow = 'hidden';
+      snapshot.style.position = 'relative';
+      snapshot.style.backgroundImage = "url('image_leaderboard_shf.jpg')";
+      snapshot.style.backgroundSize = 'cover';
+      snapshot.style.backgroundPosition = 'center';
+      snapshot.innerHTML = `
+        <div style="position:relative; background:rgba(0,0,0,.55); padding:18px;">
+          <h2 style="text-align:center; font-size:20px; font-weight:700;">British Classic Fantasy League 2025 🇬🇧</h2>
+          <h3 style="text-align:center; font-size:16px; font-weight:600;">My League Ranking</h3>
+          <p style="text-align:center; font-size:12px; color:#d1d5db; margin-bottom:10px;">Entry Count – ${allRows.length}</p>
+          <table style="width:100%; text-align:center; border-collapse:collapse;">
+            <thead><tr>${headerRow.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=https://tinyurl.com/britishclassicfl-leaderboard"
+               style="position:absolute; bottom:16px; left:16px; width:52px; height:52px; border-radius:6px;">
+          <p style="text-align:center; font-size:11px; color:#ccc; margin-top:12px;">Data from tinyurl.com/britishclassicfl-leaderboard<br>Sponsored by the Sabado Sessions Podcast</p>
+        </div>
+      `;
+      document.body.appendChild(snapshot);
+
+      html2canvas(snapshot, { scale: 2, useCORS: true }).then(async canvas => {
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+        const file = new File([blob], 'league_ranking.png', { type: 'image/png' });
+        try {
+          await navigator.share({
+            title: 'British Classic Fantasy League 2025 🇬🇧',
+            text: 'Check out my league ranking!',
+            files: [file]
+          });
+        } catch {
+          const url = URL.createObjectURL(file);
+          window.open(url, '_blank');
+        }
+        snapshot.remove();
+      });
+    }
+
+    document.getElementById('shareRankingBtn').addEventListener('click', shareRanking);
+    shareFloatingBtn.addEventListener('click', shareRanking);
+    loadLeaderboard();
+  });
   </script>
 </body>
 </html>
-
