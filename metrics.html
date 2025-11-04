@@ -221,7 +221,7 @@
       if(charts[hid])charts[hid].destroy();
       charts[hid]=new Chart(document.getElementById(hid),{
         type:'bar',
-        data:{labels:lbls,datasets:[{label:'Predicted Totals',data:h,backgroundColor:'#3b82f6',borderRadius:5}]},
+        data:{labels:lbls,datasets:[{data:h,backgroundColor:'#3b82f6',borderRadius:5}]},
         options:{
           scales:{
             x:{ticks:{color:'#ccc',font:{size:9}},title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:10,weight:'bold'}}},
