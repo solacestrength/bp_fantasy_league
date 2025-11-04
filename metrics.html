@@ -1,7 +1,350 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8" /><!DOCTYPE html>
+<html lang="en">
+<head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Metrics | British Classic Fantasy League 2025 🇬🇧</title>
+
+  <!-- Libraries -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script>window.QRCode = window.QRCode || QRCode;</script>
+  <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
+
+  <style>
+    body {background:#0b0b0b;color:#f1f1f1;font-family:'Inter',sans-serif;}
+    select {background:#1f1f1f;border:1px solid #333;}
+    canvas {max-width:100%;height:auto!important;}
+    .chart-container {max-width:600px;margin:0 auto;}
+    @media(min-width:1024px){.chart-container{max-width:500px;}}
+    .collapsible-content{max-height:0;overflow:hidden;opacity:0;transition:max-height .5s ease,opacity .4s ease;}
+    .collapsible-content.open{opacity:1;max-height:1000px;}
+    .arrow{transition:transform .4s ease;}
+    .arrow.rotate{transform:rotate(180deg);}
+    .share-btn{background-color:#dc2626;display:flex;align-items:center;justify-content:center;
+      border-radius:.5rem;height:36px;width:36px;transition:background-color .2s ease;}
+    .share-btn:hover{background-color:#ef4444;}
+    .share-icon{filter:invert(1);height:18px;width:18px;}
+    @keyframes fadeInUp {0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:translateY(0);}}
+    .animate-fade-in-up {animation:fadeInUp 0.8s ease-out forwards;}
+    .animate-fade-in {animation:fadeInUp 1s ease-out forwards;}
+  </style>
+</head>
+
+<body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
+  <!-- Background -->
+  <div class="absolute inset-0 bg-[url('bc25_logo.jpg')] bg-cover bg-center opacity-45"></div>
+  <div class="absolute inset-0 bg-black/70"></div>
+
+  <div class="relative z-10 flex flex-col flex-grow animate-fade-in">
+    <!-- HEADER -->
+    <header class="site-header w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 relative z-50">
+      <div class="w-full flex items-center justify-center px-4 py-3">
+        <div class="flex-1 text-center">
+          <a href="index.html" class="font-bold text-white hover:text-red-500 transition text-sm sm:text-lg md:text-xl lg:text-2xl">
+            British Classic Fantasy League 2025 🇬🇧
+          </a>
+        </div>
+        <div class="absolute right-4 top-1/2 -translate-y-1/2">
+          <button id="menu-btn" aria-expanded="false" class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- MENU -->
+    <div id="mobile-menu" class="fixed top-16 right-4 w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-md shadow-lg z-50 scale-y-0 opacity-0 origin-top transition-transform duration-300 ease-in-out pointer-events-none">
+      <nav class="flex flex-col py-2 text-white">
+        <a href="index.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Home</a>
+        <a href="entry.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">League Entry</a>
+        <a href="leaderboard.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Leaderboard</a>
+        <a href="accuracy_scores.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Accuracy Scores</a>
+        <a href="metrics.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Metrics</a>
+      </nav>
+    </div>
+
+    <!-- MAIN -->
+    <main class="max-w-5xl mx-auto p-6 space-y-8 mt-6 animate-fade-in-up">
+      <section class="text-center">
+        <h2 class="text-xl font-semibold mb-1">Metrics Dashboard</h2>
+        <p class="text-gray-400 text-sm">
+          Explore how the predicted winners and totals are distributed for a given weight class. Sample size = number of entrants.
+          User note – any labels that appear from tapping bars or chart sections will also be visible in your shared images 📊
+        </p>
+      </section>
+
+      <!-- WOMEN -->
+      <div class="bg-black/60 rounded-lg p-4">
+        <button onclick="toggleSection('women')" class="flex items-center justify-between w-full text-left text-lg font-bold">
+          <span>Women</span>
+          <svg id="arrow-women" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+        <div id="women" class="collapsible-content mt-4">
+          <select id="womenSelect" class="p-2 rounded mb-4 text-sm"></select>
+          <div class="chart-container">
+            <div class="flex justify-end mb-1">
+              <button class="share-btn" onclick="shareChart('womenDonut','F')">
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>
+              </button>
+            </div>
+            <canvas id="womenDonut"></canvas>
+          </div>
+          <div class="chart-container mt-6">
+            <div class="flex justify-end mb-1">
+              <button class="share-btn" onclick="shareChart('womenHist','F')">
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>
+              </button>
+            </div>
+            <canvas id="womenHist"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- MEN -->
+      <div class="bg-black/60 rounded-lg p-4">
+        <button onclick="toggleSection('men')" class="flex items-center justify-between w-full text-left text-lg font-bold">
+          <span>Men</span>
+          <svg id="arrow-men" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+        <div id="men" class="collapsible-content mt-4">
+          <select id="menSelect" class="p-2 rounded mb-4 text-sm"></select>
+          <div class="chart-container">
+            <div class="flex justify-end mb-1">
+              <button class="share-btn" onclick="shareChart('menDonut','M')">
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>
+              </button>
+            </div>
+            <canvas id="menDonut"></canvas>
+          </div>
+          <div class="chart-container mt-6">
+            <div class="flex justify-end mb-1">
+              <button class="share-btn" onclick="shareChart('menHist','M')">
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>
+              </button>
+            </div>
+            <canvas id="menHist"></canvas>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div class="flex justify-center mt-8">
+      <a href="leaderboard.html" class="bg-gray-800/60 border border-gray-700 text-gray-200 font-semibold px-6 py-3 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-base">
+        View Leaderboard
+      </a>
+    </div>
+    <div class="flex justify-center mt-4">
+      <a href="#top" class="bg-gray-800/60 border border-gray-700 text-gray-300 font-semibold px-5 py-2 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
+        Back to Top
+      </a>
+    </div>
+
+    <footer class="text-center text-gray-500 text-sm py-4 bg-transparent">
+      Sponsored by the Sabado Sessions Podcast
+    </footer>
+  </div>
+
+  <script>
+    // MENU LOGIC
+    const menuBtn=document.getElementById('menu-btn'),mobileMenu=document.getElementById('mobile-menu');
+    function toggleMenu(show){if(show){mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');mobileMenu.classList.add('scale-y-100','opacity-100');}else{mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');mobileMenu.classList.remove('scale-y-100','opacity-100');}}
+    let menuVisible=false;menuBtn.addEventListener('click',e=>{menuVisible=!menuVisible;toggleMenu(menuVisible);e.stopPropagation();});
+    document.addEventListener('click',e=>{if(!mobileMenu.contains(e.target)&&!menuBtn.contains(e.target)){if(menuVisible){menuVisible=false;toggleMenu(false);}}});
+    toggleMenu(false);
+
+    // CHART SETUP
+    Chart.register(ChartDataLabels);
+    const SHEET_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
+    let allData=[],charts={};
+
+    function toggleSection(id){
+      const c=document.getElementById(id);
+      const a=document.getElementById(`arrow-${id}`);
+      const open=c.classList.toggle('open');
+      a.classList.toggle('rotate',open);
+    }
+
+    Papa.parse(SHEET_URL,{download:true,header:true,complete:r=>{allData=r.data;setupDropdowns();}});
+
+    function setupDropdowns(){
+      ['F','M'].forEach(g=>{
+        const d=allData.filter(r=>r.Gender===g);
+        const classes=[...new Set(d.map(r=>r.Class))].sort((a,b)=>parseFloat(a)-parseFloat(b));
+        const s=document.getElementById(g==='F'?'womenSelect':'menSelect');
+        s.innerHTML=classes.map(c=>`<option value="${c}">${c}kg</option>`).join('');
+        s.onchange=()=>renderCharts(g,s.value);
+        renderCharts(g,classes[0]);
+      });
+    }
+
+    function renderCharts(g,w){
+      const f=allData.filter(r=>r.Gender===g&&r.Class===w);
+      if(!f.length)return;
+
+      const counts={};f.forEach(r=>counts[r.Athlete]=(counts[r.Athlete]||0)+1);
+      const l=Object.keys(counts),v=Object.values(counts),t=v.reduce((a,b)=>a+b,0);
+      const colors=['#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'];
+      const cset=l.map((_,i)=>colors[i%colors.length]);
+      const id=g==='F'?'womenDonut':'menDonut';
+      if(charts[id])charts[id].destroy();
+      charts[id]=new Chart(document.getElementById(id),{
+        type:'doughnut',
+        data:{labels:l,datasets:[{data:v,backgroundColor:cset,borderColor:'#111',borderWidth:1}]},
+        options:{
+          plugins:{
+            title:{display:true,text:'Share of Votes',color:'#ccc',font:{weight:'bold',size:14},padding:{bottom:2}},
+            subtitle:{display:true,text:`Total Votes – ${t}`,color:'#aaa',font:{weight:'normal',size:12},padding:{top:1,bottom:6}},
+            legend:{position:'bottom',labels:{color:'#ccc',boxWidth:10,boxHeight:10}},
+            datalabels:{color:'#fff',font:{weight:'bold',size:11},formatter:x=>{const p=(x/t)*100;return p>=3?`${p.toFixed(1)}%`:'';},anchor:'center',align:'center'}
+          }
+        },
+        plugins:[ChartDataLabels]
+      });
+
+      const totals=f.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v));
+      if(!totals.length)return;
+      const N=totals.length,min=Math.min(...totals),max=Math.max(...totals),bins=Math.round(Math.sqrt(N)),bw=(max-min)/bins,h=Array(bins).fill(0);
+      totals.forEach(v=>{const i=Math.min(Math.floor((v-min)/bw),bins-1);h[i]++;});
+      const lbls=Array.from({length:bins},(_,i)=>`${(min+i*bw).toFixed(0)}–${(min+(i+1)*bw).toFixed(0)}`),hid=g==='F'?'womenHist':'menHist';
+      if(charts[hid])charts[hid].destroy();
+      charts[hid]=new Chart(document.getElementById(hid),{
+        type:'bar',
+        data:{labels:lbls,datasets:[{label:'Predicted Totals',data:h,backgroundColor:'#3b82f6',borderRadius:5}]},
+        options:{
+          scales:{
+            x:{ticks:{color:'#ccc',font:{size:10}},title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:11,weight:'bold'}}},
+            y:{beginAtZero:true,ticks:{color:'#ccc',font:{size:10}},title:{display:true,text:'Frequency',color:'#ccc',font:{size:11,weight:'bold'}}}
+          },
+          plugins:{legend:{display:false},datalabels:{color:'#fff',font:{weight:'bold',size:11},anchor:'center',align:'center',formatter:v=>v>0?v:''}}
+        },
+        plugins:[ChartDataLabels]
+      });
+    }
+
+    // SHARE EXPORT (Leaderboard-style QR)
+    async function shareChart(id,g){
+      const srcCanvas=document.getElementById(id);
+      await new Promise(requestAnimationFrame);
+      const s=document.getElementById(g==='F'?'womenSelect':'menSelect');
+      const w=s.value;
+      const titleMain='British Classic Fantasy League 2025 🇬🇧';
+      const titleSub=`${w}kg ${g==='F'?'Women':'Men'}`;
+      const fn=`metrics_${g}_${w}_${id.includes('Donut')?'donut':'hist'}.png`;
+
+      const dataURL=srcCanvas.toDataURL('image/png');
+      const img=new Image();img.src=dataURL;await img.decode();
+
+      const card=document.createElement('div');
+      card.style.position='relative';
+      card.style.backgroundImage="url('bc25_logo.jpg')";
+      card.style.backgroundSize='cover';
+      card.style.backgroundPosition='center';
+      card.style.padding='24px';
+      card.style.borderRadius='16px';
+      card.style.textAlign='center';
+      card.style.color='#fff';
+      card.style.fontFamily="'Inter', sans-serif";
+      card.style.maxWidth='960px';
+      card.style.margin='0 auto';
+      card.style.boxSizing='border-box';
+      card.style.backgroundColor='rgba(0,0,0,0.7)'; // watermark style dark overlay
+
+      const header=document.createElement('h2');
+      header.textContent=titleMain;
+      header.style.fontSize='18px';
+      header.style.fontWeight='700';
+            header.style.margin='0 0 4px 0';
+
+      const sub=document.createElement('p');
+      sub.textContent=titleSub;
+      sub.style.fontSize='16px';
+      sub.style.color='#ddd';
+      sub.style.margin='0 0 14px 0';
+
+      img.style.maxWidth='100%';
+      img.style.height='auto';
+      img.style.borderRadius='8px';
+      img.style.display='block';
+      img.style.margin='0 auto 12px auto';
+
+      const credit=document.createElement('p');
+      credit.style.fontSize='13px';
+      credit.style.color='#aaa';
+      credit.style.lineHeight='1.5';
+      credit.innerHTML='Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
+
+      // ✅ Leaderboard-style QR Code
+      const qrCanvas=document.createElement('canvas');
+      qrCanvas.width=75;
+      qrCanvas.height=75;
+      qrCanvas.style.position='absolute';
+      qrCanvas.style.bottom='18px';
+      qrCanvas.style.left='18px';
+      qrCanvas.style.opacity='0.85';
+      qrCanvas.style.borderRadius='8px';
+      qrCanvas.style.pointerEvents='none';
+
+      await QRCode.toCanvas(
+        qrCanvas,
+        'https://britishclassicfantasyleague.github.io/metrics.html',
+        {
+          width: 75,
+          margin: 1,
+          color: {
+            dark: '#ffffff',
+            light: 'rgba(0,0,0,0)',
+          },
+        }
+      );
+
+      // Append everything in same order as leaderboard
+      card.append(header, sub, img, credit, qrCanvas);
+      document.body.appendChild(card);
+
+      // Capture snapshot
+      const snapshot = await html2canvas(card, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+        scrollY: 0,
+      });
+      card.remove();
+
+      // Convert to shareable file
+      const blob = await new Promise((r) => snapshot.toBlob(r, 'image/png'));
+      const file = new File([blob], fn, { type: 'image/png' });
+
+      // ✅ Desktop-safe share (no auto-download)
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        if (confirm('Share this chart image?')) {
+          await navigator.share({
+            title: 'British Classic Fantasy League 2025',
+            text: 'Check out these British Classic Fantasy League stats!',
+            files: [file],
+          });
+        }
+      } else {
+        alert('Sharing not supported on this device.');
+      }
+    }
+  </script>
+</body>
+</html>
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Metrics | British Classic Fantasy League 2025 🇬🇧</title>
 
