@@ -12,16 +12,8 @@
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
-  <!-- ✅ Force QRCode global attach -->
-  <script>
-    (function() {
-      const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
-      s.onload = () => { window.QRCode = window.QRCode || QRCode; };
-      s.onerror = () => console.error('Failed to load QRCode library');
-      document.head.appendChild(s);
-    })();
-  </script>
+<!-- ✅ Correct browser-ready library -->
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 
   <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
 
