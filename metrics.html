@@ -357,6 +357,14 @@
     });
   }
 
+  // ======= COLLAPSIBLE SECTIONS =======
+function toggleSection(id) {
+  const content = document.getElementById(id);
+  const arrow = document.getElementById(`arrow-${id}`);
+  const isOpen = content.classList.toggle('open');
+  arrow.classList.toggle('rotate', isOpen);
+}
+
   // ======= SHARE / EXPORT with leaderboard-style QR (PNG) =======
   async function shareChart(id, g){
     const s = sizing();
