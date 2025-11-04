@@ -11,11 +11,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <!-- ✅ Robust QRCode global definition -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-  <script>
-    window.QRCode = window.QRCode || QRCode; // ensures availability globally
-  </script>
+  <script>window.QRCode = window.QRCode || QRCode;</script>
   <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
 
   <style>
@@ -44,6 +41,7 @@
   <div class="absolute inset-0 bg-black/70"></div>
 
   <div class="relative z-10 flex flex-col flex-grow animate-fade-in">
+    <!-- HEADER -->
     <header class="site-header w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 relative z-50">
       <div class="w-full flex items-center justify-center px-4 py-3">
         <div class="flex-1 text-center">
@@ -61,6 +59,7 @@
       </div>
     </header>
 
+    <!-- MENU -->
     <div id="mobile-menu" class="fixed top-16 right-4 w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-md shadow-lg z-50 scale-y-0 opacity-0 origin-top transition-transform duration-300 ease-in-out pointer-events-none">
       <nav class="flex flex-col py-2 text-white">
         <a href="index.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Home</a>
@@ -71,13 +70,13 @@
       </nav>
     </div>
 
-    <!-- MAIN CONTENT -->
+    <!-- MAIN -->
     <main class="max-w-5xl mx-auto p-6 space-y-8 mt-6 animate-fade-in-up">
       <section class="text-center">
         <h2 class="text-xl font-semibold mb-1">Metrics Dashboard</h2>
         <p class="text-gray-400 text-sm">
           Explore how the predicted winners and totals are distributed for a given weight class. Sample size = number of entrants.
-          User note - any labels that appear from tapping bars or chart sections will also be visible in your shared images 📊
+          User note – any labels that appear from tapping bars or chart sections will also be visible in your shared images 📊
         </p>
       </section>
 
@@ -157,14 +156,14 @@
   </div>
 
   <script>
-    // MENU TOGGLE
+    // MENU LOGIC
     const menuBtn=document.getElementById('menu-btn'),mobileMenu=document.getElementById('mobile-menu');
     function toggleMenu(show){if(show){mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');mobileMenu.classList.add('scale-y-100','opacity-100');}else{mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');mobileMenu.classList.remove('scale-y-100','opacity-100');}}
     let menuVisible=false;menuBtn.addEventListener('click',e=>{menuVisible=!menuVisible;toggleMenu(menuVisible);e.stopPropagation();});
     document.addEventListener('click',e=>{if(!mobileMenu.contains(e.target)&&!menuBtn.contains(e.target)){if(menuVisible){menuVisible=false;toggleMenu(false);}}});
     toggleMenu(false);
 
-    // CHARTS
+    // CHART RENDERING
     Chart.register(ChartDataLabels);
     const SHEET_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
     let allData=[],charts={};
@@ -237,13 +236,7 @@
           },
           plugins:{
             legend:{display:false},
-            datalabels:{
-              color:'#fff',
-              font:{weight:'bold',size:11},
-              anchor:'center', // inside bars
-              align:'center',
-              formatter:v=>v>0?v:''
-            }
+            datalabels:{color:'#fff',font:{weight:'bold',size:11},anchor:'center',align:'center',formatter:v=>v>0?v:''}
           }
         },
         plugins:[ChartDataLabels]
@@ -265,11 +258,11 @@
 
       const card=document.createElement('div');
       card.style.position='relative';
-      card.style.backgroundImage="linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)), url('bc25_logo.jpg')";
+      card.style.backgroundImage="linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('bc25_logo.jpg')";
+      card.style.backgroundBlendMode='overlay'; // ✅ changed from 'darken'
       card.style.backgroundSize='cover';
       card.style.backgroundPosition='center';
-      card.style.backgroundBlendMode='darken';
-            card.style.padding='24px';
+      card.style.padding='24px';
       card.style.borderRadius='16px';
       card.style.textAlign='center';
       card.style.color='#fff';
@@ -278,7 +271,7 @@
       card.style.margin='0 auto';
       card.style.boxSizing='border-box';
 
-      // Header
+      // Header & chart
       const header=document.createElement('h2');
       header.textContent=titleMain;
       header.style.fontSize='18px';
@@ -291,21 +284,19 @@
       sub.style.color='#ddd';
       sub.style.margin='0 0 14px 0';
 
-      // Chart image
       img.style.maxWidth='100%';
       img.style.height='auto';
       img.style.borderRadius='8px';
       img.style.display='block';
       img.style.margin='0 auto 12px auto';
 
-      // Credit text
       const credit=document.createElement('p');
       credit.style.fontSize='13px';
       credit.style.color='#aaa';
       credit.style.lineHeight='1.5';
       credit.innerHTML='Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-      // ✅ QR Code watermark
+      // ✅ QR Code visible above overlay
       const qrCanvas=document.createElement('canvas');
       qrCanvas.width=75;
       qrCanvas.height=75;
@@ -315,48 +306,36 @@
       qrCanvas.style.opacity='0.85';
       qrCanvas.style.borderRadius='8px';
       qrCanvas.style.pointerEvents='none';
+      qrCanvas.style.zIndex='10'; // keep above overlay
 
-      // Ensure QRCode is available
-      if (typeof window.QRCode !== 'undefined') {
-        await QRCode.toCanvas(qrCanvas, 'https://britishclassicfantasyleague.github.io/metrics.html', {
-          width: 75,
-          margin: 1,
-          color: { dark: '#ffffff', light: 'rgba(0,0,0,0)' }
+      if (typeof window.QRCode!=='undefined'){
+        await QRCode.toCanvas(qrCanvas,'https://britishclassicfantasyleague.github.io/metrics.html',{
+          width:75,
+          margin:1,
+          color:{dark:'#ffffff',light:'rgba(0,0,0,0)'}
         });
-      } else {
-        console.error('QRCode library not available.');
       }
 
-      // Assemble export card
-      card.append(header, sub, img, credit, qrCanvas);
+      card.append(header,sub,img,credit,qrCanvas);
       document.body.appendChild(card);
 
-      // Snapshot export
-      const snapshot = await html2canvas(card, {
-        backgroundColor: null,
-        scale: 2,
-        useCORS: true,
-        scrollY: 0
-      });
+      const snapshot=await html2canvas(card,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
       card.remove();
 
-      const blob = await new Promise(r => snapshot.toBlob(r, 'image/png'));
-      const file = new File([blob], fn, { type: 'image/png' });
+      const blob=await new Promise(r=>snapshot.toBlob(r,'image/png'));
+      const file=new File([blob],fn,{type:'image/png'});
 
-      // ✅ Share logic (no forced download)
-      try {
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try{
+        if(navigator.canShare&&navigator.canShare({files:[file]})){
           await navigator.share({
-            title: 'British Classic Fantasy League 2025',
-            text: 'Check out these British Classic Fantasy League stats!',
-            files: [file]
+            title:'British Classic Fantasy League 2025',
+            text:'Check out these British Classic Fantasy League stats!',
+            files:[file]
           });
-        } else {
-          alert('Sharing is not supported on this browser. Try on a mobile device instead.');
+        }else{
+          alert('Sharing not supported on this device.');
         }
-      } catch (err) {
-        console.error('Share failed:', err);
-      }
+      }catch(err){console.error('Share failed:',err);}
     }
   </script>
 </body>
