@@ -11,8 +11,9 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <!-- ✅ Correct QR library (matches leaderboard behaviour) -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+  <!-- QR (same behavior as leaderboard: server-generated PNG, reliable + CORS-friendly) -->
+  <!-- (No script tag needed because we fetch a PNG) -->
+
   <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
 
   <style>
@@ -21,19 +22,21 @@
     canvas {max-width:100%;height:auto!important;}
     .chart-container {max-width:600px;margin:0 auto;}
     @media(min-width:1024px){.chart-container{max-width:500px;}}
+
     .collapsible-content{max-height:0;overflow:hidden;opacity:0;transition:max-height .5s ease,opacity .4s ease;}
     .collapsible-content.open{opacity:1;max-height:1000px;}
     .arrow{transition:transform .4s ease;}
     .arrow.rotate{transform:rotate(180deg);}
-    .share-btn{background-color:#dc2626;display:flex;align-items:center;justify-content:center;
-      border-radius:.5rem;height:36px;width:36px;transition:background-color .2s ease;}
+
+    .share-btn{
+      background-color:#dc2626;display:flex;align-items:center;justify-content:center;
+      border-radius:.5rem;height:36px;width:36px;transition:background-color .2s ease;
+    }
     .share-btn:hover{background-color:#ef4444;}
     .share-icon{filter:invert(1);height:18px;width:18px;}
 
-    @keyframes fadeInUp {
-      0% {opacity:0;transform:translateY(10px);}
-      100% {opacity:1;transform:translateY(0);}
-    }
+    /* Fade-in animation */
+    @keyframes fadeInUp { 0% {opacity:0;transform:translateY(10px);} 100% {opacity:1;transform:translateY(0);} }
     .animate-fade-in-up {animation:fadeInUp 0.8s ease-out forwards;}
     .animate-fade-in {animation:fadeInUp 1s ease-out forwards;}
   </style>
@@ -80,7 +83,7 @@
         <h2 class="text-xl font-semibold mb-1">Metrics Dashboard</h2>
         <p class="text-gray-400 text-sm">
           Explore how the predicted winners and totals are distributed for a given weight class. Sample size = number of entrants.
-          User note - any labels that appear from tapping bars or chart sections will also be visible in your shared images 📊
+          User note — any labels that appear from tapping bars or chart sections will also be visible in your shared images 📊
         </p>
       </section>
 
@@ -94,6 +97,7 @@
         </button>
         <div id="women" class="collapsible-content mt-4">
           <select id="womenSelect" class="p-2 rounded mb-4 text-sm"></select>
+
           <div class="chart-container">
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('womenDonut','F')">
@@ -102,7 +106,8 @@
             </div>
             <canvas id="womenDonut"></canvas>
           </div>
-          <div class="chart-container mt-6">
+
+          <div class="chart-container mt-8">
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('womenHist','F')">
                 <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>
@@ -123,6 +128,7 @@
         </button>
         <div id="men" class="collapsible-content mt-4">
           <select id="menSelect" class="p-2 rounded mb-4 text-sm"></select>
+
           <div class="chart-container">
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('menDonut','M')">
@@ -131,7 +137,8 @@
             </div>
             <canvas id="menDonut"></canvas>
           </div>
-          <div class="chart-container mt-6">
+
+          <div class="chart-container mt-8">
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('menHist','M')">
                 <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>
@@ -161,21 +168,115 @@
   </div>
 
   <script>
-    // MENU
+    // ===== MENU =====
     const menuBtn=document.getElementById('menu-btn'),mobileMenu=document.getElementById('mobile-menu');
-    function toggleMenu(show){if(show){mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');mobileMenu.classList.add('scale-y-100','opacity-100');}else{mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');mobileMenu.classList.remove('scale-y-100','opacity-100');}}
-    let menuVisible=false;menuBtn.addEventListener('click',e=>{menuVisible=!menuVisible;toggleMenu(menuVisible);e.stopPropagation();});
+    function toggleMenu(show){
+      if(show){mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');mobileMenu.classList.add('scale-y-100','opacity-100');}
+      else{mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');mobileMenu.classList.remove('scale-y-100','opacity-100');}
+    }
+    let menuVisible=false;
+    menuBtn.addEventListener('click',e=>{menuVisible=!menuVisible;toggleMenu(menuVisible);e.stopPropagation();});
     document.addEventListener('click',e=>{if(!mobileMenu.contains(e.target)&&!menuBtn.contains(e.target)){if(menuVisible){menuVisible=false;toggleMenu(false);}}});
     toggleMenu(false);
 
-    // CHARTS
+    // ===== CHART HELPERS =====
     Chart.register(ChartDataLabels);
+
+    // Size helper: ~75% bigger on desktop EXCEPT donut legend text
+    function getSizes(){
+      const desktop = window.matchMedia('(min-width:1024px)').matches;
+      const mul = desktop ? 1.75 : 1.0;
+      return {
+        // donut
+        donutTitle: Math.round(12*mul),
+        donutSubtitle: Math.round(10*mul),
+        donutDatalabel: Math.round(10*mul),
+        donutLegendText: 8,        // stays small (unchanged)
+        donutLegendBox: 8,         // unchanged squares
+
+        // histogram
+        histTitle: Math.round(12*mul),
+        histSubtitle: Math.round(10*mul),
+        histAxis: Math.round(10*mul),
+        histTick: Math.round(9*mul),
+        histDL: Math.round(12*mul), // inside bars — bold & readable
+      };
+    }
+
+    // Colors
+    const COLORS=['#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'];
+
+    // External label + connector lines for donut (so % never covers slice)
+    const donutLeaderPlugin = {
+      id:'donutLeaderPlugin',
+      afterDatasetsDraw(chart,args,pluginOptions){
+        if(chart.config.type!=='doughnut') return;
+        const {ctx, chartArea:{left,right,top,bottom}} = chart;
+        const meta = chart.getDatasetMeta(0);
+        const data = chart.data.datasets[0].data;
+        const total = data.reduce((a,b)=>a+b,0)||1;
+
+        ctx.save();
+        ctx.strokeStyle = '#ffffff';
+        ctx.fillStyle = '#ffffff';
+        ctx.lineWidth = 1;
+
+        meta.data.forEach((arc, i)=>{
+          const val = data[i];
+          if(!val) return;
+          const pct = (val/total)*100;
+          // Compute point just outside arc
+          const pos = arc.tooltipPosition();
+          const centerX = (left+right)/2;
+          const centerY = (top+bottom)/2;
+          const angle = Math.atan2(pos.y-centerY,pos.x-centerX);
+          const r = arc.outerRadius + 14;   // label radius outside the arc
+          const lx = centerX + Math.cos(angle)*r;
+          const ly = centerY + Math.sin(angle)*r;
+
+          // Draw small connector from arc edge to label point
+          const edgeX = centerX + Math.cos(angle)*arc.outerRadius;
+          const edgeY = centerY + Math.sin(angle)*arc.outerRadius;
+          ctx.beginPath();
+          ctx.moveTo(edgeX, edgeY);
+          // slight outward + horizontal nudge so lines don’t overlap label boxes
+          const midX = centerX + Math.cos(angle)*(arc.outerRadius+8);
+          const midY = centerY + Math.sin(angle)*(arc.outerRadius+8);
+          ctx.lineTo(midX, midY);
+          ctx.lineTo(lx, ly);
+          ctx.stroke();
+
+          // Render percentage text outside (no overlap with slice)
+          const sizes = getSizes();
+          ctx.font = `bold ${Math.max(10,sizes.donutDatalabel)}px Inter, system-ui, -apple-system, Segoe UI, Roboto`;
+          ctx.textAlign = (Math.cos(angle) >= 0) ? 'left' : 'right';
+          ctx.textBaseline = 'middle';
+          const labelText = pct >= 3 ? `${pct.toFixed(1)}%` : ''; // keep your ≥3% rule
+          if(labelText){
+            const tx = lx + ((Math.cos(angle)>=0)? 6 : -6);
+            ctx.fillText(labelText, tx, ly);
+          }
+        });
+
+        ctx.restore();
+      }
+    };
+
+    // ===== DATA & RENDERING =====
     const SHEET_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
     let allData=[],charts={};
 
-    function toggleSection(id){const c=document.getElementById(id),a=document.getElementById(`arrow-${id}`);const open=c.classList.toggle('open');a.classList.toggle('rotate',open);}
+    function toggleSection(id){
+      const c=document.getElementById(id);
+      const a=document.getElementById(`arrow-${id}`);
+      const open=c.classList.toggle('open');
+      a.classList.toggle('rotate',open);
+    }
 
-    Papa.parse(SHEET_URL,{download:true,header:true,complete:r=>{allData=r.data;setupDropdowns();}});
+    Papa.parse(SHEET_URL,{download:true,header:true,complete:r=>{
+      allData=r.data;
+      setupDropdowns();
+    }});
 
     function setupDropdowns(){
       ['F','M'].forEach(g=>{
@@ -192,172 +293,213 @@
       const f=allData.filter(r=>r.Gender===g&&r.Class===w);
       if(!f.length)return;
 
-      // DONUT
-      const counts={};f.forEach(r=>counts[r.Athlete]=(counts[r.Athlete]||0)+1);
-      const l=Object.keys(counts),v=Object.values(counts),t=v.reduce((a,b)=>a+b,0);
-      const colors=['#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'];
-      const cset=l.map((_,i)=>colors[i%colors.length]),id=g==='F'?'womenDonut':'menDonut';
-      if(charts[id])charts[id].destroy();
-      charts[id]=new Chart(document.getElementById(id),{
+      const sizes=getSizes();
+
+      // ===== DONUT =====
+      const counts={}; f.forEach(r=>counts[r.Athlete]=(counts[r.Athlete]||0)+1);
+      const l=Object.keys(counts), v=Object.values(counts), t=v.reduce((a,b)=>a+b,0);
+      const cset=l.map((_,i)=>COLORS[i%COLORS.length]);
+      const donutId=g==='F'?'womenDonut':'menDonut';
+      if(charts[donutId]) charts[donutId].destroy();
+
+      charts[donutId]=new Chart(document.getElementById(donutId),{
         type:'doughnut',
-        data:{labels:l,datasets:[{data:v,backgroundColor:cset,borderColor:'#111',borderWidth:1}]},
+        data:{labels:l,datasets:[{data:v,backgroundColor:cset,borderColor:'#111',borderWidth:1,hoverOffset:6}]},
         options:{
+          layout:{padding:{top:6,bottom:6,left:6,right:6}},
           plugins:{
-            title:{display:true,text:'Share of Votes',color:'#ccc',font:{weight:'bold',size:12},padding:{bottom:2}},
-            subtitle:{display:true,text:`Total Votes – ${t}`,color:'#aaa',font:{weight:'normal',size:10},padding:{top:1,bottom:6}},
-            legend:{position:'bottom',labels:{color:'#ccc',boxWidth:8,boxHeight:8}, font:{weight:'normal',size:8}},
-            datalabels:{color:'#fff',font:{weight:'bold',size:10},formatter:x=>{const p=(x/t)*100;return p>=3?`${p.toFixed(1)}%`:'';},anchor:'center',align:'center'}
-          }
+            title:{display:true,text:'Share of Votes',color:'#ccc',font:{weight:'bold',size:sizes.donutTitle},padding:{bottom:2}},
+            subtitle:{display:true,text:`Total Votes – ${t}`,color:'#aaa',font:{weight:'normal',size:sizes.donutSubtitle},padding:{top:1,bottom:6}},
+            legend:{position:'bottom',labels:{color:'#ccc',boxWidth:sizes.donutLegendBox,boxHeight:sizes.donutLegendBox,font:{size:sizes.donutLegendText}}},
+            datalabels:{display:false} // handled by custom leader plugin so labels are outside with connectors
+          },
+          cutout:'55%',
+          animation:{duration:400}
         },
-        plugins:[ChartDataLabels]
+        plugins:[ChartDataLabels,donutLeaderPlugin]
       });
 
-      // HISTOGRAM
-      const totals=f.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v));
-      if(!totals.length)return;
-      const N=totals.length,min=Math.min(...totals),max=Math.max(...totals),bins=Math.round(Math.sqrt(N)),bw=(max-min)/bins,h=Array(bins).fill(0);
-      totals.forEach(v=>{const i=Math.min(Math.floor((v-min)/bw),bins-1);h[i]++;});
-      const lbls=Array.from({length:bins},(_,i)=>`${(min+i*bw).toFixed(0)}–${(min+(i+1)*bw).toFixed(0)}`),hid=g==='F'?'womenHist':'menHist';
-      if(charts[hid])charts[hid].destroy();
+      // ===== HISTOGRAM =====
+      // Use only strictly-positive totals (ignore 0 kg) for counts & binning
+      const totals=f.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v)&&v>0);
+      const N=totals.length;
+      if(charts[g==='F'?'womenHist':'menHist']) charts[g==='F'?'womenHist':'menHist'].destroy();
+
+      if(N===0){
+        // Draw an empty chart with proper title/subtitle showing 0 votes
+        const hid=g==='F'?'womenHist':'menHist';
+        charts[hid]=new Chart(document.getElementById(hid),{
+          type:'bar',
+          data:{labels:[],datasets:[{data:[],backgroundColor:'#3b82f6',borderRadius:5}]},
+          options:{
+            plugins:{
+              title:{display:true,text:'Distribution of Predicted Winning Totals',color:'#ccc',font:{weight:'bold',size:sizes.histTitle},padding:{bottom:2}},
+              subtitle:{display:true,text:`Total Votes – 0`,color:'#aaa',font:{weight:'normal',size:sizes.histSubtitle},padding:{top:1,bottom:6}},
+              legend:{display:false},
+              datalabels:{display:false}
+            },
+            scales:{
+              x:{ticks:{color:'#ccc',font:{size:sizes.histTick}},title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:sizes.histAxis,weight:'bold'}}},
+              y:{beginAtZero:true,ticks:{color:'#ccc',font:{size:sizes.histTick}},title:{display:true,text:'Frequency',color:'#ccc',font:{size:sizes.histAxis,weight:'bold'}}}
+            }
+          }
+        });
+        return;
+      }
+
+      const min=Math.min(...totals), max=Math.max(...totals);
+      const bins=Math.max(3, Math.round(Math.sqrt(N)));
+      const bw = (max===min) ? 1 : (max-min)/bins;
+      const edges = Array.from({length:bins},(_,i)=>min+i*bw);
+      const countsBins = Array(bins).fill(0);
+      totals.forEach(v=>{
+        let idx = Math.floor((v-min)/bw);
+        if(idx>=bins) idx=bins-1;
+        if(idx<0) idx=0;
+        countsBins[idx]++;
+      });
+      const labels = edges.map((e,i)=>{
+        const a = e;
+        const b = (i===bins-1)? max : (e+bw);
+        return `${Math.round(a)}–${Math.round(b)}`;
+      });
+
+      const hid=g==='F'?'womenHist':'menHist';
       charts[hid]=new Chart(document.getElementById(hid),{
         type:'bar',
-        data:{labels:lbls,datasets:[{data:h,backgroundColor:'#3b82f6',borderRadius:5}]},
+        data:{labels:labels,datasets:[{data:countsBins,backgroundColor:'#3b82f6',borderRadius:5}]},
         options:{
-          scales:{
-            x:{ticks:{color:'#ccc',font:{size:9}},title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:10,weight:'bold'}}},
-            y:{beginAtZero:true,ticks:{color:'#ccc',font:{size:9}},title:{display:true,text:'Frequency',color:'#ccc',font:{size:10,weight:'bold'}}}
-          },
+          layout:{padding:{top:6,bottom:6,left:6,right:6}},
           plugins:{
+            title:{display:true,text:'Distribution of Predicted Winning Totals',color:'#ccc',font:{weight:'bold',size:sizes.histTitle},padding:{bottom:2}},
+            subtitle:{display:true,text:`Total Votes – ${N}`,color:'#aaa',font:{weight:'normal',size:sizes.histSubtitle},padding:{top:1,bottom:6}},
             legend:{display:false},
-            datalabels:{anchor:'center',align:'center',color:'#fff',font:{weight:'bold',size:8},formatter:v=>v>0?v:''}
-          }
+            datalabels:{
+              anchor:'center',
+              align:'center',
+              color:'#fff',
+              font:{weight:'bold',size:sizes.histDL},
+              formatter:v=>v>0? v : ''
+            }
+          },
+          scales:{
+            x:{ticks:{color:'#ccc',font:{size:sizes.histTick}},title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:sizes.histAxis,weight:'bold'}}},
+            y:{beginAtZero:true,ticks:{color:'#ccc',font:{size:sizes.histTick}},title:{display:true,text:'Frequency',color:'#ccc',font:{size:sizes.histAxis,weight:'bold'}}}
+          },
+          animation:{duration:400}
         },
         plugins:[ChartDataLabels]
       });
     }
 
-    // SHARE EXPORT + QR WATERMARK (final version)
-async function shareChart(id, g) {
-  const srcCanvas = document.getElementById(id);
-  await new Promise(requestAnimationFrame);
-  const s = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
-  const w = s.value;
-  const titleMain = 'British Classic Fantasy League 2025 🇬🇧';
-  const titleSub = `${w}kg ${g === 'F' ? 'Women' : 'Men'}`;
-  const fn = `metrics_${g}_${w}_${id.includes('Donut') ? 'donut' : 'hist'}.png`;
+    // ===== SHARE EXPORT (PNG + QR like leaderboard) =====
+    async function shareChart(id, g){
+      const srcCanvas=document.getElementById(id);
+      await new Promise(requestAnimationFrame);
+      const s=document.getElementById(g==='F'?'womenSelect':'menSelect');
+      const w=s.value;
+      const titleMain='British Classic Fantasy League 2025 🇬🇧';
+      const titleSub=`${w}kg ${g==='F'?'Women':'Men'}`;
+      const fn=`metrics_${g}_${w}_${id.includes('Donut')?'donut':'hist'}.png`;
 
-  // Create snapshot container
-  const card = document.createElement('div');
-  card.style.position = 'relative';
-  card.style.width = '780px'; // ✅ fixed width for consistent scaling
-  card.style.borderRadius = '16px';
-  card.style.overflow = 'hidden';
-  card.style.margin = '0 auto';
-  card.style.backgroundImage = "url('bc25_logo.jpg')";
-  card.style.backgroundSize = 'cover';
-  card.style.backgroundPosition = 'center';
-  card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
+      // Snapshot card (consistent width for scaling)
+      const card=document.createElement('div');
+      card.style.position='relative';
+      card.style.width='780px';
+      card.style.borderRadius='16px';
+      card.style.overflow='hidden';
+      card.style.margin='0 auto';
+      card.style.backgroundImage="url('bc25_logo.jpg')";
+      card.style.backgroundSize='cover';
+      card.style.backgroundPosition='center';
+      card.style.boxShadow='0 10px 25px rgba(0,0,0,0.35)';
 
-  // Overlay for dark fade
-  const overlay = document.createElement('div');
-  overlay.style.position = 'absolute';
-  overlay.style.inset = 0;
-  overlay.style.background = 'rgba(0,0,0,0.65)'; // ✅ dim background only
-  card.appendChild(overlay);
+      // Dark overlay (dim BG only)
+      const overlay=document.createElement('div');
+      overlay.style.position='absolute';
+      overlay.style.inset=0;
+      overlay.style.background='rgba(0,0,0,0.65)';
+      card.appendChild(overlay);
 
-  // Inner container (text + chart)
-  const inner = document.createElement('div');
-  inner.style.position = 'relative';
-  inner.style.padding = '24px';
-  inner.style.textAlign = 'center';
-  inner.style.color = '#fff';
-  inner.style.fontFamily = "'Inter', sans-serif";
-  inner.style.zIndex = '2';
+      // Inner contents
+      const inner=document.createElement('div');
+      inner.style.position='relative';
+      inner.style.padding='24px';
+      inner.style.textAlign='center';
+      inner.style.color='#fff';
+      inner.style.fontFamily="'Inter', sans-serif";
+      inner.style.zIndex='2';
 
-  const header = document.createElement('h2');
-  header.textContent = titleMain;
-  header.style.fontSize = '30px';
-  header.style.fontWeight = '700';
-  header.style.margin = '0 0 4px 0';
+      const header=document.createElement('h2');
+      header.textContent=titleMain;
+      header.style.fontSize='30px';
+      header.style.fontWeight='700';
+      header.style.margin='0 0 4px 0';
 
-  const sub = document.createElement('p');
-  sub.textContent = titleSub;
-  sub.style.fontSize = '26px';
-  sub.style.fontWeight = '700';
-  sub.style.color = '#ddd';
-  sub.style.margin = '0 0 14px 0';
+      const sub=document.createElement('p');
+      sub.textContent=titleSub;
+      sub.style.fontSize='26px';
+      sub.style.fontWeight='700';
+      sub.style.color='#ddd';
+      sub.style.margin='0 0 14px 0';
 
-  // Chart image
-  const dataURL = srcCanvas.toDataURL('image/png');
-  const img = new Image();
-  img.src = dataURL;
-  img.style.width = '100%';
-  img.style.height = 'auto';
-  img.style.borderRadius = '8px';
-  img.style.display = 'block';
-  img.style.margin = '0 auto 14px auto';
-  await img.decode();
+      const dataURL=srcCanvas.toDataURL('image/png');
+      const img=new Image();
+      img.src=dataURL;
+      img.style.width='100%';
+      img.style.height='auto';
+      img.style.borderRadius='8px';
+      img.style.display='block';
+      img.style.margin='0 auto 14px auto';
+      await img.decode();
 
-  // Bottom credits
-  const credit = document.createElement('p');
-  credit.style.fontSize = '15px';
-  credit.style.color = '#ccc';
-  credit.style.lineHeight = '1.5';
-  credit.style.marginTop = '8px';
-  credit.innerHTML =
-    'Data from tinyurl.com/britishclassicfl-metrics<br><br>' +
-    'Sponsored by the Sabado Sessions Podcast';
+      const credit=document.createElement('p');
+      credit.style.fontSize='15px';
+      credit.style.color='#ccc';
+      credit.style.lineHeight='1.5';
+      credit.style.marginTop='8px';
+      credit.innerHTML='Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-  // ✅ Leaderboard-style QR (scannable PNG)
-  const qrURL = `https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${encodeURIComponent('https://solacestrength.github.io/britishclassicfl/metrics.html')}`;
-  const qrImg = new Image();
-  qrImg.src = qrURL;
-  qrImg.crossOrigin = 'anonymous';
-  qrImg.style.position = 'absolute';
-  qrImg.style.bottom = '18px';
-  qrImg.style.left = '18px';
-  qrImg.style.width = '60px';
-  qrImg.style.height = '60px';
-  qrImg.style.borderRadius = '6px';
-  qrImg.style.opacity = '0.9'; // ✅ strong contrast, no blur
-  qrImg.style.background = 'transparent';
+      // Leaderboard-style QR (reliable PNG)
+      const qrSize = 60; // fixed (matches your latest stable version)
+      const qrURL = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent('https://solacestrength.github.io/britishclassicfl/metrics.html')}`;
+      const qrImg = new Image();
+      qrImg.src = qrURL;
+      qrImg.crossOrigin = 'anonymous';
+      qrImg.style.position = 'absolute';
+      qrImg.style.bottom = '18px';
+      qrImg.style.left = '18px';
+      qrImg.style.width = qrSize+'px';
+      qrImg.style.height = qrSize+'px';
+      qrImg.style.borderRadius = '6px';
+      qrImg.style.opacity = '0.95'; // crisp & scannable
+      qrImg.style.background = 'transparent';
 
-  inner.append(header, sub, img, credit);
-  card.append(inner, qrImg);
-  document.body.appendChild(card);
+      inner.append(header, sub, img, credit);
+      card.append(inner, qrImg);
+      document.body.appendChild(card);
 
-  // Capture snapshot
-  const snapshot = await html2canvas(card, {
-    backgroundColor: null,
-    scale: 2,
-    useCORS: true,
-    scrollY: 0
-  });
+      const snapshot=await html2canvas(card,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
+      card.remove();
 
-  card.remove();
+      const blob=await new Promise(r=>snapshot.toBlob(r,'image/png'));
+      const file=new File([blob],fn,{type:'image/png'});
 
-  const blob = await new Promise(r => snapshot.toBlob(r, 'image/png'));
-  const file = new File([blob], fn, { type: 'image/png' });
-
-  // Share logic — no confirmation popup
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try {
-      await navigator.share({
-        title: 'British Classic Fantasy League 2025',
-        text: 'Check out these British Classic Fantasy League stats!',
-        files: [file]
-      });
-    } catch (e) {
-      console.warn('Share cancelled or unsupported', e);
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        try{
+          await navigator.share({
+            title:'British Classic Fantasy League 2025',
+            text:'Check out these British Classic Fantasy League stats!',
+            files:[file]
+          });
+        }catch(e){ /* user cancelled or unsupported */ }
+      }else{
+        const link=document.createElement('a');
+        link.href=snapshot.toDataURL('image/png');
+        link.download=fn;
+        link.click();
+      }
     }
-  } else {
-    // Fallback: download image
-    const link = document.createElement('a');
-    link.href = snapshot.toDataURL('image/png');
-    link.download = fn;
-    link.click();
-  }
-}
   </script>
 </body>
 </html>
