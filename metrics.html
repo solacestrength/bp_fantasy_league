@@ -304,28 +304,24 @@ async function shareChart(id, g) {
   const isMobile = window.innerWidth < 768;
   const fn = `metrics_${g}_${w}_${isDonut ? 'donut' : 'hist'}.png`;
 
+  // 🔧 unified aspect ratio fix — match donut & histogram exports
   const card = document.createElement('div');
   card.style.position = 'relative';
   card.style.width = s.exportWidth + 'px';
   card.style.borderRadius = '16px';
   card.style.overflow = 'hidden';
   card.style.margin = '0 auto';
-
-  // ✅ Fix: prevent horizontal cropping on mobile histogram exports
-  if (!isDonut && isMobile) {
-    card.style.backgroundImage = "url('bc25_logo.jpg')";
-    card.style.backgroundSize = 'contain';
-    card.style.backgroundRepeat = 'no-repeat';
-    card.style.backgroundPosition = 'center';
-    card.style.backgroundColor = '#000';
-  } else {
-    card.style.backgroundImage = "url('bc25_logo.jpg')";
-    card.style.backgroundSize = 'cover';
-    card.style.backgroundPosition = 'center';
-  }
-
+  card.style.backgroundImage = "url('bc25_logo.jpg')";
+  card.style.backgroundSize = 'cover'; // ✅ keep cover, no letterbox
+  card.style.backgroundPosition = 'center';
   card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
-  card.style.minHeight = isDonut ? (isMobile ? '920px' : '860px') : (isMobile ? '900px' : '820px');
+  card.style.minHeight = isDonut
+    ? isMobile
+      ? '920px'
+      : '860px'
+    : isMobile
+      ? '870px' // ✅ shorter + balanced histogram export
+      : '820px';
 
   const overlay = document.createElement('div');
   overlay.style.position = 'absolute';
@@ -335,7 +331,11 @@ async function shareChart(id, g) {
 
   const inner = document.createElement('div');
   inner.style.position = 'relative';
-  inner.style.padding = '36px 28px';
+  inner.style.padding = isDonut
+    ? '36px 28px 36px 28px'
+    : isMobile
+      ? '50px 28px 36px 28px' // ✅ more top padding for histos to balance composition
+      : '40px 28px 36px 28px';
   inner.style.textAlign = 'center';
   inner.style.color = '#fff';
   inner.style.fontFamily = "'Inter', sans-serif";
@@ -360,13 +360,14 @@ async function shareChart(id, g) {
   await img.decode();
   img.style.display = 'block';
   img.style.margin = '0 auto 20px';
-  img.style.width = isDonut ? (isMobile ? '80%' : '70%') : (isMobile ? '96%' : '93%');
+  img.style.width = isDonut ? (isMobile ? '80%' : '70%') : (isMobile ? '95%' : '93%');
   img.style.borderRadius = '8px';
 
   const credit = document.createElement('p');
   credit.style.fontSize = isMobile ? s.creditFont * 1.25 + 'px' : s.creditFont * 1.15 + 'px';
   credit.style.color = '#ccc';
-  credit.innerHTML = 'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
+  credit.innerHTML =
+    'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
   const qr = new Image();
   qr.crossOrigin = 'anonymous';
