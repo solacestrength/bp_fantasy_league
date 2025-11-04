@@ -239,8 +239,6 @@
 
     // SHARE EXPORT + QR WATERMARK
     async function shareChart(id,g){
-      if(typeof QRCode==='undefined'){alert('QR code generator not loaded yet — please reload the page.');return;}
-
       const srcCanvas=document.getElementById(id);
       await new Promise(requestAnimationFrame);
       const s=document.getElementById(g==='F'?'womenSelect':'menSelect');
