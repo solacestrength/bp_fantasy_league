@@ -190,7 +190,6 @@
       const f=allData.filter(r=>r.Gender===g&&r.Class===w);
       if(!f.length)return;
 
-      // DONUT
       const counts={};f.forEach(r=>counts[r.Athlete]=(counts[r.Athlete]||0)+1);
       const l=Object.keys(counts),v=Object.values(counts),t=v.reduce((a,b)=>a+b,0);
       const colors=['#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'];
@@ -210,7 +209,6 @@
         plugins:[ChartDataLabels]
       });
 
-      // HISTOGRAM
       const totals=f.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v));
       if(!totals.length)return;
       const N=totals.length,min=Math.min(...totals),max=Math.max(...totals),bins=Math.round(Math.sqrt(N)),bw=(max-min)/bins,h=Array(bins).fill(0);
@@ -234,7 +232,7 @@
       });
     }
 
-    // SHARE EXPORT + QR WATERMARK
+    // SHARE EXPORT + QR WATERMARK (no popup + visible QR)
     async function shareChart(id,g){
       const srcCanvas=document.getElementById(id);
       await new Promise(requestAnimationFrame);
@@ -286,18 +284,17 @@
       credit.style.lineHeight='1.5';
       credit.innerHTML='Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-      // ✅ QR watermark (bottom-left)
-      const qrCanvas=document.createElement('canvas');
-      qrCanvas.width=75;
-      qrCanvas.height=75;
+      const qrCanvas=document.createElement('div');
       qrCanvas.style.position='absolute';
       qrCanvas.style.bottom='18px';
       qrCanvas.style.left='18px';
-      qrCanvas.style.opacity='0.35';
+      qrCanvas.style.width='75px';
+      qrCanvas.style.height='75px';
+      qrCanvas.style.zIndex='10';
+      qrCanvas.style.background='rgba(0,0,0,0.4)';
       qrCanvas.style.borderRadius='8px';
-      qrCanvas.style.pointerEvents='none';
+      qrCanvas.style.opacity='0.9';
 
-      // generate QR directly
       new QRCode(qrCanvas, {
         text: 'https://solacestrength.github.io/britishclassicfl/metrics.html',
         width: 75,
@@ -310,26 +307,22 @@
       card.append(header, sub, img, credit, qrCanvas);
       document.body.appendChild(card);
 
-      const snapshot = await html2canvas(card, { backgroundColor: null, scale: 2, useCORS: true, scrollY: 0 });
+      const snapshot=await html2canvas(card,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
       card.remove();
 
-      const blob = await new Promise(r => snapshot.toBlob(r, 'image/png'));
-      const file = new File([blob], fn, { type: 'image/png' });
+      const blob=await new Promise(r=>snapshot.toBlob(r,'image/png'));
+      const file=new File([blob],fn,{type:'image/png'});
 
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        const confirmed = confirm('Share this chart? Tap OK to open your device’s share options.');
-        if (confirmed) {
-          await navigator.share({
-            title: 'British Classic Fantasy League 2025',
-            text: 'Check out these British Classic Fantasy League stats!',
-            files: [file]
-          });
-        }
-      } else {
-        // fallback download
-        const link = document.createElement('a');
-        link.href = snapshot.toDataURL('image/png');
-        link.download = fn;
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        await navigator.share({
+          title:'British Classic Fantasy League 2025',
+          text:'Check out these British Classic Fantasy League stats!',
+          files:[file]
+        });
+      }else{
+        const link=document.createElement('a');
+        link.href=snapshot.toDataURL('image/png');
+        link.download=fn;
         link.click();
       }
     }
