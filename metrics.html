@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Metrics | British Classic Fantasy League 2025 🇬🇧</title>
 
+  <!-- ✅ Correct relative stylesheet path -->
+  <link rel="stylesheet" href="assets/css/fix-dropdown.css">
+
   <!-- Libraries -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -12,21 +15,13 @@
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
-  <!-- ✅ Correct UMD build for QRCode (so it's globally available on GitHub Pages) -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.umd.min.js" defer></script>
-<script>
-  window.addEventListener('DOMContentLoaded', () => {
+  <!-- ✅ Load QRCode first and bind it globally -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.umd.min.js"></script>
+  <script>
     if (typeof window.QRCode === 'undefined' && typeof QRCode !== 'undefined') {
       window.QRCode = QRCode;
     }
-  });
-</script>
-
-  <script>
-    window.QRCode = window.QRCode || QRCode;
   </script>
-
-  <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
 
   <style>
     body {background:#0b0b0b;color:#f1f1f1;font-family:'Inter',sans-serif;}
