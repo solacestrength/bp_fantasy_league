@@ -434,36 +434,35 @@ async function shareChart(id, g) {
   // --- Height presets (match your stable values) ---
   card.style.minHeight = isMobile ? (isDonut ? '920px' : '820px') : (isDonut ? '860px' : '820px');
 
-  // ===== MOBILE-ONLY: refined dimension freeze + smaller donut buffer =====
+  // ===== MOBILE-ONLY: final donut trim (v5.4) =====
 if (isMobile) {
   await new Promise(requestAnimationFrame);
 
-  // Freeze canvas dimensions
   const chartCanvas = src;
   chartCanvas.style.height = chartCanvas.clientHeight + 'px';
   chartCanvas.style.width = chartCanvas.clientWidth + 'px';
 
-  // Downscale snapshot
+  // Downscale captured image
   const wPx = Math.round(img.naturalWidth / 2);
   const hPx = Math.round(img.naturalHeight / 2);
   img.style.width = wPx + 'px';
   img.style.height = hPx + 'px';
 
-  // ✅ Refined footer buffer — less padding for donut exports
+  // ⚙️ Calculate heights
   const naturalH = card.scrollHeight;
   const desiredRatio = isDonut ? 1.02 : 1.0;
   const fixedH = Math.min(naturalH * desiredRatio, s.exportWidth * desiredRatio);
 
-  // 🍩 Donut gets 0.13 (was 0.18); histogram keeps 0.18
-  const buffer = Math.round(fixedH * (isDonut ? 0.13 : 0.18));
+  // 🍩 Donut buffer reduced to 0.10 for perfect footer alignment
+  const buffer = Math.round(fixedH * (isDonut ? 0.10 : 0.18));
   card.style.height = fixedH + buffer + 'px';
   card.style.maxHeight = fixedH + buffer + 'px';
 
-  // Keep slim spacer
-  spacer.style.height = isDonut ? '12px' : '28px';
+  // 🧩 Spacer nearly removed for donut (keeps QR readable, footer tight)
+  spacer.style.height = isDonut ? '6px' : '28px';
 
   await new Promise(requestAnimationFrame);
-  }
+}
 
   // --- Capture ---
   const canvas = await html2canvas(card, {
