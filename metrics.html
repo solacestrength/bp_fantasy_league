@@ -272,8 +272,40 @@
           title:{display:true,text:'Distribution of Predicted Winning Totals',color:'#ccc',font:{size:s.histTitle,weight:'bold'},padding:{bottom:4}},
           subtitle:{display:true,text:`Total Votes – ${N}`,color:'#aaa',font:{size:s.histSubtitle},padding:{top:2,bottom:10}},
           legend:{display:false},
-          datalabels:{anchor:'center',align:'center',color:'#fff',font:{weight:'normal',size:s.histBarLabel},formatter:v=>v>0?v:''}
-        },
+          datalabels: {
+  color: '#fff',
+  font: { weight: 'normal', size: s.histBarLabel },
+  formatter: v => v > 0 ? v : '',
+  clip: false,
+  offset: 0,
+  anchor: function(context) {
+    // Determine how tall the bar is relative to the chart area
+    const chart = context.chart;
+    const dataset = context.dataset;
+    const index = context.dataIndex;
+    const value = dataset.data[index];
+    const yScale = chart.scales.y;
+    const chartHeight = yScale.bottom - yScale.top;
+    const barHeight = Math.abs(yScale.getPixelForValue(0) - yScale.getPixelForValue(value));
+    const heightPct = barHeight / chartHeight;
+
+    // If the bar is <8% of total chart height, move label to top
+    return heightPct < 0.08 ? 'end' : 'center';
+  },
+  align: function(context) {
+    const chart = context.chart;
+    const dataset = context.dataset;
+    const index = context.dataIndex;
+    const value = dataset.data[index];
+    const yScale = chart.scales.y;
+    const chartHeight = yScale.bottom - yScale.top;
+    const barHeight = Math.abs(yScale.getPixelForValue(0) - yScale.getPixelForValue(value));
+    const heightPct = barHeight / chartHeight;
+
+    // Match alignment: if short bar, center above; else center within
+    return heightPct < 0.08 ? 'start' : 'center';
+  }
+},
         scales:{
           x:{ticks:{color:'#ccc',font:{size:s.axisTick}},
              title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:s.axisTitle,weight:'bold'}}},
