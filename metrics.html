@@ -320,30 +320,19 @@ function toggleSection(id){
   a.classList.toggle('rotate',o);
 }
 
-// ======= SHARE / EXPORT (v5.2: Desktop original + Mobile North Star w/ dimension-freeze) =======
+// ======= SHARE / EXPORT (Desktop unchanged · Mobile hist fixed · Mobile donut compact) =======
 async function shareChart(id, g) {
   const s = sizing();
   const src = document.getElementById(id);
   await new Promise(requestAnimationFrame);
 
   const sel = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
-  const w = sel.value;
+  const wClass = sel.value;
   const isDonut = id.includes('Donut');
   const isMobile = window.innerWidth < 768;
-  const fn = `metrics_${g}_${w}_${isDonut ? 'donut' : 'hist'}.png`;
+  const fn = `metrics_${g}_${wClass}_${isDonut ? 'donut' : 'hist'}.png`;
 
-  // --- Hide gridlines before capture ---
-  const chart = src.chart || Chart.getChart(src);
-  let prevGridState = null;
-  if (chart) {
-    prevGridState = JSON.parse(JSON.stringify(chart.options.scales || {}));
-    if (chart.options.scales?.x) chart.options.scales.x.grid.display = false;
-    if (chart.options.scales?.y) chart.options.scales.y.grid.display = false;
-    chart.update();
-    await new Promise(requestAnimationFrame);
-  }
-
-  // --- Base card ---
+  // === Base Card ===
   const card = document.createElement('div');
   card.style.position = 'relative';
   card.style.width = s.exportWidth + 'px';
@@ -354,6 +343,9 @@ async function shareChart(id, g) {
   card.style.backgroundSize = 'cover';
   card.style.backgroundPosition = 'center';
   card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
+  card.style.minHeight = isDonut
+    ? (isMobile ? '920px' : '860px')
+    : (isMobile ? '820px' : '780px');
 
   const overlay = document.createElement('div');
   overlay.style.position = 'absolute';
@@ -361,57 +353,66 @@ async function shareChart(id, g) {
   overlay.style.background = 'rgba(0,0,0,0.65)';
   card.appendChild(overlay);
 
-  // --- Inner wrapper ---
+  // === Inner ===
   const inner = document.createElement('div');
   inner.style.position = 'relative';
+  inner.style.padding = isDonut
+    ? '36px 28px 36px 28px'
+    : isMobile ? '42px 28px 28px 28px' : '36px 28px 24px 28px';
   inner.style.textAlign = 'center';
   inner.style.color = '#fff';
   inner.style.fontFamily = "'Inter', sans-serif";
   inner.style.zIndex = '2';
-  inner.style.padding = isMobile
-    ? (isDonut ? '36px 28px 36px 28px' : '42px 28px 28px 28px')
-    : (isDonut ? '36px 28px 36px 28px' : '40px 28px 36px 28px');
-  card.appendChild(inner);
 
-  // --- Headings ---
   const header = document.createElement('h2');
   header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
-  header.style.fontSize = (isMobile ? s.headerFont * 1.5 : s.headerFont * 1.25) + 'px';
+  header.style.fontSize = isMobile ? s.headerFont * 1.5 + 'px' : s.headerFont * 1.25 + 'px';
   header.style.fontWeight = '700';
   header.style.margin = '0 0 4px 0';
 
   const sub = document.createElement('p');
-  sub.textContent = `${w}kg ${g === 'F' ? 'Women' : 'Men'}`;
-  sub.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.25) + 'px';
+  sub.textContent = `${wClass}kg ${g === 'F' ? 'Women' : 'Men'}`;
+  sub.style.fontSize = isMobile ? s.subFont * 1.5 + 'px' : s.subFont * 1.25 + 'px';
   sub.style.fontWeight = '700';
   sub.style.color = '#ddd';
   sub.style.margin = '0 0 14px 0';
 
-  // --- Chart snapshot ---
+  // === Hide gridlines before snapshot (restored later)
+  const chart = src.chart || Chart.getChart(src);
+  let prevScales = null;
+  if (chart && chart.options?.scales) {
+    prevScales = JSON.parse(JSON.stringify(chart.options.scales));
+    if (chart.options.scales.x?.grid) chart.options.scales.x.grid.display = false;
+    if (chart.options.scales.y?.grid) chart.options.scales.y.grid.display = false;
+    chart.update();
+    await new Promise(requestAnimationFrame);
+  }
+
+  // === Chart snapshot → <img>
   const dataURL = src.toDataURL('image/png');
   const img = new Image();
   img.src = dataURL;
   await img.decode();
   img.style.display = 'block';
-  img.style.margin = '0 auto 18px auto';
+  img.style.margin = '0 auto 18px';
   img.style.borderRadius = '8px';
-  img.style.width = (isMobile ? (isDonut ? '80%' : '96%') : (isDonut ? '70%' : '93%'));
+  img.style.width = isDonut ? (isMobile ? '80%' : '70%') : (isMobile ? '96%' : '94%');
   img.style.height = 'auto';
 
-  // --- Credits ---
+  // === Credits
   const credit = document.createElement('p');
-  credit.style.fontSize = (isMobile ? s.creditFont * 1.25 : s.creditFont * 1.15) + 'px';
+  credit.style.fontSize = isMobile ? s.creditFont * 1.25 + 'px' : s.creditFont * 1.15 + 'px';
   credit.style.color = '#ccc';
   credit.style.lineHeight = '1.5';
   credit.style.marginTop = '8px';
   credit.innerHTML =
     'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-  // --- Spacer (helps html2canvas include footer fully) ---
+  // === Spacer (default; may be disabled on mobile donut)
   const spacer = document.createElement('div');
-  spacer.style.height = isMobile ? (isDonut ? '16px' : '28px') : '0px';
+  spacer.style.height = '28px';
 
-  // --- QR ---
+  // === QR
   const qr = new Image();
   qr.crossOrigin = 'anonymous';
   const qrsz = isMobile ? s.qrSize * 1.1 : s.qrSize * 1.25;
@@ -426,45 +427,49 @@ async function shareChart(id, g) {
   qr.style.borderRadius = '6px';
   qr.style.opacity = '0.95';
 
-  // --- Assemble ---
   inner.append(header, sub, img, credit, spacer);
-  card.appendChild(qr);
+  card.append(inner, qr);
   document.body.appendChild(card);
 
-  // --- Height presets (match your stable values) ---
-  card.style.minHeight = isMobile ? (isDonut ? '920px' : '820px') : (isDonut ? '860px' : '820px');
-
-  // ===== MOBILE-ONLY: final donut trim (v5.4) =====
-if (isMobile) {
+  // === Dimension Control
   await new Promise(requestAnimationFrame);
 
-  const chartCanvas = src;
-  chartCanvas.style.height = chartCanvas.clientHeight + 'px';
-  chartCanvas.style.width = chartCanvas.clientWidth + 'px';
+  if (isMobile && isDonut) {
+    // ---- MOBILE DONUT: compact bottom by removing flow expansion ----
+    // Footer out of flow
+    credit.style.position = 'absolute';
+    credit.style.bottom = '16px';
+    credit.style.left = '0';
+    credit.style.width = '100%';
+    credit.style.marginTop = '0';
+    credit.style.textAlign = 'center';
+    // Slimmer donut visual footprint
+    img.style.width = '78%';
+    img.style.marginBottom = '24px';
+    // Spacer off
+    spacer.style.display = 'none';
 
-  // Downscale captured image
-  const wPx = Math.round(img.naturalWidth / 2);
-  const hPx = Math.round(img.naturalHeight / 2);
-  img.style.width = wPx + 'px';
-  img.style.height = hPx + 'px';
+    await new Promise(requestAnimationFrame);
 
-  // ⚙️ Calculate heights
-  const naturalH = card.scrollHeight;
-  const desiredRatio = isDonut ? 1.02 : 1.0;
-  const fixedH = Math.min(naturalH * desiredRatio, s.exportWidth * desiredRatio);
-
-  // 🍩 Donut buffer reduced to 0.10 for perfect footer alignment
-  const buffer = Math.round(fixedH * (isDonut ? 0.10 : 0.18));
-  card.style.height = fixedH + buffer + 'px';
-  card.style.maxHeight = fixedH + buffer + 'px';
-
-  // 🧩 Spacer nearly removed for donut (keeps QR readable, footer tight)
-  spacer.style.height = isDonut ? '6px' : '28px';
+    // Height = top → bottom of visible content (img) + room for footer/qr
+    const imgBottom = inner.offsetTop + img.offsetTop + img.offsetHeight;
+    const footerAllowance = 140; // room for legend-in-canvas look + pinned credits
+    const visibleHeight = imgBottom + footerAllowance;
+    card.style.height = visibleHeight + 'px';
+    card.style.maxHeight = visibleHeight + 'px';
+  } else if (isMobile && !isDonut) {
+    // ---- MOBILE HISTOGRAM: keep the 18% buffer you liked ----
+    const desiredRatio = 1.0;
+    const fixedH = Math.min(card.scrollHeight, s.exportWidth * desiredRatio);
+    const buffer = Math.round(fixedH * 0.18);
+    card.style.height = fixedH + buffer + 'px';
+    card.style.maxHeight = fixedH + buffer + 'px';
+    spacer.style.height = '28px';
+  } // Desktop: unchanged (natural height); spacer stays as appended.
 
   await new Promise(requestAnimationFrame);
-}
 
-  // --- Capture ---
+  // === Capture
   const canvas = await html2canvas(card, {
     backgroundColor: null,
     scale: 2,
@@ -473,13 +478,13 @@ if (isMobile) {
   });
   card.remove();
 
-  // --- Restore gridlines ---
-  if (chart && prevGridState) {
-    chart.options.scales = prevGridState;
+  // === Restore gridlines post-export
+  if (chart && prevScales) {
+    chart.options.scales = prevScales;
     chart.update();
   }
 
-  // --- Save / Share ---
+  // === Save / Share
   const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
   const file = new File([blob], fn, { type: 'image/png' });
 
