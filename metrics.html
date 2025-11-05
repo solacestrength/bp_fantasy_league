@@ -454,7 +454,6 @@ async function shareChart(id, g) {
   card.style.maxHeight = fixedH + buffer + 'px';
 
   // Add a spacer for consistent capture (slightly taller for donuts)
-  const spacer = document.createElement('div');
   spacer.style.height = isDonut ? '36px' : '28px';
   inner.appendChild(spacer);
 
