@@ -440,12 +440,12 @@ async function shareChart(id, g) {
   const fixedH = Math.min(naturalH * desiredRatio, s.exportWidth * desiredRatio);
 
   // 🍩 Perfectly balanced: donut gets 16%, histogram stays 18%
-  const buffer = Math.round(fixedH * (isDonut ? 0.16 : 0.18));
+  const buffer = Math.round(fixedH * (isDonut ? 0.18 : 0.18));
   card.style.height = fixedH + buffer + 'px';
   card.style.maxHeight = fixedH + buffer + 'px';
 
   // Keep slim donut spacer for safety
-  spacer.style.height = isDonut ? '22px' : '28px';
+  spacer.style.height = isDonut ? '16px' : '28px';
 
   await new Promise(requestAnimationFrame);
 
