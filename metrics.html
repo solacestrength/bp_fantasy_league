@@ -541,97 +541,101 @@ async function shareChart(id, g) {
     await new Promise(requestAnimationFrame);
   }
 
-  // --- Base card ---
-  const card = document.createElement('div');
-  card.style.position = 'relative';
-  card.style.width = s.exportWidth + 'px';
-  card.style.borderRadius = '16px';
-  card.style.overflow = 'hidden';
-  card.style.margin = '0 auto';
-  card.style.backgroundImage = "url('bc25_logo.jpg')";
-  card.style.backgroundRepeat = 'no-repeat';
-  card.style.backgroundPosition = 'center';
-  card.style.backgroundSize = 'contain'; // ✅ Preserves full logo for all exports
-  card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
+// --- Base card ---
+const card = document.createElement('div');
+card.style.position = 'relative';
+card.style.width = s.exportWidth + 'px';
+card.style.borderRadius = '16px';
+card.style.overflow = 'hidden';
+card.style.backgroundImage = "url('bc25_logo.jpg')";
+card.style.backgroundSize = 'cover';
+card.style.backgroundPosition = 'center';
+card.style.boxShadow = 'none'; // ✅ no border glow
+card.style.margin = '0';        // ✅ remove outer margin for edge-to-edge look
 
-  const overlay = document.createElement('div');
-  overlay.style.position = 'absolute';
-  overlay.style.inset = '0';
-  overlay.style.background = 'rgba(0,0,0,0.65)';
-  card.appendChild(overlay);
+const overlay = document.createElement('div');
+overlay.style.position = 'absolute';
+overlay.style.inset = '0';
+overlay.style.background = 'rgba(0,0,0,0.65)';
+card.appendChild(overlay);
 
-  // --- Inner wrapper ---
-  const inner = document.createElement('div');
-  inner.style.position = 'relative';
-  inner.style.textAlign = 'center';
-  inner.style.color = '#fff';
-  inner.style.fontFamily = "'Inter', sans-serif";
-  inner.style.zIndex = '2';
-  inner.style.padding = isMobile
-    ? (isDonut ? '36px 28px 36px 28px' : '42px 28px 28px 28px')
-    : (isDonut ? '36px 28px 36px 28px' : '40px 28px 36px 28px');
-  card.appendChild(inner);
+// --- Inner wrapper ---
+const inner = document.createElement('div');
+inner.style.position = 'relative';
+inner.style.textAlign = 'center';
+inner.style.color = '#fff';
+inner.style.fontFamily = "'Inter', sans-serif";
+inner.style.zIndex = '2';
+inner.style.padding = isMobile
+  ? (isDonut ? '36px 28px 36px 28px' : '42px 28px 28px 28px')
+  : (isDonut ? '36px 28px 36px 28px' : '40px 28px 36px 28px');
+card.appendChild(inner);
 
-  // --- Headings ---
-  const header = document.createElement('h2');
-  header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
-  header.style.fontSize = (isMobile ? s.headerFont * 1.5 : s.headerFont * 1.25) + 'px';
-  header.style.fontWeight = '700';
-  header.style.margin = '0 0 4px 0';
+// --- Headings ---
+const header = document.createElement('h2');
+header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
+header.style.fontSize = (isMobile ? s.headerFont * 1.5 : s.headerFont * 1.25) + 'px';
+header.style.fontWeight = '700';
+header.style.margin = '0 0 4px 0';
 
-  const sub = document.createElement('p');
-  sub.textContent = `${w}kg ${g === 'F' ? 'Women' : 'Men'}`;
-  sub.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.25) + 'px';
-  sub.style.fontWeight = '700';
-  sub.style.color = '#ddd';
-  sub.style.margin = '0 0 14px 0';
+const sub = document.createElement('p');
+sub.textContent = `${w}kg ${g === 'F' ? 'Women' : 'Men'}`;
+sub.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.25) + 'px';
+sub.style.fontWeight = '700';
+sub.style.color = '#ddd';
+sub.style.margin = '0 0 14px 0';
 
-  // --- Chart snapshot ---
-  const dataURL = src.toDataURL('image/png');
-  const img = new Image();
-  img.src = dataURL;
-  await img.decode();
-  img.style.display = 'block';
-  img.style.margin = '0 auto 18px auto';
-  img.style.borderRadius = '8px';
-  img.style.width = (isMobile ? (isDonut ? '80%' : '96%') : (isDonut ? '70%' : '93%'));
-  img.style.height = 'auto';
+// --- Chart snapshot ---
+const dataURL = src.toDataURL('image/png');
+const img = new Image();
+img.src = dataURL;
+await img.decode();
+img.style.display = 'block';
+img.style.margin = '0 auto 18px auto';
+img.style.borderRadius = '8px';
+img.style.width = (isMobile ? (isDonut ? '80%' : '96%') : (isDonut ? '70%' : '93%'));
+img.style.height = 'auto';
 
-  // --- Credits ---
-  const credit = document.createElement('p');
-  credit.style.fontSize = (isMobile ? s.creditFont * 1.25 : s.creditFont * 1.15) + 'px';
-  credit.style.color = '#ccc';
-  credit.style.lineHeight = '1.5';
-  credit.style.marginTop = '8px';
-  credit.innerHTML =
-    'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
+// --- Credits ---
+const credit = document.createElement('p');
+credit.style.fontSize = (isMobile ? s.creditFont * 1.25 : s.creditFont * 1.15) + 'px';
+credit.style.color = '#ccc';
+credit.style.lineHeight = '1.5';
+credit.style.marginTop = '8px';
+credit.innerHTML =
+  'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-  // --- Spacer ---
-  const spacer = document.createElement('div');
-  spacer.style.height = isMobile ? (isDonut ? '16px' : '28px') : '0px';
+// --- Spacer (helps html2canvas include footer fully) ---
+const spacer = document.createElement('div');
+spacer.style.height = isMobile ? (isDonut ? '16px' : '28px') : '0px';
 
-  // --- QR ---
-  const qr = new Image();
-  qr.crossOrigin = 'anonymous';
-  const qrsz = isMobile ? s.qrSize * 1.1 : s.qrSize * 1.25;
-  qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent(
-    'https://solacestrength.github.io/britishclassicfl/metrics.html'
-  )}`;
-  qr.style.position = 'absolute';
-  qr.style.bottom = '18px';
-  qr.style.left = '18px';
-  qr.style.width = qrsz + 'px';
-  qr.style.height = qrsz + 'px';
-  qr.style.borderRadius = '6px';
-  qr.style.opacity = '0.95';
+// --- QR ---
+const qr = new Image();
+qr.crossOrigin = 'anonymous';
+const qrsz = isMobile ? s.qrSize * 1.1 : s.qrSize * 1.25;
+qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent(
+  'https://solacestrength.github.io/britishclassicfl/metrics.html'
+)}`;
+qr.style.position = 'absolute';
+qr.style.bottom = '18px';
+qr.style.left = '18px';
+qr.style.width = qrsz + 'px';
+qr.style.height = qrsz + 'px';
+qr.style.borderRadius = '6px';
+qr.style.opacity = '0.95';
 
-  // --- Assemble ---
-  inner.append(header, sub, img, credit, spacer);
-  card.appendChild(qr);
-  document.body.appendChild(card);
+// --- Assemble ---
+inner.append(header, sub, img, credit, spacer);
+card.appendChild(qr);
+document.body.appendChild(card);
 
-  // --- Light padding to prevent QR cut-off (no minHeight enforced) ---
-  card.style.paddingBottom = isMobile ? '20px' : '24px';
+// --- Height presets (stable values) ---
+card.style.minHeight = isMobile ? (isDonut ? '920px' : '820px') : (isDonut ? '860px' : '820px');
+
+// --- ✅ Balanced bottom padding for composition ---
+card.style.paddingBottom = isDonut
+  ? (isMobile ? '16px' : '20px')
+  : (isMobile ? '28px' : '24px');
 
   // --- MOBILE-ONLY refinement ---
   if (isMobile) {
