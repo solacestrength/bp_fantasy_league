@@ -277,7 +277,8 @@
   font: { weight: 'normal', size: s.histBarLabel },
   formatter: v => v > 0 ? v : '',
   clip: false,
-  offset: 2,
+  clamp: true,
+  offset: 0,
   anchor: function(context) {
     const chart = context.chart;
     const dataset = context.dataset;
@@ -288,8 +289,8 @@
     const barHeight = Math.abs(yScale.getPixelForValue(0) - yScale.getPixelForValue(value));
     const heightPct = barHeight / chartHeight;
 
-    // ✅ If bar too short (<8%), anchor to bar top (end)
-    return heightPct < 0.08 ? 'end' : 'center';
+    // ✅ Only switch anchor for very short bars (<6%)
+    return heightPct < 0.06 ? 'end' : 'center';
   },
   align: function(context) {
     const chart = context.chart;
@@ -301,8 +302,8 @@
     const barHeight = Math.abs(yScale.getPixelForValue(0) - yScale.getPixelForValue(value));
     const heightPct = barHeight / chartHeight;
 
-    // ✅ Inside bars = centered, short bars = above top edge
-    return heightPct < 0.08 ? 'start' : 'center';
+    // ✅ Center labels vertically inside bars by default
+    return heightPct < 0.06 ? 'start' : 'center';
   }
 }
         },
