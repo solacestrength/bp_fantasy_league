@@ -264,7 +264,15 @@
     if(charts[histId])charts[histId].destroy();
     charts[histId]=new Chart(document.getElementById(histId),{
       type:'bar',
-      datalabels: {
+      data:{labels:labelsH,datasets:[{data:countsH,backgroundColor:'#3b82f6',borderRadius:5}]},
+      options:{
+        maintainAspectRatio:false,
+        aspectRatio:0.92, // tall but not extreme
+        plugins:{
+          title:{display:true,text:'Distribution of Predicted Winning Totals',color:'#ccc',font:{size:s.histTitle,weight:'bold'},padding:{bottom:4}},
+          subtitle:{display:true,text:`Total Votes – ${N}`,color:'#aaa',font:{size:s.histSubtitle},padding:{top:2,bottom:10}},
+          legend:{display:false},
+          datalabels: {
   color: '#fff',
   font: { weight: 'normal', size: s.histBarLabel },
   formatter: v => v > 0 ? v : '',
