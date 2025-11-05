@@ -230,14 +230,20 @@ function createDonutChart(canvasId, dataObj, total, s) {
     '#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'
   ];
 
+  const labels = Object.keys(dataObj);
+  const data = Object.values(dataObj);
+
+  // Deterministic label -> index map (avoids legend row/flow quirks)
+  const labelIndexMap = new Map(labels.map((t, i) => [t, i]));
+
   const ctx = document.getElementById(canvasId);
 
   const chart = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: Object.keys(dataObj),
+      labels,
       datasets: [{
-        data: Object.values(dataObj),
+        data,
         backgroundColor: colors,
         borderColor: '#111',
         borderWidth: 1
@@ -245,7 +251,7 @@ function createDonutChart(canvasId, dataObj, total, s) {
     },
     options: {
       maintainAspectRatio: true,
-      aspectRatio: 1,           // true 1:1 donut
+      aspectRatio: 1,         // true 1:1 donut
       cutout: '57%',
       plugins: {
         title: {
@@ -268,45 +274,47 @@ function createDonutChart(canvasId, dataObj, total, s) {
             color: '#ccc',
             boxWidth: 10,
             boxHeight: 10,
-            // Bold logic lives here, driven by our state flags:
+            // Bold driven by our state (pinned > hover)
             font: (legendCtx) => {
               const c = legendCtx.chart;
-              const idx = legendCtx.index;
+              const text = legendCtx.label?.text ?? labels[legendCtx.index];
+              const idx = labelIndexMap.get(text);
               const pinned = c.$pinnedIndex ?? -1;
-              const hoverBold = c.$legendBoldIndex ?? -1;
-              const isBold = (idx === pinned) || (pinned === -1 && idx === hoverBold);
+              const hover  = c.$hoverIndex  ?? -1;
+              const isBold = (idx === pinned) || (pinned === -1 && idx === hover);
               return { size: s.donutLegend, weight: isBold ? 'bold' : 'normal' };
             }
           },
-          // Hover previews (desktop): bold + tooltip + slice highlight
+          // Hover previews (desktop)
           onHover: (e, item, legend) => {
             const c = legend.chart;
-            // If something is pinned, we still show hover feedback,
-            // but pinned wins for "stay-on" after mouse leaves.
-            c.$legendBoldIndex = item.index;
-            setActiveSlice(c, item.index, true);
+            const text = item.text;
+            const idx = labelIndexMap.get(text);
+            c.$hoverIndex = idx;
+            setActiveSlice(c, idx, true);
           },
-          // Mouse leaves legend: clear hover (keep pinned if any)
+          // Leave legend area
           onLeave: (e, item, legend) => {
             const c = legend.chart;
-            c.$legendBoldIndex = -1;
+            c.$hoverIndex = -1;
             if (c.$pinnedIndex != null) {
               setActiveSlice(c, c.$pinnedIndex, true);
             } else {
               setActiveSlice(c, -1, false);
             }
           },
-          // Click to toggle pin: click again to unpin
+          // Click/tap to toggle pin
           onClick: (e, item, legend) => {
             const c = legend.chart;
-            if (c.$pinnedIndex === item.index) {
+            const idx = labelIndexMap.get(item.text);
+            if (c.$pinnedIndex === idx) {
               c.$pinnedIndex = null;
-              c.$legendBoldIndex = -1;
+              c.$hoverIndex = -1;
               setActiveSlice(c, -1, false);
             } else {
-              c.$pinnedIndex = item.index;
-              c.$legendBoldIndex = item.index;
-              setActiveSlice(c, item.index, true);
+              c.$pinnedIndex = idx;
+              c.$hoverIndex = idx;
+              setActiveSlice(c, idx, true);
             }
           }
         },
@@ -321,24 +329,20 @@ function createDonutChart(canvasId, dataObj, total, s) {
           align: 'center',
           clamp: true
         },
-        tooltip: {
-          // default tooltip; we programmatically open it via setActiveElements
-        }
+        tooltip: {} // default behavior; we open it programmatically
       }
     },
     plugins: [ChartDataLabels]
   });
 
-  // --- Helpers bound to this chart instance ---
+  // --- helpers bound to this chart instance ---
   function setActiveSlice(c, dataIndex, withTooltip) {
     if (dataIndex >= 0) {
       c.setActiveElements([{ datasetIndex: 0, index: dataIndex }]);
       if (withTooltip) {
-        // Use the element's center as the tooltip anchor
-        const meta = c.getDatasetMeta(0);
-        const el = meta?.data?.[dataIndex];
+        const el = c.getDatasetMeta(0)?.data?.[dataIndex];
         if (el) {
-          const { x, y } = el.getProps(['x', 'y'], true);
+          const { x, y } = el.getProps(['x','y'], true);
           c.tooltip.setActiveElements([{ datasetIndex: 0, index: dataIndex }], { x, y });
         }
       }
@@ -346,15 +350,13 @@ function createDonutChart(canvasId, dataObj, total, s) {
       c.setActiveElements([]);
       c.tooltip.setActiveElements([], { x: 0, y: 0 });
     }
-    c.update('none'); // fast refresh
+    c.update('none');
   }
 
-  // Expose helper for shareChart if you ever need it
-  chart._setActiveSlice = (idx, showTooltip=true) => setActiveSlice(chart, idx, showTooltip);
-
-  // Clear state initially
   chart.$pinnedIndex = null;
-  chart.$legendBoldIndex = -1;
+  chart.$hoverIndex  = -1;
+  chart._setActiveSlice = (idx, showTooltip=true) => setActiveSlice(chart, idx, showTooltip);
+  chart._labelIndexMap  = labelIndexMap;
 
   return chart;
 }
