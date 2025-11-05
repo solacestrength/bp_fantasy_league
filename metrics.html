@@ -320,7 +320,7 @@ function toggleSection(id){
   a.classList.toggle('rotate',o);
 }
 
-// ======= SHARE / EXPORT (Histogram framing fix only) =======
+// ======= SHARE / EXPORT (Refined height-lock fix) =======
 async function shareChart(id, g) {
   const s = sizing();
   const src = document.getElementById(id);
@@ -332,7 +332,7 @@ async function shareChart(id, g) {
   const isMobile = window.innerWidth < 768;
   const fn = `metrics_${g}_${w}_${isDonut ? 'donut' : 'hist'}.png`;
 
-  // Base card container
+  // === Base Card ===
   const card = document.createElement('div');
   card.style.position = 'relative';
   card.style.width = s.exportWidth + 'px';
@@ -344,7 +344,7 @@ async function shareChart(id, g) {
   card.style.backgroundPosition = 'center';
   card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
 
-  // Donut taller, histogram shorter & wider
+  // balanced min-heights
   card.style.minHeight = isDonut
     ? (isMobile ? '920px' : '860px')
     : (isMobile ? '820px' : '780px');
@@ -355,6 +355,7 @@ async function shareChart(id, g) {
   overlay.style.background = 'rgba(0,0,0,0.65)';
   card.appendChild(overlay);
 
+  // === Inner Content ===
   const inner = document.createElement('div');
   inner.style.position = 'relative';
   inner.style.padding = isDonut
@@ -386,8 +387,8 @@ async function shareChart(id, g) {
   img.src = dataURL;
   await img.decode();
   img.style.display = 'block';
-  img.style.borderRadius = '8px';
   img.style.margin = '0 auto 18px auto';
+  img.style.borderRadius = '8px';
   img.style.width = isDonut ? (isMobile ? '80%' : '70%') : (isMobile ? '96%' : '94%');
   img.style.height = 'auto';
 
@@ -399,6 +400,7 @@ async function shareChart(id, g) {
   credit.innerHTML =
     'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
+  // QR code
   const qr = new Image();
   qr.crossOrigin = 'anonymous';
   const qrsz = isMobile ? s.qrSize * 1.1 : s.qrSize * 1.25;
@@ -417,31 +419,34 @@ async function shareChart(id, g) {
   card.append(inner, qr);
   document.body.appendChild(card);
 
-  // --- FINAL DIMENSION CONTROL (Root Fix) ---
+  // === FINAL DIMENSION CONTROL (Corrected) ===
   await new Promise(requestAnimationFrame);
 
-  // Pixel-lock image
-  const wPx = img.clientWidth;
-  const hPx = img.clientHeight;
+  // lock the actual Chart.js canvas before clamping
+  const chartCanvas = src;
+  chartCanvas.style.height = chartCanvas.clientHeight + 'px';
+  chartCanvas.style.width = chartCanvas.clientWidth + 'px';
+
+  // pixel-lock image
+  const wPx = img.naturalWidth / 2;
+  const hPx = img.naturalHeight / 2;
   img.style.width = wPx + 'px';
   img.style.height = hPx + 'px';
 
-  // Compute natural card height
+  // measure natural card height
   const naturalH = card.scrollHeight;
-  // Donut taller, histogram squarer
-  const desiredRatio = isDonut ? 1.1 : 0.85;
+  // donuts slightly taller, histograms nearly square
+  const desiredRatio = isDonut ? 1.05 : 1.0;
   const fixedH = Math.min(naturalH, s.exportWidth * desiredRatio);
 
-  // Freeze exact card dimensions before capture
   card.style.height = fixedH + 'px';
-  card.style.minHeight = fixedH + 'px';
   card.style.maxHeight = fixedH + 'px';
 
-  // Force reflow & extra frame to stabilize
+  // allow reflow frame
   void card.offsetHeight;
   await new Promise(requestAnimationFrame);
 
-  // Capture
+  // === Capture ===
   const canvas = await html2canvas(card, {
     backgroundColor: null,
     scale: 2,
@@ -450,9 +455,10 @@ async function shareChart(id, g) {
   });
   card.remove();
 
-  // Save / Share
+  // === Save / Share ===
   const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
   const file = new File([blob], fn, { type: 'image/png' });
+
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try {
       await navigator.share({
