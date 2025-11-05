@@ -200,203 +200,248 @@
 
 <script>
 // ======= MENU =======
-const menuBtn=document.getElementById('menu-btn');
-const mobileMenu=document.getElementById('mobile-menu');
-function toggleMenu(show){
-  if(show){mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');
-    mobileMenu.classList.add('scale-y-100','opacity-100');}
-  else{mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');
-    mobileMenu.classList.remove('scale-y-100','opacity-100');}}
-let menuVisible=false;
-menuBtn.addEventListener('click',e=>{menuVisible=!menuVisible;toggleMenu(menuVisible);e.stopPropagation();});
-document.addEventListener('click',e=>{if(!mobileMenu.contains(e.target)&&!menuBtn.contains(e.target)){if(menuVisible){menuVisible=false;toggleMenu(false);}}});
+const menuBtn = document.getElementById('menu-btn');
+const mobileMenu = document.getElementById('mobile-menu');
+
+function toggleMenu(show) {
+  if (show) {
+    mobileMenu.classList.remove('scale-y-0', 'opacity-0', 'pointer-events-none');
+    mobileMenu.classList.add('scale-y-100', 'opacity-100');
+  } else {
+    mobileMenu.classList.add('scale-y-0', 'opacity-0', 'pointer-events-none');
+    mobileMenu.classList.remove('scale-y-100', 'opacity-100');
+  }
+}
+
+let menuVisible = false;
+menuBtn.addEventListener('click', e => {
+  menuVisible = !menuVisible;
+  toggleMenu(menuVisible);
+  e.stopPropagation();
+});
+
+document.addEventListener('click', e => {
+  if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+    if (menuVisible) {
+      menuVisible = false;
+      toggleMenu(false);
+    }
+  }
+});
 toggleMenu(false);
 
 // ======= CHARTS =======
 Chart.register(ChartDataLabels);
-const SHEET_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
-let allData=[]; const charts={};
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
+let allData = [];
+const charts = {};
 
-function sizing(){
-  const d=window.matchMedia('(min-width:1024px)').matches;
-  return{
-    donutTitle:d?22:14, donutSubtitle:d?18:12, donutLegend:d?18:12, donutPercent:d?16:12,
-    histTitle:d?22:14, histSubtitle:d?18:12, axisTitle:d?18:12, axisTick:d?14:11, histBarLabel:d?12:10,
-    exportWidth:d?1024:780, qrSize:d?96:72, creditFont:d?18:13, headerFont:d?32:20, subFont:d?26:16
+function sizing() {
+  const d = window.matchMedia('(min-width:1024px)').matches;
+  return {
+    donutTitle: d ? 22 : 14,
+    donutSubtitle: d ? 18 : 12,
+    donutLegend: d ? 18 : 12,
+    donutPercent: d ? 16 : 12,
+    histTitle: d ? 22 : 14,
+    histSubtitle: d ? 18 : 12,
+    axisTitle: d ? 18 : 12,
+    axisTick: d ? 14 : 11,
+    histBarLabel: d ? 12 : 10,
+    exportWidth: d ? 1024 : 780,
+    qrSize: d ? 96 : 72,
+    creditFont: d ? 18 : 13,
+    headerFont: d ? 32 : 20,
+    subFont: d ? 26 : 16
   };
 }
 
-Papa.parse(SHEET_URL,{download:true,header:true,complete:r=>{allData=r.data;setupDropdowns();}});
-function setupDropdowns(){
-  ['F','M'].forEach(g=>{
-    const d=allData.filter(r=>r.Gender===g);
-    const classes=[...new Set(d.map(r=>r.Class))].sort((a,b)=>parseFloat(a)-parseFloat(b));
-    const s=document.getElementById(g==='F'?'womenSelect':'menSelect');
-    s.innerHTML=classes.map(c=>`<option value="${c}">${c}kg</option>`).join('');
-    s.onchange=()=>renderCharts(g,s.value);
-    renderCharts(g,classes[0]);
+Papa.parse(SHEET_URL, {
+  download: true,
+  header: true,
+  complete: r => {
+    allData = r.data;
+    setupDropdowns();
+  }
+});
+
+function setupDropdowns() {
+  ['F', 'M'].forEach(g => {
+    const d = allData.filter(r => r.Gender === g);
+    const classes = [...new Set(d.map(r => r.Class))].sort((a, b) => parseFloat(a) - parseFloat(b));
+    const s = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
+    s.innerHTML = classes.map(c => `<option value="${c}">${c}kg</option>`).join('');
+    s.onchange = () => renderCharts(g, s.value);
+    renderCharts(g, classes[0]);
   });
 }
 
-function renderCharts(g, w){
+function renderCharts(g, w) {
   const s = sizing();
-  const isDesktop = window.matchMedia('(min-width:1024px)').matches;
-  const donutId = g==='F' ? 'womenDonut' : 'menDonut';
-  ...
-  // --- DONUT ---
-  const donutCanvas = document.getElementById(donutId);
-  if (!isDesktop) {
-    // Make sure no stale height attribute fights Chart.js on mobile
-    donutCanvas.style.height = '';
-    donutCanvas.removeAttribute('height');
-  }
+  const donutId = g === 'F' ? 'womenDonut' : 'menDonut';
+  const histId = g === 'F' ? 'womenHist' : 'menHist';
+  const rows = allData.filter(r => r.Gender === g && r.Class === w);
+  if (!rows.length) return;
 
+  // --- DONUT ---
+  const counts = {};
+  rows.forEach(r => counts[r.Athlete] = (counts[r.Athlete] || 0) + 1);
+  const dLabels = Object.keys(counts);
+  const dData = Object.values(counts);
+  const total = dData.reduce((a, b) => a + b, 0);
+  const colors = ['#ef4444', '#f97316', '#facc15', '#22c55e', '#14b8a6', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#d946ef', '#fb7185'];
   if (charts[donutId]) charts[donutId].destroy();
-  charts[donutId] = new Chart(donutCanvas, {
-  type: 'doughnut',
-  data: {
-    labels: dLabels,
-    datasets: [{
-      data: dData,
-      backgroundColor: colors,
-      borderColor: '#111',
-      borderWidth: 1
-    }]
-  },
-  options: {
-    maintainAspectRatio: !isDesktop,   // true on mobile, false on desktop
-    aspectRatio: 1,                    // keeps donut perfectly circular on mobile
-    cutout: '57%',
-    plugins: {
-      title: {
-        display: true,
-        text: 'Share of Votes',
-        color: '#ccc',
-        font: { weight: 'bold', size: s.donutTitle },
-        padding: { bottom: 8 }
-      },
-      subtitle: {
-        display: true,
-        text: `Total Votes – ${total}`,
-        color: '#aaa',
-        font: { size: s.donutSubtitle },
-        padding: { top: 2, bottom: 12 }
-      },
-      legend: {
-        position: 'bottom',
-        labels: {
+
+  const isDesktop = window.matchMedia('(min-width:1024px)').matches;
+
+  charts[donutId] = new Chart(document.getElementById(donutId), {
+    type: 'doughnut',
+    data: {
+      labels: dLabels,
+      datasets: [{
+        data: dData,
+        backgroundColor: colors,
+        borderColor: '#111',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      maintainAspectRatio: !isDesktop, // ✅ fix for mobile squashing
+      aspectRatio: 1, // perfect circle
+      cutout: '57%',
+      plugins: {
+        title: {
+          display: true,
+          text: 'Share of Votes',
           color: '#ccc',
-          boxWidth: 10,
-          boxHeight: 10,
-          font: { size: s.donutLegend }
-        }
-      },
-      datalabels: {
-        color: '#fff',
-        font: { weight: 'bold', size: s.donutPercent },
-        formatter: v => {
-          const p = (v / total) * 100;
-          return p >= 3 ? `${p.toFixed(1)}%` : '';
+          font: { weight: 'bold', size: s.donutTitle },
+          padding: { bottom: 8 }
         },
-        anchor: 'center',
-        align: 'center',
-        clamp: true
+        subtitle: {
+          display: true,
+          text: `Total Votes – ${total}`,
+          color: '#aaa',
+          font: { size: s.donutSubtitle },
+          padding: { top: 2, bottom: 12 }
+        },
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#ccc',
+            boxWidth: 10,
+            boxHeight: 10,
+            font: { size: s.donutLegend }
+          }
+        },
+        datalabels: {
+          color: '#fff',
+          font: { weight: 'bold', size: s.donutPercent },
+          formatter: v => {
+            const p = (v / total) * 100;
+            return p >= 3 ? `${p.toFixed(1)}%` : '';
+          },
+          anchor: 'center',
+          align: 'center',
+          clamp: true
+        }
       }
-    }
-  },
-  plugins: [ChartDataLabels]
-});
+    },
+    plugins: [ChartDataLabels]
+  });
 
   // --- HISTOGRAM ---
-  const vals=rows.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v)&&v>0);
-  if(!vals.length){
-    if(charts[histId]) charts[histId].destroy();
-    charts[histId]=new Chart(document.getElementById(histId),{
-      type:'bar', data:{labels:[],datasets:[{data:[]}]},
-      options:{
-        plugins:{
-          title:{display:true,text:'Distribution of Predicted Winning Totals',color:'#ccc',font:{size:s.histTitle,weight:'bold'},padding:{bottom:6}},
-          subtitle:{display:true,text:`Total Votes – 0`,color:'#aaa',font:{size:s.histSubtitle},padding:{top:2,bottom:10}},
-          legend:{display:false}
+  const vals = rows.map(r => parseFloat(r.PredictedTotal)).filter(v => !isNaN(v) && v > 0);
+  if (!vals.length) {
+    if (charts[histId]) charts[histId].destroy();
+    charts[histId] = new Chart(document.getElementById(histId), {
+      type: 'bar',
+      data: { labels: [], datasets: [{ data: [] }] },
+      options: {
+        plugins: {
+          title: { display: true, text: 'Distribution of Predicted Winning Totals', color: '#ccc', font: { size: s.histTitle, weight: 'bold' }, padding: { bottom: 8 } },
+          subtitle: { display: true, text: `Total Votes – 0`, color: '#aaa', font: { size: s.histSubtitle }, padding: { top: 2, bottom: 12 } },
+          legend: { display: false }
         }
       }
     });
     return;
   }
 
-  const N=vals.length, min=Math.min(...vals), max=Math.max(...vals);
-  const bins=Math.max(3,Math.round(Math.sqrt(N)));
-  const bw=(max-min)/bins||1;
-  const countsH=Array(bins).fill(0);
-  vals.forEach(v=>{let i=Math.floor((v-min)/bw); if(i>=bins)i=bins-1; if(i<0)i=0; countsH[i]++;});
-  const labelsH=Array.from({length:bins},(_,i)=>`${(min+i*bw).toFixed(0)}–${(min+(i+1)*bw).toFixed(0)}`);
+  const N = vals.length, min = Math.min(...vals), max = Math.max(...vals);
+  const bins = Math.max(3, Math.round(Math.sqrt(N)));
+  const bw = (max - min) / bins || 1;
+  const countsH = Array(bins).fill(0);
+  vals.forEach(v => { let i = Math.floor((v - min) / bw); if (i >= bins) i = bins - 1; if (i < 0) i = 0; countsH[i]++; });
+  const labelsH = Array.from({ length: bins }, (_, i) => `${(min + i * bw).toFixed(0)}–${(min + (i + 1) * bw).toFixed(0)}`);
 
-  const minC=Math.min(...countsH), maxC=Math.max(...countsH);
-  const yMin=Math.floor(minC/2);
-  const span=maxC-yMin;
-  const step=Math.max(1,Math.round(span/4));
-  const yMax=Math.ceil(maxC/step)*step;
+  const minC = Math.min(...countsH), maxC = Math.max(...countsH);
+  const yMin = Math.floor(minC / 2);
+  const span = maxC - yMin;
+  const step = Math.max(1, Math.round(span / 4));
+  const yMax = Math.ceil(maxC / step) * step;
 
-  if(charts[histId]) charts[histId].destroy();
-  charts[histId]=new Chart(document.getElementById(histId),{
-    type:'bar',
-        data:{labels:labelsH,datasets:[{data:countsH,backgroundColor:'#3b82f6',borderRadius:5}]},
-    options:{
-      maintainAspectRatio:false, aspectRatio:0.9,
-      plugins:{
-        title:{
-          display:true,
-          text:'Distribution of Predicted Winning Totals',
-          color:'#ccc',
-          font:{size:s.histTitle,weight:'bold'},
-          padding:{bottom:6}  // tighter spacing for vertical alignment
+  if (charts[histId]) charts[histId].destroy();
+  charts[histId] = new Chart(document.getElementById(histId), {
+    type: 'bar',
+    data: { labels: labelsH, datasets: [{ data: countsH, backgroundColor: '#3b82f6', borderRadius: 5 }] },
+    options: {
+      maintainAspectRatio: false,
+      aspectRatio: 0.9,
+      plugins: {
+        title: {
+          display: true,
+          text: 'Distribution of Predicted Winning Totals',
+          color: '#ccc',
+          font: { size: s.histTitle, weight: 'bold' },
+          padding: { bottom: 8 }
         },
-        subtitle:{
-          display:true,
-          text:`Total Votes – ${N}`,
-          color:'#aaa',
-          font:{size:s.histSubtitle},
-          padding:{top:2,bottom:10}
+        subtitle: {
+          display: true,
+          text: `Total Votes – ${N}`,
+          color: '#aaa',
+          font: { size: s.histSubtitle },
+          padding: { top: 2, bottom: 12 }
         },
-        legend:{display:false},
-        datalabels:{
-          color:'#fff',
-          formatter:(v)=> v>0 ? v : '',
-          anchor:'center',
-          align:(ctx)=>{
-            const v=ctx.dataset.data[ctx.dataIndex]||0;
-            const scale=ctx.chart.scales.y; if(!scale) return 'center';
-            const barH = scale.getPixelForValue(yMin+v)-scale.getPixelForValue(yMin);
-            const f=ctx.chart.options.plugins.datalabels?.font?.size || s.histBarLabel;
-            return (barH < f*1.05) ? 'end' : 'center';
+        legend: { display: false },
+        datalabels: {
+          color: '#fff',
+          formatter: (v) => v > 0 ? v : '',
+          anchor: 'center',
+          align: (ctx) => {
+            const v = ctx.dataset.data[ctx.dataIndex] || 0;
+            const scale = ctx.chart.scales.y;
+            if (!scale) return 'center';
+            const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
+            const f = ctx.chart.options.plugins.datalabels?.font?.size || s.histBarLabel;
+            return (barH < f * 1.05) ? 'end' : 'center';
           },
-          offset:0,
-          clamp:true,
-          font:{size:s.histBarLabel,weight:'normal'}
+          offset: 0,
+          clamp: true,
+          font: { size: s.histBarLabel, weight: 'normal' }
         }
       },
-      scales:{
-        x:{
-          ticks:{color:'#ccc',font:{size:s.axisTick}},
-          title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:s.axisTitle,weight:'bold'}}
+      scales: {
+        x: {
+          ticks: { color: '#ccc', font: { size: s.axisTick } },
+          title: { display: true, text: 'Predicted Total (kg)', color: '#ccc', font: { size: s.axisTitle, weight: 'bold' } }
         },
-        y:{
-          min:yMin,max:yMax,beginAtZero:false,
-          ticks:{color:'#ccc',font:{size:s.axisTick}},
-          title:{display:true,text:'Frequency',color:'#ccc',font:{size:s.axisTitle,weight:'bold'}}
+        y: {
+          min: yMin, max: yMax, beginAtZero: false,
+          ticks: { color: '#ccc', font: { size: s.axisTick } },
+          title: { display: true, text: 'Frequency', color: '#ccc', font: { size: s.axisTitle, weight: 'bold' } }
         }
       }
     },
-    plugins:[ChartDataLabels]
+    plugins: [ChartDataLabels]
   });
 }
 
 // ======= COLLAPSIBLE =======
-function toggleSection(id){
-  const c=document.getElementById(id);
-  const a=document.getElementById(`arrow-${id}`);
-  const o=c.classList.toggle('open');
-  a.classList.toggle('rotate',o);
+function toggleSection(id) {
+  const c = document.getElementById(id);
+  const a = document.getElementById(`arrow-${id}`);
+  const o = c.classList.toggle('open');
+  a.classList.toggle('rotate', o);
 }
 
 // ======= SHARE / EXPORT (v5.2: Desktop original + Mobile North Star w/ dimension-freeze) =======
