@@ -250,59 +250,61 @@ function renderCharts(g,w){
     plugins:[ChartDataLabels]
   });
 
-// === Interactive Legend Mirror (accurate, red highlight + tooltip) ===
+// === Interactive Legend Mirror (bold legend text + accurate slice + tooltip) ===
 const donutChart = charts[donutId];
 const legendPlugin = donutChart.options.plugins.legend;
 
-// Helper: safely find correct slice index by label text
+// Helper: find slice index by label text
 function getSliceIndexByLabel(chart, label) {
   return chart.data.labels.findIndex(l => l === label);
 }
 
-// Shared highlight function
+// Shared highlight logic
 function highlightSlice(chart, index, showTooltip = true) {
-  const meta = chart.getDatasetMeta(0);
-  meta.data.forEach((arc, i) => {
-    // Restore default style first
-    arc.options.borderColor = '#111';
-    arc.options.borderWidth = 1;
-  });
-
   if (index >= 0) {
-    const arc = meta.data[index];
-    arc.options.borderColor = '#dc2626'; // red border highlight
-    arc.options.borderWidth = 4;
-
+    chart.setActiveElements([{ datasetIndex: 0, index }]);
     if (showTooltip) {
-      chart.setActiveElements([{ datasetIndex: 0, index }]);
       chart.tooltip.setActiveElements([{ datasetIndex: 0, index }], { x: 0, y: 0 });
     }
   } else {
     chart.setActiveElements([]);
     chart.tooltip.setActiveElements([], { x: 0, y: 0 });
   }
-
-  chart.update();
+  chart.update('none');
 }
 
 // Legend click (mobile + desktop)
 legendPlugin.onClick = (e, legendItem, legend) => {
   const chart = legend.chart;
-  const index = getSliceIndexByLabel(chart, legendItem.text);
-  highlightSlice(chart, index, true);
+  const idx = getSliceIndexByLabel(chart, legendItem.text);
+  highlightSlice(chart, idx, true);
+
+  // Bolden selected label
+  legend.legendItems.forEach(li => li.fontStyle = 'normal');
+  legendItem.fontStyle = 'bold';
+  chart.update('none');
 };
 
 // Hover (desktop)
 legendPlugin.onHover = (e, legendItem, legend) => {
   const chart = legend.chart;
-  const index = getSliceIndexByLabel(chart, legendItem.text);
-  highlightSlice(chart, index, true);
+  const idx = getSliceIndexByLabel(chart, legendItem.text);
+  highlightSlice(chart, idx, true);
+
+  // Bolden hovered label
+  legend.legendItems.forEach(li => li.fontStyle = 'normal');
+  legendItem.fontStyle = 'bold';
+  chart.update('none');
 };
 
-// Hover out (desktop) or touch release (mobile)
+// Hover out or tap off
 legendPlugin.onLeave = (e, legendItem, legend) => {
   const chart = legend.chart;
   highlightSlice(chart, -1, false);
+
+  // Restore normal font weight
+  legend.legendItems.forEach(li => li.fontStyle = 'normal');
+  chart.update('none');
 };
 
 // === Safeguard: enforce square aspect ratio on redraws ===
