@@ -190,6 +190,14 @@
   document.addEventListener('click',e=>{if(!mobileMenu.contains(e.target)&&!menuBtn.contains(e.target)){if(menuVisible){menuVisible=false;toggleMenu(false);}}});
   toggleMenu(false);
 
+    // ======= COLLAPSIBLE =======
+function toggleSection(id){
+  const c = document.getElementById(id);
+  const a = document.getElementById(`arrow-${id}`);
+  const o = c.classList.toggle('open');
+  a.classList.toggle('rotate', o);
+}
+
   // ======= CHARTS =======
   Chart.register(ChartDataLabels);
   const SHEET_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
