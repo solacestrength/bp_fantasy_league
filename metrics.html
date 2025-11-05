@@ -418,7 +418,7 @@ async function shareChart(id, g) {
   const baseH = isDonut ? 860 : 820;
   const scaleFactor = isMobile ? 0.92 : 1.0;
   const fixedH = Math.min(naturalH * scaleFactor, s.exportWidth * scaleFactor);
-  const buffer = Math.round(fixedH * (isMobile ? (isDonut ? 0.15 : 0.22) : (isDonut ? 0.02 : 0.03)));
+  const buffer = Math.round(fixedH * (isMobile ? (isDonut ? 0.15 : 0.22) : (isDonut ? 0.02 : 0.02)));
 
   card.style.height = fixedH + buffer + 'px';
   card.style.maxHeight = fixedH + buffer + 'px';
