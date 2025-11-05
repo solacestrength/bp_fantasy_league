@@ -261,8 +261,10 @@ function renderCharts(g,w){
     options:{
       maintainAspectRatio:true,aspectRatio:(window.innerWidth>=1024?1.5:1.1),
       plugins:{
-        title:{display:true,text:'Distribution of Predicted Winning Totals',color:'#ccc',font:{size:s.histTitle,weight:'bold'},padding:{bottom:8}},
-        subtitle:{display:true,text:`Total Votes – ${N}`,color:'#aaa',font:{size:s.histSubtitle},padding:{top:2,bottom:12}},
+       title:{display:true,text:'Distribution of Predicted Winning Totals',color:'#ccc',
+       font:{size:s.donutTitle,weight:'bold'},padding:{bottom:8}},
+       subtitle:{display:true,text:`Total Votes – ${N}`,color:'#aaa',
+          font:{size:s.donutSubtitle},padding:{top:2,bottom:12}},
         legend:{display:false},
         datalabels:{
           color:'#fff',formatter:(v)=>v>0?v:'',anchor:'center',
