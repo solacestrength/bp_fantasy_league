@@ -320,7 +320,7 @@ function toggleSection(id){
   a.classList.toggle('rotate',o);
 }
 
-// ======= SHARE / EXPORT (North Star Lock-In vFinal.1) =======
+// ======= SHARE / EXPORT (True Final Stable Build) =======
 async function shareChart(id, g) {
   const s = sizing();
   const src = document.getElementById(id);
@@ -332,7 +332,15 @@ async function shareChart(id, g) {
   const isMobile = window.innerWidth < 768;
   const fn = `metrics_${g}_${w}_${isDonut ? 'donut' : 'hist'}.png`;
 
-  // === Base Card ===
+  // === Clone chart as static image (prevents reflow issues) ===
+  const cloneCanvas = document.createElement('canvas');
+  cloneCanvas.width = src.width;
+  cloneCanvas.height = src.height;
+  const ctx = cloneCanvas.getContext('2d');
+  ctx.drawImage(src, 0, 0);
+  const dataURL = cloneCanvas.toDataURL('image/png');
+
+  // === Card setup ===
   const card = document.createElement('div');
   card.style.position = 'relative';
   card.style.width = s.exportWidth + 'px';
@@ -353,7 +361,6 @@ async function shareChart(id, g) {
   overlay.style.background = 'rgba(0,0,0,0.65)';
   card.appendChild(overlay);
 
-  // === Inner Content ===
   const inner = document.createElement('div');
   inner.style.position = 'relative';
   inner.style.padding = isDonut
@@ -379,19 +386,7 @@ async function shareChart(id, g) {
   sub.style.color = '#ddd';
   sub.style.margin = '0 0 14px 0';
 
-  // === Hide gridlines before capture ===
-  const chart = src.chart || Chart.getChart(src);
-  let prevGridState = null;
-  if (chart) {
-    prevGridState = JSON.parse(JSON.stringify(chart.options.scales));
-    if (chart.options.scales.x) chart.options.scales.x.grid.display = false;
-    if (chart.options.scales.y) chart.options.scales.y.grid.display = false;
-    chart.update();
-    await new Promise(requestAnimationFrame);
-  }
-
-  // === Chart snapshot ===
-  const dataURL = src.toDataURL('image/png');
+  // === Chart image ===
   const img = new Image();
   img.src = dataURL;
   await img.decode();
@@ -406,7 +401,7 @@ async function shareChart(id, g) {
   credit.style.color = '#ccc';
   credit.style.lineHeight = '1.5';
   credit.style.marginTop = '8px';
-  credit.style.marginBottom = '20px'; // ✅ ensures full visibility
+  credit.style.marginBottom = '26px';
   credit.innerHTML =
     'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
@@ -430,18 +425,14 @@ async function shareChart(id, g) {
 
   await new Promise(requestAnimationFrame);
 
-  const naturalH = card.scrollHeight;
-  const desiredRatio = isDonut ? 1.05 : 1.0;
-  const fixedH = Math.min(naturalH, s.exportWidth * desiredRatio);
-
-  // ✅ Final footer buffer (now 15%)
-  const buffer = Math.round(fixedH * 0.15);
-  card.style.height = fixedH + buffer + 'px';
-  card.style.maxHeight = fixedH + buffer + 'px';
+  // === Stable fixed height with generous buffer ===
+  const baseHeight = card.scrollHeight;
+  const buffer = Math.round(baseHeight * 0.15);
+  card.style.height = baseHeight + buffer + 'px';
+  card.style.maxHeight = baseHeight + buffer + 'px';
 
   await new Promise(requestAnimationFrame);
 
-  // === Capture ===
   const canvas = await html2canvas(card, {
     backgroundColor: null,
     scale: 2,
@@ -450,13 +441,6 @@ async function shareChart(id, g) {
   });
   card.remove();
 
-  // === Restore gridlines ===
-  if (chart && prevGridState) {
-    chart.options.scales = prevGridState;
-    chart.update();
-  }
-
-  // === Save / Share ===
   const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
   const file = new File([blob], fn, { type: 'image/png' });
 
