@@ -399,7 +399,17 @@ async function shareChart(id, g) {
     if (chart.options.scales?.x) chart.options.scales.x.grid.display = false;
     if (chart.options.scales?.y) chart.options.scales.y.grid.display = false;
     chart.update();
-    await new Promise(requestAnimationFrame);
+await new Promise(requestAnimationFrame);
+
+// --- Reapply horizontal centering for histograms ---
+if (id.includes('Hist')) {
+  const chartArea = chart.chartArea;
+  const canvas = chart.canvas;
+  const plotCenter = chartArea.left + (chartArea.right - chartArea.left) / 2;
+  const canvasCenter = canvas.width / 2;
+  const offset = canvasCenter - plotCenter;
+  canvas.style.transform = `translateX(${offset}px)`;
+}
   }
 
   // --- Base card ---
