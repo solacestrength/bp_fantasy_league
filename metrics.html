@@ -230,7 +230,9 @@ function createDonutChart(canvasId, dataObj, total, s) {
     '#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'
   ];
 
-  const chart = new Chart(document.getElementById(canvasId), {
+  const ctx = document.getElementById(canvasId);
+
+  const chart = new Chart(ctx, {
     type: 'doughnut',
     data: {
       labels: Object.keys(dataObj),
@@ -243,7 +245,7 @@ function createDonutChart(canvasId, dataObj, total, s) {
     },
     options: {
       maintainAspectRatio: true,
-      aspectRatio: 1,
+      aspectRatio: 1,           // true 1:1 donut
       cutout: '57%',
       plugins: {
         title: {
@@ -266,44 +268,45 @@ function createDonutChart(canvasId, dataObj, total, s) {
             color: '#ccc',
             boxWidth: 10,
             boxHeight: 10,
-            font: ctx => {
-              const idx = ctx.index;
-              const c = ctx.chart;
-              const active = c.$activeLegendIndex ?? -1;
-              return {
-                size: s.donutLegend,
-                weight: idx === active ? 'bold' : 'normal'
-              };
+            // Bold logic lives here, driven by our state flags:
+            font: (legendCtx) => {
+              const c = legendCtx.chart;
+              const idx = legendCtx.index;
+              const pinned = c.$pinnedIndex ?? -1;
+              const hoverBold = c.$legendBoldIndex ?? -1;
+              const isBold = (idx === pinned) || (pinned === -1 && idx === hoverBold);
+              return { size: s.donutLegend, weight: isBold ? 'bold' : 'normal' };
             }
           },
-          onClick: (e, item, legend) => {
-            const c = legend.chart;
-            const idx = item.index;
-
-            // Toggle-on/off behaviour
-            if (c.$activeLegendIndex === idx) {
-              delete c.$activeLegendIndex;
-              c.setActiveElements([]);
-              c.tooltip.setActiveElements([], { x: 0, y: 0 });
-            } else {
-              c.$activeLegendIndex = idx;
-              c.setActiveElements([{ datasetIndex: 0, index: idx }]);
-              c.tooltip.setActiveElements([{ datasetIndex: 0, index: idx }], { x: 0, y: 0 });
-            }
-            c.update();
-          },
+          // Hover previews (desktop): bold + tooltip + slice highlight
           onHover: (e, item, legend) => {
             const c = legend.chart;
-            c.setActiveElements([{ datasetIndex: 0, index: item.index }]);
-            c.tooltip.setActiveElements([{ datasetIndex: 0, index: item.index }], { x: 0, y: 0 });
-            c.update('none');
+            // If something is pinned, we still show hover feedback,
+            // but pinned wins for "stay-on" after mouse leaves.
+            c.$legendBoldIndex = item.index;
+            setActiveSlice(c, item.index, true);
           },
+          // Mouse leaves legend: clear hover (keep pinned if any)
           onLeave: (e, item, legend) => {
             const c = legend.chart;
-            if (c.$activeLegendIndex === undefined) {
-              c.setActiveElements([]);
-              c.tooltip.setActiveElements([], { x: 0, y: 0 });
-              c.update('none');
+            c.$legendBoldIndex = -1;
+            if (c.$pinnedIndex != null) {
+              setActiveSlice(c, c.$pinnedIndex, true);
+            } else {
+              setActiveSlice(c, -1, false);
+            }
+          },
+          // Click to toggle pin: click again to unpin
+          onClick: (e, item, legend) => {
+            const c = legend.chart;
+            if (c.$pinnedIndex === item.index) {
+              c.$pinnedIndex = null;
+              c.$legendBoldIndex = -1;
+              setActiveSlice(c, -1, false);
+            } else {
+              c.$pinnedIndex = item.index;
+              c.$legendBoldIndex = item.index;
+              setActiveSlice(c, item.index, true);
             }
           }
         },
@@ -317,56 +320,41 @@ function createDonutChart(canvasId, dataObj, total, s) {
           anchor: 'center',
           align: 'center',
           clamp: true
+        },
+        tooltip: {
+          // default tooltip; we programmatically open it via setActiveElements
         }
       }
     },
     plugins: [ChartDataLabels]
   });
 
-  // === Interactive Legend Mirror (name click = slice highlight) ===
-  const legendPlugin = chart.options.plugins.legend;
-
-  function getSliceIndexByLabel(chart, label) {
-    return chart.data.labels.findIndex(l => l === label);
-  }
-
-  function highlightSlice(chart, index, showTooltip = true) {
-    if (index >= 0) {
-      chart.setActiveElements([{ datasetIndex: 0, index }]);
-      if (showTooltip) {
-        chart.tooltip.setActiveElements([{ datasetIndex: 0, index }], { x: 0, y: 0 });
+  // --- Helpers bound to this chart instance ---
+  function setActiveSlice(c, dataIndex, withTooltip) {
+    if (dataIndex >= 0) {
+      c.setActiveElements([{ datasetIndex: 0, index: dataIndex }]);
+      if (withTooltip) {
+        // Use the element's center as the tooltip anchor
+        const meta = c.getDatasetMeta(0);
+        const el = meta?.data?.[dataIndex];
+        if (el) {
+          const { x, y } = el.getProps(['x', 'y'], true);
+          c.tooltip.setActiveElements([{ datasetIndex: 0, index: dataIndex }], { x, y });
+        }
       }
     } else {
-      chart.setActiveElements([]);
-      chart.tooltip.setActiveElements([], { x: 0, y: 0 });
+      c.setActiveElements([]);
+      c.tooltip.setActiveElements([], { x: 0, y: 0 });
     }
-    chart.update('none');
+    c.update('none'); // fast refresh
   }
 
-  legendPlugin.onClick = (e, legendItem, legend) => {
-    const chart = legend.chart;
-    const idx = getSliceIndexByLabel(chart, legendItem.text);
-    highlightSlice(chart, idx, true);
-    legend.legendItems.forEach(li => li.fontStyle = 'normal');
-    legendItem.fontStyle = 'bold';
-    chart.update('none');
-  };
+  // Expose helper for shareChart if you ever need it
+  chart._setActiveSlice = (idx, showTooltip=true) => setActiveSlice(chart, idx, showTooltip);
 
-  legendPlugin.onHover = (e, legendItem, legend) => {
-    const chart = legend.chart;
-    const idx = getSliceIndexByLabel(chart, legendItem.text);
-    highlightSlice(chart, idx, true);
-    legend.legendItems.forEach(li => li.fontStyle = 'normal');
-    legendItem.fontStyle = 'bold';
-    chart.update('none');
-  };
-
-  legendPlugin.onLeave = (e, legendItem, legend) => {
-    const chart = legend.chart;
-    highlightSlice(chart, -1, false);
-    legend.legendItems.forEach(li => li.fontStyle = 'normal');
-    chart.update('none');
-  };
+  // Clear state initially
+  chart.$pinnedIndex = null;
+  chart.$legendBoldIndex = -1;
 
   return chart;
 }
@@ -387,10 +375,6 @@ function renderCharts(g, w) {
   // Destroy existing chart then rebuild
   if (charts[donutId]) charts[donutId].destroy();
   charts[donutId] = createDonutChart(donutId, counts, total, s);
-
-  // Enforce perfect circular proportions
-  charts[donutId].options.maintainAspectRatio = true;
-  charts[donutId].options.aspectRatio = 1;
 
   // Histogram
   const vals=rows.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v)&&v>0);
