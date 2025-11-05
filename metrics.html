@@ -190,14 +190,6 @@
   document.addEventListener('click',e=>{if(!mobileMenu.contains(e.target)&&!menuBtn.contains(e.target)){if(menuVisible){menuVisible=false;toggleMenu(false);}}});
   toggleMenu(false);
 
-    // ======= COLLAPSIBLE =======
-function toggleSection(id){
-  const c = document.getElementById(id);
-  const a = document.getElementById(`arrow-${id}`);
-  const o = c.classList.toggle('open');
-  a.classList.toggle('rotate', o);
-}
-
   // ======= CHARTS =======
   Chart.register(ChartDataLabels);
   const SHEET_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
@@ -212,178 +204,283 @@ function toggleSection(id){
     };
   }
 
-  // ======= SHARE / EXPORT (v6.1 — Desktop Stable + Mobile Gold, No Gridlines) =======
-async function shareChart(id, g) {
-  const s = sizing();
-  const src = document.getElementById(id);
-  await new Promise(requestAnimationFrame);
-
-  const sel = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
-  const w = sel.value;
-  const isDonut = id.includes('Donut');
-  const isMobile = window.innerWidth < 768;
-  const fn = `metrics_${g}_${w}_${isDonut ? 'donut' : 'hist'}.png`;
-
-  // === Disable gridlines before capture (permanent for exports) ===
-  const chart = src.chart || Chart.getChart(src);
-  if (chart) {
-    if (chart.options.scales?.x) chart.options.scales.x.grid.display = false;
-    if (chart.options.scales?.y) chart.options.scales.y.grid.display = false;
-    chart.update();
-    await new Promise(requestAnimationFrame);
-  }
-
-  // === Base Card ===
-  const card = document.createElement('div');
-  card.style.position = 'relative';
-  card.style.width = s.exportWidth + 'px';
-  card.style.borderRadius = '16px';
-  card.style.overflow = 'hidden';
-  card.style.margin = '0 auto';
-  card.style.backgroundImage = "url('bc25_logo.jpg')";
-  card.style.backgroundSize = 'cover';
-  card.style.backgroundPosition = 'center';
-  card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
-
-  const overlay = document.createElement('div');
-  overlay.style.position = 'absolute';
-  overlay.style.inset = '0';
-  overlay.style.background = 'rgba(0,0,0,0.65)';
-  card.appendChild(overlay);
-
-  // === Inner wrapper ===
-  const inner = document.createElement('div');
-  inner.style.position = 'relative';
-  inner.style.textAlign = 'center';
-  inner.style.color = '#fff';
-  inner.style.fontFamily = "'Inter', sans-serif";
-  inner.style.zIndex = '2';
-  inner.style.padding = isMobile
-    ? (isDonut ? '36px 28px 36px 28px' : '42px 28px 28px 28px')
-    : (isDonut ? '36px 28px 36px 28px' : '40px 28px 36px 28px');
-  card.appendChild(inner);
-
-  // === Header ===
-  const header = document.createElement('h2');
-  header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
-  header.style.fontSize = (isMobile ? s.headerFont * 1.5 : s.headerFont * 1.25) + 'px';
-  header.style.fontWeight = '700';
-  header.style.margin = '0 0 4px 0';
-
-  const sub = document.createElement('p');
-  sub.textContent = `${w}kg ${g === 'F' ? 'Women' : 'Men'}`;
-  sub.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.25) + 'px';
-  sub.style.fontWeight = '700';
-  sub.style.color = '#ddd';
-  sub.style.margin = '0 0 14px 0';
-
-  // === Chart Snapshot ===
-  const dataURL = src.toDataURL('image/png');
-  const img = new Image();
-  img.src = dataURL;
-  await img.decode();
-  img.style.display = 'block';
-  img.style.margin = '0 auto 18px auto';
-  img.style.borderRadius = '8px';
-  img.style.width = (isMobile ? (isDonut ? '80%' : '96%') : (isDonut ? '70%' : '93%'));
-  img.style.height = 'auto';
-
-  // === Credits ===
-  const credit = document.createElement('p');
-  credit.style.fontSize = (isMobile ? s.creditFont * 1.25 : s.creditFont * 1.15) + 'px';
-  credit.style.color = '#ccc';
-  credit.style.lineHeight = '1.5';
-  credit.style.marginTop = '8px';
-  credit.innerHTML =
-    'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
-
-  // === Spacer (for footer safety) ===
-  const spacer = document.createElement('div');
-  spacer.style.height = isMobile ? (isDonut ? '12px' : '28px') : '0px';
-
-  // === QR (Shared logic) ===
-  const qr = new Image();
-  qr.crossOrigin = 'anonymous';
-  const qrsz = isMobile ? s.qrSize * 1.1 : s.qrSize * 1.25;
-  qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent(
-    'https://solacestrength.github.io/britishclassicfl/metrics.html'
-  )}`;
-  qr.style.position = 'absolute';
-  qr.style.bottom = '18px';
-  qr.style.left = '18px';
-  qr.style.width = qrsz + 'px';
-  qr.style.height = qrsz + 'px';
-  qr.style.borderRadius = '6px';
-  qr.style.opacity = '0.95';
-
-  // === Assemble Card ===
-  inner.append(header, sub, img, credit, spacer);
-  card.appendChild(qr);
-  document.body.appendChild(card);
-
-  // === Dimension Handling ===
-  card.style.minHeight = isMobile
-    ? (isDonut ? '920px' : '820px')
-    : (isDonut ? '860px' : '820px');
-
-  if (isMobile) {
-    // --- MOBILE LOGIC (Gold) ---
+  // === SHARE / EXPORT (Unified Dimension-Freeze Build) ===
+  async function shareChart(id, g) {
+    const s = sizing();
+    const src = document.getElementById(id);
     await new Promise(requestAnimationFrame);
 
-    const chartCanvas = src;
-    chartCanvas.style.height = chartCanvas.clientHeight + 'px';
-    chartCanvas.style.width = chartCanvas.clientWidth + 'px';
+    const sel = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
+    const w = sel.value;
+    const isDonut = id.includes('Donut');
+    const isMobile = window.innerWidth < 768;
+    const fn = `metrics_${g}_${w}_${isDonut ? 'donut' : 'hist'}.png`;
 
-    img.style.width = Math.round(img.naturalWidth / 2) + 'px';
-    img.style.height = Math.round(img.naturalHeight / 2) + 'px';
+    const chart = src.chart || Chart.getChart(src);
+    let prevGridState = null;
+    if (chart) {
+      prevGridState = JSON.parse(JSON.stringify(chart.options.scales || {}));
+      if (chart.options.scales?.x) chart.options.scales.x.grid.display = false;
+      if (chart.options.scales?.y) chart.options.scales.y.grid.display = false;
+      chart.update();
+      await new Promise(requestAnimationFrame);
+    }
+
+    // Base card
+    const card = document.createElement('div');
+    card.style.position = 'relative';
+    card.style.width = s.exportWidth + 'px';
+    card.style.borderRadius = '16px';
+    card.style.overflow = 'hidden';
+    card.style.margin = '0 auto';
+    card.style.backgroundImage = "url('bc25_logo.jpg')";
+    card.style.backgroundSize = 'cover';
+    card.style.backgroundPosition = 'center';
+    card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
+
+    const overlay = document.createElement('div');
+    overlay.style.position = 'absolute';
+    overlay.style.inset = '0';
+    overlay.style.background = 'rgba(0,0,0,0.65)';
+    card.appendChild(overlay);
+
+    const inner = document.createElement('div');
+    inner.style.position = 'relative';
+    inner.style.textAlign = 'center';
+    inner.style.color = '#fff';
+    inner.style.fontFamily = "'Inter', sans-serif";
+    inner.style.zIndex = '2';
+    inner.style.padding = isDonut ? '36px 28px 36px 28px' : '40px 28px 36px 28px';
+    card.appendChild(inner);
+
+    const header = document.createElement('h2');
+    header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
+    header.style.fontSize = (isMobile ? s.headerFont * 1.5 : s.headerFont * 1.25) + 'px';
+    header.style.fontWeight = '700';
+    header.style.margin = '0 0 4px 0';
+
+    const sub = document.createElement('p');
+    sub.textContent = `${w}kg ${g === 'F' ? 'Women' : 'Men'}`;
+    sub.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.25) + 'px';
+    sub.style.fontWeight = '700';
+    sub.style.color = '#ddd';
+    sub.style.margin = '0 0 14px 0';
+
+    const dataURL = src.toDataURL('image/png');
+    const img = new Image();
+    img.src = dataURL;
+    await img.decode();
+    img.style.display = 'block';
+    img.style.margin = '0 auto 18px auto';
+    img.style.borderRadius = '8px';
+    img.style.width = (isMobile ? (isDonut ? '80%' : '96%') : (isDonut ? '70%' : '93%'));
+    img.style.height = 'auto';
+
+    const credit = document.createElement('p');
+    credit.style.fontSize = (isMobile ? s.creditFont * 1.25 : s.creditFont * 1.15) + 'px';
+    credit.style.color = '#ccc';
+    credit.style.lineHeight = '1.5';
+    credit.style.marginTop = '8px';
+    credit.innerHTML =
+      'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
+
+    const spacer = document.createElement('div');
+    spacer.style.height = isDonut ? '14px' : '28px';
+
+    const qr = new Image();
+    qr.crossOrigin = 'anonymous';
+    const qrsz = isMobile ? s.qrSize * 1.1 : s.qrSize * 1.25;
+    qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent(
+      'https://solacestrength.github.io/britishclassicfl/metrics.html'
+    )}`;
+    qr.style.position = 'absolute';
+    qr.style.bottom = '18px';
+    qr.style.left = '18px';
+    qr.style.width = qrsz + 'px';
+    qr.style.height = qrsz + 'px';
+        qr.style.borderRadius = '6px';
+    qr.style.opacity = '0.95';
+
+    // --- Assemble ---
+    inner.append(header, sub, img, credit, spacer);
+    card.appendChild(qr);
+    document.body.appendChild(card);
+
+    // --- Unified height logic (same across desktop & mobile) ---
+    await new Promise(requestAnimationFrame);
 
     const naturalH = card.scrollHeight;
-    const desiredRatio = isDonut ? 1.02 : 1.0;
-    const fixedH = Math.min(naturalH * desiredRatio, s.exportWidth * desiredRatio);
+    const baseH = isDonut ? 860 : 820; // stable reference
+    const scaleFactor = isMobile ? 0.92 : 1.0;
 
-    // ✅ Tuned buffers for mobile
+    const fixedH = Math.min(naturalH * scaleFactor, s.exportWidth * scaleFactor);
     const buffer = Math.round(fixedH * (isDonut ? 0.15 : 0.22));
+
     card.style.height = fixedH + buffer + 'px';
     card.style.maxHeight = fixedH + buffer + 'px';
-    spacer.style.height = isDonut ? '12px' : '28px';
+    card.style.minHeight = (baseH * scaleFactor) + 'px';
 
     await new Promise(requestAnimationFrame);
-  } else {
-    // --- DESKTOP LOGIC (Stable) ---
-    const fixedH = card.scrollHeight;
-    const buffer = Math.round(fixedH * (isDonut ? 0.11 : 0.18));
-    card.style.height = fixedH + buffer + 'px';
-    card.style.maxHeight = fixedH + buffer + 'px';
+
+    // --- Capture ---
+    const canvas = await html2canvas(card, {
+      backgroundColor: null,
+      scale: 2,
+      useCORS: true,
+      scrollY: 0
+    });
+    card.remove();
+
+    // --- Restore gridlines ---
+    if (chart && prevGridState) {
+      chart.options.scales = prevGridState;
+      chart.update();
+    }
+
+    // --- Save / Share ---
+    const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
+    const file = new File([blob], fn, { type: 'image/png' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          title: 'British Classic Fantasy League 2025',
+          text: 'Check out these stats!',
+          files: [file],
+        });
+      } catch (e) {}
+    } else {
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = fn;
+      link.click();
+    }
   }
 
-  // === Capture ===
-  const canvas = await html2canvas(card, {
-    backgroundColor: null,
-    scale: 2,
-    useCORS: true,
-    scrollY: 0,
-  });
-  card.remove();
+  // ======= COLLAPSIBLE =======
+  function toggleSection(id){
+    const c=document.getElementById(id);
+    const a=document.getElementById(`arrow-${id}`);
+    const o=c.classList.toggle('open');
+    a.classList.toggle('rotate',o);
+  }
 
-  // === Save / Share ===
-  const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
-  const file = new File([blob], fn, { type: 'image/png' });
+  // ======= CSV LOADING & CHART INITIALISATION =======
+  Papa.parse(SHEET_URL,{download:true,header:true,complete:r=>{
+    allData=r.data;
+    setupDropdowns();
+  }});
 
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try {
-      await navigator.share({
-        title: 'British Classic Fantasy League 2025',
-        text: 'Check out these stats!',
-        files: [file],
+  function setupDropdowns(){
+    ['F','M'].forEach(g=>{
+      const d=allData.filter(r=>r.Gender===g);
+      const classes=[...new Set(d.map(r=>r.Class))].sort((a,b)=>parseFloat(a)-parseFloat(b));
+      const s=document.getElementById(g==='F'?'womenSelect':'menSelect');
+      s.innerHTML=classes.map(c=>`<option value="${c}">${c}kg</option>`).join('');
+      s.onchange=()=>renderCharts(g,s.value);
+      renderCharts(g,classes[0]);
+    });
+  }
+
+  function renderCharts(g,w){
+    const s=sizing();
+    const donutId=g==='F'?'womenDonut':'menDonut';
+    const histId=g==='F'?'womenHist':'menHist';
+    const rows=allData.filter(r=>r.Gender===g&&r.Class===w);
+    if(!rows.length)return;
+
+    // --- DONUT ---
+    const counts={}; rows.forEach(r=>counts[r.Athlete]=(counts[r.Athlete]||0)+1);
+    const dLabels=Object.keys(counts); const dData=Object.values(counts);
+    const total=dData.reduce((a,b)=>a+b,0);
+    const colors=['#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'];
+    if(charts[donutId]) charts[donutId].destroy();
+    charts[donutId]=new Chart(document.getElementById(donutId),{
+      type:'doughnut',
+      data:{labels:dLabels,datasets:[{data:dData,backgroundColor:colors,borderColor:'#111',borderWidth:1}]},
+      options:{
+        maintainAspectRatio:true, aspectRatio:1, cutout:'57%',
+        plugins:{
+          title:{display:true,text:'Share of Votes',color:'#ccc',font:{weight:'bold',size:s.donutTitle},padding:{bottom:8}},
+          subtitle:{display:true,text:`Total Votes – ${total}`,color:'#aaa',font:{size:s.donutSubtitle},padding:{top:2,bottom:12}},
+          legend:{position:'bottom',labels:{color:'#ccc',boxWidth:10,boxHeight:10,font:{size:s.donutLegend}}},
+          datalabels:{
+            color:'#fff', font:{weight:'bold',size:s.donutPercent},
+            formatter:v=>{const p=(v/total)*100; return p>=3?`${p.toFixed(1)}%`:'';},
+            anchor:'center', align:'center', clamp:true
+          }
+        }
+      },
+      plugins:[ChartDataLabels]
+    });
+
+    // --- HISTOGRAM ---
+    const vals=rows.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v)&&v>0);
+    if(!vals.length){
+      if(charts[histId]) charts[histId].destroy();
+      charts[histId]=new Chart(document.getElementById(histId),{
+        type:'bar', data:{labels:[],datasets:[{data:[]}]},
+        options:{
+          plugins:{
+            title:{display:true,text:'Distribution of Predicted Winning Totals',color:'#ccc',font:{size:s.histTitle,weight:'bold'},padding:{bottom:8}},
+            subtitle:{display:true,text:`Total Votes – 0`,color:'#aaa',font:{size:s.histSubtitle},padding:{top:2,bottom:12}},
+            legend:{display:false}
+          }
+        }
       });
-    } catch (e) {}
-  } else {
-    const link = document.createElement('a');
-    link.href = canvas.toDataURL('image/png');
-    link.download = fn;
-    link.click();
+      return;
+    }
+
+    const N=vals.length, min=Math.min(...vals), max=Math.max(...vals);
+    const bins=Math.max(3,Math.round(Math.sqrt(N)));
+    const bw=(max-min)/bins||1;
+    const countsH=Array(bins).fill(0);
+    vals.forEach(v=>{let i=Math.floor((v-min)/bw); if(i>=bins)i=bins-1; if(i<0)i=0; countsH[i]++;});
+    const labelsH=Array.from({length:bins},(_,i)=>`${(min+i*bw).toFixed(0)}–${(min+(i+1)*bw).toFixed(0)}`);
+
+    const minC=Math.min(...countsH), maxC=Math.max(...countsH);
+    const yMin=Math.floor(minC/2);
+    const span=maxC-yMin;
+    const step=Math.max(1,Math.round(span/4));
+    const yMax=Math.ceil(maxC/step)*step;
+
+    if(charts[histId]) charts[histId].destroy();
+    charts[histId]=new Chart(document.getElementById(histId),{
+      type:'bar',
+      data:{labels:labelsH,datasets:[{data:countsH,backgroundColor:'#3b82f6',borderRadius:5}]},
+      options:{
+        maintainAspectRatio:true, aspectRatio:(window.innerWidth>=1024?1.5:1.1),
+        plugins:{
+          title:{display:true,text:'Distribution of Predicted Winning Totals',color:'#ccc',font:{size:s.histTitle,weight:'bold'},padding:{bottom:8}},
+          subtitle:{display:true,text:`Total Votes – ${N}`,color:'#aaa',font:{size:s.histSubtitle},padding:{top:2,bottom:12}},
+          legend:{display:false},
+          datalabels:{
+            color:'#fff',
+            formatter:(v)=> v>0 ? v : '',
+            anchor:'center',
+            align:(ctx)=>{
+              const v=ctx.dataset.data[ctx.dataIndex]||0;
+              const scale=ctx.chart.scales.y; if(!scale) return 'center';
+              const barH = scale.getPixelForValue(yMin+v)-scale.getPixelForValue(yMin);
+              const f=ctx.chart.options.plugins.datalabels?.font?.size || s.histBarLabel;
+              return (barH < f*1.05) ? 'end' : 'center';
+            },
+            offset:0,
+            clamp:true,
+            font:{size:s.histBarLabel,weight:'normal'}
+          }
+        },
+        scales:{
+          x:{ticks:{color:'#ccc',font:{size:s.axisTick}},
+             title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:s.axisTitle,weight:'bold'}}},
+          y:{min:yMin,max:yMax,beginAtZero:false,
+             ticks:{color:'#ccc',font:{size:s.axisTick}},
+             title:{display:true,text:'Frequency',color:'#ccc',font:{size:s.axisTitle,weight:'bold'}}}
+        }
+      },
+      plugins:[ChartDataLabels]
+    });
   }
-}
   </script>
 </body>
 </html>
