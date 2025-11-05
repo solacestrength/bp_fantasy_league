@@ -448,10 +448,15 @@ async function shareChart(id, g) {
   const desiredRatio = isDonut ? 1.05 : 1.0;
   const fixedH = Math.min(naturalH, s.exportWidth * desiredRatio);
 
-  // --- Generous footer buffer (now 18%) ---
-  const buffer = Math.round(fixedH * 0.18);
+  // ✅ Slightly higher buffer for donut (to give footer breathing room)
+  const buffer = Math.round(fixedH * (isDonut ? 0.22 : 0.18));
   card.style.height = fixedH + buffer + 'px';
   card.style.maxHeight = fixedH + buffer + 'px';
+
+  // Add a spacer for consistent capture (slightly taller for donuts)
+  const spacer = document.createElement('div');
+  spacer.style.height = isDonut ? '36px' : '28px';
+  inner.appendChild(spacer);
 
   await new Promise(requestAnimationFrame);
 
