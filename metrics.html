@@ -26,9 +26,10 @@
     border: 1px solid #333;
   }
 
+  /* ✅ Key fix — remove height:auto that was squashing charts */
   canvas {
+    display: block;
     max-width: 100%;
-    height: auto !important;
   }
 
   .chart-container {
@@ -37,28 +38,10 @@
     position: relative;
   }
 
-  /* === Unified Donut + Histogram Layout (v6.1 Stable) === */
+  /* === Unified Donut + Histogram Layout (v6.2 Final Stable) === */
   @media (min-width: 1024px) {
     .chart-container {
-      max-width: 500px;
-      margin: 0 auto;
-    }
-
-    /* --- Donuts: perfectly square, desktop balanced --- */
-    #womenDonut,
-    #menDonut {
-      height: 375px !important;
-      width: 375px !important;
-      display: block;
-      margin: 0 auto;
-    }
-
-    /* --- Histograms: restore full area, no clipping --- */
-    #womenHist,
-    #menHist {
-      height: 395px !important;
-      width: 500px !important;
-      display: block;
+      max-width: 520px;
       margin: 0 auto;
     }
   }
@@ -66,24 +49,6 @@
   @media (max-width: 1023px) {
     .chart-container {
       max-width: 92%;
-      margin: 0 auto;
-    }
-
-    /* --- Donuts: mobile circle --- */
-    #womenDonut,
-    #menDonut {
-      height: 336px !important;
-      width: 336px !important;
-      display: block;
-      margin: 0 auto;
-    }
-
-    /* --- Histograms: proportionally balanced, full visible area --- */
-    #womenHist,
-    #menHist {
-      height: 390px !important;
-      width: 100% !important;
-      display: block;
       margin: 0 auto;
     }
   }
@@ -327,7 +292,8 @@ function sizing() {
     qrSize: d ? 96 : 72,
     creditFont: d ? 18 : 13,
     headerFont: d ? 32 : 20,
-    subFont: d ? 26 : 16
+    subFont: d ? 26 : 16,
+    histAR: d ? 1.35 : 1.2 // ✅ histogram aspect ratio (width ÷ height)
   };
 }
 
@@ -398,7 +364,7 @@ function renderCharts(g, w) {
       ]
     },
     options: {
-      maintainAspectRatio: !isDesktop, // ✅ fix for mobile squashing
+      maintainAspectRatio: true,
       aspectRatio: 1, // perfect circle
       cutout: '57%',
       plugins: {
@@ -502,8 +468,8 @@ function renderCharts(g, w) {
       datasets: [{ data: countsH, backgroundColor: '#3b82f6', borderRadius: 5 }]
     },
     options: {
-      maintainAspectRatio: !isDesktop, // ✅ new fix for histogram stretching
-      aspectRatio: 0.9,
+      maintainAspectRatio: true,
+      aspectRatio: s.histAR,
       plugins: {
         title: {
           display: true,
