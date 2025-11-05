@@ -314,7 +314,7 @@
     const scaleFactor = isMobile ? 0.92 : 1.0;
 
     const fixedH = Math.min(naturalH * scaleFactor, s.exportWidth * scaleFactor);
-    const buffer = Math.round(fixedH * (isDonut ? 0.12 : 0.20));
+    const buffer = Math.round(fixedH * (isDonut ? 0.15 : 0.22));
 
     card.style.height = fixedH + buffer + 'px';
     card.style.maxHeight = fixedH + buffer + 'px';
