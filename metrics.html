@@ -320,7 +320,7 @@ function toggleSection(id){
   a.classList.toggle('rotate',o);
 }
 
-// ======= SHARE / EXPORT (Refined height-lock fix) =======
+// ======= SHARE / EXPORT (North Star vFinal) =======
 async function shareChart(id, g) {
   const s = sizing();
   const src = document.getElementById(id);
@@ -343,8 +343,6 @@ async function shareChart(id, g) {
   card.style.backgroundSize = 'cover';
   card.style.backgroundPosition = 'center';
   card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
-
-  // balanced min-heights
   card.style.minHeight = isDonut
     ? (isMobile ? '920px' : '860px')
     : (isMobile ? '820px' : '780px');
@@ -381,7 +379,14 @@ async function shareChart(id, g) {
   sub.style.color = '#ddd';
   sub.style.margin = '0 0 14px 0';
 
-  // Chart snapshot
+  // Chart snapshot (gridlines hidden)
+  const chart = src.chart || Chart.getChart(src);
+  if (chart) {
+    chart.options.scales.x.grid.display = false;
+    chart.options.scales.y.grid.display = false;
+    chart.update();
+  }
+
   const dataURL = src.toDataURL('image/png');
   const img = new Image();
   img.src = dataURL;
@@ -422,29 +427,29 @@ async function shareChart(id, g) {
   // === FINAL DIMENSION CONTROL (Corrected) ===
   await new Promise(requestAnimationFrame);
 
-  // lock the actual Chart.js canvas before clamping
   const chartCanvas = src;
   chartCanvas.style.height = chartCanvas.clientHeight + 'px';
   chartCanvas.style.width = chartCanvas.clientWidth + 'px';
 
-  // pixel-lock image
   const wPx = img.naturalWidth / 2;
   const hPx = img.naturalHeight / 2;
   img.style.width = wPx + 'px';
   img.style.height = hPx + 'px';
 
-  // measure natural card height
   const naturalH = card.scrollHeight;
-  // donuts slightly taller, histograms nearly square
   const desiredRatio = isDonut ? 1.05 : 1.0;
   const fixedH = Math.min(naturalH, s.exportWidth * desiredRatio);
 
   card.style.height = fixedH + 'px';
   card.style.maxHeight = fixedH + 'px';
 
-  // allow reflow frame
   void card.offsetHeight;
   await new Promise(requestAnimationFrame);
+
+  // --- add buffer to prevent cropped footer ---
+  const buffer = Math.round(fixedH * 0.06);
+  card.style.height = fixedH + buffer + 'px';
+  card.style.maxHeight = fixedH + buffer + 'px';
 
   // === Capture ===
   const canvas = await html2canvas(card, {
@@ -454,6 +459,13 @@ async function shareChart(id, g) {
     scrollY: 0,
   });
   card.remove();
+
+  // === Restore gridlines for on-page charts ===
+  if (chart) {
+    chart.options.scales.x.grid.display = true;
+    chart.options.scales.y.grid.display = true;
+    chart.update();
+  }
 
   // === Save / Share ===
   const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
