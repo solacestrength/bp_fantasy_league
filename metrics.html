@@ -434,33 +434,35 @@ async function shareChart(id, g) {
   // --- Height presets (match your stable values) ---
   card.style.minHeight = isMobile ? (isDonut ? '920px' : '820px') : (isDonut ? '860px' : '820px');
 
-  // ===== MOBILE-ONLY: dimension freeze + 50% downscale + footer buffer 0.18 =====
-  if (isMobile) {
-    await new Promise(requestAnimationFrame);
+  // ===== MOBILE-ONLY: refined dimension freeze + smaller donut buffer =====
+if (isMobile) {
+  await new Promise(requestAnimationFrame);
 
-    // Freeze canvas size so html2canvas respects current box (prevents “tall” hist)
-    const chartCanvas = src;
-    chartCanvas.style.height = chartCanvas.clientHeight + 'px';
-    chartCanvas.style.width = chartCanvas.clientWidth + 'px';
+  // Freeze canvas dimensions
+  const chartCanvas = src;
+  chartCanvas.style.height = chartCanvas.clientHeight + 'px';
+  chartCanvas.style.width = chartCanvas.clientWidth + 'px';
 
-    // Downscale captured bitmap a touch (this was in your last working mobile flow)
-    const wPx = Math.round(img.naturalWidth / 2);
-    const hPx = Math.round(img.naturalHeight / 2);
-    img.style.width = wPx + 'px';
-    img.style.height = hPx + 'px';
+  // Downscale snapshot
+  const wPx = Math.round(img.naturalWidth / 2);
+  const hPx = Math.round(img.naturalHeight / 2);
+  img.style.width = wPx + 'px';
+  img.style.height = hPx + 'px';
 
-    // Calculate and apply footer buffer (exact 0.18 you asked for)
-    const naturalH = card.scrollHeight;
-    const desiredRatio = isDonut ? 1.02 : 1.0;
-    const fixedH = Math.min(naturalH * desiredRatio, s.exportWidth * desiredRatio);
-    const buffer = Math.round(fixedH * 0.18);
-    card.style.height = fixedH + buffer + 'px';
-    card.style.maxHeight = fixedH + buffer + 'px';
+  // ✅ Refined footer buffer — less padding for donut exports
+  const naturalH = card.scrollHeight;
+  const desiredRatio = isDonut ? 1.02 : 1.0;
+  const fixedH = Math.min(naturalH * desiredRatio, s.exportWidth * desiredRatio);
 
-    // Keep slim spacer (prevents last line clipping on some devices)
-    spacer.style.height = isDonut ? '16px' : '28px';
+  // 🍩 Donut gets 0.13 (was 0.18); histogram keeps 0.18
+  const buffer = Math.round(fixedH * (isDonut ? 0.13 : 0.18));
+  card.style.height = fixedH + buffer + 'px';
+  card.style.maxHeight = fixedH + buffer + 'px';
 
-    await new Promise(requestAnimationFrame);
+  // Keep slim spacer
+  spacer.style.height = isDonut ? '12px' : '28px';
+
+  await new Promise(requestAnimationFrame);
   }
 
   // --- Capture ---
