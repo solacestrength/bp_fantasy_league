@@ -14,45 +14,55 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
   <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
 
-  <style>
-    body {background:#0b0b0b;color:#f1f1f1;font-family:'Inter',sans-serif;}
-    select {background:#1f1f1f;border:1px solid #333;}
-    canvas {max-width:100%;height:auto!important;}
-    .chart-container {max-width:600px;margin:0 auto;position:relative;}
+<style>
+  body {background:#0b0b0b;color:#f1f1f1;font-family:'Inter',sans-serif;}
+  select {background:#1f1f1f;border:1px solid #333;}
+  canvas {max-width:100%;height:auto!important;}
+  .chart-container {max-width:600px;margin:0 auto;position:relative;}
 
-    /* === Balanced & refined chart heights (v5.3) === */
-    @media (min-width:1024px){
-      .chart-container{max-width:480px;} /* slightly narrower histogram base */
-      #womenDonut, #menDonut {height:375px !important;}
-      #womenHist, #menHist {
-        height:360px !important;          /* reduced overall height */
-        transform: scale(0.93);           /* proportional scale-down */
-        transform-origin: top center;
-      }
+  /* === Balanced & refined chart heights (v5.3) === */
+  @media (min-width:1024px){
+    .chart-container{max-width:480px;} /* slightly narrower histogram base */
+    #womenDonut, #menDonut {height:375px !important;}
+    #womenHist, #menHist {
+      height:360px !important;          /* reduced overall height */
+      transform: scale(0.93);           /* proportional scale-down */
+      transform-origin: top center;
     }
-    @media (max-width:1023px){
-      #womenDonut, #menDonut {height:336px !important;}
-      #womenHist, #menHist {
-        height:360px !important;
-        transform: scale(0.90);
-        transform-origin: top center;
-      }
+  }
+  @media (max-width:1023px){
+    #womenDonut, #menDonut {height:336px !important;}
+    #womenHist, #menHist {
+      height:360px !important;
+      transform: scale(0.90);
+      transform-origin: top center;
     }
+  }
 
-    .collapsible-content{max-height:0;overflow:hidden;opacity:0;
-      transition:max-height .5s ease,opacity .4s ease;}
-    .collapsible-content.open{opacity:1;max-height:1000px;}
-    .arrow{transition:transform .4s ease;}
-    .arrow.rotate{transform:rotate(180deg);}
-    .share-btn{background-color:#dc2626;display:flex;align-items:center;justify-content:center;
-      border-radius:.5rem;height:36px;width:36px;transition:background-color .2s ease;}
-    .share-btn:hover{background-color:#ef4444;}
-    .share-icon{filter:invert(1);height:18px;width:18px;}
+  /* === ✅ Fix stretched donut shapes (maintains perfect circle) === */
+  #womenDonut, #menDonut {
+    aspect-ratio: 1 / 1 !important;   /* lock canvas box to square */
+    width: 100% !important;
+    height: auto !important;
+    max-height: 480px;                /* safe ceiling for desktop */
+    display: block;
+    margin: 0 auto;
+  }
 
-    @keyframes fadeInUp {0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:translateY(0);}}
-    .animate-fade-in-up{animation:fadeInUp 0.8s ease-out forwards;}
-    .animate-fade-in{animation:fadeInUp 1s ease-out forwards;}
-  </style>
+  .collapsible-content{max-height:0;overflow:hidden;opacity:0;
+    transition:max-height .5s ease,opacity .4s ease;}
+  .collapsible-content.open{opacity:1;max-height:1000px;}
+  .arrow{transition:transform .4s ease;}
+  .arrow.rotate{transform:rotate(180deg);}
+  .share-btn{background-color:#dc2626;display:flex;align-items:center;justify-content:center;
+    border-radius:.5rem;height:36px;width:36px;transition:background-color .2s ease;}
+  .share-btn:hover{background-color:#ef4444;}
+  .share-icon{filter:invert(1);height:18px;width:18px;}
+
+  @keyframes fadeInUp {0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:translateY(0);}}
+  .animate-fade-in-up{animation:fadeInUp 0.8s ease-out forwards;}
+  .animate-fade-in{animation:fadeInUp 1s ease-out forwards;}
+</style>
 </head>
 
 <body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
