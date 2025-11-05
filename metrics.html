@@ -432,30 +432,20 @@ async function shareChart(id, g) {
   card.append(inner, qr);
   document.body.appendChild(card);
 
-  // === Dimension Control ===
+    // === Dimension Control ===
   await new Promise(requestAnimationFrame);
 
-  const chartCanvas = src;
-  chartCanvas.style.height = chartCanvas.clientHeight + 'px';
-  chartCanvas.style.width = chartCanvas.clientWidth + 'px';
-
-  const wPx = img.naturalWidth / 2;
-  const hPx = img.naturalHeight / 2;
-  img.style.width = wPx + 'px';
-  img.style.height = hPx + 'px';
-
   const naturalH = card.scrollHeight;
-  const desiredRatio = isDonut ? 1.05 : 1.0;
-  const fixedH = Math.min(naturalH, s.exportWidth * desiredRatio);
+  const desiredRatio = isDonut ? 1.02 : 1.0; // donut now nearly same height as histogram
+  const fixedH = Math.min(naturalH * desiredRatio, s.exportWidth * desiredRatio);
 
-  // ✅ Slightly higher buffer for donut (to give footer breathing room)
-  const buffer = Math.round(fixedH * (isDonut ? 0.22 : 0.18));
+  // 🧩 Reduced donut buffer to tighten bottom space
+  const buffer = Math.round(fixedH * (isDonut ? 0.12 : 0.18));
   card.style.height = fixedH + buffer + 'px';
   card.style.maxHeight = fixedH + buffer + 'px';
 
-  // Add a spacer for consistent capture (slightly taller for donuts)
-  spacer.style.height = isDonut ? '36px' : '28px';
-  inner.appendChild(spacer);
+  // Keep spacer but slim for donuts
+  spacer.style.height = isDonut ? '16px' : '28px';
 
   await new Promise(requestAnimationFrame);
 
