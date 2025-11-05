@@ -31,24 +31,24 @@
     }
   }
 
-  @media (max-width:1023px){
-    /* --- Donuts: preserve perfect circle on mobile --- */
-    #womenDonut, #menDonut {
-      width: 100% !important;
-      height: auto !important;
-      aspect-ratio: 1 / 1 !important;
-      max-width: 360px;
-      display: block;
-      margin: 0 auto;
-    }
-
-    /* --- Histograms: keep current scaling --- */
-    #womenHist, #menHist {
-      height:360px !important;
-      transform: scale(0.90);
-      transform-origin: top center;
-    }
+@media (max-width:1023px){
+  /* --- Donuts: true square render box (Chart.js safe) --- */
+  #womenDonut, #menDonut {
+    display: block;
+    margin: 0 auto;
+    width: 100% !important;
+    max-width: 340px;
+    height: 340px !important; /* fixed equal height */
+    aspect-ratio: 1 / 1 !important;
   }
+
+  /* --- Histograms: keep current scaling --- */
+  #womenHist, #menHist {
+    height:360px !important;
+    transform: scale(0.90);
+    transform-origin: top center;
+  }
+}
 
   .collapsible-content {
     max-height:0;
