@@ -37,28 +37,27 @@
     position: relative;
   }
 
-  /* === Unified Donut + Histogram Sizing (v6.0 Final) === */
+  /* === Unified Donut + Histogram Layout (v6.1 Stable) === */
   @media (min-width: 1024px) {
     .chart-container {
-      max-width: 500px; /* narrower base for desktop symmetry */
+      max-width: 500px;
+      margin: 0 auto;
     }
 
-    /* --- Donuts (perfectly round, centred) --- */
+    /* --- Donuts: perfectly square, desktop balanced --- */
     #womenDonut,
     #menDonut {
-      width: 100% !important;
-      height: auto !important;
-      aspect-ratio: 1 / 1; /* ✅ ensures perfect circle */
+      height: 375px !important;
+      width: 375px !important;
       display: block;
       margin: 0 auto;
     }
 
-    /* --- Histograms (balanced width/height) --- */
+    /* --- Histograms: restore full area, no clipping --- */
     #womenHist,
     #menHist {
-      width: 100% !important;
-      aspect-ratio: 1.1 / 1; /* slight horizontal room for axis labels */
-      height: auto !important;
+      height: 395px !important;
+      width: 500px !important;
       display: block;
       margin: 0 auto;
     }
@@ -66,31 +65,30 @@
 
   @media (max-width: 1023px) {
     .chart-container {
-      max-width: 90%;
+      max-width: 92%;
+      margin: 0 auto;
     }
 
-    /* --- Donuts (mobile-perfect circle) --- */
+    /* --- Donuts: mobile circle --- */
     #womenDonut,
     #menDonut {
-      width: 100% !important;
-      height: auto !important;
-      aspect-ratio: 1 / 1;
+      height: 336px !important;
+      width: 336px !important;
       display: block;
       margin: 0 auto;
     }
 
-    /* --- Histograms (mobile proportional view) --- */
+    /* --- Histograms: proportionally balanced, full visible area --- */
     #womenHist,
     #menHist {
+      height: 390px !important;
       width: 100% !important;
-      height: auto !important;
-      aspect-ratio: 1.1 / 1;
       display: block;
       margin: 0 auto;
     }
   }
 
-  /* === Collapsible animations and shared UI === */
+  /* === Collapsible & animation logic === */
   .collapsible-content {
     max-height: 0;
     overflow: hidden;
