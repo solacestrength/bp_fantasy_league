@@ -32,19 +32,12 @@
   }
 
 @media (max-width:1023px){
-  /* --- Donuts: true square render box (Chart.js safe) --- */
-  #womenDonut, #menDonut {
-    display: block;
-    margin: 0 auto;
-    width: 100% !important;
-    max-width: 340px;
-    height: 340px !important; /* fixed equal height */
-    aspect-ratio: 1 / 1 !important;
-  }
+  /* Donuts: square via Chart.js aspect ratio on mobile */
+  #womenDonut, #menDonut { width: 100% !important; height: auto !important; }
 
-  /* --- Histograms: keep current scaling --- */
+  /* Histogram keeps its current size */
   #womenHist, #menHist {
-    height:360px !important;
+    height: 360px !important;
     transform: scale(0.90);
     transform-origin: top center;
   }
@@ -245,37 +238,74 @@ function setupDropdowns(){
   });
 }
 
-function renderCharts(g,w){
-  const s=sizing();
-  const donutId=g==='F'?'womenDonut':'menDonut';
-  const histId=g==='F'?'womenHist':'menHist';
-  const rows=allData.filter(r=>r.Gender===g&&r.Class===w);
-  if(!rows.length)return;
-
+function renderCharts(g, w){
+  const s = sizing();
+  const isDesktop = window.matchMedia('(min-width:1024px)').matches;
+  const donutId = g==='F' ? 'womenDonut' : 'menDonut';
+  ...
   // --- DONUT ---
-  const counts={}; rows.forEach(r=>counts[r.Athlete]=(counts[r.Athlete]||0)+1);
-  const dLabels=Object.keys(counts); const dData=Object.values(counts);
-  const total=dData.reduce((a,b)=>a+b,0);
-  const colors=['#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'];
-  if(charts[donutId]) charts[donutId].destroy();
-  charts[donutId]=new Chart(document.getElementById(donutId),{
-    type:'doughnut',
-    data:{labels:dLabels,datasets:[{data:dData,backgroundColor:colors,borderColor:'#111',borderWidth:1}]},
-    options:{
-      maintainAspectRatio:false, aspectRatio:1, cutout:'57%',
-      plugins:{
-        title:{display:true,text:'Share of Votes',color:'#ccc',font:{weight:'bold',size:s.donutTitle},padding:{bottom:8}},
-        subtitle:{display:true,text:`Total Votes – ${total}`,color:'#aaa',font:{size:s.donutSubtitle},padding:{top:2,bottom:12}},
-        legend:{position:'bottom',labels:{color:'#ccc',boxWidth:10,boxHeight:10,font:{size:s.donutLegend}}},
-        datalabels:{
-          color:'#fff', font:{weight:'bold',size:s.donutPercent},
-          formatter:v=>{const p=(v/total)*100; return p>=3?`${p.toFixed(1)}%`:'';},
-          anchor:'center', align:'center', clamp:true
+  const donutCanvas = document.getElementById(donutId);
+  if (!isDesktop) {
+    // Make sure no stale height attribute fights Chart.js on mobile
+    donutCanvas.style.height = '';
+    donutCanvas.removeAttribute('height');
+  }
+
+  if (charts[donutId]) charts[donutId].destroy();
+  charts[donutId] = new Chart(donutCanvas, {
+  type: 'doughnut',
+  data: {
+    labels: dLabels,
+    datasets: [{
+      data: dData,
+      backgroundColor: colors,
+      borderColor: '#111',
+      borderWidth: 1
+    }]
+  },
+  options: {
+    maintainAspectRatio: !isDesktop,   // true on mobile, false on desktop
+    aspectRatio: 1,                    // keeps donut perfectly circular on mobile
+    cutout: '57%',
+    plugins: {
+      title: {
+        display: true,
+        text: 'Share of Votes',
+        color: '#ccc',
+        font: { weight: 'bold', size: s.donutTitle },
+        padding: { bottom: 8 }
+      },
+      subtitle: {
+        display: true,
+        text: `Total Votes – ${total}`,
+        color: '#aaa',
+        font: { size: s.donutSubtitle },
+        padding: { top: 2, bottom: 12 }
+      },
+      legend: {
+        position: 'bottom',
+        labels: {
+          color: '#ccc',
+          boxWidth: 10,
+          boxHeight: 10,
+          font: { size: s.donutLegend }
         }
+      },
+      datalabels: {
+        color: '#fff',
+        font: { weight: 'bold', size: s.donutPercent },
+        formatter: v => {
+          const p = (v / total) * 100;
+          return p >= 3 ? `${p.toFixed(1)}%` : '';
+        },
+        anchor: 'center',
+        align: 'center',
+        clamp: true
       }
-    },
-    plugins:[ChartDataLabels]
-  });
+    }
+  },
+  plugins: [ChartDataLabels]
+});
 
   // --- HISTOGRAM ---
   const vals=rows.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v)&&v>0);
