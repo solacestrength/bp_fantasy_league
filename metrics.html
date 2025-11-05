@@ -454,8 +454,8 @@ if (isMobile) {
   const desiredRatio = isDonut ? 1.02 : 1.0;
   const fixedH = Math.min(naturalH * desiredRatio, s.exportWidth * desiredRatio);
 
-  // 🍩 Donut gets 0.13 (was 0.18); histogram keeps 0.18
-  const buffer = Math.round(fixedH * (isDonut ? 0.13 : 0.18));
+  // 🍩 Donut gets 0.11 (was 0.18); histogram keeps 0.18
+  const buffer = Math.round(fixedH * (isDonut ? 0.11 : 0.18));
   card.style.height = fixedH + buffer + 'px';
   card.style.maxHeight = fixedH + buffer + 'px';
 
