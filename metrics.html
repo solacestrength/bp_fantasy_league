@@ -264,22 +264,13 @@
     if(charts[histId])charts[histId].destroy();
     charts[histId]=new Chart(document.getElementById(histId),{
       type:'bar',
-      data:{labels:labelsH,datasets:[{data:countsH,backgroundColor:'#3b82f6',borderRadius:5}]},
-      options:{
-        maintainAspectRatio:false,
-        aspectRatio:0.92, // tall but not extreme
-        plugins:{
-          title:{display:true,text:'Distribution of Predicted Winning Totals',color:'#ccc',font:{size:s.histTitle,weight:'bold'},padding:{bottom:4}},
-          subtitle:{display:true,text:`Total Votes – ${N}`,color:'#aaa',font:{size:s.histSubtitle},padding:{top:2,bottom:10}},
-          legend:{display:false},
-          datalabels: {
+      datalabels: {
   color: '#fff',
   font: { weight: 'normal', size: s.histBarLabel },
   formatter: v => v > 0 ? v : '',
   clip: false,
-  offset: 0,
+  offset: 2,
   anchor: function(context) {
-    // Determine how tall the bar is relative to the chart area
     const chart = context.chart;
     const dataset = context.dataset;
     const index = context.dataIndex;
@@ -288,9 +279,8 @@
     const chartHeight = yScale.bottom - yScale.top;
     const barHeight = Math.abs(yScale.getPixelForValue(0) - yScale.getPixelForValue(value));
     const heightPct = barHeight / chartHeight;
-
-    // If the bar is <8% of total chart height, move label to top
-    return heightPct < 0.08 ? 'end' : 'center';
+    // ✅ If bar <8% of total height → label above bar
+    return heightPct < 0.08 ? 'end' : 'end';
   },
   align: function(context) {
     const chart = context.chart;
@@ -301,8 +291,7 @@
     const chartHeight = yScale.bottom - yScale.top;
     const barHeight = Math.abs(yScale.getPixelForValue(0) - yScale.getPixelForValue(value));
     const heightPct = barHeight / chartHeight;
-
-    // Match alignment: if short bar, center above; else center within
+    // ✅ Move label just above small bars, else center vertically inside
     return heightPct < 0.08 ? 'start' : 'center';
   }
 }
