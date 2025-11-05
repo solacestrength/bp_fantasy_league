@@ -230,107 +230,103 @@ function renderCharts(g,w){
   const rows=allData.filter(r=>r.Gender===g&&r.Class===w);
   if(!rows.length)return;
 
-  // --- DONUT ---
-const counts = {};
-rows.forEach(r => counts[r.Athlete] = (counts[r.Athlete] || 0) + 1);
-const dLabels = Object.keys(counts);
-const dData   = Object.values(counts);
-const total   = dData.reduce((a,b)=>a+b,0);
-const colors  = ['#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'];
+// --- DONUT ---
+function createDonutChart(canvasId, dataObj, total, s) {
+  const colors = [
+    '#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6',
+    '#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'
+  ];
 
-if (charts[donutId]) charts[donutId].destroy();
-
-charts[donutId] = new Chart(document.getElementById(donutId), {
-  type: 'doughnut',
-  data: {
-    labels: dLabels,
-    datasets: [{
-      data: dData,
-      backgroundColor: colors,
-      borderColor: '#111',
-      borderWidth: 1
-    }]
-  },
-  options: {
-    // keep your donut aspect safeguards
-    maintainAspectRatio: true,
-    aspectRatio: 1,
-    cutout: '57%',
-    plugins: {
-      title: {
-        display: true,
-        text: 'Share of Votes',
-        color: '#ccc',
-        font: { weight: 'bold', size: s.donutTitle },
-        padding: { bottom: 8 }
-      },
-      subtitle: {
-        display: true,
-        text: `Total Votes – ${total}`,
-        color: '#aaa',
-        font: { size: s.donutSubtitle },
-        padding: { top: 2, bottom: 12 }
-      },
-      legend: {
-        position: 'bottom',
-        labels: {
+  const chart = new Chart(document.getElementById(canvasId), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(dataObj),
+      datasets: [{
+        data: Object.values(dataObj),
+        backgroundColor: colors,
+        borderColor: '#111',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      maintainAspectRatio: true,
+      aspectRatio: 1,
+      cutout: '57%',
+      plugins: {
+        title: {
+          display: true,
+          text: 'Share of Votes',
           color: '#ccc',
-          boxWidth: 10,
-          boxHeight: 10,
-          font: { size: s.donutLegend }
+          font: { weight: 'bold', size: s.donutTitle },
+          padding: { bottom: 8 }
         },
-        // ✅ Use legendItem.index (true index into the arcs)
-        onHover: (e, item, legend) => {
-          const chart = legend.chart;
-          const arcIndex = item.index;      // <- reliable mapping
-          chart.setActiveElements([{ datasetIndex: 0, index: arcIndex }]);
-          chart.tooltip.setActiveElements([{ datasetIndex: 0, index: arcIndex }], { x: 0, y: 0 });
-
-          // Make this legend label bold while hovering/tapping
-          legend.legendItems.forEach(li => { li.font = { ...li.font, weight: 'normal' }; });
-          item.font = { ...item.font, weight: 'bold' };
-
-          chart.update('none');
+        subtitle: {
+          display: true,
+          text: `Total Votes – ${total}`,
+          color: '#aaa',
+          font: { size: s.donutSubtitle },
+          padding: { top: 2, bottom: 12 }
         },
-        onLeave: (e, item, legend) => {
-          const chart = legend.chart;
-          chart.setActiveElements([]);
-          chart.tooltip.setActiveElements([], { x: 0, y: 0 });
-
-          // restore bolding
-          legend.legendItems.forEach(li => { li.font = { ...li.font, weight: 'normal' }; });
-
-          chart.update('none');
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#ccc',
+            boxWidth: 10,
+            boxHeight: 10,
+            font: ctx => {
+              const idx = ctx.index;
+              const c = ctx.chart;
+              const active = c.$activeLegendIndex ?? -1;
+              return {
+                size: s.donutLegend,
+                weight: idx === active ? 'bold' : 'normal'
+              };
+            }
+          },
+          onHover: (e, item, legend) => {
+            const c = legend.chart;
+            c.$activeLegendIndex = item.index;
+            c.setActiveElements([{ datasetIndex: 0, index: item.index }]);
+            c.tooltip.setActiveElements([{ datasetIndex: 0, index: item.index }], { x: 0, y: 0 });
+            c.update('none');
+          },
+          onLeave: (e, item, legend) => {
+            const c = legend.chart;
+            delete c.$activeLegendIndex;
+            c.setActiveElements([]);
+            c.tooltip.setActiveElements([], { x: 0, y: 0 });
+            c.update('none');
+          },
+          onClick: (e, item, legend) => {
+            const c = legend.chart;
+            c.$activeLegendIndex = item.index;
+            c.setActiveElements([{ datasetIndex: 0, index: item.index }]);
+            c.tooltip.setActiveElements([{ datasetIndex: 0, index: item.index }], { x: 0, y: 0 });
+            c.update();
+          }
         },
-        onClick: (e, item, legend) => {
-          // Behave identically to slice tap: just show that slice + tooltip now.
-          const chart = legend.chart;
-          const arcIndex = item.index;
-          chart.setActiveElements([{ datasetIndex: 0, index: arcIndex }]);
-          chart.tooltip.setActiveElements([{ datasetIndex: 0, index: arcIndex }], { x: 0, y: 0 });
-
-          // Bold current, normalize others
-          legend.legendItems.forEach(li => { li.font = { ...li.font, weight: 'normal' }; });
-          item.font = { ...item.font, weight: 'bold' };
-
-          chart.update('none');
+        datalabels: {
+          color: '#fff',
+          font: { weight: 'bold', size: s.donutPercent },
+          formatter: v => {
+            const p = (v / total) * 100;
+            return p >= 3 ? `${p.toFixed(1)}%` : '';
+          },
+          anchor: 'center',
+          align: 'center',
+          clamp: true
         }
-      },
-      datalabels: {
-        color: '#fff',
-        font: { weight: 'bold', size: s.donutPercent },
-        formatter: v => {
-          const p = (v / total) * 100;
-          return p >= 3 ? `${p.toFixed(1)}%` : '';
-        },
-        anchor: 'center',
-        align: 'center',
-        clamp: true
       }
-    }
-  },
-  plugins: [ChartDataLabels]
-});
+    },
+    plugins: [ChartDataLabels]
+  });
+
+  return chart;
+}
+
+// ✅ Use the reusable donut chart builder
+if (charts[donutId]) charts[donutId].destroy();
+charts[donutId] = createDonutChart(donutId, counts, total, s);
 
 // === Interactive Legend Mirror (bold legend text + accurate slice + tooltip) ===
 const donutChart = charts[donutId];
