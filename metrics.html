@@ -287,8 +287,9 @@
     const chartHeight = yScale.bottom - yScale.top;
     const barHeight = Math.abs(yScale.getPixelForValue(0) - yScale.getPixelForValue(value));
     const heightPct = barHeight / chartHeight;
-    // ✅ If bar <8% of total height → label above bar
-    return heightPct < 0.08 ? 'end' : 'end';
+
+    // ✅ If bar too short (<8%), anchor to bar top (end)
+    return heightPct < 0.08 ? 'end' : 'center';
   },
   align: function(context) {
     const chart = context.chart;
@@ -299,7 +300,8 @@
     const chartHeight = yScale.bottom - yScale.top;
     const barHeight = Math.abs(yScale.getPixelForValue(0) - yScale.getPixelForValue(value));
     const heightPct = barHeight / chartHeight;
-    // ✅ Move label just above small bars, else center vertically inside
+
+    // ✅ Inside bars = centered, short bars = above top edge
     return heightPct < 0.08 ? 'start' : 'center';
   }
 }
