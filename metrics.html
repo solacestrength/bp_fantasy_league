@@ -320,7 +320,7 @@ function toggleSection(id){
   a.classList.toggle('rotate',o);
 }
 
-// ======= SHARE / EXPORT (vFinal.5.1 Hybrid Logic) =======
+// ======= SHARE / EXPORT (v5.2: Desktop original + Mobile North Star w/ dimension-freeze) =======
 async function shareChart(id, g) {
   const s = sizing();
   const src = document.getElementById(id);
@@ -332,18 +332,18 @@ async function shareChart(id, g) {
   const isMobile = window.innerWidth < 768;
   const fn = `metrics_${g}_${w}_${isDonut ? 'donut' : 'hist'}.png`;
 
-  // === Hide gridlines before export ===
+  // --- Hide gridlines before capture ---
   const chart = src.chart || Chart.getChart(src);
   let prevGridState = null;
   if (chart) {
-    prevGridState = JSON.parse(JSON.stringify(chart.options.scales));
-    if (chart.options.scales.x) chart.options.scales.x.grid.display = false;
-    if (chart.options.scales.y) chart.options.scales.y.grid.display = false;
+    prevGridState = JSON.parse(JSON.stringify(chart.options.scales || {}));
+    if (chart.options.scales?.x) chart.options.scales.x.grid.display = false;
+    if (chart.options.scales?.y) chart.options.scales.y.grid.display = false;
     chart.update();
     await new Promise(requestAnimationFrame);
   }
 
-  // === Create Export Card ===
+  // --- Base card ---
   const card = document.createElement('div');
   card.style.position = 'relative';
   card.style.width = s.exportWidth + 'px';
@@ -355,168 +355,115 @@ async function shareChart(id, g) {
   card.style.backgroundPosition = 'center';
   card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
 
-  // === MOBILE LOGIC (North Star vFinal.4D + 0.18 fix) ===
+  const overlay = document.createElement('div');
+  overlay.style.position = 'absolute';
+  overlay.style.inset = '0';
+  overlay.style.background = 'rgba(0,0,0,0.65)';
+  card.appendChild(overlay);
+
+  // --- Inner wrapper ---
+  const inner = document.createElement('div');
+  inner.style.position = 'relative';
+  inner.style.textAlign = 'center';
+  inner.style.color = '#fff';
+  inner.style.fontFamily = "'Inter', sans-serif";
+  inner.style.zIndex = '2';
+  inner.style.padding = isMobile
+    ? (isDonut ? '36px 28px 36px 28px' : '42px 28px 28px 28px')
+    : (isDonut ? '36px 28px 36px 28px' : '40px 28px 36px 28px');
+  card.appendChild(inner);
+
+  // --- Headings ---
+  const header = document.createElement('h2');
+  header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
+  header.style.fontSize = (isMobile ? s.headerFont * 1.5 : s.headerFont * 1.25) + 'px';
+  header.style.fontWeight = '700';
+  header.style.margin = '0 0 4px 0';
+
+  const sub = document.createElement('p');
+  sub.textContent = `${w}kg ${g === 'F' ? 'Women' : 'Men'}`;
+  sub.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.25) + 'px';
+  sub.style.fontWeight = '700';
+  sub.style.color = '#ddd';
+  sub.style.margin = '0 0 14px 0';
+
+  // --- Chart snapshot ---
+  const dataURL = src.toDataURL('image/png');
+  const img = new Image();
+  img.src = dataURL;
+  await img.decode();
+  img.style.display = 'block';
+  img.style.margin = '0 auto 18px auto';
+  img.style.borderRadius = '8px';
+  img.style.width = (isMobile ? (isDonut ? '80%' : '96%') : (isDonut ? '70%' : '93%'));
+  img.style.height = 'auto';
+
+  // --- Credits ---
+  const credit = document.createElement('p');
+  credit.style.fontSize = (isMobile ? s.creditFont * 1.25 : s.creditFont * 1.15) + 'px';
+  credit.style.color = '#ccc';
+  credit.style.lineHeight = '1.5';
+  credit.style.marginTop = '8px';
+  credit.innerHTML =
+    'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
+
+  // --- Spacer (helps html2canvas include footer fully) ---
+  const spacer = document.createElement('div');
+  spacer.style.height = isMobile ? (isDonut ? '16px' : '28px') : '0px';
+
+  // --- QR ---
+  const qr = new Image();
+  qr.crossOrigin = 'anonymous';
+  const qrsz = isMobile ? s.qrSize * 1.1 : s.qrSize * 1.25;
+  qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent(
+    'https://solacestrength.github.io/britishclassicfl/metrics.html'
+  )}`;
+  qr.style.position = 'absolute';
+  qr.style.bottom = '18px';
+  qr.style.left = '18px';
+  qr.style.width = qrsz + 'px';
+  qr.style.height = qrsz + 'px';
+  qr.style.borderRadius = '6px';
+  qr.style.opacity = '0.95';
+
+  // --- Assemble ---
+  inner.append(header, sub, img, credit, spacer);
+  card.appendChild(qr);
+  document.body.appendChild(card);
+
+  // --- Height presets (match your stable values) ---
+  card.style.minHeight = isMobile ? (isDonut ? '920px' : '820px') : (isDonut ? '860px' : '820px');
+
+  // ===== MOBILE-ONLY: dimension freeze + 50% downscale + footer buffer 0.18 =====
   if (isMobile) {
-    card.style.minHeight = isDonut ? '920px' : '820px';
-
-    const overlay = document.createElement('div');
-    overlay.style.position = 'absolute';
-    overlay.style.inset = '0';
-    overlay.style.background = 'rgba(0,0,0,0.65)';
-    card.appendChild(overlay);
-
-    const inner = document.createElement('div');
-    inner.style.position = 'relative';
-    inner.style.padding = isDonut
-      ? '36px 28px 36px 28px'
-      : '42px 28px 28px 28px';
-    inner.style.textAlign = 'center';
-    inner.style.color = '#fff';
-    inner.style.fontFamily = "'Inter', sans-serif";
-    inner.style.zIndex = '2';
-
-    const header = document.createElement('h2');
-    header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
-    header.style.fontSize = s.headerFont * 1.5 + 'px';
-    header.style.fontWeight = '700';
-    header.style.margin = '0 0 4px 0';
-
-    const sub = document.createElement('p');
-    sub.textContent = `${w}kg ${g === 'F' ? 'Women' : 'Men'}`;
-    sub.style.fontSize = s.subFont * 1.5 + 'px';
-    sub.style.fontWeight = '700';
-    sub.style.color = '#ddd';
-    sub.style.margin = '0 0 14px 0';
-
-    // --- Snapshot chart ---
-    const dataURL = src.toDataURL('image/png');
-    const img = new Image();
-    img.src = dataURL;
-    await img.decode();
-    img.style.display = 'block';
-    img.style.margin = '0 auto 18px auto';
-    img.style.borderRadius = '8px';
-    img.style.width = isDonut ? '80%' : '96%';
-    img.style.height = 'auto';
-
-    const credit = document.createElement('p');
-    credit.style.fontSize = s.creditFont * 1.25 + 'px';
-    credit.style.color = '#ccc';
-    credit.style.lineHeight = '1.5';
-    credit.style.marginTop = '8px';
-    credit.innerHTML =
-      'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
-
-    const spacer = document.createElement('div');
-    spacer.style.height = isDonut ? '16px' : '28px';
-
-    const qr = new Image();
-    qr.crossOrigin = 'anonymous';
-    const qrsz = s.qrSize * 1.1;
-    qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent(
-      'https://solacestrength.github.io/britishclassicfl/metrics.html'
-    )}`;
-    qr.style.position = 'absolute';
-    qr.style.bottom = '18px';
-    qr.style.left = '18px';
-    qr.style.width = qrsz + 'px';
-    qr.style.height = qrsz + 'px';
-    qr.style.borderRadius = '6px';
-    qr.style.opacity = '0.95';
-
-    inner.append(header, sub, img, credit, spacer);
-    card.append(inner, qr);
-    document.body.appendChild(card);
-
-    // --- Dynamic height adjustment for mobile (v5.1 refined) ---
     await new Promise(requestAnimationFrame);
 
+    // Freeze canvas size so html2canvas respects current box (prevents “tall” hist)
+    const chartCanvas = src;
+    chartCanvas.style.height = chartCanvas.clientHeight + 'px';
+    chartCanvas.style.width = chartCanvas.clientWidth + 'px';
+
+    // Downscale captured bitmap a touch (this was in your last working mobile flow)
+    const wPx = Math.round(img.naturalWidth / 2);
+    const hPx = Math.round(img.naturalHeight / 2);
+    img.style.width = wPx + 'px';
+    img.style.height = hPx + 'px';
+
+    // Calculate and apply footer buffer (exact 0.18 you asked for)
     const naturalH = card.scrollHeight;
     const desiredRatio = isDonut ? 1.02 : 1.0;
     const fixedH = Math.min(naturalH * desiredRatio, s.exportWidth * desiredRatio);
-
-    // 🍩 Perfect mobile balance — consistent footer across donut & hist
-    const buffer = Math.round(fixedH * (isDonut ? 0.18 : 0.18));
+    const buffer = Math.round(fixedH * 0.18);
     card.style.height = fixedH + buffer + 'px';
     card.style.maxHeight = fixedH + buffer + 'px';
 
-    // Keep slim donut spacer for safety (prevents footer clip)
+    // Keep slim spacer (prevents last line clipping on some devices)
     spacer.style.height = isDonut ? '16px' : '28px';
 
     await new Promise(requestAnimationFrame);
-
-  // === DESKTOP LOGIC (Stable Classic Layout) ===
-  } else {
-    card.style.minHeight = isDonut ? '860px' : '820px';
-
-    const overlay = document.createElement('div');
-    overlay.style.position = 'absolute';
-    overlay.style.inset = '0';
-    overlay.style.background = 'rgba(0,0,0,0.65)';
-    card.appendChild(overlay);
-
-    const inner = document.createElement('div');
-    inner.style.position = 'relative';
-    inner.style.padding = isDonut
-      ? '36px 28px 36px 28px'
-      : '40px 28px 36px 28px';
-    inner.style.textAlign = 'center';
-    inner.style.color = '#fff';
-    inner.style.fontFamily = "'Inter', sans-serif";
-    inner.style.zIndex = '2';
-
-    const header = document.createElement('h2');
-    header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
-    header.style.fontSize = s.headerFont * 1.25 + 'px';
-    header.style.fontWeight = '700';
-    header.style.margin = '0 0 4px 0';
-
-    const sub = document.createElement('p');
-    sub.textContent = `${w}kg ${g === 'F' ? 'Women' : 'Men'}`;
-    sub.style.fontSize = s.subFont * 1.25 + 'px';
-    sub.style.fontWeight = '700';
-    sub.style.color = '#ddd';
-    sub.style.margin = '0 0 14px 0';
-
-    const dataURL = src.toDataURL('image/png');
-    const img = new Image();
-    img.src = dataURL;
-    await img.decode();
-    img.style.display = 'block';
-    img.style.margin = '0 auto 20px';
-    img.style.borderRadius = '8px';
-    img.style.width = isDonut ? '70%' : '93%';
-    img.style.height = 'auto';
-
-    const credit = document.createElement('p');
-    credit.style.fontSize = s.creditFont * 1.15 + 'px';
-    credit.style.color = '#ccc';
-    credit.style.lineHeight = '1.5';
-    credit.style.marginTop = '8px';
-    credit.innerHTML =
-      'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
-
-    const qr = new Image();
-    qr.crossOrigin = 'anonymous';
-    const qrsz = s.qrSize * 1.25;
-    qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent(
-      'https://solacestrength.github.io/britishclassicfl/metrics.html'
-    )}`;
-    qr.style.position = 'absolute';
-    qr.style.bottom = '18px';
-    qr.style.left = '18px';
-    qr.style.width = qrsz + 'px';
-    qr.style.height = qrsz + 'px';
-    qr.style.borderRadius = '6px';
-    qr.style.opacity = '0.95';
-
-    inner.append(header, sub, img, credit);
-    card.append(inner, qr);
-    document.body.appendChild(card);
   }
 
-  // === Capture export ===
-  await new Promise(requestAnimationFrame);
+  // --- Capture ---
   const canvas = await html2canvas(card, {
     backgroundColor: null,
     scale: 2,
@@ -525,13 +472,13 @@ async function shareChart(id, g) {
   });
   card.remove();
 
-  // === Restore gridlines after capture ===
+  // --- Restore gridlines ---
   if (chart && prevGridState) {
     chart.options.scales = prevGridState;
     chart.update();
   }
 
-  // === Save / Share ===
+  // --- Save / Share ---
   const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
   const file = new File([blob], fn, { type: 'image/png' });
 
