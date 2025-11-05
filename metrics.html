@@ -320,7 +320,7 @@ function toggleSection(id){
   a.classList.toggle('rotate',o);
 }
 
-// ======= SHARE / EXPORT (vFinal.5 Hybrid Logic) =======
+// ======= SHARE / EXPORT (vFinal.5.1 Hybrid Logic) =======
 async function shareChart(id, g) {
   const s = sizing();
   const src = document.getElementById(id);
@@ -332,7 +332,7 @@ async function shareChart(id, g) {
   const isMobile = window.innerWidth < 768;
   const fn = `metrics_${g}_${w}_${isDonut ? 'donut' : 'hist'}.png`;
 
-  // === Get chart context and hide gridlines before rendering ===
+  // === Hide gridlines before export ===
   const chart = src.chart || Chart.getChart(src);
   let prevGridState = null;
   if (chart) {
@@ -355,9 +355,10 @@ async function shareChart(id, g) {
   card.style.backgroundPosition = 'center';
   card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
 
-  // === MOBILE EXPORT LOGIC (North Star vFinal.4D) ===
+  // === MOBILE LOGIC (North Star vFinal.4D + 0.18 fix) ===
   if (isMobile) {
     card.style.minHeight = isDonut ? '920px' : '820px';
+
     const overlay = document.createElement('div');
     overlay.style.position = 'absolute';
     overlay.style.inset = '0';
@@ -387,6 +388,7 @@ async function shareChart(id, g) {
     sub.style.color = '#ddd';
     sub.style.margin = '0 0 14px 0';
 
+    // --- Snapshot chart ---
     const dataURL = src.toDataURL('image/png');
     const img = new Image();
     img.src = dataURL;
@@ -426,16 +428,24 @@ async function shareChart(id, g) {
     card.append(inner, qr);
     document.body.appendChild(card);
 
-    // --- Dynamic height adjustment for mobile ---
+    // --- Dynamic height adjustment for mobile (v5.1 refined) ---
     await new Promise(requestAnimationFrame);
+
     const naturalH = card.scrollHeight;
     const desiredRatio = isDonut ? 1.02 : 1.0;
     const fixedH = Math.min(naturalH * desiredRatio, s.exportWidth * desiredRatio);
-    const buffer = Math.round(fixedH * 0.18); // perfect mobile footer balance
+
+    // 🍩 Perfect mobile balance — consistent footer across donut & hist
+    const buffer = Math.round(fixedH * (isDonut ? 0.18 : 0.18));
     card.style.height = fixedH + buffer + 'px';
     card.style.maxHeight = fixedH + buffer + 'px';
 
-  // === DESKTOP EXPORT LOGIC (Classic North Star Desktop) ===
+    // Keep slim donut spacer for safety (prevents footer clip)
+    spacer.style.height = isDonut ? '16px' : '28px';
+
+    await new Promise(requestAnimationFrame);
+
+  // === DESKTOP LOGIC (Stable Classic Layout) ===
   } else {
     card.style.minHeight = isDonut ? '860px' : '820px';
 
@@ -505,7 +515,7 @@ async function shareChart(id, g) {
     document.body.appendChild(card);
   }
 
-  // === Capture and Save ===
+  // === Capture export ===
   await new Promise(requestAnimationFrame);
   const canvas = await html2canvas(card, {
     backgroundColor: null,
@@ -515,13 +525,13 @@ async function shareChart(id, g) {
   });
   card.remove();
 
-  // === Restore gridlines after export ===
+  // === Restore gridlines after capture ===
   if (chart && prevGridState) {
     chart.options.scales = prevGridState;
     chart.update();
   }
 
-  // === Save / Share Logic ===
+  // === Save / Share ===
   const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
   const file = new File([blob], fn, { type: 'image/png' });
 
