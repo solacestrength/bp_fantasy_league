@@ -320,7 +320,7 @@ function toggleSection(id){
   a.classList.toggle('rotate',o);
 }
 
-// ======= SHARE / EXPORT (North Star vFinal) =======
+// ======= SHARE / EXPORT (North Star Lock-In) =======
 async function shareChart(id, g) {
   const s = sizing();
   const src = document.getElementById(id);
@@ -379,14 +379,19 @@ async function shareChart(id, g) {
   sub.style.color = '#ddd';
   sub.style.margin = '0 0 14px 0';
 
-  // Chart snapshot (gridlines hidden)
+  // === Get chart context and hide gridlines before rendering toDataURL ===
   const chart = src.chart || Chart.getChart(src);
+  let prevGridState = null;
   if (chart) {
-    chart.options.scales.x.grid.display = false;
-    chart.options.scales.y.grid.display = false;
+    // Deep clone grid state for restoration later
+    prevGridState = JSON.parse(JSON.stringify(chart.options.scales));
+    if (chart.options.scales.x) chart.options.scales.x.grid.display = false;
+    if (chart.options.scales.y) chart.options.scales.y.grid.display = false;
     chart.update();
+    await new Promise(requestAnimationFrame); // ensure repaint before capture
   }
 
+  // === Chart snapshot ===
   const dataURL = src.toDataURL('image/png');
   const img = new Image();
   img.src = dataURL;
@@ -405,7 +410,6 @@ async function shareChart(id, g) {
   credit.innerHTML =
     'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-  // QR code
   const qr = new Image();
   qr.crossOrigin = 'anonymous';
   const qrsz = isMobile ? s.qrSize * 1.1 : s.qrSize * 1.25;
@@ -424,7 +428,7 @@ async function shareChart(id, g) {
   card.append(inner, qr);
   document.body.appendChild(card);
 
-  // === FINAL DIMENSION CONTROL (Corrected) ===
+  // === Dimension Control ===
   await new Promise(requestAnimationFrame);
 
   const chartCanvas = src;
@@ -440,16 +444,12 @@ async function shareChart(id, g) {
   const desiredRatio = isDonut ? 1.05 : 1.0;
   const fixedH = Math.min(naturalH, s.exportWidth * desiredRatio);
 
-  card.style.height = fixedH + 'px';
-  card.style.maxHeight = fixedH + 'px';
-
-  void card.offsetHeight;
-  await new Promise(requestAnimationFrame);
-
-  // --- add buffer to prevent cropped footer ---
-  const buffer = Math.round(fixedH * 0.06);
+  // --- Add generous footer buffer (now 12%) ---
+  const buffer = Math.round(fixedH * 0.12);
   card.style.height = fixedH + buffer + 'px';
   card.style.maxHeight = fixedH + buffer + 'px';
+
+  await new Promise(requestAnimationFrame);
 
   // === Capture ===
   const canvas = await html2canvas(card, {
@@ -460,10 +460,9 @@ async function shareChart(id, g) {
   });
   card.remove();
 
-  // === Restore gridlines for on-page charts ===
-  if (chart) {
-    chart.options.scales.x.grid.display = true;
-    chart.options.scales.y.grid.display = true;
+  // === Restore gridlines (post-export only) ===
+  if (chart && prevGridState) {
+    chart.options.scales = prevGridState;
     chart.update();
   }
 
