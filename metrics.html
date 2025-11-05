@@ -285,23 +285,34 @@ function createDonutChart(canvasId, dataObj, total, s) {
           },
           onHover: (e, item, legend) => {
             const c = legend.chart;
-            c.$activeLegendIndex = item.index;
+            c.$hoverIndex = item.index;
             c.setActiveElements([{ datasetIndex: 0, index: item.index }]);
             c.tooltip.setActiveElements([{ datasetIndex: 0, index: item.index }], { x: 0, y: 0 });
             c.update('none');
           },
           onLeave: (e, item, legend) => {
             const c = legend.chart;
-            delete c.$activeLegendIndex;
-            c.setActiveElements([]);
-            c.tooltip.setActiveElements([], { x: 0, y: 0 });
-            c.update('none');
+            delete c.$hoverIndex;
+            if (c.$activeLegendIndex === undefined) {
+              c.setActiveElements([]);
+              c.tooltip.setActiveElements([], { x: 0, y: 0 });
+              c.update('none');
+            }
           },
           onClick: (e, item, legend) => {
             const c = legend.chart;
-            c.$activeLegendIndex = item.index;
-            c.setActiveElements([{ datasetIndex: 0, index: item.index }]);
-            c.tooltip.setActiveElements([{ datasetIndex: 0, index: item.index }], { x: 0, y: 0 });
+            const idx = item.index;
+
+            // --- Toggle-off logic ---
+            if (c.$activeLegendIndex === idx) {
+              delete c.$activeLegendIndex;
+              c.setActiveElements([]);
+              c.tooltip.setActiveElements([], { x: 0, y: 0 });
+            } else {
+              c.$activeLegendIndex = idx;
+              c.setActiveElements([{ datasetIndex: 0, index: idx }]);
+              c.tooltip.setActiveElements([{ datasetIndex: 0, index: idx }], { x: 0, y: 0 });
+            }
             c.update();
           }
         },
@@ -327,7 +338,7 @@ function createDonutChart(canvasId, dataObj, total, s) {
 // ✅ Use the reusable donut chart builder
 if (charts[donutId]) charts[donutId].destroy();
 charts[donutId] = createDonutChart(donutId, counts, total, s);
-
+  
 // === Interactive Legend Mirror (bold legend text + accurate slice + tooltip) ===
 const donutChart = charts[donutId];
 const legendPlugin = donutChart.options.plugins.legend;
