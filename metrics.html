@@ -250,6 +250,58 @@ function renderCharts(g,w){
     plugins:[ChartDataLabels]
   });
 
+  // === Interactive Legend Highlight (Donut only, 10-second capture-ready version) ===
+charts[donutId].options.plugins.legend.onClick = (e, legendItem, legend) => {
+  const chart = legend.chart;
+  const index = legendItem.index;
+  const meta = chart.getDatasetMeta(0);
+
+  // Reset any existing highlights first
+  meta.data.forEach((arc) => {
+    arc.options.borderWidth = 1;
+    arc.options.borderColor = '#111';
+    arc.options.offset = 0;
+    arc.options.backgroundColor = arc.$originalColor || arc.options.backgroundColor;
+  });
+
+  // Apply highlight
+  meta.data.forEach((arc, i) => {
+    if (i === index) {
+      // Highlighted slice
+      arc.options.borderWidth = 4;
+      arc.options.borderColor = '#fff';
+      arc.options.offset = 10;
+
+      // Soft fade-in brightness (keep export-safe)
+      const original = Chart.helpers.color(arc.$originalColor || arc.options.backgroundColor);
+      arc.options.backgroundColor = original.brighten(0.4).rgbString();
+    } else {
+      // Dim other slices
+      const original = Chart.helpers.color(arc.$originalColor || arc.options.backgroundColor);
+      arc.options.backgroundColor = original.darken(0.4).rgbString();
+    }
+  });
+
+  chart.update('active');
+
+  // Maintain highlight for 10 seconds (ensures html2canvas can capture it)
+  setTimeout(() => {
+    meta.data.forEach((arc) => {
+      arc.options.borderWidth = 1;
+      arc.options.borderColor = '#111';
+      arc.options.offset = 0;
+      arc.options.backgroundColor = arc.$originalColor || arc.options.backgroundColor;
+    });
+    chart.update('active');
+  }, 10000);
+};
+
+// Store original slice colors for clean restoration
+charts[donutId].data.datasets[0].data.forEach((_, i) => {
+  const arc = charts[donutId].getDatasetMeta(0).data[i];
+  arc.$originalColor = arc.options.backgroundColor;
+});
+
 // === Safeguard: enforce square aspect ratio on redraws ===
 charts[donutId].options.maintainAspectRatio = true;
 charts[donutId].options.aspectRatio = 1;
