@@ -391,7 +391,6 @@ function renderCharts(g, w) {
   // Enforce perfect circular proportions
   charts[donutId].options.maintainAspectRatio = true;
   charts[donutId].options.aspectRatio = 1;
-}
 
   // Histogram
   const vals=rows.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v)&&v>0);
