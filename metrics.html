@@ -39,6 +39,14 @@
       }
     }
 
+    /* === Preserve true aspect for donut charts (no stretch or squash) === */
+#womenDonut, #menDonut {
+  width: 100% !important;
+  aspect-ratio: 1 / 1 !important;
+  max-height: none !important;
+  object-fit: contain;
+}
+
     .collapsible-content{max-height:0;overflow:hidden;opacity:0;
       transition:max-height .5s ease,opacity .4s ease;}
     .collapsible-content.open{opacity:1;max-height:1000px;}
@@ -241,6 +249,10 @@ function renderCharts(g,w){
     },
     plugins:[ChartDataLabels]
   });
+
+// === Safeguard: enforce square aspect ratio on redraws ===
+charts[donutId].options.maintainAspectRatio = true;
+charts[donutId].options.aspectRatio = 1;
 
   // Histogram
   const vals=rows.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v)&&v>0);
