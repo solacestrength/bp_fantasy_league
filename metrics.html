@@ -20,15 +20,23 @@
     canvas {max-width:100%;height:auto!important;}
     .chart-container {max-width:600px;margin:0 auto;position:relative;}
 
-    /* Balanced chart heights */
+    /* === Balanced & refined chart heights (v5.3) === */
     @media (min-width:1024px){
-      .chart-container{max-width:500px;}
+      .chart-container{max-width:480px;} /* slightly narrower histogram base */
       #womenDonut, #menDonut {height:375px !important;}
-      #womenHist, #menHist {height:395px !important;}
+      #womenHist, #menHist {
+        height:360px !important;          /* reduced overall height */
+        transform: scale(0.93);           /* proportional scale-down */
+        transform-origin: top center;
+      }
     }
     @media (max-width:1023px){
       #womenDonut, #menDonut {height:336px !important;}
-      #womenHist, #menHist {height:390px !important;}
+      #womenHist, #menHist {
+        height:360px !important;
+        transform: scale(0.90);
+        transform-origin: top center;
+      }
     }
 
     .collapsible-content{max-height:0;overflow:hidden;opacity:0;
@@ -152,7 +160,7 @@
       </div>
     </main>
 
-        <div class="flex justify-center mt-8">
+    <div class="flex justify-center mt-8">
       <a href="leaderboard.html" class="bg-gray-800/60 border border-gray-700 text-gray-200 font-semibold px-6 py-3 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-base">
         View Leaderboard
       </a>
@@ -225,7 +233,6 @@ function renderCharts(g,w){
     type:'doughnut',
     data:{labels:dLabels,datasets:[{data:dData,backgroundColor:colors,borderColor:'#111',borderWidth:1}]},
     options:{
-      // page donut gets a taller slot but stays perfectly round
       maintainAspectRatio:false, aspectRatio:1, cutout:'57%',
       plugins:{
         title:{display:true,text:'Share of Votes',color:'#ccc',font:{weight:'bold',size:s.donutTitle},padding:{bottom:8}},
@@ -249,8 +256,8 @@ function renderCharts(g,w){
       type:'bar', data:{labels:[],datasets:[{data:[]}]},
       options:{
         plugins:{
-          title:{display:true,text:'Distribution of Predicted Winning Totals',color:'#ccc',font:{size:s.histTitle,weight:'bold'},padding:{bottom:8}},
-          subtitle:{display:true,text:`Total Votes – 0`,color:'#aaa',font:{size:s.histSubtitle},padding:{top:2,bottom:12}},
+          title:{display:true,text:'Distribution of Predicted Winning Totals',color:'#ccc',font:{size:s.histTitle,weight:'bold'},padding:{bottom:6}},
+          subtitle:{display:true,text:`Total Votes – 0`,color:'#aaa',font:{size:s.histSubtitle},padding:{top:2,bottom:10}},
           legend:{display:false}
         }
       }
@@ -269,20 +276,30 @@ function renderCharts(g,w){
   const yMin=Math.floor(minC/2);
   const span=maxC-yMin;
   const step=Math.max(1,Math.round(span/4));
-  const yMax=Math.ceil(maxC/step)*step; // stop at nearest multiple >= max
+  const yMax=Math.ceil(maxC/step)*step;
 
   if(charts[histId]) charts[histId].destroy();
   charts[histId]=new Chart(document.getElementById(histId),{
     type:'bar',
-    data:{labels:labelsH,datasets:[{data:countsH,backgroundColor:'#3b82f6',borderRadius:5}]},
+        data:{labels:labelsH,datasets:[{data:countsH,backgroundColor:'#3b82f6',borderRadius:5}]},
     options:{
-      // page histogram slightly shorter than donut (unsquashed)
       maintainAspectRatio:false, aspectRatio:0.9,
       plugins:{
-        title:{display:true,text:'Distribution of Predicted Winning Totals',color:'#ccc',font:{size:s.histTitle,weight:'bold'},padding:{bottom:8}},
-        subtitle:{display:true,text:`Total Votes – ${N}`,color:'#aaa',font:{size:s.histSubtitle},padding:{top:2,bottom:12}},
+        title:{
+          display:true,
+          text:'Distribution of Predicted Winning Totals',
+          color:'#ccc',
+          font:{size:s.histTitle,weight:'bold'},
+          padding:{bottom:6}  // tighter spacing for vertical alignment
+        },
+        subtitle:{
+          display:true,
+          text:`Total Votes – ${N}`,
+          color:'#aaa',
+          font:{size:s.histSubtitle},
+          padding:{top:2,bottom:10}
+        },
         legend:{display:false},
-        // middle labels, auto-top if bar is too short
         datalabels:{
           color:'#fff',
           formatter:(v)=> v>0 ? v : '',
@@ -291,7 +308,6 @@ function renderCharts(g,w){
             const v=ctx.dataset.data[ctx.dataIndex]||0;
             const scale=ctx.chart.scales.y; if(!scale) return 'center';
             const barH = scale.getPixelForValue(yMin+v)-scale.getPixelForValue(yMin);
-            // approximate label height in px
             const f=ctx.chart.options.plugins.datalabels?.font?.size || s.histBarLabel;
             return (barH < f*1.05) ? 'end' : 'center';
           },
@@ -301,11 +317,15 @@ function renderCharts(g,w){
         }
       },
       scales:{
-        x:{ticks:{color:'#ccc',font:{size:s.axisTick}},
-           title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:s.axisTitle,weight:'bold'}}},
-        y:{min:yMin,max:yMax,beginAtZero:false,
-           ticks:{color:'#ccc',font:{size:s.axisTick}},
-           title:{display:true,text:'Frequency',color:'#ccc',font:{size:s.axisTitle,weight:'bold'}}}
+        x:{
+          ticks:{color:'#ccc',font:{size:s.axisTick}},
+          title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:s.axisTitle,weight:'bold'}}
+        },
+        y:{
+          min:yMin,max:yMax,beginAtZero:false,
+          ticks:{color:'#ccc',font:{size:s.axisTick}},
+          title:{display:true,text:'Frequency',color:'#ccc',font:{size:s.axisTitle,weight:'bold'}}
+        }
       }
     },
     plugins:[ChartDataLabels]
@@ -431,38 +451,27 @@ async function shareChart(id, g) {
   card.appendChild(qr);
   document.body.appendChild(card);
 
-  // --- Height presets (match your stable values) ---
+  // --- Height presets (stable values) ---
   card.style.minHeight = isMobile ? (isDonut ? '920px' : '820px') : (isDonut ? '860px' : '820px');
 
   // ===== MOBILE-ONLY: refined dimension freeze + smaller donut buffer =====
-if (isMobile) {
-  await new Promise(requestAnimationFrame);
-
-  // Freeze canvas dimensions
-  const chartCanvas = src;
-  chartCanvas.style.height = chartCanvas.clientHeight + 'px';
-  chartCanvas.style.width = chartCanvas.clientWidth + 'px';
-
-  // Downscale snapshot
-  const wPx = Math.round(img.naturalWidth / 2);
-  const hPx = Math.round(img.naturalHeight / 2);
-  img.style.width = wPx + 'px';
-  img.style.height = hPx + 'px';
-
-  // ✅ Refined footer buffer — less padding for donut exports
-  const naturalH = card.scrollHeight;
-  const desiredRatio = isDonut ? 1.02 : 1.0;
-  const fixedH = Math.min(naturalH * desiredRatio, s.exportWidth * desiredRatio);
-
-  // 🍩 Donut gets 0.11 (was 0.18); histogram keeps 0.18
-  const buffer = Math.round(fixedH * (isDonut ? 0.11 : 0.18));
-  card.style.height = fixedH + buffer + 'px';
-  card.style.maxHeight = fixedH + buffer + 'px';
-
-  // Keep slim spacer
-  spacer.style.height = isDonut ? '12px' : '28px';
-
-  await new Promise(requestAnimationFrame);
+  if (isMobile) {
+    await new Promise(requestAnimationFrame);
+    const chartCanvas = src;
+    chartCanvas.style.height = chartCanvas.clientHeight + 'px';
+    chartCanvas.style.width = chartCanvas.clientWidth + 'px';
+    const wPx = Math.round(img.naturalWidth / 2);
+    const hPx = Math.round(img.naturalHeight / 2);
+    img.style.width = wPx + 'px';
+    img.style.height = hPx + 'px';
+    const naturalH = card.scrollHeight;
+    const desiredRatio = isDonut ? 1.02 : 1.0;
+    const fixedH = Math.min(naturalH * desiredRatio, s.exportWidth * desiredRatio);
+    const buffer = Math.round(fixedH * (isDonut ? 0.11 : 0.18));
+    card.style.height = fixedH + buffer + 'px';
+    card.style.maxHeight = fixedH + buffer + 'px';
+    spacer.style.height = isDonut ? '12px' : '28px';
+    await new Promise(requestAnimationFrame);
   }
 
   // --- Capture ---
