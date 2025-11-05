@@ -250,42 +250,40 @@ function renderCharts(g,w){
     plugins:[ChartDataLabels]
   });
 
-// === Interactive Legend Mirroring (identical to slice tap/hover) ===
+// === Interactive Legend Mirroring (slice tap/hover + tooltip, export-safe) ===
 const donutChart = charts[donutId];
 const legendPlugin = donutChart.options.plugins.legend;
 
-// Handle click (mobile & desktop)
+// Click / tap legend item → mimic slice tap (activates tooltip)
 legendPlugin.onClick = (e, legendItem, legend) => {
   const chart = legend.chart;
   const index = legendItem.index;
   const element = chart.getDatasetMeta(0).data[index];
-  if (element) {
-    const evt = new MouseEvent('click', {
-      bubbles: true,
-      cancelable: true,
-      view: window,
-      clientX: e.clientX || 0,
-      clientY: e.clientY || 0
-    });
-    element.canvas.dispatchEvent(evt);
-  }
+  if (!element) return;
+
+  // Activate slice highlight
+  chart.setActiveElements([{ datasetIndex: 0, index }]);
+  chart.tooltip.setActiveElements([{ datasetIndex: 0, index }], { x: 0, y: 0 });
+  chart.update();
 };
 
-// Handle hover (desktop)
+// Hover over legend item → mimic slice hover
 legendPlugin.onHover = (e, legendItem, legend) => {
   const chart = legend.chart;
   const index = legendItem.index;
   const element = chart.getDatasetMeta(0).data[index];
-  if (element) {
-    chart.setActiveElements([{ datasetIndex: 0, index }]);
-    chart.update();
-  }
+  if (!element) return;
+
+  chart.setActiveElements([{ datasetIndex: 0, index }]);
+  chart.tooltip.setActiveElements([{ datasetIndex: 0, index }], { x: 0, y: 0 });
+  chart.update();
 };
 
-// Handle hover out (restore)
+// Hover out or leave legend → clear highlights and tooltip
 legendPlugin.onLeave = (e, legendItem, legend) => {
   const chart = legend.chart;
   chart.setActiveElements([]);
+  chart.tooltip.setActiveElements([], { x: 0, y: 0 });
   chart.update();
 };
 
