@@ -432,20 +432,20 @@ async function shareChart(id, g) {
   card.append(inner, qr);
   document.body.appendChild(card);
 
-    // === Dimension Control ===
+  // === Dimension Control (vFinal.4D — Donut 13.5% Footer Balance) ===
   await new Promise(requestAnimationFrame);
 
   const naturalH = card.scrollHeight;
-  const desiredRatio = isDonut ? 1.02 : 1.0; // donut now nearly same height as histogram
+  const desiredRatio = isDonut ? 1.02 : 1.0;
   const fixedH = Math.min(naturalH * desiredRatio, s.exportWidth * desiredRatio);
 
-  // 🧩 Reduced donut buffer to tighten bottom space
-  const buffer = Math.round(fixedH * (isDonut ? 0.12 : 0.18));
+  // 🍩 Perfectly balanced: donut gets 13.5%, histogram stays 18%
+  const buffer = Math.round(fixedH * (isDonut ? 0.135 : 0.18));
   card.style.height = fixedH + buffer + 'px';
   card.style.maxHeight = fixedH + buffer + 'px';
 
-  // Keep spacer but slim for donuts
-  spacer.style.height = isDonut ? '16px' : '28px';
+  // Keep slim donut spacer for safety
+  spacer.style.height = isDonut ? '14px' : '28px';
 
   await new Promise(requestAnimationFrame);
 
