@@ -15,65 +15,141 @@
   <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
 
 <style>
-  body {background:#0b0b0b;color:#f1f1f1;font-family:'Inter',sans-serif;}
-  select {background:#1f1f1f;border:1px solid #333;}
-  canvas {max-width:100%;height:auto!important;}
-  .chart-container {max-width:600px;margin:0 auto;position:relative;}
+  body {
+    background: #0b0b0b;
+    color: #f1f1f1;
+    font-family: 'Inter', sans-serif;
+  }
 
-  /* === Balanced & refined chart heights (v5.3 FINAL) === */
-  @media (min-width:1024px){
-    .chart-container{max-width:480px;} /* slightly narrower histogram base */
-    #womenDonut, #menDonut {height:375px !important;}
-    #womenHist, #menHist {
-      height:360px !important;          /* reduced overall height */
-      transform: scale(0.93);           /* proportional scale-down */
-      transform-origin: top center;
+  select {
+    background: #1f1f1f;
+    border: 1px solid #333;
+  }
+
+  canvas {
+    max-width: 100%;
+    height: auto !important;
+  }
+
+  .chart-container {
+    max-width: 600px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* === Unified Donut + Histogram Sizing (v6.0 Final) === */
+  @media (min-width: 1024px) {
+    .chart-container {
+      max-width: 500px; /* narrower base for desktop symmetry */
+    }
+
+    /* --- Donuts (perfectly round, centred) --- */
+    #womenDonut,
+    #menDonut {
+      width: 100% !important;
+      height: auto !important;
+      aspect-ratio: 1 / 1; /* ✅ ensures perfect circle */
+      display: block;
+      margin: 0 auto;
+    }
+
+    /* --- Histograms (balanced width/height) --- */
+    #womenHist,
+    #menHist {
+      width: 100% !important;
+      aspect-ratio: 1.1 / 1; /* slight horizontal room for axis labels */
+      height: auto !important;
+      display: block;
+      margin: 0 auto;
     }
   }
 
-@media (max-width:1023px){
-  /* Donuts: square via Chart.js aspect ratio on mobile */
-  #womenDonut, #menDonut { width: 100% !important; height: auto !important; }
+  @media (max-width: 1023px) {
+    .chart-container {
+      max-width: 90%;
+    }
 
-  /* Histogram keeps its current size */
-  #womenHist, #menHist {
-    height: 360px !important;
-    transform: scale(0.90);
-    transform-origin: top center;
+    /* --- Donuts (mobile-perfect circle) --- */
+    #womenDonut,
+    #menDonut {
+      width: 100% !important;
+      height: auto !important;
+      aspect-ratio: 1 / 1;
+      display: block;
+      margin: 0 auto;
+    }
+
+    /* --- Histograms (mobile proportional view) --- */
+    #womenHist,
+    #menHist {
+      width: 100% !important;
+      height: auto !important;
+      aspect-ratio: 1.1 / 1;
+      display: block;
+      margin: 0 auto;
+    }
   }
-}
 
+  /* === Collapsible animations and shared UI === */
   .collapsible-content {
-    max-height:0;
-    overflow:hidden;
-    opacity:0;
-    transition:max-height .5s ease,opacity .4s ease;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.5s ease, opacity 0.4s ease;
   }
+
   .collapsible-content.open {
-    opacity:1;
-    max-height:1000px;
+    opacity: 1;
+    max-height: 1000px;
   }
-  .arrow {transition:transform .4s ease;}
-  .arrow.rotate {transform:rotate(180deg);}
+
+  .arrow {
+    transition: transform 0.4s ease;
+  }
+
+  .arrow.rotate {
+    transform: rotate(180deg);
+  }
+
   .share-btn {
-    background-color:#dc2626;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border-radius:.5rem;
-    height:36px;
-    width:36px;
-    transition:background-color .2s ease;
+    background-color: #dc2626;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    height: 36px;
+    width: 36px;
+    transition: background-color 0.2s ease;
   }
-  .share-btn:hover {background-color:#ef4444;}
-  .share-icon {filter:invert(1);height:18px;width:18px;}
+
+  .share-btn:hover {
+    background-color: #ef4444;
+  }
+
+  .share-icon {
+    filter: invert(1);
+    height: 18px;
+    width: 18px;
+  }
 
   @keyframes fadeInUp {
-    0%{opacity:0;transform:translateY(10px);}
-    100%{opacity:1;transform:translateY(0);}
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
-  .animate-fade-in-up {animation:fadeInUp 0.8s ease-out forwards;}
-  .animate-fade-in {animation:fadeInUp 1s ease-out forwards;}
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+  }
+
+  .animate-fade-in {
+    animation: fadeInUp 1s ease-out forwards;
+  }
 </style>
 </head>
 
@@ -232,7 +308,8 @@ toggleMenu(false);
 
 // ======= CHARTS =======
 Chart.register(ChartDataLabels);
-const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
+const SHEET_URL =
+  'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
 let allData = [];
 const charts = {};
 
@@ -268,7 +345,9 @@ Papa.parse(SHEET_URL, {
 function setupDropdowns() {
   ['F', 'M'].forEach(g => {
     const d = allData.filter(r => r.Gender === g);
-    const classes = [...new Set(d.map(r => r.Class))].sort((a, b) => parseFloat(a) - parseFloat(b));
+    const classes = [...new Set(d.map(r => r.Class))].sort(
+      (a, b) => parseFloat(a) - parseFloat(b)
+    );
     const s = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
     s.innerHTML = classes.map(c => `<option value="${c}">${c}kg</option>`).join('');
     s.onchange = () => renderCharts(g, s.value);
@@ -285,11 +364,24 @@ function renderCharts(g, w) {
 
   // --- DONUT ---
   const counts = {};
-  rows.forEach(r => counts[r.Athlete] = (counts[r.Athlete] || 0) + 1);
+  rows.forEach(r => (counts[r.Athlete] = (counts[r.Athlete] || 0) + 1));
   const dLabels = Object.keys(counts);
   const dData = Object.values(counts);
   const total = dData.reduce((a, b) => a + b, 0);
-  const colors = ['#ef4444', '#f97316', '#facc15', '#22c55e', '#14b8a6', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#d946ef', '#fb7185'];
+  const colors = [
+    '#ef4444',
+    '#f97316',
+    '#facc15',
+    '#22c55e',
+    '#14b8a6',
+    '#3b82f6',
+    '#8b5cf6',
+    '#ec4899',
+    '#06b6d4',
+    '#84cc16',
+    '#d946ef',
+    '#fb7185'
+  ];
   if (charts[donutId]) charts[donutId].destroy();
 
   const isDesktop = window.matchMedia('(min-width:1024px)').matches;
@@ -298,12 +390,14 @@ function renderCharts(g, w) {
     type: 'doughnut',
     data: {
       labels: dLabels,
-      datasets: [{
-        data: dData,
-        backgroundColor: colors,
-        borderColor: '#111',
-        borderWidth: 1
-      }]
+      datasets: [
+        {
+          data: dData,
+          backgroundColor: colors,
+          borderColor: '#111',
+          borderWidth: 1
+        }
+      ]
     },
     options: {
       maintainAspectRatio: !isDesktop, // ✅ fix for mobile squashing
@@ -358,8 +452,20 @@ function renderCharts(g, w) {
       data: { labels: [], datasets: [{ data: [] }] },
       options: {
         plugins: {
-          title: { display: true, text: 'Distribution of Predicted Winning Totals', color: '#ccc', font: { size: s.histTitle, weight: 'bold' }, padding: { bottom: 8 } },
-          subtitle: { display: true, text: `Total Votes – 0`, color: '#aaa', font: { size: s.histSubtitle }, padding: { top: 2, bottom: 12 } },
+          title: {
+            display: true,
+            text: 'Distribution of Predicted Winning Totals',
+            color: '#ccc',
+            font: { size: s.histTitle, weight: 'bold' },
+            padding: { bottom: 8 }
+          },
+          subtitle: {
+            display: true,
+            text: `Total Votes – 0`,
+            color: '#aaa',
+            font: { size: s.histSubtitle },
+            padding: { top: 2, bottom: 12 }
+          },
           legend: { display: false }
         }
       }
@@ -367,14 +473,24 @@ function renderCharts(g, w) {
     return;
   }
 
-  const N = vals.length, min = Math.min(...vals), max = Math.max(...vals);
+  const N = vals.length,
+    min = Math.min(...vals),
+    max = Math.max(...vals);
   const bins = Math.max(3, Math.round(Math.sqrt(N)));
   const bw = (max - min) / bins || 1;
   const countsH = Array(bins).fill(0);
-  vals.forEach(v => { let i = Math.floor((v - min) / bw); if (i >= bins) i = bins - 1; if (i < 0) i = 0; countsH[i]++; });
-  const labelsH = Array.from({ length: bins }, (_, i) => `${(min + i * bw).toFixed(0)}–${(min + (i + 1) * bw).toFixed(0)}`);
+  vals.forEach(v => {
+    let i = Math.floor((v - min) / bw);
+    if (i >= bins) i = bins - 1;
+    if (i < 0) i = 0;
+    countsH[i]++;
+  });
+  const labelsH = Array.from({ length: bins }, (_, i) =>
+    `${(min + i * bw).toFixed(0)}–${(min + (i + 1) * bw).toFixed(0)}`
+  );
 
-  const minC = Math.min(...countsH), maxC = Math.max(...countsH);
+  const minC = Math.min(...countsH),
+    maxC = Math.max(...countsH);
   const yMin = Math.floor(minC / 2);
   const span = maxC - yMin;
   const step = Math.max(1, Math.round(span / 4));
@@ -383,9 +499,12 @@ function renderCharts(g, w) {
   if (charts[histId]) charts[histId].destroy();
   charts[histId] = new Chart(document.getElementById(histId), {
     type: 'bar',
-    data: { labels: labelsH, datasets: [{ data: countsH, backgroundColor: '#3b82f6', borderRadius: 5 }] },
+    data: {
+      labels: labelsH,
+      datasets: [{ data: countsH, backgroundColor: '#3b82f6', borderRadius: 5 }]
+    },
     options: {
-      maintainAspectRatio: false,
+      maintainAspectRatio: !isDesktop, // ✅ new fix for histogram stretching
       aspectRatio: 0.9,
       plugins: {
         title: {
@@ -405,15 +524,17 @@ function renderCharts(g, w) {
         legend: { display: false },
         datalabels: {
           color: '#fff',
-          formatter: (v) => v > 0 ? v : '',
+          formatter: v => (v > 0 ? v : ''),
           anchor: 'center',
-          align: (ctx) => {
+          align: ctx => {
             const v = ctx.dataset.data[ctx.dataIndex] || 0;
             const scale = ctx.chart.scales.y;
             if (!scale) return 'center';
-            const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
-            const f = ctx.chart.options.plugins.datalabels?.font?.size || s.histBarLabel;
-            return (barH < f * 1.05) ? 'end' : 'center';
+            const barH =
+              scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
+            const f =
+              ctx.chart.options.plugins.datalabels?.font?.size || s.histBarLabel;
+            return barH < f * 1.05 ? 'end' : 'center';
           },
           offset: 0,
           clamp: true,
@@ -423,12 +544,24 @@ function renderCharts(g, w) {
       scales: {
         x: {
           ticks: { color: '#ccc', font: { size: s.axisTick } },
-          title: { display: true, text: 'Predicted Total (kg)', color: '#ccc', font: { size: s.axisTitle, weight: 'bold' } }
+          title: {
+            display: true,
+            text: 'Predicted Total (kg)',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          }
         },
         y: {
-          min: yMin, max: yMax, beginAtZero: false,
+          min: yMin,
+          max: yMax,
+          beginAtZero: false,
           ticks: { color: '#ccc', font: { size: s.axisTick } },
-          title: { display: true, text: 'Frequency', color: '#ccc', font: { size: s.axisTitle, weight: 'bold' } }
+          title: {
+            display: true,
+            text: 'Frequency',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          }
         }
       }
     },
