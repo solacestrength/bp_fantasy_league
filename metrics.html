@@ -20,7 +20,7 @@
     canvas {max-width:100%;height:auto!important;}
     .chart-container {max-width:600px;margin:0 auto;position:relative;}
 
-    /* === Balanced chart heights and scaling (North Star vFinal Unified) === */
+    /* === Balanced chart heights and scaling === */
     @media (min-width:1024px){
       .chart-container{max-width:480px;}
       #womenDonut, #menDonut {height:375px !important;}
@@ -39,13 +39,13 @@
       }
     }
 
-    /* === Preserve true aspect for donut charts (no stretch or squash) === */
-#womenDonut, #menDonut {
-  width: 100% !important;
-  aspect-ratio: 1 / 1 !important;
-  max-height: none !important;
-  object-fit: contain;
-}
+    /* === Preserve true aspect for donut charts === */
+    #womenDonut, #menDonut {
+      width: 100% !important;
+      aspect-ratio: 1 / 1 !important;
+      max-height: none !important;
+      object-fit: contain;
+    }
 
     .collapsible-content{max-height:0;overflow:hidden;opacity:0;
       transition:max-height .5s ease,opacity .4s ease;}
@@ -56,7 +56,6 @@
       border-radius:.5rem;height:36px;width:36px;transition:background-color .2s ease;}
     .share-btn:hover{background-color:#ef4444;}
     .share-icon{filter:invert(1);height:18px;width:18px;}
-
     @keyframes fadeInUp {0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:translateY(0);}}
     .animate-fade-in-up{animation:fadeInUp 0.8s ease-out forwards;}
     .animate-fade-in{animation:fadeInUp 1s ease-out forwards;}
@@ -89,23 +88,12 @@
       </div>
     </header>
 
-    <div id="mobile-menu"
-      class="fixed top-16 right-4 w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-md shadow-lg z-50 scale-y-0 opacity-0 origin-top transition-transform duration-300 ease-in-out pointer-events-none">
-      <nav class="flex flex-col py-2 text-white">
-        <a href="index.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Home</a>
-        <a href="entry.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">League Entry</a>
-        <a href="leaderboard.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Leaderboard</a>
-        <a href="accuracy_scores.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Accuracy Scores</a>
-        <a href="metrics.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Metrics</a>
-      </nav>
-    </div>
-
     <main class="max-w-5xl mx-auto p-6 space-y-8 mt-6 animate-fade-in-up">
       <section class="text-center">
         <h2 class="text-xl font-semibold mb-1">Metrics Dashboard</h2>
         <p class="text-gray-400 text-sm">
-          Explore how the predicted winners and totals are distributed for a given weight class. Sample size = number of entrants.
-          User note - any labels that appear from tapping bars, chart sections or lifter names will also be visible in your shared images 📊
+          Explore how the predicted winners and totals are distributed for each weight class. 
+          Any labels visible from taps or hovers will appear in your shared images 📊
         </p>
       </section>
 
@@ -122,7 +110,7 @@
           <div class="chart-container">
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('womenDonut','F')">
-                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon"/>
               </button>
             </div>
             <canvas id="womenDonut"></canvas>
@@ -130,7 +118,7 @@
           <div class="chart-container mt-6">
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('womenHist','F')">
-                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon"/>
               </button>
             </div>
             <canvas id="womenHist"></canvas>
@@ -151,7 +139,7 @@
           <div class="chart-container">
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('menDonut','M')">
-                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon"/>
               </button>
             </div>
             <canvas id="menDonut"></canvas>
@@ -159,7 +147,7 @@
           <div class="chart-container mt-6">
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('menHist','M')">
-                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon"/>
               </button>
             </div>
             <canvas id="menHist"></canvas>
@@ -167,17 +155,6 @@
         </div>
       </div>
     </main>
-
-    <div class="flex justify-center mt-8">
-      <a href="leaderboard.html" class="bg-gray-800/60 border border-gray-700 text-gray-200 font-semibold px-6 py-3 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-base">
-        View Leaderboard
-      </a>
-    </div>
-    <div class="flex justify-center mt-4">
-      <a href="#top" class="bg-gray-800/60 border border-gray-700 text-gray-300 font-semibold px-5 py-2 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
-        Back to Top
-      </a>
-    </div>
 
     <footer class="text-center text-gray-500 text-sm py-4 bg-transparent">
       Sponsored by the Sabado Sessions Podcast
@@ -209,7 +186,7 @@ function toggleMenu(show){
   else{mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');mobileMenu.classList.remove('scale-y-100','opacity-100');}}
 toggleMenu(false);
 
-// CSV PARSE + CHARTS
+// CSV PARSE
 Papa.parse(SHEET_URL,{download:true,header:true,complete:r=>{allData=r.data;setupDropdowns();}});
 
 function setupDropdowns(){
@@ -223,162 +200,41 @@ function setupDropdowns(){
   });
 }
 
-// --- DONUT HELPER (global, above renderCharts) ---
-function createDonutChart(canvasId, dataObj, total, s) {
-  const colors = [
-    '#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6',
-    '#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'
-  ];
+function renderCharts(g,w){
+  const s=sizing();
+  const donutId=g==='F'?'womenDonut':'menDonut';
+  const histId=g==='F'?'womenHist':'menHist';
+  const rows=allData.filter(r=>r.Gender===g&&r.Class===w);
+  if(!rows.length)return;
 
-  const labels = Object.keys(dataObj);
-  const data = Object.values(dataObj);
+  // --- DONUT DATA ---
+  const counts={};
+  rows.forEach(r=>counts[r.Athlete]=(counts[r.Athlete]||0)+1);
+  const total=Object.values(counts).reduce((a,b)=>a+b,0);
 
-  // Deterministic label -> index map (avoids legend row/flow quirks)
-  const labelIndexMap = new Map(labels.map((t, i) => [t, i]));
-
-  const ctx = document.getElementById(canvasId);
-
-  const chart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels,
-      datasets: [{
-        data,
-        backgroundColor: colors,
-        borderColor: '#111',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      maintainAspectRatio: true,
-      aspectRatio: 1,         // true 1:1 donut
-      cutout: '57%',
-      plugins: {
-        title: {
-          display: true,
-          text: 'Share of Votes',
-          color: '#ccc',
-          font: { weight: 'bold', size: s.donutTitle },
-          padding: { bottom: 8 }
-        },
-        subtitle: {
-          display: true,
-          text: `Total Votes – ${total}`,
-          color: '#aaa',
-          font: { size: s.donutSubtitle },
-          padding: { top: 2, bottom: 12 }
-        },
-        legend: {
-          position: 'bottom',
-          labels: {
-            color: '#ccc',
-            boxWidth: 10,
-            boxHeight: 10,
-            // Bold driven by our state (pinned > hover)
-            font: (legendCtx) => {
-              const c = legendCtx.chart;
-              const text = legendCtx.label?.text ?? labels[legendCtx.index];
-              const idx = labelIndexMap.get(text);
-              const pinned = c.$pinnedIndex ?? -1;
-              const hover  = c.$hoverIndex  ?? -1;
-              const isBold = (idx === pinned) || (pinned === -1 && idx === hover);
-              return { size: s.donutLegend, weight: isBold ? 'bold' : 'normal' };
-            }
-          },
-          // Hover previews (desktop)
-          onHover: (e, item, legend) => {
-            const c = legend.chart;
-            const text = item.text;
-            const idx = labelIndexMap.get(text);
-            c.$hoverIndex = idx;
-            setActiveSlice(c, idx, true);
-          },
-          // Leave legend area
-          onLeave: (e, item, legend) => {
-            const c = legend.chart;
-            c.$hoverIndex = -1;
-            if (c.$pinnedIndex != null) {
-              setActiveSlice(c, c.$pinnedIndex, true);
-            } else {
-              setActiveSlice(c, -1, false);
-            }
-          },
-          // Click/tap to toggle pin
-          onClick: (e, item, legend) => {
-            const c = legend.chart;
-            const idx = labelIndexMap.get(item.text);
-            if (c.$pinnedIndex === idx) {
-              c.$pinnedIndex = null;
-              c.$hoverIndex = -1;
-              setActiveSlice(c, -1, false);
-            } else {
-              c.$pinnedIndex = idx;
-              c.$hoverIndex = idx;
-              setActiveSlice(c, idx, true);
-            }
-          }
-        },
-        datalabels: {
-          color: '#fff',
-          font: { weight: 'bold', size: s.donutPercent },
-          formatter: v => {
-            const p = (v / total) * 100;
-            return p >= 3 ? `${p.toFixed(1)}%` : '';
-          },
-          anchor: 'center',
-          align: 'center',
-          clamp: true
-        },
-        tooltip: {} // default behavior; we open it programmatically
+  if(charts[donutId]) charts[donutId].destroy();
+  charts[donutId]=new Chart(document.getElementById(donutId),{
+    type:'doughnut',
+    data:{labels:Object.keys(counts),datasets:[{data:Object.values(counts),
+      backgroundColor:['#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6',
+                       '#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'],
+      borderColor:'#111',borderWidth:1}]},
+    options:{
+      maintainAspectRatio:true,aspectRatio:1,cutout:'57%',
+      plugins:{
+        title:{display:true,text:'Share of Votes',color:'#ccc',
+          font:{weight:'bold',size:s.donutTitle},padding:{bottom:8}},
+        subtitle:{display:true,text:`Total Votes – ${total}`,color:'#aaa',
+          font:{size:s.donutSubtitle},padding:{top:2,bottom:12}},
+        legend:{position:'bottom',labels:{color:'#ccc',boxWidth:10,boxHeight:10,font:{size:s.donutLegend}}},
+        datalabels:{color:'#fff',font:{weight:'bold',size:s.donutPercent},
+          formatter:v=>{const p=(v/total)*100;return p>=3?`${p.toFixed(1)}%`:'';}}
       }
     },
-    plugins: [ChartDataLabels]
+    plugins:[ChartDataLabels]
   });
 
-  // --- helpers bound to this chart instance ---
-  function setActiveSlice(c, dataIndex, withTooltip) {
-    if (dataIndex >= 0) {
-      c.setActiveElements([{ datasetIndex: 0, index: dataIndex }]);
-      if (withTooltip) {
-        const el = c.getDatasetMeta(0)?.data?.[dataIndex];
-        if (el) {
-          const { x, y } = el.getProps(['x','y'], true);
-          c.tooltip.setActiveElements([{ datasetIndex: 0, index: dataIndex }], { x, y });
-        }
-      }
-    } else {
-      c.setActiveElements([]);
-      c.tooltip.setActiveElements([], { x: 0, y: 0 });
-    }
-    c.update('none');
-  }
-
-  chart.$pinnedIndex = null;
-  chart.$hoverIndex  = -1;
-  chart._setActiveSlice = (idx, showTooltip=true) => setActiveSlice(chart, idx, showTooltip);
-  chart._labelIndexMap  = labelIndexMap;
-
-  return chart;
-}
-
-// --- RENDER CHARTS ---
-function renderCharts(g, w) {
-  const s = sizing();
-  const donutId = g === 'F' ? 'womenDonut' : 'menDonut';
-  const histId = g === 'F' ? 'womenHist' : 'menHist';
-  const rows = allData.filter(r => r.Gender === g && r.Class === w);
-  if (!rows.length) return;
-
-// --- DONUT DATA ---
-  const counts = {};
-  rows.forEach(r => counts[r.Athlete] = (counts[r.Athlete] || 0) + 1);
-  const total = Object.values(counts).reduce((a, b) => a + b, 0);
-
-  // Destroy existing chart then rebuild
-  if (charts[donutId]) charts[donutId].destroy();
-  charts[donutId] = createDonutChart(donutId, counts, total, s);
-
-  // Histogram
+  // --- HISTOGRAM ---
   const vals=rows.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v)&&v>0);
   if(!vals.length){if(charts[histId]) charts[histId].destroy();return;}
   const N=vals.length,min=Math.min(...vals),max=Math.max(...vals);
@@ -404,29 +260,24 @@ function renderCharts(g, w) {
         legend:{display:false},
         datalabels:{
           color:'#fff',formatter:(v)=>v>0?v:'',anchor:'center',
-                    align:(ctx)=>{
-            const v = ctx.dataset.data[ctx.dataIndex] || 0;
-            const scale = ctx.chart.scales.y;
-            if (!scale) return 'center';
-            const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
-            const f = ctx.chart.options.plugins.datalabels?.font?.size || s.histBarLabel;
-            return (barH < f * 1.05) ? 'end' : 'center';
+          align:(ctx)=>{
+            const v=ctx.dataset.data[ctx.dataIndex]||0;
+            const scale=ctx.chart.scales.y;if(!scale)return'center';
+            const barH=scale.getPixelForValue(yMin+v)-scale.getPixelForValue(yMin);
+            const f=ctx.chart.options.plugins.datalabels?.font?.size||s.histBarLabel;
+            return(barH<f*1.05)?'end':'center';
           },
-          offset:0,clamp:true,font:{size:s.histBarLabel,weight:'normal'}
+          font:{size:s.histBarLabel,weight:'normal'}
         }
       },
       scales:{
-        x:{
-          ticks:{color:'#ccc',font:{size:s.axisTick}},
-          title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:s.axisTitle,weight:'bold'}},
-          grid:{display:false}
-        },
-        y:{
-          min:yMin,max:yMax,beginAtZero:false,
-          ticks:{color:'#ccc',font:{size:s.axisTick}},
-          title:{display:true,text:'Frequency',color:'#ccc',font:{size:s.axisTitle,weight:'bold'}},
-          grid:{display:false}
-        }
+        x:{ticks:{color:'#ccc',font:{size:s.axisTick}},
+           title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:s.axisTitle,weight:'bold'}},
+           grid:{display:false}},
+        y:{min:yMin,max:yMax,beginAtZero:false,
+           ticks:{color:'#ccc',font:{size:s.axisTick}},
+           title:{display:true,text:'Frequency',color:'#ccc',font:{size:s.axisTitle,weight:'bold'}},
+           grid:{display:false}}
       }
     },
     plugins:[ChartDataLabels]
@@ -441,17 +292,17 @@ function toggleSection(id){
   a.classList.toggle('rotate',o);
 }
 
-// ======= SHARE / EXPORT (Gold Standard Unified Desktop + Mobile) =======
-async function shareChart(id, g) {
-  const s = sizing();
-  const src = document.getElementById(id);
+// ======= SHARE / EXPORT =======
+async function shareChart(id,g){
+  const s=sizing();
+  const src=document.getElementById(id);
   await new Promise(requestAnimationFrame);
 
-  const sel = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
-  const w = sel.value;
-  const isDonut = id.includes('Donut');
-  const isMobile = window.innerWidth < 768;
-  const fn = `metrics_${g}_${w}_${isDonut ? 'donut' : 'hist'}.png`;
+  const sel=document.getElementById(g==='F'?'womenSelect':'menSelect');
+  const w=sel.value;
+  const isDonut=id.includes('Donut');
+  const isMobile=window.innerWidth<768;
+    const fn = `metrics_${g}_${w}_${isDonut ? 'donut' : 'hist'}.png`;
 
   // --- Hide gridlines before capture ---
   const chart = src.chart || Chart.getChart(src);
@@ -550,7 +401,7 @@ async function shareChart(id, g) {
   card.appendChild(qr);
   document.body.appendChild(card);
 
-  // --- Height Logic (Gold Standard) ---
+  // --- Height Logic (Gold Standard Unified) ---
   await new Promise(requestAnimationFrame);
   const naturalH = card.scrollHeight;
   const baseH = isDonut ? 860 : 820;
