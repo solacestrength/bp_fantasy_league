@@ -293,7 +293,7 @@ function sizing() {
     creditFont: d ? 18 : 13,
     headerFont: d ? 32 : 20,
     subFont: d ? 26 : 16,
-    histAR: d ? 1.35 : 1.2 // ✅ histogram aspect ratio (width ÷ height)
+    histAR: d ? 1.15 : 1.2 // ✅ histogram aspect ratio (width ÷ height)
   };
 }
 
@@ -333,39 +333,22 @@ function renderCharts(g, w) {
   const dData = Object.values(counts);
   const total = dData.reduce((a, b) => a + b, 0);
   const colors = [
-    '#ef4444',
-    '#f97316',
-    '#facc15',
-    '#22c55e',
-    '#14b8a6',
-    '#3b82f6',
-    '#8b5cf6',
-    '#ec4899',
-    '#06b6d4',
-    '#84cc16',
-    '#d946ef',
-    '#fb7185'
+    '#ef4444', '#f97316', '#facc15', '#22c55e', '#14b8a6', '#3b82f6',
+    '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#d946ef', '#fb7185'
   ];
   if (charts[donutId]) charts[donutId].destroy();
-
-  const isDesktop = window.matchMedia('(min-width:1024px)').matches;
 
   charts[donutId] = new Chart(document.getElementById(donutId), {
     type: 'doughnut',
     data: {
       labels: dLabels,
       datasets: [
-        {
-          data: dData,
-          backgroundColor: colors,
-          borderColor: '#111',
-          borderWidth: 1
-        }
+        { data: dData, backgroundColor: colors, borderColor: '#111', borderWidth: 1 }
       ]
     },
     options: {
       maintainAspectRatio: true,
-      aspectRatio: 1, // perfect circle
+      aspectRatio: 1,          // ✅ perfect circle donuts on all devices
       cutout: '57%',
       plugins: {
         title: {
@@ -384,12 +367,7 @@ function renderCharts(g, w) {
         },
         legend: {
           position: 'bottom',
-          labels: {
-            color: '#ccc',
-            boxWidth: 10,
-            boxHeight: 10,
-            font: { size: s.donutLegend }
-          }
+          labels: { color: '#ccc', boxWidth: 10, boxHeight: 10, font: { size: s.donutLegend } }
         },
         datalabels: {
           color: '#fff',
@@ -421,14 +399,14 @@ function renderCharts(g, w) {
             text: 'Distribution of Predicted Winning Totals',
             color: '#ccc',
             font: { size: s.histTitle, weight: 'bold' },
-            padding: { bottom: 8 }
+            padding: { bottom: 6 }
           },
           subtitle: {
             display: true,
             text: `Total Votes – 0`,
             color: '#aaa',
             font: { size: s.histSubtitle },
-            padding: { top: 2, bottom: 12 }
+            padding: { top: 2, bottom: 10 }
           },
           legend: { display: false }
         }
@@ -437,9 +415,9 @@ function renderCharts(g, w) {
     return;
   }
 
-  const N = vals.length,
-    min = Math.min(...vals),
-    max = Math.max(...vals);
+  const N = vals.length;
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
   const bins = Math.max(3, Math.round(Math.sqrt(N)));
   const bw = (max - min) / bins || 1;
   const countsH = Array(bins).fill(0);
@@ -453,8 +431,8 @@ function renderCharts(g, w) {
     `${(min + i * bw).toFixed(0)}–${(min + (i + 1) * bw).toFixed(0)}`
   );
 
-  const minC = Math.min(...countsH),
-    maxC = Math.max(...countsH);
+  const minC = Math.min(...countsH);
+  const maxC = Math.max(...countsH);
   const yMin = Math.floor(minC / 2);
   const span = maxC - yMin;
   const step = Math.max(1, Math.round(span / 4));
@@ -469,21 +447,22 @@ function renderCharts(g, w) {
     },
     options: {
       maintainAspectRatio: true,
-      aspectRatio: s.histAR,
+      aspectRatio: s.histAR,         // ✅ desktop slightly taller for axes
+      layout: { padding: { bottom: 20 } }, // ✅ room for x-axis ticks
       plugins: {
         title: {
           display: true,
           text: 'Distribution of Predicted Winning Totals',
           color: '#ccc',
           font: { size: s.histTitle, weight: 'bold' },
-          padding: { bottom: 8 }
+          padding: { bottom: 6 }
         },
         subtitle: {
           display: true,
           text: `Total Votes – ${N}`,
           color: '#aaa',
           font: { size: s.histSubtitle },
-          padding: { top: 2, bottom: 12 }
+          padding: { top: 2, bottom: 10 }
         },
         legend: { display: false },
         datalabels: {
@@ -494,10 +473,8 @@ function renderCharts(g, w) {
             const v = ctx.dataset.data[ctx.dataIndex] || 0;
             const scale = ctx.chart.scales.y;
             if (!scale) return 'center';
-            const barH =
-              scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
-            const f =
-              ctx.chart.options.plugins.datalabels?.font?.size || s.histBarLabel;
+            const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
+            const f = ctx.chart.options.plugins.datalabels?.font?.size || s.histBarLabel;
             return barH < f * 1.05 ? 'end' : 'center';
           },
           offset: 0,
