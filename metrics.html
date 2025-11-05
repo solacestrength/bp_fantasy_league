@@ -293,7 +293,7 @@ function sizing() {
     creditFont: d ? 18 : 13,
     headerFont: d ? 32 : 20,
     subFont: d ? 26 : 16,
-    histAR: d ? 1.15 : 1.2 // ✅ histogram aspect ratio (width ÷ height)
+    histAR: d ? 1.32 : 1.2 // ✅ histogram aspect ratio (width ÷ height)
   };
 }
 
@@ -448,7 +448,7 @@ function renderCharts(g, w) {
     options: {
       maintainAspectRatio: true,
       aspectRatio: s.histAR,         // ✅ desktop slightly taller for axes
-      layout: { padding: { bottom: 20 } }, // ✅ room for x-axis ticks
+      layout: { padding: { bottom: 28 } }, // ✅ room for x-axis ticks
       plugins: {
         title: {
           display: true,
