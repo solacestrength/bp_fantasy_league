@@ -20,7 +20,7 @@
   canvas {max-width:100%;height:auto!important;}
   .chart-container {max-width:600px;margin:0 auto;position:relative;}
 
-  /* === Balanced & refined chart heights (v5.3) === */
+  /* === Balanced & refined chart heights (v5.3 FINAL) === */
   @media (min-width:1024px){
     .chart-container{max-width:480px;} /* slightly narrower histogram base */
     #womenDonut, #menDonut {height:375px !important;}
@@ -30,8 +30,19 @@
       transform-origin: top center;
     }
   }
+
   @media (max-width:1023px){
-    #womenDonut, #menDonut {height:336px !important;}
+    /* --- Donuts: preserve perfect circle on mobile --- */
+    #womenDonut, #menDonut {
+      width: 100% !important;
+      height: auto !important;
+      aspect-ratio: 1 / 1 !important;
+      max-width: 360px;
+      display: block;
+      margin: 0 auto;
+    }
+
+    /* --- Histograms: keep current scaling --- */
     #womenHist, #menHist {
       height:360px !important;
       transform: scale(0.90);
@@ -39,29 +50,37 @@
     }
   }
 
-  /* === ✅ Fix stretched donut shapes (maintains perfect circle) === */
-  #womenDonut, #menDonut {
-    aspect-ratio: 1 / 1 !important;   /* lock canvas box to square */
-    width: 100% !important;
-    height: auto !important;
-    max-height: 480px;                /* safe ceiling for desktop */
-    display: block;
-    margin: 0 auto;
+  .collapsible-content {
+    max-height:0;
+    overflow:hidden;
+    opacity:0;
+    transition:max-height .5s ease,opacity .4s ease;
   }
+  .collapsible-content.open {
+    opacity:1;
+    max-height:1000px;
+  }
+  .arrow {transition:transform .4s ease;}
+  .arrow.rotate {transform:rotate(180deg);}
+  .share-btn {
+    background-color:#dc2626;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:.5rem;
+    height:36px;
+    width:36px;
+    transition:background-color .2s ease;
+  }
+  .share-btn:hover {background-color:#ef4444;}
+  .share-icon {filter:invert(1);height:18px;width:18px;}
 
-  .collapsible-content{max-height:0;overflow:hidden;opacity:0;
-    transition:max-height .5s ease,opacity .4s ease;}
-  .collapsible-content.open{opacity:1;max-height:1000px;}
-  .arrow{transition:transform .4s ease;}
-  .arrow.rotate{transform:rotate(180deg);}
-  .share-btn{background-color:#dc2626;display:flex;align-items:center;justify-content:center;
-    border-radius:.5rem;height:36px;width:36px;transition:background-color .2s ease;}
-  .share-btn:hover{background-color:#ef4444;}
-  .share-icon{filter:invert(1);height:18px;width:18px;}
-
-  @keyframes fadeInUp {0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:translateY(0);}}
-  .animate-fade-in-up{animation:fadeInUp 0.8s ease-out forwards;}
-  .animate-fade-in{animation:fadeInUp 1s ease-out forwards;}
+  @keyframes fadeInUp {
+    0%{opacity:0;transform:translateY(10px);}
+    100%{opacity:1;transform:translateY(0);}
+  }
+  .animate-fade-in-up {animation:fadeInUp 0.8s ease-out forwards;}
+  .animate-fade-in {animation:fadeInUp 1s ease-out forwards;}
 </style>
 </head>
 
