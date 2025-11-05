@@ -223,13 +223,6 @@ function setupDropdowns(){
   });
 }
 
-function renderCharts(g,w){
-  const s=sizing();
-  const donutId=g==='F'?'womenDonut':'menDonut';
-  const histId=g==='F'?'womenHist':'menHist';
-  const rows=allData.filter(r=>r.Gender===g&&r.Class===w);
-  if(!rows.length)return;
-  
 // --- DONUT HELPER (global, above renderCharts) ---
 function createDonutChart(canvasId, dataObj, total, s) {
   const colors = [
@@ -386,7 +379,7 @@ function renderCharts(g, w) {
   const rows = allData.filter(r => r.Gender === g && r.Class === w);
   if (!rows.length) return;
 
-  // --- DONUT DATA ---
+// --- DONUT DATA ---
   const counts = {};
   rows.forEach(r => counts[r.Athlete] = (counts[r.Athlete] || 0) + 1);
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
