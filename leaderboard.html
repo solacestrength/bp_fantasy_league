@@ -290,23 +290,17 @@ searchInput.addEventListener("keydown", (e) => {
   }
 });
 
-/* Helper: remove existing contextual button */
-function removeContextualShare() {
-  if (contextualShareBtn) {
-    contextualShareBtn.remove();
-    contextualShareBtn = null;
-  }
-}
-
 /* Helper: insert contextual button above highlighted row */
 function insertContextualShare() {
   removeContextualShare();
   if (searchMatches.length === 0) return;
 
   const matchIndex = searchMatches[currentMatchIndex];
-  const highlightedRow = document.querySelector(`tr:nth-child(${(matchIndex % rowsPerPage) + 1})`);
-  if (!highlightedRow) return;
+  const visibleRows = document.querySelectorAll("#leaderboardBody tr");
+  const rowPosition = matchIndex % rowsPerPage;
+  const targetRow = visibleRows[rowPosition];
 
+  // if match is on first visible row, insert before it safely
   const container = document.createElement('tr');
   container.className = "contextual-share-row";
   container.innerHTML = `
@@ -318,7 +312,15 @@ function insertContextualShare() {
       </button>
     </td>
   `;
-  highlightedRow.parentNode.insertBefore(container, highlightedRow);
+
+  const body = document.getElementById("leaderboardBody");
+  if (targetRow) {
+    body.insertBefore(container, targetRow);
+  } else {
+    // fallback: append to end if target row not found
+    body.appendChild(container);
+  }
+
   contextualShareBtn = document.getElementById("contextualShareBtn");
   contextualShareBtn.addEventListener("click", shareRanking);
 }
@@ -348,8 +350,23 @@ async function shareRanking() {
     const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
     const file = new File([blob], 'league_ranking.png', { type: 'image/png' });
 
-    btn.textContent = "Share Generated Image";
-    btn.disabled = false;
+    // immediately hide the generating state once ready
+    btn.style.display = "none";
+
+    // Add "Share Generated Image" button in same place
+    const newBtn = document.createElement("button");
+    newBtn.textContent = "Share Generated Image";
+    newBtn.className = "bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1";
+    newBtn.style.minWidth = "130px";
+    newBtn.style.height = "24px";
+    btn.parentNode.appendChild(newBtn);
+
+    newBtn.addEventListener("click", async () => {
+      await performShare(file, 'British Classic Fantasy League 2025 🇬🇧', 'Check out my league ranking!');
+      removeContextualShare();
+    });
+    return;
+  }
 
     // When user taps "Share Generated Image"
     btn.onclick = async () => {
