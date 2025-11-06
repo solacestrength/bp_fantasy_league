@@ -270,20 +270,44 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('contextShareBtn').addEventListener('click', shareRanking);
   }
 
-  /* --- Search Functionality --- */
-  const searchInput = document.getElementById("searchInput");
-  searchInput.addEventListener("input", () => {
-    const filter = searchInput.value.trim().toLowerCase();
-    searchMatches = [];
-    currentMatchIndex = -1;
-    if (!filter) { filteredRows = [...allRows]; currentPage = 1; renderTable(); return; }
-    allRows.forEach((row, idx) => { if (row.join(" ").toLowerCase().includes(filter)) searchMatches.push(idx); });
-    if (searchMatches.length > 0) {
-      currentMatchIndex = 0;
-      currentPage = Math.floor(searchMatches[currentMatchIndex] / rowsPerPage) + 1;
-      renderTable();
-    } else { renderTable(); }
+  /* --- Search Functionality with Enter cycling --- */
+const searchInput = document.getElementById("searchInput");
+
+searchInput.addEventListener("input", () => {
+  const filter = searchInput.value.trim().toLowerCase();
+  searchMatches = [];
+  currentMatchIndex = -1;
+
+  if (!filter) {
+    filteredRows = [...allRows];
+    currentPage = 1;
+    renderTable();
+    return;
+  }
+
+  allRows.forEach((row, idx) => {
+    if (row.join(" ").toLowerCase().includes(filter)) searchMatches.push(idx);
   });
+
+  if (searchMatches.length > 0) {
+    currentMatchIndex = 0;
+    currentPage = Math.floor(searchMatches[currentMatchIndex] / rowsPerPage) + 1;
+    renderTable();
+  } else {
+    renderTable();
+  }
+});
+
+/* --- Cycle through matches on Enter --- */
+searchInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && searchMatches.length > 1) {
+    e.preventDefault();
+    currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
+    const matchIdx = searchMatches[currentMatchIndex];
+    currentPage = Math.floor(matchIdx / rowsPerPage) + 1;
+    renderTable();
+  }
+});
 
   /* --- Browser Detection --- */
   function detectBrowserShareSupport() {
