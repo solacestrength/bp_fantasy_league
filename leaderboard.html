@@ -250,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
     container.appendChild(b);
   }
 
-  /* --- Search + share button --- */
+  /* --- Search + share --- */
   const searchInput = document.getElementById("searchInput");
   const shareFloatingBtn = document.createElement('button');
   shareFloatingBtn.id = 'floatingShareBtn';
@@ -280,7 +280,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (searchMatches.length === 0) return alert("Please search for your name first.");
     const { isChromeIOS, isAndroidChrome } = detectBrowserShareSupport();
 
-    // Chrome iOS: auto-download fallback
     if (isChromeIOS) {
       const canvas = await buildSnapshotCanvas();
       const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
@@ -293,10 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Android Chrome: two-step share
     if (isAndroidChrome) return chromeTwoStepShare();
-
-    // Everyone else: one-step share
     return oneStepShare();
   }
 
@@ -305,7 +301,6 @@ document.addEventListener('DOMContentLoaded', () => {
     overlay.style = "position:fixed;inset:0;background:rgba(0,0,0,.7);color:#fff;display:flex;justify-content:center;align-items:center;z-index:9999;";
     overlay.textContent = "Generating snapshot...";
     document.body.appendChild(overlay);
-
     const canvas = await buildSnapshotCanvas();
     overlay.remove();
     const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
@@ -351,6 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function buildSnapshotCanvas() {
+    const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
     const matchIndex = searchMatches[currentMatchIndex];
     let start = Math.max(0, matchIndex - 4), end = Math.min(allRows.length - 1, matchIndex + 5);
     const visible = allRows.slice(start, end + 1);
@@ -366,11 +362,13 @@ document.addEventListener('DOMContentLoaded', () => {
       boxShadow:'0 10px 30px rgba(0,0,0,.35)',backgroundImage:"url('image_leaderboard_shf.jpg')",
       backgroundSize:'cover',backgroundPosition:'center',display:'block',isolation:'isolate'
     });
+    if (isAndroidChrome || isChromeIOS) snap.style.paddingBottom = '40px';
 
     const qr = new Image();
     qr.crossOrigin='anonymous';
     qr.src=`https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
     await new Promise(res => { qr.onload = res; });
+
     snap.innerHTML = `
       <div style="background:rgba(0,0,0,.55);padding:18px 18px 14px;position:relative;">
         <img src="${qr.src}" style="position:absolute;bottom:16px;left:18px;width:52px;height:52px;border-radius:6px;" />
@@ -381,9 +379,11 @@ document.addEventListener('DOMContentLoaded', () => {
           <thead><tr>${headerRow.map(h => `<th style='padding:4px;font-weight:600;'>${h}</th>`).join('')}</tr></thead>
           <tbody>${rowsHtml}</tbody>
         </table>
-        <p style="font-size:11px;color:#ccc;text-align:center;margin-top:10px;">
-          Data from tinyurl.com/britishclassicfl-leaderboard<br>Sponsored by the Sabado Sessions Podcast
+        <p style="font-size:11px;color:#ccc;text-align:center;margin-top:10px;line-height:1.4;">
+          Data from tinyurl.com/britishclassicfl-leaderboard<br>
+          Sponsored by the Sabado Sessions Podcast
         </p>
+        <div style="height:32px;width:100%;background:transparent;"></div>
       </div>`;
     document.body.appendChild(snap);
     const canvas = await html2canvas(snap,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
