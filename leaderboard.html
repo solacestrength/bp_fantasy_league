@@ -275,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
   shareFloatingBtn.addEventListener('click', shareRanking);
   loadLeaderboard();
 
-    /* --- SHARE SYSTEM --- */
+      /* --- SHARE SYSTEM --- */
   async function shareRanking() {
     if (searchMatches.length === 0) return alert("Please search for your name first.");
     const { isChromeIOS, isAndroidChrome } = detectBrowserShareSupport();
