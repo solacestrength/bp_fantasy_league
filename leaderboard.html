@@ -429,42 +429,46 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>`;
 
     /* ---------- FINAL CAPTURE: Chrome + iOS aspect-ratio fix ---------- */
-    const wrapper = document.createElement('div');
-    wrapper.style.position = 'fixed';
-    wrapper.style.inset = '0';
-    wrapper.style.display = 'flex';
-    wrapper.style.justifyContent = 'center';
-    wrapper.style.alignItems = 'flex-start';
-    wrapper.style.background = 'transparent';
-    wrapper.style.zIndex = '9999';
+const wrapper = document.createElement('div');
+wrapper.style.position = 'fixed';
+wrapper.style.inset = '0';
+wrapper.style.display = 'flex';
+wrapper.style.justifyContent = 'center';
+wrapper.style.alignItems = 'flex-start';
+wrapper.style.background = 'transparent';
+wrapper.style.zIndex = '9999';
 
-    const safeBox = document.createElement('div');
-    safeBox.style.width = '600px';
-    safeBox.style.aspectRatio = '600 / 750';
-    safeBox.style.display = 'flex';
-    safeBox.style.justifyContent = 'center';
-    safeBox.style.alignItems = 'flex-start';
-    safeBox.appendChild(snap);
-    wrapper.appendChild(safeBox);
-    document.body.appendChild(wrapper);
+// fixed box that preserves Safari proportions
+const safeBox = document.createElement('div');
+safeBox.style.width = '600px';
+safeBox.style.height = '750px'; // force 4:5 ratio for consistent geometry
+safeBox.style.display = 'flex';
+safeBox.style.justifyContent = 'center';
+safeBox.style.alignItems = 'flex-start';
+safeBox.style.overflow = 'hidden';
+safeBox.appendChild(snap);
 
-    const isAnyChrome = isChromeIOS || isAndroidChrome;
-    if (isAnyChrome) {
-      wrapper.style.transform = 'scale(1.2)';
-      wrapper.style.transformOrigin = 'top center';
-      snap.style.minHeight = '780px';
-    }
+wrapper.appendChild(safeBox);
+document.body.appendChild(wrapper);
 
-    const canvas = await html2canvas(wrapper, {
-      backgroundColor: null,
-      scale: isAnyChrome ? 2.5 : 2,
-      useCORS: true,
-      scrollY: 0
-    });
+// Chrome iOS/Android full-height fix
+const isAnyChrome = isChromeIOS || isAndroidChrome;
+if (isAnyChrome) {
+  snap.style.minHeight = '750px';
+  snap.style.backgroundSize = 'cover';
+  snap.style.backgroundRepeat = 'no-repeat';
+  snap.style.backgroundPosition = 'center';
+}
 
-    wrapper.remove();
-    return canvas;
-  }
+const canvas = await html2canvas(wrapper, {
+  backgroundColor: null,
+  scale: 2, // keep 2x crispness, prevent stretch
+  useCORS: true,
+  scrollY: 0
+});
+
+wrapper.remove();
+return canvas;
 
   document.getElementById('shareRankingBtn').addEventListener('click', shareRanking);
   shareFloatingBtn.addEventListener('click', shareRanking);
