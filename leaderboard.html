@@ -377,19 +377,39 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 async function buildSnapshotCanvas() {
-  // --- 0) Build the 10-row table section ---
+  // --- 0) Compute the 10-row window around the searched name ---
+  const total = allRows.length;
   const matchIndex = searchMatches[currentMatchIndex];
-  let start = Math.max(0, matchIndex - 4),
-      end   = Math.min(allRows.length - 1, matchIndex + 5);
-  const visible = allRows.slice(start, end + 1);
 
-  const rowsHtml = visible.map((r, i) => {
+  let start, end;
+  if (matchIndex < 10) {
+    // Top 10 block
+    start = 0;
+    end = Math.min(9, total - 1);
+  } else if (matchIndex > total - 10) {
+    // Bottom 10 block
+    start = Math.max(0, total - 10);
+    end = total - 1;
+  } else {
+    // Middle block (4 above, 5 below)
+    start = matchIndex - 4;
+    end = matchIndex + 5;
+  }
+
+  // Slice rows & ensure exactly 10
+  const slice = allRows.slice(start, Math.min(end + 1, total));
+  while (slice.length < 10) slice.push(new Array(headerRow.length).fill(''));
+
+  // --- 1) Build the rows HTML ---
+  const rowsHtml = slice.map((r, i) => {
     const actual = start + i;
     const bold = actual === matchIndex ? 'font-weight:bold;' : '';
-    return `<tr style="${bold}">${r.map(c => `<td class='px-3 py-1 text-center'>${c}</td>`).join('')}</tr>`;
+    return `<tr style="${bold}">
+      ${r.map(c => `<td class='px-3 py-1 text-center'>${c}</td>`).join('')}
+    </tr>`;
   }).join('');
 
-  // --- 1) Create main snapshot content ---
+  // --- 2) Create snapshot container ---
   const snap = document.createElement('div');
   Object.assign(snap.style, {
     width: '600px',
@@ -405,13 +425,13 @@ async function buildSnapshotCanvas() {
     isolation: 'isolate'
   });
 
-  // Load QR
+  // --- 3) Load QR code ---
   const qr = new Image();
   qr.crossOrigin = 'anonymous';
   qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
   await new Promise(res => { qr.onload = res; });
 
-  // Footer: fixed line-height + block spans
+  // --- 4) Build footer (with line spacing fixed) ---
   const footerHtml = `
     <p style="font-size:11px;color:#ccc;text-align:center;margin-top:14px;line-height:1.5;">
       <span style="display:block;">Data from tinyurl.com/britishclassicfl-leaderboard</span>
@@ -419,6 +439,7 @@ async function buildSnapshotCanvas() {
     </p>
   `;
 
+  // --- 5) Compose main HTML inside snapshot ---
   snap.innerHTML = `
     <div style="background:rgba(0,0,0,.55);padding:18px;position:relative;">
       <img src="${qr.src}" style="position:absolute;bottom:16px;left:18px;width:52px;height:52px;border-radius:6px;" />
@@ -432,15 +453,17 @@ async function buildSnapshotCanvas() {
         Entry Count – ${allRows.length}
       </p>
       <table style="width:100%;table-layout:fixed;border-collapse:collapse;">
-        <thead><tr>${headerRow.map(h => `<th style='padding:4px;font-weight:600;'>${h}</th>`).join('')}</tr></thead>
+        <thead>
+          <tr>${headerRow.map(h => `<th style='padding:4px;font-weight:600;'>${h}</th>`).join('')}</tr>
+        </thead>
         <tbody>${rowsHtml}</tbody>
       </table>
       ${footerHtml}
-      <div style="height:30px;width:100%;background:transparent;"></div>
+      <div style="height:40px;width:100%;background:transparent;"></div>
     </div>
   `;
 
-  // --- 2) Tall wrapper ensures full content is visible to renderer ---
+  // --- 6) Wrapper for full-height rendering (prevents cropping on Chrome iOS/Android) ---
   const scrollWrapper = document.createElement('div');
   Object.assign(scrollWrapper.style, {
     position: 'fixed',
@@ -461,12 +484,12 @@ async function buildSnapshotCanvas() {
   scrollWrapper.appendChild(snap);
   document.body.appendChild(scrollWrapper);
 
-  // --- 3) Let layout stabilise before measuring ---
+  // --- 7) Let the layout settle and measure true content height ---
   await new Promise(r => requestAnimationFrame(r));
-  const snapHeight = snap.scrollHeight; // <- TRUE HEIGHT
+  const snapHeight = snap.scrollHeight;
   console.log(`Snapshot true height: ${snapHeight}px`);
 
-  // --- 4) Capture full content using enforced dimensions ---
+  // --- 8) Capture the full content using enforced size parameters ---
   const canvas = await html2canvas(scrollWrapper, {
     backgroundColor: null,
     useCORS: true,
@@ -478,7 +501,7 @@ async function buildSnapshotCanvas() {
     windowHeight: snapHeight
   });
 
-  // --- 5) Cleanup and return ---
+  // --- 9) Cleanup DOM and return canvas ---
   scrollWrapper.remove();
   return canvas;
 }
