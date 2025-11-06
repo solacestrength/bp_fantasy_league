@@ -258,7 +258,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } else { renderTable(); shareFloatingBtn.classList.add("hidden"); }
   });
 
-  /* --- SHARE SYSTEM (Universal) --- */
   document.getElementById('shareRankingBtn').addEventListener('click', shareRanking);
   shareFloatingBtn.addEventListener('click', shareRanking);
   loadLeaderboard();
@@ -271,24 +270,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const isChromeIOS = /CriOS/.test(ua);
     const isAndroidChrome = /Chrome/.test(ua) && !isIOS && !/Edg|OPR|Brave/.test(ua);
 
-    // --- Fallback for Chrome iOS ---
-    if (isChromeIOS) {
-      const canvas = await buildSnapshotCanvas();
-      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'league_ranking.png';
-      link.click();
-      URL.revokeObjectURL(link.href);
-      alert("Direct sharing isn’t supported in Chrome on iOS — image downloaded instead.");
-      return;
-    }
+    // Chrome iOS → allow share sheet, skip canShare() check
+    if (isChromeIOS) return oneStepShare(true);
 
-    // --- Android Chrome: 2-step system ---
     if (isAndroidChrome) return chromeTwoStepShare();
 
-    // --- Everyone else (Safari, Desktop, Firefox) ---
-    return oneStepShare();
+    return oneStepShare(false);
   }
 
   async function chromeTwoStepShare() {
@@ -316,44 +303,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
     shareNow.addEventListener('click', async () => {
       try {
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: 'British Classic Fantasy League 2025 🇬🇧',
-            text: 'Check out my league ranking!',
-            files: [file]
-          });
-        } else {
-          const link = document.createElement('a');
-          link.href = URL.createObjectURL(file);
-          link.download = 'league_ranking.png';
-          link.click();
-          URL.revokeObjectURL(link.href);
-        }
+        await performShare(file, 'British Classic Fantasy League 2025 🇬🇧', 'Check out my league ranking!');
       } catch (err) { console.error(err); }
-      shareNow.remove();
-      toast.remove();
+      shareNow.remove(); toast.remove();
     });
   }
 
-  async function oneStepShare() {
+  async function oneStepShare(skipCanShareCheck = false) {
     const canvas = await buildSnapshotCanvas();
     const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
     const file = new File([blob], 'league_ranking.png', { type: 'image/png' });
     try {
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: 'British Classic Fantasy League 2025 🇬🇧',
-          text: 'Check out my league ranking!',
-          files: [file]
-        });
+      await performShare(file, 'British Classic Fantasy League 2025 🇬🇧', 'Check out my league ranking!', skipCanShareCheck);
+    } catch (err) { console.error(err); }
+  }
+
+  async function performShare(file, title, text, skipCanShareCheck = false) {
+    const ua = navigator.userAgent;
+    const isChromeIOS = /CriOS/.test(ua);
+    const filename = file.name;
+
+    try {
+      if (!skipCanShareCheck && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ title, text, files: [file] });
+      } else if (isChromeIOS && navigator.share) {
+        // Chrome iOS: share blob via URL
+        await navigator.share({ title, text, url: URL.createObjectURL(file) });
       } else {
+        // Fallback download
         const link = document.createElement('a');
         link.href = URL.createObjectURL(file);
-        link.download = 'league_ranking.png';
+        link.download = filename;
         link.click();
         URL.revokeObjectURL(link.href);
       }
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error("Share failed:", err);
+    }
   }
 
   async function buildSnapshotCanvas() {
