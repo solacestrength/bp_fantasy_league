@@ -143,281 +143,275 @@
   </div>
 
   <!-- Libraries -->
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      /* --- Burger / dropdown --- */
-      const menuBtn = document.getElementById('menu-btn');
-      const mobileMenu = document.getElementById('mobile-menu');
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  /* --- Burger / dropdown --- */
+  const menuBtn = document.getElementById('menu-btn');
+  const mobileMenu = document.getElementById('mobile-menu');
 
-      menuBtn.addEventListener('click', (e) => {
-        const isOpen = mobileMenu.classList.contains('opacity-100');
-        mobileMenu.classList.toggle('opacity-100', !isOpen);
-        mobileMenu.classList.toggle('opacity-0', isOpen);
-        mobileMenu.classList.toggle('scale-y-100', !isOpen);
-        mobileMenu.classList.toggle('scale-y-0', isOpen);
-        menuBtn.setAttribute('aria-expanded', String(!isOpen));
-        e.stopPropagation();
-      });
+  menuBtn.addEventListener('click', (e) => {
+    const isOpen = mobileMenu.classList.contains('opacity-100');
+    mobileMenu.classList.toggle('opacity-100', !isOpen);
+    mobileMenu.classList.toggle('opacity-0', isOpen);
+    mobileMenu.classList.toggle('scale-y-100', !isOpen);
+    mobileMenu.classList.toggle('scale-y-0', isOpen);
+    menuBtn.setAttribute('aria-expanded', String(!isOpen));
+    e.stopPropagation();
+  });
 
-      document.addEventListener('click', (e) => {
-        if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
-          mobileMenu.classList.remove('opacity-100', 'scale-y-100');
-          mobileMenu.classList.add('opacity-0', 'scale-y-0');
-          menuBtn.setAttribute('aria-expanded', 'false');
-        }
-      });
+  document.addEventListener('click', (e) => {
+    if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+      mobileMenu.classList.remove('opacity-100', 'scale-y-100');
+      mobileMenu.classList.add('opacity-0', 'scale-y-0');
+      menuBtn.setAttribute('aria-expanded', 'false');
+    }
+  });
 
-      /* --- Accuracy table logic --- */
-      const rowsPerPage = 50;
-      let allRows = [], filteredRows = [], currentPage = 1;
-      let searchMatches = [], currentMatchIndex = -1;
-      let headerRow = [], nameColIdx = 1;
+  /* --- Accuracy table logic --- */
+  const rowsPerPage = 50;
+  let allRows = [], filteredRows = [], currentPage = 1;
+  let searchMatches = [], currentMatchIndex = -1;
+  let headerRow = [], nameColIdx = 1;
 
-      async function loadScores() {
-        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSuA8YB98ghNeM-cS6Fs1pJNkEBOI0x7WKI4R0vtvAG68mo7PJZYVj2HsdxH3DDqvieaTpe9zUzJcNW/pub?gid=1841956952&single=true&output=csv";
-        const response = await fetch(csvUrl);
-        const text = await response.text();
-        const parsed = Papa.parse(text.trim(), { skipEmptyLines: true });
-        const rows = parsed.data;
+  async function loadScores() {
+    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSuA8YB98ghNeM-cS6Fs1pJNkEBOI0x7WKI4R0vtvAG68mo7PJZYVj2HsdxH3DDqvieaTpe9zUzJcNW/pub?gid=1841956952&single=true&output=csv";
+    const response = await fetch(csvUrl);
+    const text = await response.text();
+    const parsed = Papa.parse(text.trim(), { skipEmptyLines: true });
+    const rows = parsed.data;
 
-        headerRow = rows.shift();
-        const idx = headerRow.findIndex(h => h.trim().toLowerCase() === 'name');
-        nameColIdx = idx >= 0 ? idx : 1;
+    headerRow = rows.shift();
+    const idx = headerRow.findIndex(h => h.trim().toLowerCase() === 'name');
+    nameColIdx = idx >= 0 ? idx : 1;
 
-        document.getElementById("accuracyHeader").innerHTML =
-          headerRow.map(h => `<th class="px-3 py-2 text-center">${h}</th>`).join("");
+    document.getElementById("accuracyHeader").innerHTML =
+      headerRow.map(h => `<th class="px-3 py-2 text-center">${h}</th>`).join("");
 
-        allRows = rows;
-        filteredRows = [...allRows];
-        renderTable();
-      }
-
-      function renderTable() {
-        const tbody = document.getElementById("accuracyBody");
-        tbody.innerHTML = "";
-
-        const start = (currentPage - 1) * rowsPerPage;
-        const end = start + rowsPerPage;
-
-        filteredRows.slice(start, end).forEach((row, idx) => {
-          const globalIndex = start + idx;
-          const isHighlighted = searchMatches.length && searchMatches[currentMatchIndex] === globalIndex;
-          const rowClass = isHighlighted ? "pulse-row" : "";
-          const tds = row.map(cell => `<td class="px-3 py-2 text-center">${cell}</td>`).join('');
-          tbody.insertAdjacentHTML("beforeend", `<tr class="${rowClass}">${tds}</tr>`);
-        });
-
-        renderPagination();
-      }
-
-      function renderPagination() {
-        const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
-        const container = document.getElementById("paginationContainer");
-        container.innerHTML = "";
-        if (totalPages <= 1) return;
-
-        const prevBtn = document.createElement("button");
-        prevBtn.textContent = "« Prev";
-        prevBtn.className = "px-2 py-1 mx-1 bg-gray-700/60 rounded hover:bg-gray-600";
-        prevBtn.disabled = currentPage === 1;
-        prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; renderTable(); } };
-        container.appendChild(prevBtn);
-
-        const maxButtons = 5;
-        let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
-        let endPage = Math.min(totalPages, startPage + maxButtons - 1);
-        if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
-
-        if (startPage > 1) { createPageButton(1, container); if (startPage > 2) container.insertAdjacentHTML("beforeend", "<span class='mx-1'>...</span>"); }
-        for (let i = startPage; i <= endPage; i++) createPageButton(i, container);
-        if (endPage < totalPages) { if (endPage < totalPages - 1) container.insertAdjacentHTML("beforeend", "<span class='mx-1'>...</span>"); createPageButton(totalPages, container); }
-
-        const nextBtn = document.createElement("button");
-        nextBtn.textContent = "Next »";
-        nextBtn.className = "px-2 py-1 mx-1 bg-gray-700/60 rounded hover:bg-gray-600";
-        nextBtn.disabled = currentPage === totalPages;
-        nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; renderTable(); } };
-        container.appendChild(nextBtn);
-      }
-
-      function createPageButton(page, container) {
-        const btn = document.createElement("button");
-        btn.textContent = page;
-        btn.className = `px-2 py-1 mx-1 rounded ${page === currentPage ? "bg-red-600 text-white" : "bg-gray-700/60 hover:bg-gray-600"}`;
-        btn.onclick = () => { currentPage = page; renderTable(); };
-        container.appendChild(btn);
-      }
-
-      /* --- Floating Share button --- */
-      const searchInput = document.getElementById("searchInput");
-      const shareFloatingBtn = document.createElement('button');
-      shareFloatingBtn.id = 'floatingShareBtn';
-      shareFloatingBtn.textContent = "Share My Score";
-      shareFloatingBtn.className = "hidden fixed bottom-20 right-6 bg-red-600 text-white px-4 py-2 rounded-full shadow-lg z-50 hover:bg-red-700 transition-opacity duration-700 ease-in-out";
-      document.body.appendChild(shareFloatingBtn);
-
-      let inactivityTimer;
-      function fadeOutShareButton() {
-        shareFloatingBtn.classList.add('fade-out');
-        setTimeout(() => {
-          shareFloatingBtn.classList.add('hidden');
-          shareFloatingBtn.classList.remove('fade-out');
-        }, 700);
-      }
-      function resetInactivityTimer() {
-        clearTimeout(inactivityTimer);
-        if (!shareFloatingBtn.classList.contains('hidden')) {
-          inactivityTimer = setTimeout(() => { fadeOutShareButton(); }, 10000);
-        }
-      }
-      window.addEventListener('scroll', resetInactivityTimer);
-      document.addEventListener('input', resetInactivityTimer);
-
-      /* --- Search / cycle --- */
-      searchInput.addEventListener("input", () => {
-        const filter = searchInput.value.trim().toLowerCase();
-        searchMatches = [];
-        currentMatchIndex = -1;
-        if (!filter) { filteredRows = [...allRows]; currentPage = 1; renderTable(); shareFloatingBtn.classList.add("hidden"); return; }
-        allRows.forEach((row, idx) => { if (row.join(" ").toLowerCase().includes(filter)) searchMatches.push(idx); });
-        if (searchMatches.length > 0) {
-          currentMatchIndex = 0;
-          const matchIdx = searchMatches[currentMatchIndex];
-          currentPage = Math.floor(matchIdx / rowsPerPage) + 1;
-          renderTable(); shareFloatingBtn.classList.remove("hidden"); resetInactivityTimer();
-        } else { renderTable(); shareFloatingBtn.classList.add("hidden"); }
-      });
-
-      searchInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && searchMatches.length > 1) {
-          e.preventDefault();
-          currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
-          const matchIdx = searchMatches[currentMatchIndex];
-          currentPage = Math.floor(matchIdx / rowsPerPage) + 1;
-          renderTable(); shareFloatingBtn.classList.remove("hidden"); resetInactivityTimer();
-        }
-      });
-
-      /* --- Export snapshot --- */
-async function shareScore() {
-  if (searchMatches.length === 0) { 
-    alert("Please search for your name first."); 
-    return; 
+    allRows = rows;
+    filteredRows = [...allRows];
+    renderTable();
   }
 
-  const matchIndex = searchMatches[currentMatchIndex];
-  let start, end;
+  function renderTable() {
+    const tbody = document.getElementById("accuracyBody");
+    tbody.innerHTML = "";
 
-  // --- Top 10 logic ---
-  if (matchIndex < 10) {
-    start = 0;
-    end = 9;
-  } else {
-    start = matchIndex - 4;
-    end = matchIndex + 5;
-    if (start < 0) { end += -start; start = 0; }
-    if (end > allRows.length - 1) { 
-      start = Math.max(0, allRows.length - 10); 
-      end = allRows.length - 1; 
+    const start = (currentPage - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+
+    filteredRows.slice(start, end).forEach((row, idx) => {
+      const globalIndex = start + idx;
+      const isHighlighted = searchMatches.length && searchMatches[currentMatchIndex] === globalIndex;
+      const rowClass = isHighlighted ? "pulse-row" : "";
+      const tds = row.map(cell => `<td class="px-3 py-2 text-center">${cell}</td>`).join('');
+      tbody.insertAdjacentHTML("beforeend", `<tr class="${rowClass}">${tds}</tr>`);
+    });
+
+    renderPagination();
+  }
+
+  function renderPagination() {
+    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+    const container = document.getElementById("paginationContainer");
+    container.innerHTML = "";
+    if (totalPages <= 1) return;
+
+    const prevBtn = document.createElement("button");
+    prevBtn.textContent = "« Prev";
+    prevBtn.className = "px-2 py-1 mx-1 bg-gray-700/60 rounded hover:bg-gray-600";
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; renderTable(); } };
+    container.appendChild(prevBtn);
+
+    const maxButtons = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+    if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
+
+    if (startPage > 1) { createPageButton(1, container); if (startPage > 2) container.insertAdjacentHTML("beforeend", "<span class='mx-1'>...</span>"); }
+    for (let i = startPage; i <= endPage; i++) createPageButton(i, container);
+    if (endPage < totalPages) { if (endPage < totalPages - 1) container.insertAdjacentHTML("beforeend", "<span class='mx-1'>...</span>"); createPageButton(totalPages, container); }
+
+    const nextBtn = document.createElement("button");
+    nextBtn.textContent = "Next »";
+    nextBtn.className = "px-2 py-1 mx-1 bg-gray-700/60 rounded hover:bg-gray-600";
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; renderTable(); } };
+    container.appendChild(nextBtn);
+  }
+
+  function createPageButton(page, container) {
+    const btn = document.createElement("button");
+    btn.textContent = page;
+    btn.className = `px-2 py-1 mx-1 rounded ${page === currentPage ? "bg-red-600 text-white" : "bg-gray-700/60 hover:bg-gray-600"}`;
+    btn.onclick = () => { currentPage = page; renderTable(); };
+    container.appendChild(btn);
+  }
+
+  /* --- Floating Share button --- */
+  const searchInput = document.getElementById("searchInput");
+  const shareFloatingBtn = document.createElement('button');
+  shareFloatingBtn.id = 'floatingShareBtn';
+  shareFloatingBtn.textContent = "Share My Score";
+  shareFloatingBtn.className = "hidden fixed bottom-20 right-6 bg-red-600 text-white px-4 py-2 rounded-full shadow-lg z-50 hover:bg-red-700 transition-opacity duration-700 ease-in-out";
+  document.body.appendChild(shareFloatingBtn);
+
+  let inactivityTimer;
+  function fadeOutShareButton() {
+    shareFloatingBtn.classList.add('fade-out');
+    setTimeout(() => {
+      shareFloatingBtn.classList.add('hidden');
+      shareFloatingBtn.classList.remove('fade-out');
+    }, 700);
+  }
+  function resetInactivityTimer() {
+    clearTimeout(inactivityTimer);
+    if (!shareFloatingBtn.classList.contains('hidden')) {
+      inactivityTimer = setTimeout(() => { fadeOutShareButton(); }, 10000);
     }
   }
+  window.addEventListener('scroll', resetInactivityTimer);
+  document.addEventListener('input', resetInactivityTimer);
 
-  const visibleRows = allRows.slice(start, end + 1);
-  const rowsHtml = visibleRows.map((row, i) => {
-    const actualIndex = start + i;
-    const isMatch = actualIndex === matchIndex;
-    return `<tr style="${isMatch ? 'font-weight:bold;' : ''}">
-      ${row.map(cell => `<td class='px-3 py-1 text-center'>${cell}</td>`).join('')}
-    </tr>`;
-  }).join('');
+  /* --- Search / cycle --- */
+  searchInput.addEventListener("input", () => {
+    const filter = searchInput.value.trim().toLowerCase();
+    searchMatches = [];
+    currentMatchIndex = -1;
+    if (!filter) { filteredRows = [...allRows]; currentPage = 1; renderTable(); shareFloatingBtn.classList.add("hidden"); return; }
+    allRows.forEach((row, idx) => { if (row.join(" ").toLowerCase().includes(filter)) searchMatches.push(idx); });
+    if (searchMatches.length > 0) {
+      currentMatchIndex = 0;
+      const matchIdx = searchMatches[currentMatchIndex];
+      currentPage = Math.floor(matchIdx / rowsPerPage) + 1;
+      renderTable(); shareFloatingBtn.classList.remove("hidden"); resetInactivityTimer();
+    } else { renderTable(); shareFloatingBtn.classList.add("hidden"); }
+  });
 
-  // --- Create snapshot ---
-  const snapshot = document.createElement('div');
-  snapshot.style.width = '600px';
-  snapshot.style.borderRadius = '16px';
-snapshot.style.overflow = 'hidden';
-snapshot.style.position = 'relative';
-snapshot.style.background = '#000'; // 👈 prevents white edges
-snapshot.style.boxShadow = '0 10px 30px rgba(0,0,0,.35)';
-snapshot.style.backgroundImage = "url('image_accuracy.jpg')";
-snapshot.style.backgroundSize = 'cover';
-snapshot.style.backgroundPosition = 'center';
-snapshot.style.display = 'block'; // ensures canvas respects clipping
-snapshot.style.isolation = 'isolate'; // fixes alpha blending glitch
+  searchInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && searchMatches.length > 1) {
+      e.preventDefault();
+      currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
+      const matchIdx = searchMatches[currentMatchIndex];
+      currentPage = Math.floor(matchIdx / rowsPerPage) + 1;
+      renderTable(); shareFloatingBtn.classList.remove("hidden"); resetInactivityTimer();
+    }
+  });
 
-  // --- Load QR ---
-  const qrURL = `https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
-  const qrImg = new Image();
-  qrImg.crossOrigin = "anonymous";
-  qrImg.src = qrURL;
+  /* --- Export snapshot (with confirm & white-space fix) --- */
+  async function shareScore() {
+    if (searchMatches.length === 0) {
+      alert("Please search for your name first.");
+      return;
+    }
 
-  qrImg.onload = () => {
-    snapshot.innerHTML = `
-      <div style="background: rgba(0,0,0,.55); padding: 18px 18px 14px; position: relative;">
-        <img src="${qrImg.src}" alt="QR Code"
-             style="position:absolute; bottom:16px; left:18px; width:52px; height:52px; border-radius:6px;" />
-        <h2 style="text-align:center; font-size:20px; font-weight:700; margin-bottom:4px;">
-          British Classic Fantasy League 2025 🇬🇧
-        </h2>
-        <h3 style="text-align:center; font-size:16px; font-weight:600; margin-bottom:4px;">
-          My Accuracy Score
-        </h3>
-        <p style="text-align:center; font-size:12px; color:#d1d5db; opacity:0.9; margin-bottom:12px;">
-          Entry Count – ${allRows.length}
-        </p>
-        <table class="w-full text-sm" style="table-layout: fixed; border-collapse: collapse;">
-          <colgroup>${headerRow.map(() => '<col>').join('')}</colgroup>
-          <thead>
-            <tr>${headerRow.map(h => `<th class="py-1 px-3 text-center font-semibold">${h}</th>`).join('')}</tr>
-          </thead>
-          <tbody>${rowsHtml}</tbody>
-        </table>
-        <p class="text-xs text-gray-300 text-center mt-4">
-          Data from tinyurl.com/britishclassicfl-accuracy<br /><br />
-          Sponsored by the Sabado Sessions Podcast
-        </p>
-      </div>
-    `;
+    if (!confirm("Ready to share your Accuracy Score snapshot?")) return;
 
-    document.body.appendChild(snapshot);
+    const matchIndex = searchMatches[currentMatchIndex];
+    let start, end;
 
-    html2canvas(snapshot, { backgroundColor: null, scale: 2, useCORS: true, scrollY: 0 })
-      .then(async canvas => {
-        const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-        snapshot.remove();
-        const file = new File([blob], 'accuracy_score.png', { type: 'image/png' });
+    if (matchIndex < 10) {
+      start = 0;
+      end = 9;
+    } else {
+      start = matchIndex - 4;
+      end = matchIndex + 5;
+      if (start < 0) { end += -start; start = 0; }
+      if (end > allRows.length - 1) {
+        start = Math.max(0, allRows.length - 10);
+        end = allRows.length - 1;
+      }
+    }
 
+    const visibleRows = allRows.slice(start, end + 1);
+    const rowsHtml = visibleRows.map((row, i) => {
+      const actualIndex = start + i;
+      const isMatch = actualIndex === matchIndex;
+      return `<tr style="${isMatch ? 'font-weight:bold;' : ''}">
+        ${row.map(cell => `<td class='px-3 py-1 text-center'>${cell}</td>`).join('')}
+      </tr>`;
+    }).join('');
+
+    const snapshot = document.createElement('div');
+    snapshot.style.width = '600px';
+    snapshot.style.borderRadius = '16px';
+    snapshot.style.overflow = 'hidden';
+    snapshot.style.position = 'relative';
+    snapshot.style.background = '#000';
+    snapshot.style.boxShadow = '0 10px 30px rgba(0,0,0,.35)';
+    snapshot.style.backgroundImage = "url('image_accuracy.jpg')";
+    snapshot.style.backgroundSize = 'cover';
+    snapshot.style.backgroundPosition = 'center';
+    snapshot.style.display = 'block';
+    snapshot.style.isolation = 'isolate';
+
+    const qrURL = `https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
+    const qrImg = new Image();
+    qrImg.crossOrigin = "anonymous";
+    qrImg.src = qrURL;
+
+    qrImg.onload = async () => {
+      snapshot.innerHTML = `
+        <div style="background: rgba(0,0,0,.55); padding: 18px 18px 14px; position: relative;">
+          <img src="${qrImg.src}" alt="QR Code"
+               style="position:absolute; bottom:16px; left:18px; width:52px; height:52px; border-radius:6px;" />
+          <h2 style="text-align:center; font-size:20px; font-weight:700; margin-bottom:4px;">
+            British Classic Fantasy League 2025 🇬🇧
+          </h2>
+          <h3 style="text-align:center; font-size:16px; font-weight:600; margin-bottom:4px;">
+            My Accuracy Score
+          </h3>
+          <p style="text-align:center; font-size:12px; color:#d1d5db; opacity:0.9; margin-bottom:12px;">
+            Entry Count – ${allRows.length}
+          </p>
+          <table class="w-full text-sm" style="table-layout: fixed; border-collapse: collapse;">
+            <colgroup>${headerRow.map(() => '<col>').join('')}</colgroup>
+            <thead>
+              <tr>${headerRow.map(h => `<th class="py-1 px-3 text-center font-semibold">${h}</th>`).join('')}</tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+          <p class="text-xs text-gray-300 text-center mt-4">
+            Data from tinyurl.com/britishclassicfl-accuracy<br /><br />
+            Sponsored by the Sabado Sessions Podcast
+          </p>
+        </div>
+      `;
+
+      document.body.appendChild(snapshot);
+
+      const canvas = await html2canvas(snapshot, { backgroundColor: null, scale: 2, useCORS: true, scrollY: 0 });
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+      snapshot.remove();
+      const file = new File([blob], 'accuracy_score.png', { type: 'image/png' });
+
+      try {
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              title: 'My Accuracy Score',
-              text: 'Check out my accuracy score!',
-              files: [file]
-            });
-            return;
-          } catch {}
-        }
-
-        try {
-          await navigator.clipboard.writeText(window.location.href);
-          alert('Link copied to clipboard!');
-        } catch {
+          await navigator.share({
+            title: 'My Accuracy Score',
+            text: 'Check out my accuracy score!',
+            files: [file]
+          });
+        } else {
           const link = document.createElement('a');
-          link.href = canvas.toDataURL('image/png');
+          link.href = URL.createObjectURL(blob);
           link.download = 'my-accuracy-score.png';
           link.click();
+          URL.revokeObjectURL(link.href);
         }
-      });
-  }; // ✅ closes qrImg.onload
-} // ✅ closes shareScore
+      } catch (err) {
+        console.error("Share failed:", err);
+      }
+    }; // end onload
+  } // end shareScore
 
-      document.getElementById('shareRankingBtn').addEventListener('click', shareScore);
-      shareFloatingBtn.addEventListener('click', shareScore);
-      loadScores();
-    });
-  </script>
+  document.getElementById('shareRankingBtn').addEventListener('click', shareScore);
+  shareFloatingBtn.addEventListener('click', shareScore);
+  loadScores();
+});
+</script>
 </body>
 </html>
