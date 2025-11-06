@@ -294,53 +294,66 @@ document.addEventListener('DOMContentLoaded', () => {
   loadLeaderboard();
 
   async function shareRanking() {
-    if (searchMatches.length === 0) return alert("Please search for your name first.");
-    const isChrome = /Chrome/i.test(navigator.userAgent) && !/Edg|OPR|Brave/i.test(navigator.userAgent);
-    if (!isChrome) return oneStepShare();
+  if (searchMatches.length === 0) return alert("Please search for your name first.");
+  const isChrome = /Chrome/i.test(navigator.userAgent) && !/Edg|OPR|Brave/i.test(navigator.userAgent);
+  if (!isChrome) return oneStepShare();
 
-    // progress overlay
-    const overlay = document.createElement("div");
-    overlay.style = "position:fixed;inset:0;background:rgba(0,0,0,.7);color:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:9999;";
-    overlay.innerHTML = `<div style="margin-bottom:10px;">Generating snapshot...</div>
-      <div style="width:200px;height:6px;background:#333;border-radius:3px;overflow:hidden;">
-        <div id='barFill' style='width:0;height:100%;background:#f43f5e;transition:width .3s;'></div>
-      </div>`;
-    document.body.appendChild(overlay);
-    const bar = overlay.querySelector('#barFill');
-    const timeout = setTimeout(() => bar.style.width = '100%', 3000);
+  // progress overlay
+  const overlay = document.createElement("div");
+  overlay.style = "position:fixed;inset:0;background:rgba(0,0,0,.7);color:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:9999;";
+  overlay.innerHTML = `<div style="margin-bottom:10px;">Generating snapshot...</div>
+    <div style="width:200px;height:6px;background:#333;border-radius:3px;overflow:hidden;">
+      <div id='barFill' style='width:0;height:100%;background:#f43f5e;transition:width .3s;'></div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const bar = overlay.querySelector('#barFill');
+  const timeout = setTimeout(() => bar.style.width = '100%', 3000);
 
-    const canvas = await buildSnapshotCanvas();
-    clearTimeout(timeout);
-    overlay.remove();
+  // build snapshot
+  const canvas = await buildSnapshotCanvas();
+  clearTimeout(timeout);
+  overlay.remove();
 
-    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-    const file = new File([blob], 'league_ranking.png', { type: 'image/png' });
+  const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+  const file = new File([blob], 'league_ranking.png', { type: 'image/png' });
 
-    const shareNow = document.createElement('button');
-    shareNow.textContent = "Share Now";
-    shareNow.className = "fixed bottom-20 right-6 bg-red-600 text-white px-4 py-2 rounded-full shadow-lg z-50 hover:bg-red-700";
-    document.body.appendChild(shareNow);
+  // show ready toast
+  const toast = document.createElement('div');
+  toast.textContent = "Snapshot ready! Tap Share Now to continue.";
+  toast.style = "position:fixed;bottom:90px;right:6px;background:#111;color:#fff;padding:8px 12px;border-radius:8px;font-size:13px;opacity:0.9;z-index:9999;";
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
 
-    shareNow.addEventListener('click', async () => {
-      try {
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: 'British Classic Fantasy League 2025 🇬🇧',
-            text: 'Check out my league ranking!',
-            files: [file]
-          });
-        } else {
-          const link = document.createElement('a');
-          link.href = URL.createObjectURL(file);
-          link.download = 'my-league-ranking.png';
-          link.click();
-          URL.revokeObjectURL(link.href);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally { shareNow.remove(); }
-    });
-  }
+  // show Share Now button
+  const shareNow = document.createElement('button');
+  shareNow.textContent = "Share Now";
+  shareNow.className = "fixed bottom-20 right-6 bg-red-600 text-white px-4 py-2 rounded-full shadow-lg z-50 hover:bg-red-700";
+  document.body.appendChild(shareNow);
+
+  // run share inside NEW gesture (fresh click)
+  shareNow.addEventListener('click', async () => {
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: 'British Classic Fantasy League 2025 🇬🇧',
+          text: 'Check out my league ranking!',
+          files: [file]
+        });
+      } else {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(file);
+        link.download = 'my-league-ranking.png';
+        link.click();
+        URL.revokeObjectURL(link.href);
+      }
+    } catch (err) {
+      console.error("Share failed:", err);
+    } finally {
+      shareNow.remove();
+      toast.remove();
+    }
+  });
+}
 
   async function oneStepShare() {
     const canvas = await buildSnapshotCanvas();
