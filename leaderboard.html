@@ -385,23 +385,33 @@ document.addEventListener('DOMContentLoaded', () => {
         </p>
         <div style="height:32px;width:100%;background:transparent;"></div>
       </div>`;
-    document.body.appendChild(snap);
 
-    // --- Chrome iOS full render fix ---
+    // --- Chrome iOS wrapper fix for full render ---
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'fixed';
+    wrapper.style.inset = '0';
+    wrapper.style.display = 'flex';
+    wrapper.style.justifyContent = 'center';
+    wrapper.style.alignItems = 'flex-start';
+    wrapper.style.background = 'transparent';
+    wrapper.style.zIndex = '9999';
+    wrapper.appendChild(snap);
+    document.body.appendChild(wrapper);
+
     if (isChromeIOS) {
-      snap.style.transform = 'scale(0.8)';
+      snap.style.transform = 'scale(0.85)';
       snap.style.transformOrigin = 'top center';
       snap.style.marginTop = '20px';
     }
 
-    const canvas = await html2canvas(snap, {
+    const canvas = await html2canvas(wrapper, {
       backgroundColor: null,
-      scale: isChromeIOS ? 2.8 : 2,
+      scale: isChromeIOS ? 3 : 2,
       useCORS: true,
       scrollY: 0
     });
 
-    snap.remove();
+    wrapper.remove();
     return canvas;
   }
 
