@@ -377,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function buildSnapshotCanvas() {
-  // --- 0) Gather data for 10 rows around the match
+  // --- 0) Build the 10-row table section ---
   const matchIndex = searchMatches[currentMatchIndex];
   let start = Math.max(0, matchIndex - 4),
       end   = Math.min(allRows.length - 1, matchIndex + 5);
@@ -389,114 +389,97 @@ document.addEventListener('DOMContentLoaded', () => {
     return `<tr style="${bold}">${r.map(c => `<td class='px-3 py-1 text-center'>${c}</td>`).join('')}</tr>`;
   }).join('');
 
-  // --- 1) Build snapshot node (fixed width; natural height)
+  // --- 1) Create main snapshot content ---
   const snap = document.createElement('div');
   Object.assign(snap.style, {
     width: '600px',
     borderRadius: '16px',
     overflow: 'hidden',
-    position: 'relative',
     background: '#000',
     boxShadow: '0 10px 30px rgba(0,0,0,.35)',
     backgroundImage: "url('image_leaderboard_shf.jpg')",
     backgroundSize: 'cover',
     backgroundPosition: 'center',
+    position: 'relative',
     zIndex: '9999',
     isolation: 'isolate'
   });
 
-  // Load QR (blocking so we don't render before it’s ready)
+  // Load QR
   const qr = new Image();
   qr.crossOrigin = 'anonymous';
   qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
   await new Promise(res => { qr.onload = res; });
 
-  // Footer: use block spans instead of <br>
+  // Footer: fixed line-height + block spans
   const footerHtml = `
-    <p style="font-size:11px;color:#ccc;text-align:center;margin-top:10px;line-height:1.4;">
+    <p style="font-size:11px;color:#ccc;text-align:center;margin-top:12px;line-height:1.5;">
       <span style="display:block;">Data from tinyurl.com/britishclassicfl-leaderboard</span>
       <span style="display:block;">Sponsored by the Sabado Sessions Podcast</span>
     </p>
   `;
 
   snap.innerHTML = `
-    <div style="background:rgba(0,0,0,.55);padding:18px 18px 14px;position:relative;">
+    <div style="background:rgba(0,0,0,.55);padding:18px 18px 18px;position:relative;">
       <img src="${qr.src}" style="position:absolute;bottom:16px;left:18px;width:52px;height:52px;border-radius:6px;" />
-      <h2 style="text-align:center;font-size:20px;font-weight:700;margin-bottom:4px;">British Classic Fantasy League 2025 🇬🇧</h2>
-      <h3 style="text-align:center;font-size:16px;font-weight:600;margin-bottom:4px;">My League Ranking</h3>
-      <p style="text-align:center;font-size:12px;color:#d1d5db;opacity:.9;margin-bottom:12px;">Entry Count – ${allRows.length}</p>
+      <h2 style="text-align:center;font-size:20px;font-weight:700;margin-bottom:4px;">
+        British Classic Fantasy League 2025 🇬🇧
+      </h2>
+      <h3 style="text-align:center;font-size:16px;font-weight:600;margin-bottom:4px;">
+        My League Ranking
+      </h3>
+      <p style="text-align:center;font-size:12px;color:#d1d5db;opacity:.9;margin-bottom:12px;">
+        Entry Count – ${allRows.length}
+      </p>
       <table style="width:100%;table-layout:fixed;border-collapse:collapse;">
         <thead><tr>${headerRow.map(h => `<th style='padding:4px;font-weight:600;'>${h}</th>`).join('')}</tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>
       ${footerHtml}
-      <div style="height:40px;width:100%;background:transparent;"></div>
+      <div style="height:30px;width:100%;background:transparent;"></div>
     </div>
   `;
 
-  // --- 2) Wrap in scroll container to ensure Chrome paints full content ---
+  // --- 2) Use tall wrapper to prevent clipping (no scaling) ---
   const scrollWrapper = document.createElement('div');
   Object.assign(scrollWrapper.style, {
     position: 'fixed',
     top: '0',
     left: '0',
     width: '100vw',
-    height: `${window.innerHeight * 1.2}px`, // slightly taller than viewport
-    overflowY: 'scroll',
-    overflowX: 'hidden',
+    height: 'auto',
+    minHeight: `${window.innerHeight * 1.5}px`,
+    overflow: 'visible',
     background: 'transparent',
     transform: 'translateZ(0)',
     zIndex: '9999',
     display: 'flex',
     justifyContent: 'center',
-    alignItems: 'flex-start'
+    alignItems: 'flex-start',
+    padding: '20px 0'
   });
+
   snap.style.transform = 'translateZ(0)';
   scrollWrapper.appendChild(snap);
   document.body.appendChild(scrollWrapper);
 
-  // --- 3) Wait a frame for layout to settle ---
+  // --- 3) Wait a frame to settle layout ---
   await new Promise(r => requestAnimationFrame(r));
 
-  const naturalHeight = snap.offsetHeight;
-  const available = Math.max(200, window.innerHeight - 20);
-  const needsScaleDown = naturalHeight > available;
+  // --- 4) Capture at fixed 2× scale ---
+  const canvas = await html2canvas(scrollWrapper, {
+    backgroundColor: null,
+    useCORS: true,
+    scrollY: 0,
+    scale: 2,
+    windowWidth: 600,
+    windowHeight: snap.offsetHeight
+  });
 
-  let domScale = 1;
-  if (needsScaleDown) {
-    domScale = available / naturalHeight;
-    snap.style.transform = `translateZ(0) scale(${domScale})`;
-    snap.style.transformOrigin = 'top center';
-  }
-
-  const baseScale = Math.max(2, window.devicePixelRatio || 2);
-  const captureScale = baseScale * (1 / domScale);
-
-  console.log('[snapshot] naturalHeight:', naturalHeight,
-              'domScale:', domScale,
-              'captureScale:', captureScale);
-
-// --- 4) Chrome fixed pixel ratio paint ---
-scrollWrapper.style.zoom = '1.0'; // neutralize WebKit zoom scaling
-snap.style.zoom = '1.0';
-
-// Force minimal layout jitter before capture
-await new Promise(r => requestAnimationFrame(r));
-
-// Lock scrollWrapper pixel ratio to 1 for capture
-const canvas = await html2canvas(scrollWrapper, {
-  backgroundColor: null,
-  useCORS: true,
-  scrollY: 0,
-  scale: 2, // consistent retina export
-  windowWidth: 600,
-  windowHeight: snap.offsetHeight
-});
-
-// --- 5) Cleanup ---
-scrollWrapper.remove();
-return canvas;
-  }
+  // --- 5) Cleanup ---
+  scrollWrapper.remove();
+  return canvas;
+}
 
   document.getElementById('shareRankingBtn').addEventListener('click', shareRanking);
   shareFloatingBtn.addEventListener('click', shareRanking);
