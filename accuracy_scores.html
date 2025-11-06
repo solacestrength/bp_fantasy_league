@@ -338,12 +338,15 @@ async function shareScore() {
   const snapshot = document.createElement('div');
   snapshot.style.width = '600px';
   snapshot.style.borderRadius = '16px';
-  snapshot.style.overflow = 'hidden';
-  snapshot.style.position = 'relative';
-  snapshot.style.boxShadow = '0 10px 30px rgba(0,0,0,.35)';
-  snapshot.style.backgroundImage = "url('image_accuracy.jpg')";
-  snapshot.style.backgroundSize = 'cover';
-  snapshot.style.backgroundPosition = 'center';
+snapshot.style.overflow = 'hidden';
+snapshot.style.position = 'relative';
+snapshot.style.background = '#000'; // 👈 prevents white edges
+snapshot.style.boxShadow = '0 10px 30px rgba(0,0,0,.35)';
+snapshot.style.backgroundImage = "url('image_accuracy.jpg')";
+snapshot.style.backgroundSize = 'cover';
+snapshot.style.backgroundPosition = 'center';
+snapshot.style.display = 'block'; // ensures canvas respects clipping
+snapshot.style.isolation = 'isolate'; // fixes alpha blending glitch
 
   // --- Load QR ---
   const qrURL = `https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
