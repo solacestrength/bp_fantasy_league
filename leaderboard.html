@@ -245,54 +245,83 @@ document.addEventListener('DOMContentLoaded', () => {
     container.appendChild(btn);
   }
 
-  /* --- Search + Floating Share --- */
-  const searchInput = document.getElementById("searchInput");
-  const shareFloatingBtn = document.createElement('button');
-  shareFloatingBtn.id = 'floatingShareBtn';
-  shareFloatingBtn.textContent = "Share My Ranking";
-  shareFloatingBtn.className = "hidden fixed bottom-20 right-6 bg-red-600 text-white px-4 py-2 rounded-full shadow-lg z-50 hover:bg-red-700 transition-opacity duration-700 ease-in-out";
-  document.body.appendChild(shareFloatingBtn);
+  /* --- Search + Contextual Share Button (Above Highlighted Row) --- */
+const searchInput = document.getElementById("searchInput");
+let contextualShareBtn = null; // we'll dynamically create it
 
-  let inactivityTimer;
-  function fadeOutShareButton() {
-    shareFloatingBtn.classList.add('fade-out');
-    setTimeout(() => {
-      shareFloatingBtn.classList.add('hidden');
-      shareFloatingBtn.classList.remove('fade-out');
-    }, 700);
-  }
-  function resetInactivityTimer() {
-    clearTimeout(inactivityTimer);
-    if (!shareFloatingBtn.classList.contains('hidden')) {
-      inactivityTimer = setTimeout(() => { fadeOutShareButton(); }, 10000);
-    }
-  }
-  window.addEventListener('scroll', resetInactivityTimer);
-  document.addEventListener('input', resetInactivityTimer);
+searchInput.addEventListener("input", () => {
+  const filter = searchInput.value.trim().toLowerCase();
+  searchMatches = [];
+  currentMatchIndex = -1;
 
-  searchInput.addEventListener("input", () => {
-    const filter = searchInput.value.trim().toLowerCase();
-    searchMatches = [];
-    currentMatchIndex = -1;
-    if (!filter) { filteredRows = [...allRows]; currentPage = 1; renderTable(); shareFloatingBtn.classList.add("hidden"); return; }
-    allRows.forEach((row, idx) => { if (row.join(" ").toLowerCase().includes(filter)) searchMatches.push(idx); });
-    if (searchMatches.length > 0) {
-      currentMatchIndex = 0;
-      const matchIdx = searchMatches[currentMatchIndex];
-      currentPage = Math.floor(matchIdx / rowsPerPage) + 1;
-      renderTable(); shareFloatingBtn.classList.remove("hidden"); resetInactivityTimer();
-    } else { renderTable(); shareFloatingBtn.classList.add("hidden"); }
+  if (!filter) {
+    filteredRows = [...allRows];
+    currentPage = 1;
+    renderTable();
+    removeContextualShare();
+    return;
+  }
+
+  allRows.forEach((row, idx) => {
+    if (row.join(" ").toLowerCase().includes(filter)) searchMatches.push(idx);
   });
 
-  searchInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && searchMatches.length > 1) {
-      e.preventDefault();
-      currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
-      const matchIdx = searchMatches[currentMatchIndex];
-      currentPage = Math.floor(matchIdx / rowsPerPage) + 1;
-      renderTable(); shareFloatingBtn.classList.remove("hidden"); resetInactivityTimer();
-    }
-  });
+  if (searchMatches.length > 0) {
+    currentMatchIndex = 0;
+    const matchIdx = searchMatches[currentMatchIndex];
+    currentPage = Math.floor(matchIdx / rowsPerPage) + 1;
+    renderTable();
+    insertContextualShare();
+  } else {
+    renderTable();
+    removeContextualShare();
+  }
+});
+
+/* Cycle through matches when pressing Enter */
+searchInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && searchMatches.length > 1) {
+    e.preventDefault();
+    currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
+    const matchIdx = searchMatches[currentMatchIndex];
+    currentPage = Math.floor(matchIdx / rowsPerPage) + 1;
+    renderTable();
+    insertContextualShare();
+  }
+});
+
+/* Helper: remove existing contextual button */
+function removeContextualShare() {
+  if (contextualShareBtn) {
+    contextualShareBtn.remove();
+    contextualShareBtn = null;
+  }
+}
+
+/* Helper: insert contextual button above highlighted row */
+function insertContextualShare() {
+  removeContextualShare();
+  if (searchMatches.length === 0) return;
+
+  const matchIndex = searchMatches[currentMatchIndex];
+  const highlightedRow = document.querySelector(`tr:nth-child(${(matchIndex % rowsPerPage) + 1})`);
+  if (!highlightedRow) return;
+
+  const container = document.createElement('tr');
+  container.className = "contextual-share-row";
+  container.innerHTML = `
+    <td colspan="${headerRow.length}" class="text-center py-1">
+      <button id="contextualShareBtn" 
+        class="bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1"
+        style="min-width:130px; height:24px;">
+        Share My Ranking
+      </button>
+    </td>
+  `;
+  highlightedRow.parentNode.insertBefore(container, highlightedRow);
+  contextualShareBtn = document.getElementById("contextualShareBtn");
+  contextualShareBtn.addEventListener("click", shareRanking);
+}
 
   /* --- Device detection helper --- */
   function detectBrowserShareSupport() {
@@ -303,26 +332,39 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  /* --- SHARE SYSTEM --- */
-  async function shareRanking() {
-    if (searchMatches.length === 0) return alert("Please search for your name first.");
-    const { isChromeIOS, isAndroidChrome } = detectBrowserShareSupport();
+async function shareRanking() {
+  if (searchMatches.length === 0) return alert("Please search for your name first.");
+  const { isChromeIOS, isAndroidChrome } = detectBrowserShareSupport();
 
-    if (isChromeIOS) {
-      const canvas = await buildSnapshotCanvas();
-      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'league_ranking.png';
-      link.click();
-      URL.revokeObjectURL(link.href);
-      alert("Chrome on iOS doesn’t support image sharing. The snapshot has been downloaded instead. Please open this page in Safari to share.");
-      return;
-    }
+  const btn = contextualShareBtn;
+  if (!btn) return;
 
-    if (isAndroidChrome) return chromeTwoStepShare();
-    return oneStepShare();
+  // --- Two-step (Android Chrome only) ---
+  if (isAndroidChrome) {
+    btn.textContent = "Generating...";
+    btn.disabled = true;
+
+    const canvas = await buildSnapshotCanvas();
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    const file = new File([blob], 'league_ranking.png', { type: 'image/png' });
+
+    btn.textContent = "Share Generated Image";
+    btn.disabled = false;
+
+    // When user taps "Share Generated Image"
+    btn.onclick = async () => {
+      await performShare(file, 'British Classic Fantasy League 2025 🇬🇧', 'Check out my league ranking!');
+      removeContextualShare();
+    };
+    return;
   }
+
+  // --- One-step (All other browsers) ---
+  const canvas = await buildSnapshotCanvas();
+  const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+  const file = new File([blob], 'league_ranking.png', { type: 'image/png' });
+  await performShare(file, 'British Classic Fantasy League 2025 🇬🇧', 'Check out my league ranking!');
+}
 
   async function chromeTwoStepShare() {
     const overlay = document.createElement("div");
