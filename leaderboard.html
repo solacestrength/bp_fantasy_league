@@ -386,7 +386,21 @@ document.addEventListener('DOMContentLoaded', () => {
         <div style="height:32px;width:100%;background:transparent;"></div>
       </div>`;
     document.body.appendChild(snap);
-    const canvas = await html2canvas(snap,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
+
+    // --- Chrome iOS full render fix ---
+    if (isChromeIOS) {
+      snap.style.transform = 'scale(0.8)';
+      snap.style.transformOrigin = 'top center';
+      snap.style.marginTop = '20px';
+    }
+
+    const canvas = await html2canvas(snap, {
+      backgroundColor: null,
+      scale: isChromeIOS ? 2.8 : 2,
+      useCORS: true,
+      scrollY: 0
+    });
+
     snap.remove();
     return canvas;
   }
