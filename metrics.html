@@ -40,12 +40,12 @@
     }
 
     /* === Preserve true aspect for donut charts (no stretch or squash) === */
-#womenDonut, #menDonut {
-  width: 100% !important;
-  aspect-ratio: 1 / 1 !important;
-  max-height: none !important;
-  object-fit: contain;
-}
+    #womenDonut, #menDonut {
+      width:100% !important;
+      aspect-ratio:1 / 1 !important;
+      max-height:none !important;
+      object-fit:contain;
+    }
 
     .collapsible-content{max-height:0;overflow:hidden;opacity:0;
       transition:max-height .5s ease,opacity .4s ease;}
@@ -105,7 +105,7 @@
         <h2 class="text-xl font-semibold mb-1">Metrics Dashboard</h2>
         <p class="text-gray-400 text-sm">
           Explore how the predicted winners and totals are distributed for a given weight class. Sample size = number of entrants.
-          User note - any labels that appear from tapping bars or chart sections will also be visible in your shared images 📊
+          User note – any labels that appear from tapping bars or chart sections will also be visible in your shared images 📊
         </p>
       </section>
 
@@ -184,140 +184,119 @@
     </footer>
   </div>
 
-<script>
-Chart.register(ChartDataLabels);
-const SHEET_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
-let allData=[]; const charts={};
+  <script>
+function renderCharts(g, w) {
+  const s = sizing();
+  const donutId = g === 'F' ? 'womenDonut' : 'menDonut';
+  const histId  = g === 'F' ? 'womenHist'  : 'menHist';
+  const rows = allData.filter(r => r.Gender === g && r.Class === w);
+  if (!rows.length) return;
 
-function sizing(){
-  const d=window.matchMedia('(min-width:1024px)').matches;
-  return{
-    donutTitle:d?22:14, donutSubtitle:d?18:12, donutLegend:d?18:12, donutPercent:d?16:12,
-    histTitle:d?22:14, histSubtitle:d?18:12, axisTitle:d?18:12, axisTick:d?14:11, histBarLabel:d?12:10,
-    exportWidth:d?1024:780, qrSize:d?96:72, creditFont:d?18:13, headerFont:d?32:20, subFont:d?26:16
-  };
-}
-
-// MENU
-const menuBtn=document.getElementById('menu-btn');
-const mobileMenu=document.getElementById('mobile-menu');
-let menuVisible=false;
-menuBtn.addEventListener('click',e=>{menuVisible=!menuVisible;toggleMenu(menuVisible);e.stopPropagation();});
-document.addEventListener('click',e=>{if(!mobileMenu.contains(e.target)&&!menuBtn.contains(e.target)){if(menuVisible){menuVisible=false;toggleMenu(false);}}});
-function toggleMenu(show){
-  if(show){mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');mobileMenu.classList.add('scale-y-100','opacity-100');}
-  else{mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');mobileMenu.classList.remove('scale-y-100','opacity-100');}}
-toggleMenu(false);
-
-// CSV PARSE + CHARTS
-Papa.parse(SHEET_URL,{download:true,header:true,complete:r=>{allData=r.data;setupDropdowns();}});
-
-function setupDropdowns(){
-  ['F','M'].forEach(g=>{
-    const d=allData.filter(r=>r.Gender===g);
-    const classes=[...new Set(d.map(r=>r.Class))].sort((a,b)=>parseFloat(a)-parseFloat(b));
-    const s=document.getElementById(g==='F'?'womenSelect':'menSelect');
-    s.innerHTML=classes.map(c=>`<option value="${c}">${c}kg</option>`).join('');
-    s.onchange=()=>renderCharts(g,s.value);
-    renderCharts(g,classes[0]);
-  });
-}
-
-function renderCharts(g,w){
-  const s=sizing();
-  const donutId=g==='F'?'womenDonut':'menDonut';
-  const histId=g==='F'?'womenHist':'menHist';
-  const rows=allData.filter(r=>r.Gender===g&&r.Class===w);
-  if(!rows.length)return;
-
-  const counts={}; rows.forEach(r=>counts[r.Athlete]=(counts[r.Athlete]||0)+1);
-  const dLabels=Object.keys(counts); const dData=Object.values(counts);
-  const total=dData.reduce((a,b)=>a+b,0);
-  const colors=['#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'];
-  if(charts[donutId]) charts[donutId].destroy();
-  charts[donutId]=new Chart(document.getElementById(donutId),{
-    type:'doughnut',
-    data:{labels:dLabels,datasets:[{data:dData,backgroundColor:colors,borderColor:'#111',borderWidth:1}]},
-    options:{
-      maintainAspectRatio:true,aspectRatio:1,cutout:'57%',
-      plugins:{
-        title:{display:true,text:'Share of Votes',color:'#ccc',font:{weight:'bold',size:s.donutTitle},padding:{bottom:8}},
-        subtitle:{display:true,text:`Total Votes – ${total}`,color:'#aaa',font:{size:s.donutSubtitle},padding:{top:2,bottom:12}},
-        legend:{position:'bottom',labels:{color:'#ccc',boxWidth:10,boxHeight:10,font:{size:s.donutLegend}}},
-        datalabels:{color:'#fff',font:{weight:'bold',size:s.donutPercent},formatter:v=>{const p=(v/total)*100;return p>=3?`${p.toFixed(1)}%`:'';},anchor:'center',align:'center',clamp:true}
+  // ----- Donut (unchanged) -----
+  const counts = {};
+  rows.forEach(r => counts[r.Athlete] = (counts[r.Athlete] || 0) + 1);
+  const dLabels = Object.keys(counts);
+  const dData = Object.values(counts);
+  const total = dData.reduce((a, b) => a + b, 0);
+  const colors = ['#ef4444','#f97316','#facc15','#22c55e','#14b8a6',
+                  '#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16',
+                  '#d946ef','#fb7185'];
+  if (charts[donutId]) charts[donutId].destroy();
+  charts[donutId] = new Chart(document.getElementById(donutId), {
+    type: 'doughnut',
+    data: { labels: dLabels, datasets: [{ data: dData, backgroundColor: colors, borderColor: '#111', borderWidth: 1 }] },
+    options: {
+      maintainAspectRatio: true,
+      aspectRatio: 1,
+      cutout: '57%',
+      plugins: {
+        title:     { display: true, text: 'Share of Votes', color: '#ccc', font: { weight: 'bold', size: s.donutTitle }, padding: { bottom: 8 } },
+        subtitle:  { display: true, text: `Total Votes – ${total}`, color: '#aaa', font: { size: s.donutSubtitle }, padding: { top: 2, bottom: 12 } },
+        legend:    { position: 'bottom', labels: { color: '#ccc', boxWidth: 10, boxHeight: 10, font: { size: s.donutLegend } } },
+        datalabels:{ color: '#fff', font: { weight: 'bold', size: s.donutPercent },
+                     formatter:v=>{const p=(v/total)*100;return p>=3?`${p.toFixed(1)}%`:'';},
+                     anchor:'center', align:'center', clamp:true }
       }
     },
-    plugins:[ChartDataLabels]
+    plugins: [ChartDataLabels]
   });
+  charts[donutId].options.maintainAspectRatio = true;
+  charts[donutId].options.aspectRatio = 1;
 
-// === Safeguard: enforce square aspect ratio on redraws ===
-charts[donutId].options.maintainAspectRatio = true;
-charts[donutId].options.aspectRatio = 1;
+  // ----- Histogram (patched for proportionality) -----
+  const vals = rows.map(r => parseFloat(r.PredictedTotal)).filter(v => !isNaN(v) && v > 0);
+  if (!vals.length) { if (charts[histId]) charts[histId].destroy(); return; }
+  const N = vals.length, min = Math.min(...vals), max = Math.max(...vals);
+  const bins = Math.max(3, Math.round(Math.sqrt(N)));
+  const bw = (max - min) / bins || 1;
+  const countsH = Array(bins).fill(0);
+  vals.forEach(v => { let i = Math.floor((v - min) / bw); if (i >= bins) i = bins - 1; if (i < 0) i = 0; countsH[i]++; });
+  const labelsH = Array.from({ length: bins }, (_, i) =>
+    `${(min + i * bw).toFixed(0)}–${(min + (i + 1) * bw).toFixed(0)}`
+  );
+  const minC = Math.min(...countsH), maxC = Math.max(...countsH);
+  const yMin = Math.floor(minC / 2), span = maxC - yMin;
+  const step = Math.max(1, Math.round(span / 4));
+  const yMax = Math.ceil(maxC / step) * step;
 
-  // Histogram
-  const vals=rows.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v)&&v>0);
-  if(!vals.length){if(charts[histId]) charts[histId].destroy();return;}
-  const N=vals.length,min=Math.min(...vals),max=Math.max(...vals);
-  const bins=Math.max(3,Math.round(Math.sqrt(N)));
-  const bw=(max-min)/bins||1;
-  const countsH=Array(bins).fill(0);
-  vals.forEach(v=>{let i=Math.floor((v-min)/bw);if(i>=bins)i=bins-1;if(i<0)i=0;countsH[i]++;});
-  const labelsH=Array.from({length:bins},(_,i)=>`${(min+i*bw).toFixed(0)}–${(min+(i+1)*bw).toFixed(0)}`);
-  const minC=Math.min(...countsH),maxC=Math.max(...countsH);
-  const yMin=Math.floor(minC/2);const span=maxC-yMin;const step=Math.max(1,Math.round(span/4));const yMax=Math.ceil(maxC/step)*step;
-
-  if(charts[histId]) charts[histId].destroy();
-  charts[histId]=new Chart(document.getElementById(histId),{
-    type:'bar',
-    data:{labels:labelsH,datasets:[{data:countsH,backgroundColor:'#3b82f6',borderRadius:5}]},
-    options:{
-      maintainAspectRatio:true,aspectRatio:(window.innerWidth>=1024?1.5:1.1),
-      plugins:{
-       title:{display:true,text:'Distribution of Predicted Winning Totals',color:'#ccc',
-       font:{size:s.donutTitle,weight:'bold'},padding:{bottom:8}},
-       subtitle:{display:true,text:`Total Votes – ${N}`,color:'#aaa',
-          font:{size:s.donutSubtitle},padding:{top:2,bottom:12}},
-        legend:{display:false},
-        datalabels:{
-          color:'#fff',formatter:(v)=>v>0?v:'',anchor:'center',
-                    align:(ctx)=>{
+  if (charts[histId]) charts[histId].destroy();
+  charts[histId] = new Chart(document.getElementById(histId), {
+    type: 'bar',
+    data: { labels: labelsH, datasets: [{ data: countsH, backgroundColor: '#3b82f6', borderRadius: 5 }] },
+    options: {
+      maintainAspectRatio: true,
+      // keep same visual size ratio as donuts but with slightly flatter feel
+      aspectRatio: (window.innerWidth >= 1024 ? 1.45 : 1.1),
+      plugins: {
+        title: {
+          display: true,
+          text: 'Distribution of Predicted Winning Totals',
+          color: '#ccc',
+          font: { size: s.histTitle, weight: 'bold' },
+          padding: { bottom: 8 }
+        },
+        subtitle: {
+          display: true,
+          text: `Total Votes – ${N}`,
+          color: '#aaa',
+          font: { size: s.histSubtitle, weight: '600' },
+          padding: { top: 2, bottom: 12 }
+        },
+        legend: { display: false },
+        datalabels: {
+          color: '#fff',
+          font: { size: s.histBarLabel, weight: 'normal' },
+          formatter: v => v > 0 ? v : '',
+          anchor: 'center',
+          align: ctx => {
             const v = ctx.dataset.data[ctx.dataIndex] || 0;
             const scale = ctx.chart.scales.y;
             if (!scale) return 'center';
             const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
-            const f = ctx.chart.options.plugins.datalabels?.font?.size || s.histBarLabel;
+            const f = ctx.chart.options.plugins.datalabels.font.size || s.histBarLabel;
             return (barH < f * 1.05) ? 'end' : 'center';
           },
-          offset:0,clamp:true,font:{size:s.histBarLabel,weight:'normal'}
+          clamp: true
         }
       },
-      scales:{
-        x:{
-          ticks:{color:'#ccc',font:{size:s.axisTick}},
-          title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:s.axisTitle,weight:'bold'}},
-          grid:{display:false}
+      scales: {
+        x: {
+          ticks: { color: '#ccc', font: { size: s.axisTick } },
+          title: { display: true, text: 'Predicted Total (kg)', color: '#ccc', font: { size: s.axisTitle, weight: 'bold' } },
+          grid: { display: false }
         },
-        y:{
-          min:yMin,max:yMax,beginAtZero:false,
-          ticks:{color:'#ccc',font:{size:s.axisTick}},
-          title:{display:true,text:'Frequency',color:'#ccc',font:{size:s.axisTitle,weight:'bold'}},
-          grid:{display:false}
+        y: {
+          min: yMin, max: yMax, beginAtZero: false,
+          ticks: { color: '#ccc', font: { size: s.axisTick } },
+          title: { display: true, text: 'Frequency', color: '#ccc', font: { size: s.axisTitle, weight: 'bold' } },
+          grid: { display: false }
         }
       }
     },
-    plugins:[ChartDataLabels]
+    plugins: [ChartDataLabels]
   });
 }
 
-// ======= COLLAPSIBLE =======
-function toggleSection(id){
-  const c=document.getElementById(id);
-  const a=document.getElementById(`arrow-${id}`);
-  const o=c.classList.toggle('open');
-  a.classList.toggle('rotate',o);
-}
-
-// ======= SHARE / EXPORT (Gold Standard Unified Desktop + Mobile) =======
 async function shareChart(id, g) {
   const s = sizing();
   const src = document.getElementById(id);
@@ -329,8 +308,25 @@ async function shareChart(id, g) {
   const isMobile = window.innerWidth < 768;
   const fn = `metrics_${g}_${w}_${isDonut ? 'donut' : 'hist'}.png`;
 
-  // --- Hide gridlines before capture ---
+  // --- Chart reference & temporary font scaling for histograms ---
   const chart = src.chart || Chart.getChart(src);
+  let prevFontState = null;
+  if (chart && !isDonut) {
+    // store current fonts
+    prevFontState = JSON.parse(JSON.stringify(chart.options));
+    // apply 0.85× export scale to all fonts
+    const scaleFonts = (obj) => {
+      for (const key in obj) {
+        if (obj[key] && typeof obj[key] === 'object') scaleFonts(obj[key]);
+        if (key === 'size' && typeof obj[key] === 'number') obj[key] = Math.round(obj[key] * 0.85);
+      }
+    };
+    scaleFonts(chart.options);
+    chart.update();
+    await new Promise(requestAnimationFrame);
+  }
+
+  // --- Hide gridlines before capture ---
   let prevGridState = null;
   if (chart) {
     prevGridState = JSON.parse(JSON.stringify(chart.options.scales || {}));
@@ -340,7 +336,7 @@ async function shareChart(id, g) {
     await new Promise(requestAnimationFrame);
   }
 
-  // --- Base card ---
+  // --- Base export card ---
   const card = document.createElement('div');
   card.style.position = 'relative';
   card.style.width = s.exportWidth + 'px';
@@ -368,7 +364,7 @@ async function shareChart(id, g) {
   inner.style.padding = isDonut ? '36px 28px 36px 28px' : '40px 28px 36px 28px';
   card.appendChild(inner);
 
-  // --- Headings ---
+  // --- Header + subtitle ---
   const header = document.createElement('h2');
   header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
   header.style.fontSize = (isMobile ? s.headerFont * 1.5 : s.headerFont * 1.25) + 'px';
@@ -402,11 +398,10 @@ async function shareChart(id, g) {
   credit.innerHTML =
     'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-  // --- Spacer ---
   const spacer = document.createElement('div');
   spacer.style.height = isDonut ? '14px' : '28px';
 
-  // --- QR ---
+  // --- QR Code ---
   const qr = new Image();
   qr.crossOrigin = 'anonymous';
   const qrsz = isMobile ? s.qrSize * 1.1 : s.qrSize * 1.25;
@@ -426,7 +421,7 @@ async function shareChart(id, g) {
   card.appendChild(qr);
   document.body.appendChild(card);
 
-  // --- Height Logic (Gold Standard) ---
+  // --- Height logic (Gold Standard preserved) ---
   await new Promise(requestAnimationFrame);
   const naturalH = card.scrollHeight;
   const baseH = isDonut ? 860 : 820;
@@ -449,11 +444,14 @@ async function shareChart(id, g) {
   });
   card.remove();
 
-  // --- Restore gridlines ---
+  // --- Restore gridlines + fonts ---
   if (chart && prevGridState) {
     chart.options.scales = prevGridState;
-    chart.update();
   }
+  if (chart && prevFontState) {
+    chart.options = prevFontState; // restore original font sizes
+  }
+  if (chart) chart.update();
 
   // --- Save / Share ---
   const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
