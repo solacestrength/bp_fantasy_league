@@ -149,7 +149,8 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  /* --- Burger / dropdown --- */
+
+  /* --- Mobile Menu --- */
   const menuBtn = document.getElementById('menu-btn');
   const mobileMenu = document.getElementById('mobile-menu');
 
@@ -171,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  /* --- Table setup --- */
+  /* --- Leaderboard Data Setup --- */
   const rowsPerPage = 50;
   let allRows = [], filteredRows = [], currentPage = 1;
   let searchMatches = [], currentMatchIndex = -1;
@@ -197,6 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tableBody.innerHTML = "";
     const start = (currentPage - 1) * rowsPerPage;
     const end = start + rowsPerPage;
+
     filteredRows.slice(start, end).forEach((row, idx) => {
       const globalIndex = start + idx;
       const isHighlighted = searchMatches.length && searchMatches[currentMatchIndex] === globalIndex;
@@ -204,8 +206,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const tds = row.map(cell => `<td class="px-3 py-2 text-center">${cell}</td>`).join('');
       tableBody.insertAdjacentHTML("beforeend", `<tr class="${rowClass}" data-index="${globalIndex}">${tds}</tr>`);
     });
+
     renderPagination();
-    injectContextualShareButton(); // <--- added
+    injectContextualShareButton(); // New contextual button logic
   }
 
   function renderPagination() {
@@ -246,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
     container.appendChild(btn);
   }
 
-  /* --- Contextual Share Button System --- */
+  /* --- Contextual Share Button ABOVE highlighted row --- */
   function injectContextualShareButton() {
     document.querySelectorAll('.contextual-share').forEach(e => e.remove());
     if (searchMatches.length === 0) return;
@@ -256,18 +259,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!visibleRow) return;
 
     const container = document.createElement('div');
-    container.className = 'contextual-share flex justify-center';
+    container.className = 'contextual-share flex justify-center opacity-0 transition-opacity duration-500 ease-in-out';
     container.innerHTML = `
-      <button id="contextShareBtn" class="mt-2 bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded-full text-sm shadow-md">
+      <button id="contextShareBtn" class="mb-2 bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded-full text-sm shadow-md">
         Share My Ranking
       </button>
     `;
-    visibleRow.insertAdjacentElement('afterend', container);
-
+    visibleRow.insertAdjacentElement('beforebegin', container);
+    requestAnimationFrame(() => container.classList.remove('opacity-0'));
     document.getElementById('contextShareBtn').addEventListener('click', shareRanking);
   }
 
-  /* --- Search handling --- */
+  /* --- Search Functionality --- */
   const searchInput = document.getElementById("searchInput");
   searchInput.addEventListener("input", () => {
     const filter = searchInput.value.trim().toLowerCase();
@@ -282,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else { renderTable(); }
   });
 
-  /* --- Browser detection --- */
+  /* --- Browser Detection --- */
   function detectBrowserShareSupport() {
     const ua = navigator.userAgent.toLowerCase();
     return {
@@ -291,10 +294,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  /* --- Share system --- */
+  /* --- Share Logic (brilliant version, adjusted) --- */
   async function shareRanking(e) {
     const { isChromeIOS, isAndroidChrome } = detectBrowserShareSupport();
     const btn = e.target;
+
     if (isChromeIOS || isAndroidChrome) {
       btn.textContent = "Generating...";
       btn.disabled = true;
@@ -305,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.disabled = false;
       btn.onclick = async () => {
         await performShare(file, 'British Classic Fantasy League 2025 🇬🇧', 'Check out my league ranking!');
-        btn.remove(); // auto-hide after use
+        btn.remove();
       };
     } else {
       const canvas = await buildSnapshotCanvas();
@@ -329,7 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) { console.error("Share failed:", err); }
   }
 
-  /* --- Snapshot builder (unchanged from your latest) --- */
+  /* --- Snapshot Builder (perfect visual logic) --- */
   async function buildSnapshotCanvas() {
     const total = allRows.length;
     const matchIndex = searchMatches[currentMatchIndex];
@@ -356,8 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
 
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    const isIOSChrome = /CriOS/i.test(navigator.userAgent);
-    const footerSpacer = isSafari ? 32 : 52;
+    const footerSpacer = isSafari ? 36 : 52;
 
     const snap = document.createElement('div');
     Object.assign(snap.style, {
@@ -424,7 +427,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(scrollWrapper);
     await new Promise(r => requestAnimationFrame(r));
 
-    const canvas = await html2canvas(scrollWrapper, { backgroundColor: null, useCORS: true, scale: 2 });
+    const scale = isSafari ? 2.5 : 2;
+    const canvas = await html2canvas(scrollWrapper, {
+      backgroundColor: null,
+      useCORS: true,
+      scrollY: 0,
+      scale: scale,
+      width: 600
+    });
+
     scrollWrapper.remove();
     return canvas;
   }
