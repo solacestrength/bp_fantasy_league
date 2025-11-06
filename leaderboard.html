@@ -290,6 +290,13 @@ searchInput.addEventListener("keydown", (e) => {
   }
 });
 
+/* Helper: remove existing contextual button */
+function removeContextualShare() {
+  const existing = document.querySelector(".contextual-share-row");
+  if (existing) existing.remove();
+  contextualShareBtn = null;
+}
+
 /* Helper: insert contextual button above highlighted row */
 function insertContextualShare() {
   removeContextualShare();
