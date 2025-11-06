@@ -377,7 +377,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 async function buildSnapshotCanvas() {
-  // --- 0) Compute the 10-row window around the searched name ---
   const total = allRows.length;
   const matchIndex = searchMatches[currentMatchIndex];
 
@@ -393,20 +392,19 @@ async function buildSnapshotCanvas() {
     end = matchIndex + 5;
   }
 
-  // Slice rows & ensure exactly 10
   const slice = allRows.slice(start, Math.min(end + 1, total));
   while (slice.length < 10) slice.push(new Array(headerRow.length).fill(''));
 
-  // --- 1) Build the rows HTML ---
   const rowsHtml = slice.map((r, i) => {
     const actual = start + i;
     const bold = actual === matchIndex ? 'font-weight:bold;' : '';
-    return `<tr style="${bold}">
-      ${r.map(c => `<td class='px-3 py-1 text-center'>${c}</td>`).join('')}
-    </tr>`;
+    return `<tr style="${bold}">${r.map(c => `<td class='px-3 py-1 text-center'>${c}</td>`).join('')}</tr>`;
   }).join('');
 
-  // --- 2) Create snapshot container ---
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  const isIOSChrome = /CriOS/i.test(navigator.userAgent);
+  const footerSpacer = isSafari ? 32 : 52;
+
   const snap = document.createElement('div');
   Object.assign(snap.style, {
     width: '600px',
@@ -422,13 +420,11 @@ async function buildSnapshotCanvas() {
     isolation: 'isolate'
   });
 
-  // --- 3) Load QR code ---
   const qr = new Image();
   qr.crossOrigin = 'anonymous';
   qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
   await new Promise(res => { qr.onload = res; });
 
-  // --- 4) Build footer (cross-browser spacing) ---
   const footerHtml = `
     <div style="
       font-size:11px;
@@ -447,7 +443,6 @@ async function buildSnapshotCanvas() {
     </div>
   `;
 
-  // --- 5) Compose snapshot HTML ---
   snap.innerHTML = `
     <div style="background:rgba(0,0,0,.55);padding:18px;position:relative;">
       <img src="${qr.src}" style="position:absolute;bottom:16px;left:18px;width:52px;height:52px;border-radius:6px;" />
@@ -461,17 +456,14 @@ async function buildSnapshotCanvas() {
         Entry Count – ${allRows.length}
       </p>
       <table style="width:100%;table-layout:fixed;border-collapse:collapse;">
-        <thead>
-          <tr>${headerRow.map(h => `<th style='padding:4px;font-weight:600;'>${h}</th>`).join('')}</tr>
-        </thead>
+        <thead><tr>${headerRow.map(h => `<th style='padding:4px;font-weight:600;'>${h}</th>`).join('')}</tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>
       ${footerHtml}
-      <div style="height:52px;width:100%;background:transparent;"></div>
+      <div style="height:${footerSpacer}px;width:100%;background:transparent;"></div>
     </div>
   `;
 
-  // --- 6) Wrapper to guarantee full content capture ---
   const scrollWrapper = document.createElement('div');
   Object.assign(scrollWrapper.style, {
     position: 'fixed',
@@ -492,12 +484,9 @@ async function buildSnapshotCanvas() {
   scrollWrapper.appendChild(snap);
   document.body.appendChild(scrollWrapper);
 
-  // --- 7) Wait for layout to stabilise ---
   await new Promise(r => requestAnimationFrame(r));
   const snapHeight = snap.scrollHeight;
-  console.log(`Snapshot true height: ${snapHeight}px`);
 
-  // --- 8) Capture snapshot ---
   const canvas = await html2canvas(scrollWrapper, {
     backgroundColor: null,
     useCORS: true,
@@ -509,9 +498,29 @@ async function buildSnapshotCanvas() {
     windowHeight: snapHeight
   });
 
-  // --- 9) Cleanup ---
+  // Always remove snapshot DOM after rendering (prevents overlay bug)
   scrollWrapper.remove();
-  return canvas;
+
+  try {
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+    const file = new File([blob], 'league_ranking.png', { type: 'image/png' });
+
+    // Attempt native share where possible
+    if (!isIOSChrome && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file] });
+    } else {
+      // Silent auto-download fallback for Chrome iOS and others
+      const link = document.createElement('a');
+      link.download = 'league_ranking.png';
+      link.href = URL.createObjectURL(blob);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(link.href);
+    }
+  } catch {
+    scrollWrapper.remove(); // just in case
+  }
 }
 
   document.getElementById('shareRankingBtn').addEventListener('click', shareRanking);
