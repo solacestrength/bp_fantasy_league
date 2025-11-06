@@ -251,44 +251,78 @@ document.addEventListener('DOMContentLoaded', () => {
     container.appendChild(btn);
   }
 
-  /* --- Floating Share button --- */
+  /* --- Search + Contextual Share Button (Above Highlighted Row) --- */
   const searchInput = document.getElementById("searchInput");
-  const shareFloatingBtn = document.createElement('button');
-  shareFloatingBtn.id = 'floatingShareBtn';
-  shareFloatingBtn.textContent = "Share My Score";
-  shareFloatingBtn.className = "hidden fixed bottom-20 right-6 bg-red-600 text-white px-4 py-2 rounded-full shadow-lg z-50 hover:bg-red-700 transition-opacity duration-700 ease-in-out";
-  document.body.appendChild(shareFloatingBtn);
+  let contextualShareBtn = null; // dynamic button reference
 
-  let inactivityTimer;
-  function fadeOutShareButton() {
-    shareFloatingBtn.classList.add('fade-out');
-    setTimeout(() => {
-      shareFloatingBtn.classList.add('hidden');
-      shareFloatingBtn.classList.remove('fade-out');
-    }, 700);
+  // Remove any existing contextual row/button
+  function removeContextualShare() {
+    const existing = document.querySelector(".contextual-share-row");
+    if (existing) existing.remove();
+    contextualShareBtn = null;
   }
-  function resetInactivityTimer() {
-    clearTimeout(inactivityTimer);
-    if (!shareFloatingBtn.classList.contains('hidden')) {
-      inactivityTimer = setTimeout(() => { fadeOutShareButton(); }, 10000);
+
+  // Insert contextual button ABOVE the highlighted row
+  function insertContextualShare() {
+    removeContextualShare();
+    if (searchMatches.length === 0) return;
+
+    const matchIndex = searchMatches[currentMatchIndex];
+    const visibleRows = document.querySelectorAll("#accuracyBody tr");
+    const rowPosition = matchIndex % rowsPerPage;
+    const targetRow = visibleRows[rowPosition];
+
+    const container = document.createElement('tr');
+    container.className = "contextual-share-row";
+    container.innerHTML = `
+      <td colspan="${headerRow.length}" class="text-center py-1">
+        <button id="contextualShareBtn" 
+          class="bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1"
+          style="min-width:130px; height:24px;">
+          Share My Score
+        </button>
+      </td>
+    `;
+
+    const body = document.getElementById("accuracyBody");
+    if (targetRow) {
+      body.insertBefore(container, targetRow);
+    } else {
+      body.appendChild(container); // fallback
     }
-  }
-  window.addEventListener('scroll', resetInactivityTimer);
-  document.addEventListener('input', resetInactivityTimer);
 
-  /* --- Search / cycle --- */
+    contextualShareBtn = document.getElementById("contextualShareBtn");
+    contextualShareBtn.addEventListener("click", shareScore);
+  }
+
+  // Search handlers (type to filter, Enter to cycle matches)
   searchInput.addEventListener("input", () => {
     const filter = searchInput.value.trim().toLowerCase();
     searchMatches = [];
     currentMatchIndex = -1;
-    if (!filter) { filteredRows = [...allRows]; currentPage = 1; renderTable(); shareFloatingBtn.classList.add("hidden"); return; }
-    allRows.forEach((row, idx) => { if (row.join(" ").toLowerCase().includes(filter)) searchMatches.push(idx); });
+
+    if (!filter) {
+      filteredRows = [...allRows];
+      currentPage = 1;
+      renderTable();
+      removeContextualShare();
+      return;
+    }
+
+    allRows.forEach((row, idx) => {
+      if (row.join(" ").toLowerCase().includes(filter)) searchMatches.push(idx);
+    });
+
     if (searchMatches.length > 0) {
       currentMatchIndex = 0;
       const matchIdx = searchMatches[currentMatchIndex];
       currentPage = Math.floor(matchIdx / rowsPerPage) + 1;
-      renderTable(); shareFloatingBtn.classList.remove("hidden"); resetInactivityTimer();
-    } else { renderTable(); shareFloatingBtn.classList.add("hidden"); }
+      renderTable();
+      insertContextualShare();
+    } else {
+      renderTable();
+      removeContextualShare();
+    }
   });
 
   searchInput.addEventListener("keydown", (e) => {
@@ -297,119 +331,228 @@ document.addEventListener('DOMContentLoaded', () => {
       currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
       const matchIdx = searchMatches[currentMatchIndex];
       currentPage = Math.floor(matchIdx / rowsPerPage) + 1;
-      renderTable(); shareFloatingBtn.classList.remove("hidden"); resetInactivityTimer();
+      renderTable();
+      insertContextualShare();
     }
   });
 
-  /* --- Export snapshot (with confirm & white-space fix) --- */
+  /* --- Device detection helper --- */
+  function detectBrowserShareSupport() {
+    const ua = navigator.userAgent.toLowerCase();
+    return {
+      isChromeIOS: ua.includes('crios'),
+      isAndroidChrome: ua.includes('chrome') && ua.includes('android')
+    };
+  }
+
+  /* --- SHARE SYSTEM (contextual) --- */
   async function shareScore() {
-    if (searchMatches.length === 0) {
-      alert("Please search for your name first.");
+    if (searchMatches.length === 0) return alert("Please search for your name first.");
+    const { isChromeIOS, isAndroidChrome } = detectBrowserShareSupport();
+
+    const btn = contextualShareBtn;
+    if (!btn) return;
+
+    // --- Two-step (Android Chrome only) ---
+    if (isAndroidChrome) {
+      btn.textContent = "Generating...";
+      btn.disabled = true;
+
+      const canvas = await buildSnapshotCanvas();
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+      const file = new File([blob], 'accuracy_score.png', { type: 'image/png' });
+
+      // Hide generating state and replace with "Share Generated Image"
+      btn.style.display = "none";
+      const newBtn = document.createElement("button");
+      newBtn.textContent = "Share Generated Image";
+      newBtn.className = "bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1";
+      newBtn.style.minWidth = "130px";
+      newBtn.style.height = "24px";
+      btn.parentNode.appendChild(newBtn);
+
+      newBtn.addEventListener("click", async () => {
+        await performShare(file, 'British Classic Fantasy League 2025 🇬🇧', 'Check out my accuracy score!');
+        removeContextualShare();
+      });
+      return; // Android handled
+    }
+
+    // --- iOS Chrome: auto-download fallback + notice ---
+    if (isChromeIOS) {
+      const canvas = await buildSnapshotCanvas();
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'accuracy_score.png';
+      link.click();
+      URL.revokeObjectURL(link.href);
+      alert("Chrome on iOS doesn’t support image sharing. The snapshot has been downloaded instead. Please open this page in Safari to share.");
       return;
     }
 
-    if (!confirm("Ready to share your Accuracy Score snapshot?")) return;
+    // --- One-step (All other browsers) ---
+    const canvas = await buildSnapshotCanvas();
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    const file = new File([blob], 'accuracy_score.png', { type: 'image/png' });
+    await performShare(file, 'British Classic Fantasy League 2025 🇬🇧', 'Check out my accuracy score!');
+  }
 
+  async function performShare(file, title, text) {
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ title, text, files: [file] });
+      } else {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(file);
+        a.download = file.name;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+    } catch (err) {
+      console.error("Share failed:", err);
+    }
+  }
+
+  /* --- Snapshot canvas (mirrors Leaderboard structure + assets/text for Accuracy) --- */
+  async function buildSnapshotCanvas() {
+    const total = allRows.length;
     const matchIndex = searchMatches[currentMatchIndex];
-    let start, end;
 
+    // pick 10 rows with the match centered where possible
+    let start, end;
     if (matchIndex < 10) {
       start = 0;
-      end = 9;
+      end = Math.min(9, total - 1);
+    } else if (matchIndex > total - 10) {
+      start = Math.max(0, total - 10);
+      end = total - 1;
     } else {
       start = matchIndex - 4;
       end = matchIndex + 5;
-      if (start < 0) { end += -start; start = 0; }
-      if (end > allRows.length - 1) {
-        start = Math.max(0, allRows.length - 10);
-        end = allRows.length - 1;
-      }
     }
 
-    const visibleRows = allRows.slice(start, end + 1);
-    const rowsHtml = visibleRows.map((row, i) => {
-      const actualIndex = start + i;
-      const isMatch = actualIndex === matchIndex;
-      return `<tr style="${isMatch ? 'font-weight:bold;' : ''}">
-        ${row.map(cell => `<td class='px-3 py-1 text-center'>${cell}</td>`).join('')}
-      </tr>`;
+    const slice = allRows.slice(start, Math.min(end + 1, total));
+    while (slice.length < 10) slice.push(new Array(headerRow.length).fill(''));
+
+    const rowsHtml = slice.map((r, i) => {
+      const actual = start + i;
+      const bold = actual === matchIndex ? 'font-weight:bold;' : '';
+      return `<tr style="${bold}">${r.map(c => `<td class='px-3 py-1 text-center'>${c}</td>`).join('')}</tr>`;
     }).join('');
 
-    const snapshot = document.createElement('div');
-    snapshot.style.width = '600px';
-    snapshot.style.borderRadius = '16px';
-    snapshot.style.overflow = 'hidden';
-    snapshot.style.position = 'relative';
-    snapshot.style.background = '#000';
-    snapshot.style.boxShadow = '0 10px 30px rgba(0,0,0,.35)';
-    snapshot.style.backgroundImage = "url('image_accuracy.jpg')";
-    snapshot.style.backgroundSize = 'cover';
-    snapshot.style.backgroundPosition = 'center';
-    snapshot.style.display = 'block';
-    snapshot.style.isolation = 'isolate';
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isIOSChrome = /CriOS/i.test(navigator.userAgent);
+    const footerSpacer = isSafari ? 32 : 52; // keep exports consistent/stable
 
-    const qrURL = `https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
-    const qrImg = new Image();
-    qrImg.crossOrigin = "anonymous";
-    qrImg.src = qrURL;
+    const snap = document.createElement('div');
+    Object.assign(snap.style, {
+      width: '600px',
+      borderRadius: '16px',
+      overflow: 'hidden',
+      background: '#000',
+      boxShadow: '0 10px 30px rgba(0,0,0,.35)',
+      backgroundImage: "url('image_accuracy.jpg')",
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      position: 'relative',
+      zIndex: '9999',
+      isolation: 'isolate'
+    });
 
-    qrImg.onload = async () => {
-      snapshot.innerHTML = `
-        <div style="background: rgba(0,0,0,.55); padding: 18px 18px 14px; position: relative;">
-          <img src="${qrImg.src}" alt="QR Code"
-               style="position:absolute; bottom:16px; left:18px; width:52px; height:52px; border-radius:6px;" />
-          <h2 style="text-align:center; font-size:20px; font-weight:700; margin-bottom:4px;">
-            British Classic Fantasy League 2025 🇬🇧
-          </h2>
-          <h3 style="text-align:center; font-size:16px; font-weight:600; margin-bottom:4px;">
-            My Accuracy Score
-          </h3>
-          <p style="text-align:center; font-size:12px; color:#d1d5db; opacity:0.9; margin-bottom:12px;">
-            Entry Count – ${allRows.length}
-          </p>
-          <table class="w-full text-sm" style="table-layout: fixed; border-collapse: collapse;">
-            <colgroup>${headerRow.map(() => '<col>').join('')}</colgroup>
-            <thead>
-              <tr>${headerRow.map(h => `<th class="py-1 px-3 text-center font-semibold">${h}</th>`).join('')}</tr>
-            </thead>
-            <tbody>${rowsHtml}</tbody>
-          </table>
-          <p class="text-xs text-gray-300 text-center mt-4">
-            Data from tinyurl.com/britishclassicfl-accuracy<br /><br />
-            Sponsored by the Sabado Sessions Podcast
-          </p>
-        </div>
-      `;
+    const qr = new Image();
+    qr.crossOrigin = 'anonymous';
+    qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
+    await new Promise(res => { qr.onload = res; });
 
-      document.body.appendChild(snapshot);
+    const footerHtml = `
+      <div style="
+        font-size:11px;
+        color:#ccc;
+        text-align:center;
+        margin-top:18px;
+        line-height:1.6;
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
+        align-items:center;
+        gap:4px;
+      ">
+        <span>Data from tinyurl.com/britishclassicfl-accuracy</span>
+        <span>Sponsored by the Sabado Sessions Podcast</span>
+      </div>
+    `;
 
-      const canvas = await html2canvas(snapshot, { backgroundColor: null, scale: 2, useCORS: true, scrollY: 0 });
-      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-      snapshot.remove();
-      const file = new File([blob], 'accuracy_score.png', { type: 'image/png' });
+    snap.innerHTML = `
+      <div style="background:rgba(0,0,0,.55);padding:18px;position:relative;">
+        <img src="${qr.src}" style="position:absolute;bottom:16px;left:18px;width:52px;height:52px;border-radius:6px;" />
+        <h2 style="text-align:center;font-size:20px;font-weight:700;margin-bottom:4px;">
+          British Classic Fantasy League 2025 🇬🇧
+        </h2>
+        <h3 style="text-align:center;font-size:16px;font-weight:600;margin-bottom:4px;">
+          My Accuracy Score
+        </h3>
+        <p style="text-align:center;font-size:12px;color:#d1d5db;opacity:.9;margin-bottom:12px;">
+          Entry Count – ${allRows.length}
+        </p>
+        <table style="width:100%;table-layout:fixed;border-collapse:collapse;">
+          <thead><tr>${headerRow.map(h => `<th style='padding:4px;font-weight:600;'>${h}</th>`).join('')}</tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+        ${footerHtml}
+        <div style="height:${footerSpacer}px;width:100%;background:transparent;"></div>
+      </div>
+    `;
 
-      try {
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: 'My Accuracy Score',
-            text: 'Check out my accuracy score!',
-            files: [file]
-          });
-        } else {
-          const link = document.createElement('a');
-          link.href = URL.createObjectURL(blob);
-          link.download = 'my-accuracy-score.png';
-          link.click();
-          URL.revokeObjectURL(link.href);
-        }
-      } catch (err) {
-        console.error("Share failed:", err);
-      }
-    }; // end onload
-  } // end shareScore
+    // Use same wrapper technique for stable html2canvas rendering
+    const scrollWrapper = document.createElement('div');
+    Object.assign(scrollWrapper.style, {
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      width: '100vw',
+      minHeight: `${window.innerHeight * 2}px`,
+      overflow: 'visible',
+      background: 'transparent',
+      transform: 'translateZ(0)',
+      zIndex: '9999',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'flex-start',
+      padding: '20px 0'
+    });
 
-  document.getElementById('shareRankingBtn').addEventListener('click', shareScore);
-  shareFloatingBtn.addEventListener('click', shareScore);
+    scrollWrapper.appendChild(snap);
+    document.body.appendChild(scrollWrapper);
+
+    await new Promise(r => requestAnimationFrame(r));
+    const snapHeight = snap.scrollHeight;
+
+    const canvas = await html2canvas(scrollWrapper, {
+      backgroundColor: null,
+      useCORS: true,
+      scrollY: 0,
+      scale: 2,
+      width: 600,
+      height: snapHeight,
+      windowWidth: 600,
+      windowHeight: snapHeight
+    });
+
+    scrollWrapper.remove();
+    return canvas;
+  }
+
+  // Hook up header icon as a fallback share trigger too (optional)
+  document.getElementById('shareRankingBtn').addEventListener('click', () => {
+    if (!searchMatches.length) {
+      alert("Please search for your name first.");
+      return;
+    }
+    shareScore();
+  });
+
   loadScores();
 });
 </script>
