@@ -184,7 +184,58 @@
     </footer>
   </div>
 
-  <script>
+<script>
+Chart.register(ChartDataLabels);
+
+const SHEET_URL =
+  'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
+
+let allData = [];
+const charts = {};
+
+function sizing() {
+  const d = window.matchMedia('(min-width:1024px)').matches;
+  return {
+    donutTitle: d ? 22 : 14,
+    donutSubtitle: d ? 18 : 12,
+    donutLegend: d ? 18 : 12,
+    donutPercent: d ? 16 : 12,
+    histTitle: d ? 22 : 14,
+    histSubtitle: d ? 18 : 12,
+    axisTitle: d ? 18 : 12,
+    axisTick: d ? 14 : 11,
+    histBarLabel: d ? 12 : 10,
+    exportWidth: d ? 1024 : 780,
+    qrSize: d ? 96 : 72,
+    creditFont: d ? 18 : 13,
+    headerFont: d ? 32 : 20,
+    subFont: d ? 26 : 16
+  };
+}
+
+// Parse Google Sheet + initialise dropdowns
+Papa.parse(SHEET_URL, {
+  download: true,
+  header: true,
+  complete: (r) => {
+    allData = r.data;
+    setupDropdowns();
+  },
+});
+
+function setupDropdowns() {
+  ['F', 'M'].forEach((g) => {
+    const d = allData.filter((r) => r.Gender === g);
+    const classes = [...new Set(d.map((r) => r.Class))].sort((a, b) => parseFloat(a) - parseFloat(b));
+    const s = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
+    s.innerHTML = classes.map((c) => `<option value="${c}">${c}kg</option>`).join('');
+    s.onchange = () => renderCharts(g, s.value);
+    renderCharts(g, classes[0]);
+  });
+}
+</script>
+
+<script>
 function renderCharts(g, w) {
   const s = sizing();
   const donutId = g === 'F' ? 'womenDonut' : 'menDonut';
