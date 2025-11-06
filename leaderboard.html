@@ -476,18 +476,27 @@ document.addEventListener('DOMContentLoaded', () => {
               'domScale:', domScale,
               'captureScale:', captureScale);
 
-  // --- 4) Capture canvas ---
-  const canvas = await html2canvas(scrollWrapper, {
-    backgroundColor: null,
-    useCORS: true,
-    scrollY: 0,
-    scale: captureScale
-  });
+// --- 4) Chrome fixed pixel ratio paint ---
+scrollWrapper.style.zoom = '1.0'; // neutralize WebKit zoom scaling
+snap.style.zoom = '1.0';
 
-  // --- 5) Cleanup ---
-  scrollWrapper.remove();
-  return canvas;
-}
+// Force minimal layout jitter before capture
+await new Promise(r => requestAnimationFrame(r));
+
+// Lock scrollWrapper pixel ratio to 1 for capture
+const canvas = await html2canvas(scrollWrapper, {
+  backgroundColor: null,
+  useCORS: true,
+  scrollY: 0,
+  scale: 2, // consistent retina export
+  windowWidth: 600,
+  windowHeight: snap.offsetHeight
+});
+
+// --- 5) Cleanup ---
+scrollWrapper.remove();
+return canvas;
+  }
 
   document.getElementById('shareRankingBtn').addEventListener('click', shareRanking);
   shareFloatingBtn.addEventListener('click', shareRanking);
