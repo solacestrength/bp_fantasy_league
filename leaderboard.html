@@ -365,15 +365,8 @@ async function shareRanking() {
       await performShare(file, 'British Classic Fantasy League 2025 🇬🇧', 'Check out my league ranking!');
       removeContextualShare();
     });
-    return;
-  }
 
-    // When user taps "Share Generated Image"
-    btn.onclick = async () => {
-      await performShare(file, 'British Classic Fantasy League 2025 🇬🇧', 'Check out my league ranking!');
-      removeContextualShare();
-    };
-    return;
+    return; // closes Android Chrome block
   }
 
   // --- One-step (All other browsers) ---
