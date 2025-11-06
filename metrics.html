@@ -473,5 +473,25 @@ async function shareChart(id, g) {
   }
 }
 </script>
+<script>
+// ======= COLLAPSIBLE (final safe version) =======
+function toggleSection(id) {
+  const c = document.getElementById(id);
+  const a = document.getElementById(`arrow-${id}`);
+  if (!c || !a) return;
+
+  const open = c.classList.toggle('open');
+  a.classList.toggle('rotate', open);
+
+  // Smooth transition assistance
+  if (open) {
+    c.style.maxHeight = c.scrollHeight + 'px';
+    c.style.opacity = '1';
+  } else {
+    c.style.maxHeight = '0';
+    c.style.opacity = '0';
+  }
+}
+</script>
 </body>
 </html>
