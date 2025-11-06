@@ -149,6 +149,7 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  /* --- Burger / dropdown --- */
   const menuBtn = document.getElementById('menu-btn');
   const mobileMenu = document.getElementById('mobile-menu');
   menuBtn.addEventListener('click', (e) => {
@@ -168,6 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  /* --- Table logic --- */
   const rowsPerPage = 50;
   let allRows = [], filteredRows = [], currentPage = 1;
   let searchMatches = [], currentMatchIndex = -1;
@@ -237,6 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
     container.appendChild(btn);
   }
 
+  /* --- Floating share button --- */
   const searchInput = document.getElementById("searchInput");
   const shareFloatingBtn = document.createElement('button');
   shareFloatingBtn.id = 'floatingShareBtn';
@@ -285,79 +288,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  /* --- Export snapshot (confirm + white-space fix) --- */
+  /* --- SHARE LOGIC (Chrome-safe 2-step, no pop-ups) --- */
+  document.getElementById('shareRankingBtn').addEventListener('click', shareRanking);
+  shareFloatingBtn.addEventListener('click', shareRanking);
+  loadLeaderboard();
+
   async function shareRanking() {
-    if (searchMatches.length === 0) {
-      alert("Please search for your name first.");
-      return;
-    }
+    if (searchMatches.length === 0) return alert("Please search for your name first.");
+    const isChrome = /Chrome/i.test(navigator.userAgent) && !/Edg|OPR|Brave/i.test(navigator.userAgent);
+    if (!isChrome) return oneStepShare();
 
-    if (!confirm("Ready to share your League Ranking snapshot?")) return;
+    // progress overlay
+    const overlay = document.createElement("div");
+    overlay.style = "position:fixed;inset:0;background:rgba(0,0,0,.7);color:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:9999;";
+    overlay.innerHTML = `<div style="margin-bottom:10px;">Generating snapshot...</div>
+      <div style="width:200px;height:6px;background:#333;border-radius:3px;overflow:hidden;">
+        <div id='barFill' style='width:0;height:100%;background:#f43f5e;transition:width .3s;'></div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const bar = overlay.querySelector('#barFill');
+    const timeout = setTimeout(() => bar.style.width = '100%', 3000);
 
-    const matchIndex = searchMatches[currentMatchIndex];
-    let start, end;
-    if (matchIndex < 10) { start = 0; end = 9; }
-    else {
-      start = matchIndex - 4;
-      end = matchIndex + 5;
-      if (start < 0) { end += -start; start = 0; }
-      if (end > allRows.length - 1) { start = Math.max(0, allRows.length - 10); end = allRows.length - 1; }
-    }
+    const canvas = await buildSnapshotCanvas();
+    clearTimeout(timeout);
+    overlay.remove();
 
-    const visibleRows = allRows.slice(start, end + 1);
-    const rowsHtml = visibleRows.map((row, i) => {
-      const actualIndex = start + i;
-      const isMatch = actualIndex === matchIndex;
-      return `<tr style="${isMatch ? 'font-weight:bold;' : ''}">
-        ${row.map(cell => `<td class='px-3 py-1 text-center'>${cell}</td>`).join('')}
-      </tr>`;
-    }).join('');
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    const file = new File([blob], 'league_ranking.png', { type: 'image/png' });
 
-    const snapshot = document.createElement('div');
-    snapshot.style.width = '600px';
-    snapshot.style.borderRadius = '16px';
-    snapshot.style.overflow = 'hidden';
-    snapshot.style.position = 'relative';
-    snapshot.style.background = '#000';
-    snapshot.style.boxShadow = '0 10px 30px rgba(0,0,0,.35)';
-    snapshot.style.backgroundImage = "url('image_leaderboard_shf.jpg')";
-    snapshot.style.backgroundSize = 'cover';
-    snapshot.style.backgroundPosition = 'center';
-    snapshot.style.display = 'block';
-    snapshot.style.isolation = 'isolate';
+    const shareNow = document.createElement('button');
+    shareNow.textContent = "Share Now";
+    shareNow.className = "fixed bottom-20 right-6 bg-red-600 text-white px-4 py-2 rounded-full shadow-lg z-50 hover:bg-red-700";
+    document.body.appendChild(shareNow);
 
-    const qrURL = `https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
-    const qrImg = new Image();
-    qrImg.crossOrigin = "anonymous";
-    qrImg.src = qrURL;
-
-    qrImg.onload = async () => {
-      snapshot.innerHTML = `
-        <div style="background: rgba(0,0,0,.55); padding: 18px 18px 14px; position: relative;">
-          <img src="${qrImg.src}" alt="QR Code"
-               style="position:absolute; bottom:16px; left:18px; width:52px; height:52px; border-radius:6px;" />
-          <h2 class="text-center text-xl font-bold mb-1">British Classic Fantasy League 2025 🇬🇧</h2>
-          <h3 class="text-center text-base font-semibold mb-1">My League Ranking</h3>
-          <p class="text-center text-xs text-gray-300 mb-3" style="opacity:0.9;">Entry Count – ${allRows.length}</p>
-          <table class="w-full text-sm" style="table-layout: fixed; border-collapse: collapse;">
-            <colgroup>${headerRow.map(() => '<col>').join('')}</colgroup>
-            <thead><tr>${headerRow.map(h => `<th class='py-1 px-3 text-center font-semibold'>${h}</th>`).join('')}</tr></thead>
-            <tbody>${rowsHtml}</tbody>
-          </table>
-          <p class="text-xs text-gray-300 text-center mt-4">
-            Data from tinyurl.com/britishclassicfl-leaderboard<br /><br />
-            Sponsored by the Sabado Sessions Podcast
-          </p>
-        </div>
-      `;
-
-      document.body.appendChild(snapshot);
-
-      const canvas = await html2canvas(snapshot, { backgroundColor: null, scale: 2, useCORS: true, scrollY: 0 });
-      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-      snapshot.remove();
-      const file = new File([blob], 'league_ranking.png', { type: 'image/png' });
-
+    shareNow.addEventListener('click', async () => {
       try {
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
@@ -367,20 +331,78 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         } else {
           const link = document.createElement('a');
-          link.href = URL.createObjectURL(blob);
+          link.href = URL.createObjectURL(file);
           link.download = 'my-league-ranking.png';
           link.click();
           URL.revokeObjectURL(link.href);
         }
       } catch (err) {
-        console.error("Share failed:", err);
-      }
-    }; // end qrImg.onload
-  } // end shareRanking
+        console.error(err);
+      } finally { shareNow.remove(); }
+    });
+  }
 
-  document.getElementById('shareRankingBtn').addEventListener('click', shareRanking);
-  shareFloatingBtn.addEventListener('click', shareRanking);
-  loadLeaderboard();
+  async function oneStepShare() {
+    const canvas = await buildSnapshotCanvas();
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    const file = new File([blob], 'league_ranking.png', { type: 'image/png' });
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: 'British Classic Fantasy League 2025 🇬🇧',
+          text: 'Check out my league ranking!',
+          files: [file]
+        });
+      } else {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(file);
+        link.download = 'my-league-ranking.png';
+        link.click();
+        URL.revokeObjectURL(link.href);
+      }
+    } catch (err) { console.error(err); }
+  }
+
+  async function buildSnapshotCanvas() {
+    const matchIndex = searchMatches[currentMatchIndex];
+    let start = Math.max(0, matchIndex - 4), end = Math.min(allRows.length - 1, matchIndex + 5);
+    const visibleRows = allRows.slice(start, end + 1);
+    const rowsHtml = visibleRows.map((row, i) => {
+      const actual = start + i;
+      const bold = actual === matchIndex ? 'font-weight:bold;' : '';
+      return `<tr style="${bold}">${row.map(c => `<td class='px-3 py-1 text-center'>${c}</td>`).join('')}</tr>`;
+    }).join('');
+
+    const snapshot = document.createElement('div');
+    Object.assign(snapshot.style, {
+      width:'600px',borderRadius:'16px',overflow:'hidden',position:'relative',background:'#000',
+      boxShadow:'0 10px 30px rgba(0,0,0,.35)',backgroundImage:"url('image_leaderboard_shf.jpg')",
+      backgroundSize:'cover',backgroundPosition:'center',display:'block',isolation:'isolate'
+    });
+
+    const qr = new Image();
+    qr.crossOrigin='anonymous';
+    qr.src=`https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
+    await new Promise(res=>{qr.onload=res;});
+    snapshot.innerHTML=`
+      <div style="background:rgba(0,0,0,.55);padding:18px 18px 14px;position:relative;">
+        <img src="${qr.src}" style="position:absolute;bottom:16px;left:18px;width:52px;height:52px;border-radius:6px;" />
+        <h2 style="text-align:center;font-size:20px;font-weight:700;margin-bottom:4px;">British Classic Fantasy League 2025 🇬🇧</h2>
+        <h3 style="text-align:center;font-size:16px;font-weight:600;margin-bottom:4px;">My League Ranking</h3>
+        <p style="text-align:center;font-size:12px;color:#d1d5db;opacity:.9;margin-bottom:12px;">Entry Count – ${allRows.length}</p>
+        <table style="width:100%;table-layout:fixed;border-collapse:collapse;">
+          <thead><tr>${headerRow.map(h=>`<th style='padding:4px;font-weight:600;'>${h}</th>`).join('')}</tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+        <p style="font-size:11px;color:#ccc;text-align:center;margin-top:10px;">
+          Data from tinyurl.com/britishclassicfl-leaderboard<br>Sponsored by the Sabado Sessions Podcast
+        </p>
+      </div>`;
+    document.body.appendChild(snapshot);
+    const canvas=await html2canvas(snapshot,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
+    snapshot.remove();
+    return canvas;
+  }
 });
 </script>
 </body>
