@@ -202,9 +202,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const isHighlighted = searchMatches.length && searchMatches[currentMatchIndex] === globalIndex;
       const rowClass = isHighlighted ? "pulse-row" : "";
       const tds = row.map(cell => `<td class="px-3 py-2 text-center">${cell}</td>`).join('');
-      tableBody.insertAdjacentHTML("beforeend", `<tr class="${rowClass}">${tds}</tr>`);
+      tableBody.insertAdjacentHTML("beforeend", `<tr class="${rowClass}" data-index="${globalIndex}">${tds}</tr>`);
     });
     renderPagination();
+    injectContextualShareButton(); // <--- added
   }
 
   function renderPagination() {
@@ -245,56 +246,43 @@ document.addEventListener('DOMContentLoaded', () => {
     container.appendChild(btn);
   }
 
-  /* --- Search + Floating Share --- */
+  /* --- Contextual Share Button System --- */
+  function injectContextualShareButton() {
+    document.querySelectorAll('.contextual-share').forEach(e => e.remove());
+    if (searchMatches.length === 0) return;
+
+    const matchIndex = searchMatches[currentMatchIndex];
+    const visibleRow = document.querySelector(`tr[data-index="${matchIndex}"]`);
+    if (!visibleRow) return;
+
+    const container = document.createElement('div');
+    container.className = 'contextual-share flex justify-center';
+    container.innerHTML = `
+      <button id="contextShareBtn" class="mt-2 bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded-full text-sm shadow-md">
+        Share My Ranking
+      </button>
+    `;
+    visibleRow.insertAdjacentElement('afterend', container);
+
+    document.getElementById('contextShareBtn').addEventListener('click', shareRanking);
+  }
+
+  /* --- Search handling --- */
   const searchInput = document.getElementById("searchInput");
-  const shareFloatingBtn = document.createElement('button');
-  shareFloatingBtn.id = 'floatingShareBtn';
-  shareFloatingBtn.textContent = "Share My Ranking";
-  shareFloatingBtn.className = "hidden fixed bottom-20 right-6 bg-red-600 text-white px-4 py-2 rounded-full shadow-lg z-50 hover:bg-red-700 transition-opacity duration-700 ease-in-out";
-  document.body.appendChild(shareFloatingBtn);
-
-  let inactivityTimer;
-  function fadeOutShareButton() {
-    shareFloatingBtn.classList.add('fade-out');
-    setTimeout(() => {
-      shareFloatingBtn.classList.add('hidden');
-      shareFloatingBtn.classList.remove('fade-out');
-    }, 700);
-  }
-  function resetInactivityTimer() {
-    clearTimeout(inactivityTimer);
-    if (!shareFloatingBtn.classList.contains('hidden')) {
-      inactivityTimer = setTimeout(() => { fadeOutShareButton(); }, 10000);
-    }
-  }
-  window.addEventListener('scroll', resetInactivityTimer);
-  document.addEventListener('input', resetInactivityTimer);
-
   searchInput.addEventListener("input", () => {
     const filter = searchInput.value.trim().toLowerCase();
     searchMatches = [];
     currentMatchIndex = -1;
-    if (!filter) { filteredRows = [...allRows]; currentPage = 1; renderTable(); shareFloatingBtn.classList.add("hidden"); return; }
+    if (!filter) { filteredRows = [...allRows]; currentPage = 1; renderTable(); return; }
     allRows.forEach((row, idx) => { if (row.join(" ").toLowerCase().includes(filter)) searchMatches.push(idx); });
     if (searchMatches.length > 0) {
       currentMatchIndex = 0;
-      const matchIdx = searchMatches[currentMatchIndex];
-      currentPage = Math.floor(matchIdx / rowsPerPage) + 1;
-      renderTable(); shareFloatingBtn.classList.remove("hidden"); resetInactivityTimer();
-    } else { renderTable(); shareFloatingBtn.classList.add("hidden"); }
+      currentPage = Math.floor(searchMatches[currentMatchIndex] / rowsPerPage) + 1;
+      renderTable();
+    } else { renderTable(); }
   });
 
-  searchInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && searchMatches.length > 1) {
-      e.preventDefault();
-      currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
-      const matchIdx = searchMatches[currentMatchIndex];
-      currentPage = Math.floor(matchIdx / rowsPerPage) + 1;
-      renderTable(); shareFloatingBtn.classList.remove("hidden"); resetInactivityTimer();
-    }
-  });
-
-  /* --- Device detection helper --- */
+  /* --- Browser detection --- */
   function detectBrowserShareSupport() {
     const ua = navigator.userAgent.toLowerCase();
     return {
@@ -303,63 +291,28 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  /* --- SHARE SYSTEM --- */
-  async function shareRanking() {
-    if (searchMatches.length === 0) return alert("Please search for your name first.");
+  /* --- Share system --- */
+  async function shareRanking(e) {
     const { isChromeIOS, isAndroidChrome } = detectBrowserShareSupport();
-
-    if (isChromeIOS) {
+    const btn = e.target;
+    if (isChromeIOS || isAndroidChrome) {
+      btn.textContent = "Generating...";
+      btn.disabled = true;
       const canvas = await buildSnapshotCanvas();
       const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'league_ranking.png';
-      link.click();
-      URL.revokeObjectURL(link.href);
-      alert("Chrome on iOS doesn’t support image sharing. The snapshot has been downloaded instead. Please open this page in Safari to share.");
-      return;
-    }
-
-    if (isAndroidChrome) return chromeTwoStepShare();
-    return oneStepShare();
-  }
-
-  async function chromeTwoStepShare() {
-    const overlay = document.createElement("div");
-    overlay.style = "position:fixed;inset:0;background:rgba(0,0,0,.7);color:#fff;display:flex;justify-content:center;align-items:center;z-index:9999;";
-    overlay.textContent = "Generating snapshot...";
-    document.body.appendChild(overlay);
-
-    const canvas = await buildSnapshotCanvas();
-    overlay.remove();
-
-    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-    const file = new File([blob], 'league_ranking.png', { type: 'image/png' });
-
-    const toast = document.createElement('div');
-    toast.textContent = "Snapshot ready! Tap Share Now.";
-    toast.style = "position:fixed;bottom:90px;right:6px;background:#111;color:#fff;padding:8px 12px;border-radius:8px;font-size:13px;opacity:0.9;z-index:9999;";
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 4000);
-
-    const shareNow = document.createElement('button');
-    shareNow.textContent = "Share Now";
-    shareNow.className = "fixed bottom-20 right-6 bg-red-600 text-white px-4 py-2 rounded-full shadow-lg z-50 hover:bg-red-700";
-    document.body.appendChild(shareNow);
-
-    shareNow.addEventListener('click', async () => {
-      try {
+      const file = new File([blob], 'league_ranking.png', { type: 'image/png' });
+      btn.textContent = "Share Generated Image";
+      btn.disabled = false;
+      btn.onclick = async () => {
         await performShare(file, 'British Classic Fantasy League 2025 🇬🇧', 'Check out my league ranking!');
-      } catch (err) { console.error(err); }
-      shareNow.remove(); toast.remove();
-    });
-  }
-
-  async function oneStepShare() {
-    const canvas = await buildSnapshotCanvas();
-    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-    const file = new File([blob], 'league_ranking.png', { type: 'image/png' });
-    await performShare(file, 'British Classic Fantasy League 2025 🇬🇧', 'Check out my league ranking!');
+        btn.remove(); // auto-hide after use
+      };
+    } else {
+      const canvas = await buildSnapshotCanvas();
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+      const file = new File([blob], 'league_ranking.png', { type: 'image/png' });
+      await performShare(file, 'British Classic Fantasy League 2025 🇬🇧', 'Check out my league ranking!');
+    }
   }
 
   async function performShare(file, title, text) {
@@ -376,155 +329,106 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) { console.error("Share failed:", err); }
   }
 
-async function buildSnapshotCanvas() {
-  const total = allRows.length;
-  const matchIndex = searchMatches[currentMatchIndex];
+  /* --- Snapshot builder (unchanged from your latest) --- */
+  async function buildSnapshotCanvas() {
+    const total = allRows.length;
+    const matchIndex = searchMatches[currentMatchIndex];
 
-  let start, end;
-  if (matchIndex < 10) {
-    start = 0;
-    end = Math.min(9, total - 1);
-  } else if (matchIndex > total - 10) {
-    start = Math.max(0, total - 10);
-    end = total - 1;
-  } else {
-    start = matchIndex - 4;
-    end = matchIndex + 5;
-  }
-
-  const slice = allRows.slice(start, Math.min(end + 1, total));
-  while (slice.length < 10) slice.push(new Array(headerRow.length).fill(''));
-
-  const rowsHtml = slice.map((r, i) => {
-    const actual = start + i;
-    const bold = actual === matchIndex ? 'font-weight:bold;' : '';
-    return `<tr style="${bold}">${r.map(c => `<td class='px-3 py-1 text-center'>${c}</td>`).join('')}</tr>`;
-  }).join('');
-
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-  const isIOSChrome = /CriOS/i.test(navigator.userAgent);
-  const footerSpacer = isSafari ? 32 : 52;
-
-  const snap = document.createElement('div');
-  Object.assign(snap.style, {
-    width: '600px',
-    borderRadius: '16px',
-    overflow: 'hidden',
-    background: '#000',
-    boxShadow: '0 10px 30px rgba(0,0,0,.35)',
-    backgroundImage: "url('image_leaderboard_shf.jpg')",
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    position: 'relative',
-    zIndex: '9999',
-    isolation: 'isolate'
-  });
-
-  const qr = new Image();
-  qr.crossOrigin = 'anonymous';
-  qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
-  await new Promise(res => { qr.onload = res; });
-
-  const footerHtml = `
-    <div style="
-      font-size:11px;
-      color:#ccc;
-      text-align:center;
-      margin-top:18px;
-      line-height:1.6;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      align-items:center;
-      gap:4px;
-    ">
-      <span>Data from tinyurl.com/britishclassicfl-leaderboard</span>
-      <span>Sponsored by the Sabado Sessions Podcast</span>
-    </div>
-  `;
-
-  snap.innerHTML = `
-    <div style="background:rgba(0,0,0,.55);padding:18px;position:relative;">
-      <img src="${qr.src}" style="position:absolute;bottom:16px;left:18px;width:52px;height:52px;border-radius:6px;" />
-      <h2 style="text-align:center;font-size:20px;font-weight:700;margin-bottom:4px;">
-        British Classic Fantasy League 2025 🇬🇧
-      </h2>
-      <h3 style="text-align:center;font-size:16px;font-weight:600;margin-bottom:4px;">
-        My League Ranking
-      </h3>
-      <p style="text-align:center;font-size:12px;color:#d1d5db;opacity:.9;margin-bottom:12px;">
-        Entry Count – ${allRows.length}
-      </p>
-      <table style="width:100%;table-layout:fixed;border-collapse:collapse;">
-        <thead><tr>${headerRow.map(h => `<th style='padding:4px;font-weight:600;'>${h}</th>`).join('')}</tr></thead>
-        <tbody>${rowsHtml}</tbody>
-      </table>
-      ${footerHtml}
-      <div style="height:${footerSpacer}px;width:100%;background:transparent;"></div>
-    </div>
-  `;
-
-  const scrollWrapper = document.createElement('div');
-  Object.assign(scrollWrapper.style, {
-    position: 'fixed',
-    top: '0',
-    left: '0',
-    width: '100vw',
-    minHeight: `${window.innerHeight * 2}px`,
-    overflow: 'visible',
-    background: 'transparent',
-    transform: 'translateZ(0)',
-    zIndex: '9999',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-    padding: '20px 0'
-  });
-
-  scrollWrapper.appendChild(snap);
-  document.body.appendChild(scrollWrapper);
-
-  await new Promise(r => requestAnimationFrame(r));
-  const snapHeight = snap.scrollHeight;
-
-  const canvas = await html2canvas(scrollWrapper, {
-    backgroundColor: null,
-    useCORS: true,
-    scrollY: 0,
-    scale: 2,
-    width: 600,
-    height: snapHeight,
-    windowWidth: 600,
-    windowHeight: snapHeight
-  });
-
-  // Always remove snapshot DOM after rendering (prevents overlay bug)
-  scrollWrapper.remove();
-
-  try {
-    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-    const file = new File([blob], 'league_ranking.png', { type: 'image/png' });
-
-    // Attempt native share where possible
-    if (!isIOSChrome && navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file] });
+    let start, end;
+    if (matchIndex < 10) {
+      start = 0;
+      end = Math.min(9, total - 1);
+    } else if (matchIndex > total - 10) {
+      start = Math.max(0, total - 10);
+      end = total - 1;
     } else {
-      // Silent auto-download fallback for Chrome iOS and others
-      const link = document.createElement('a');
-      link.download = 'league_ranking.png';
-      link.href = URL.createObjectURL(blob);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(link.href);
+      start = matchIndex - 4;
+      end = matchIndex + 5;
     }
-  } catch {
-    scrollWrapper.remove(); // just in case
-  }
-}
 
-  document.getElementById('shareRankingBtn').addEventListener('click', shareRanking);
-  shareFloatingBtn.addEventListener('click', shareRanking);
+    const slice = allRows.slice(start, Math.min(end + 1, total));
+    while (slice.length < 10) slice.push(new Array(headerRow.length).fill(''));
+
+    const rowsHtml = slice.map((r, i) => {
+      const actual = start + i;
+      const bold = actual === matchIndex ? 'font-weight:bold;' : '';
+      return `<tr style="${bold}">${r.map(c => `<td class='px-3 py-1 text-center'>${c}</td>`).join('')}</tr>`;
+    }).join('');
+
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isIOSChrome = /CriOS/i.test(navigator.userAgent);
+    const footerSpacer = isSafari ? 32 : 52;
+
+    const snap = document.createElement('div');
+    Object.assign(snap.style, {
+      width: '600px',
+      borderRadius: '16px',
+      overflow: 'hidden',
+      background: '#000',
+      boxShadow: '0 10px 30px rgba(0,0,0,.35)',
+      backgroundImage: "url('image_leaderboard_shf.jpg')",
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      position: 'relative',
+      zIndex: '9999',
+      isolation: 'isolate'
+    });
+
+    const qr = new Image();
+    qr.crossOrigin = 'anonymous';
+    qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
+    await new Promise(res => { qr.onload = res; });
+
+    const footerHtml = `
+      <div style="font-size:11px;color:#ccc;text-align:center;margin-top:18px;line-height:1.6;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;">
+        <span>Data from tinyurl.com/britishclassicfl-leaderboard</span>
+        <span>Sponsored by the Sabado Sessions Podcast</span>
+      </div>
+    `;
+
+    snap.innerHTML = `
+      <div style="background:rgba(0,0,0,.55);padding:18px;position:relative;">
+        <img src="${qr.src}" style="position:absolute;bottom:16px;left:18px;width:52px;height:52px;border-radius:6px;" />
+        <h2 style="text-align:center;font-size:20px;font-weight:700;margin-bottom:4px;">
+          British Classic Fantasy League 2025 🇬🇧
+        </h2>
+        <h3 style="text-align:center;font-size:16px;font-weight:600;margin-bottom:4px;">My League Ranking</h3>
+        <p style="text-align:center;font-size:12px;color:#d1d5db;opacity:.9;margin-bottom:12px;">Entry Count – ${allRows.length}</p>
+        <table style="width:100%;table-layout:fixed;border-collapse:collapse;">
+          <thead><tr>${headerRow.map(h => `<th style='padding:4px;font-weight:600;'>${h}</th>`).join('')}</tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+        ${footerHtml}
+        <div style="height:${footerSpacer}px;width:100%;background:transparent;"></div>
+      </div>
+    `;
+
+    const scrollWrapper = document.createElement('div');
+    Object.assign(scrollWrapper.style, {
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      width: '100vw',
+      minHeight: `${window.innerHeight * 2}px`,
+      overflow: 'visible',
+      background: 'transparent',
+      transform: 'translateZ(0)',
+      zIndex: '9999',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'flex-start',
+      padding: '20px 0'
+    });
+
+    scrollWrapper.appendChild(snap);
+    document.body.appendChild(scrollWrapper);
+    await new Promise(r => requestAnimationFrame(r));
+
+    const canvas = await html2canvas(scrollWrapper, { backgroundColor: null, useCORS: true, scale: 2 });
+    scrollWrapper.remove();
+    return canvas;
+  }
+
   loadLeaderboard();
 });
 </script>
