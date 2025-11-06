@@ -395,10 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
     width: '600px',
     borderRadius: '16px',
     overflow: 'hidden',
-    position: 'fixed',        // keep it in-view & stable
-    top: '10px',
-    left: '50%',
-    transform: 'translateX(-50%)',
+    position: 'relative',
     background: '#000',
     boxShadow: '0 10px 30px rgba(0,0,0,.35)',
     backgroundImage: "url('image_leaderboard_shf.jpg')",
@@ -437,42 +434,58 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
   `;
 
-  document.body.appendChild(snap);
+  // --- 2) Wrap in scroll container to ensure Chrome paints full content ---
+  const scrollWrapper = document.createElement('div');
+  Object.assign(scrollWrapper.style, {
+    position: 'fixed',
+    top: '0',
+    left: '0',
+    width: '100vw',
+    height: `${window.innerHeight * 1.2}px`, // slightly taller than viewport
+    overflowY: 'scroll',
+    overflowX: 'hidden',
+    background: 'transparent',
+    transform: 'translateZ(0)',
+    zIndex: '9999',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'flex-start'
+  });
+  snap.style.transform = 'translateZ(0)';
+  scrollWrapper.appendChild(snap);
+  document.body.appendChild(scrollWrapper);
 
-  // --- 2) Ensure the whole snapshot fits the viewport (Chrome mobile needs this)
-  // Measure natural height first
+  // --- 3) Wait a frame for layout to settle ---
   await new Promise(r => requestAnimationFrame(r));
+
   const naturalHeight = snap.offsetHeight;
-  const available = Math.max(200, window.innerHeight - 20); // leave 10px margins top/bottom
+  const available = Math.max(200, window.innerHeight - 20);
   const needsScaleDown = naturalHeight > available;
 
-  // Compute a DOM scale to keep the *entire* snap inside viewport
   let domScale = 1;
   if (needsScaleDown) {
     domScale = available / naturalHeight;
-    snap.style.transform = `translateX(-50%) scale(${domScale})`;
+    snap.style.transform = `translateZ(0) scale(${domScale})`;
     snap.style.transformOrigin = 'top center';
   }
 
-  // --- 3) Capture with inverse scale so the output stays crisp & full-size
-  // Target about 1200px wide output if possible
   const baseScale = Math.max(2, window.devicePixelRatio || 2);
   const captureScale = baseScale * (1 / domScale);
 
-  // Small, helpful debug (you can comment these out later)
   console.log('[snapshot] naturalHeight:', naturalHeight,
               'domScale:', domScale,
               'captureScale:', captureScale);
 
-  const canvas = await html2canvas(snap, {
+  // --- 4) Capture canvas ---
+  const canvas = await html2canvas(scrollWrapper, {
     backgroundColor: null,
     useCORS: true,
     scrollY: 0,
     scale: captureScale
   });
 
-  // --- 4) Cleanup
-  snap.remove();
+  // --- 5) Cleanup ---
+  scrollWrapper.remove();
   return canvas;
 }
 
