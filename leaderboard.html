@@ -377,10 +377,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function buildSnapshotCanvas() {
-  const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
+  // --- 0) Gather data for 10 rows around the match
   const matchIndex = searchMatches[currentMatchIndex];
   let start = Math.max(0, matchIndex - 4),
-      end = Math.min(allRows.length - 1, matchIndex + 5);
+      end   = Math.min(allRows.length - 1, matchIndex + 5);
   const visible = allRows.slice(start, end + 1);
 
   const rowsHtml = visible.map((r, i) => {
@@ -389,26 +389,38 @@ document.addEventListener('DOMContentLoaded', () => {
     return `<tr style="${bold}">${r.map(c => `<td class='px-3 py-1 text-center'>${c}</td>`).join('')}</tr>`;
   }).join('');
 
-  // --- Main snapshot ---
+  // --- 1) Build snapshot node (fixed width; natural height)
   const snap = document.createElement('div');
   Object.assign(snap.style, {
     width: '600px',
     borderRadius: '16px',
     overflow: 'hidden',
-    position: 'relative',
+    position: 'fixed',        // keep it in-view & stable
+    top: '10px',
+    left: '50%',
+    transform: 'translateX(-50%)',
     background: '#000',
     boxShadow: '0 10px 30px rgba(0,0,0,.35)',
     backgroundImage: "url('image_leaderboard_shf.jpg')",
     backgroundSize: 'cover',
     backgroundPosition: 'center',
-    display: 'block',
+    zIndex: '9999',
     isolation: 'isolate'
   });
 
+  // Load QR (blocking so we don't render before it’s ready)
   const qr = new Image();
   qr.crossOrigin = 'anonymous';
   qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
   await new Promise(res => { qr.onload = res; });
+
+  // Footer: use block spans instead of <br>
+  const footerHtml = `
+    <p style="font-size:11px;color:#ccc;text-align:center;margin-top:10px;line-height:1.4;">
+      <span style="display:block;">Data from tinyurl.com/britishclassicfl-leaderboard</span>
+      <span style="display:block;">Sponsored by the Sabado Sessions Podcast</span>
+    </p>
+  `;
 
   snap.innerHTML = `
     <div style="background:rgba(0,0,0,.55);padding:18px 18px 14px;position:relative;">
@@ -420,53 +432,47 @@ document.addEventListener('DOMContentLoaded', () => {
         <thead><tr>${headerRow.map(h => `<th style='padding:4px;font-weight:600;'>${h}</th>`).join('')}</tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>
-      <p style="font-size:11px;color:#ccc;text-align:center;margin-top:10px;line-height:1.6;">
-        Data from tinyurl.com/britishclassicfl-leaderboard<br>
-        Sponsored by the Sabado Sessions Podcast
-      </p>
-      <div style="height:50px;width:100%;background:transparent;"></div>
-    </div>`;
+      ${footerHtml}
+      <div style="height:40px;width:100%;background:transparent;"></div>
+    </div>
+  `;
 
-  // --- Safe wrapper to guarantee full render ---
-  const wrapper = document.createElement('div');
-  Object.assign(wrapper.style, {
-    position: 'absolute',
-    top: '0',
-    left: '0',
-    width: '100%',
-    minHeight: '1200px',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-    background: 'transparent',
-    zIndex: '9999',
-    padding: '80px 0'
-  });
+  document.body.appendChild(snap);
 
-  const safeBox = document.createElement('div');
-  safeBox.style.width = '600px';
-  safeBox.style.minHeight = '850px';
-  safeBox.style.display = 'flex';
-  safeBox.style.justifyContent = 'center';
-  safeBox.style.alignItems = 'flex-start';
-  safeBox.appendChild(snap);
+  // --- 2) Ensure the whole snapshot fits the viewport (Chrome mobile needs this)
+  // Measure natural height first
+  await new Promise(r => requestAnimationFrame(r));
+  const naturalHeight = snap.offsetHeight;
+  const available = Math.max(200, window.innerHeight - 20); // leave 10px margins top/bottom
+  const needsScaleDown = naturalHeight > available;
 
-  wrapper.appendChild(safeBox);
-  document.body.appendChild(wrapper);
+  // Compute a DOM scale to keep the *entire* snap inside viewport
+  let domScale = 1;
+  if (needsScaleDown) {
+    domScale = available / naturalHeight;
+    snap.style.transform = `translateX(-50%) scale(${domScale})`;
+    snap.style.transformOrigin = 'top center';
+  }
 
-  // --- Allow Chrome to "paint" offscreen properly ---
-  window.scrollTo(0, 0);
-  await new Promise(r => setTimeout(r, 100)); // short reflow wait
+  // --- 3) Capture with inverse scale so the output stays crisp & full-size
+  // Target about 1200px wide output if possible
+  const baseScale = Math.max(2, window.devicePixelRatio || 2);
+  const captureScale = baseScale * (1 / domScale);
 
-  const canvas = await html2canvas(wrapper, {
+  // Small, helpful debug (you can comment these out later)
+  console.log('[snapshot] naturalHeight:', naturalHeight,
+              'domScale:', domScale,
+              'captureScale:', captureScale);
+
+  const canvas = await html2canvas(snap, {
     backgroundColor: null,
     useCORS: true,
-    scale: 2.5,
-    scrollY: -window.scrollY,
-    scrollX: 0
+    scrollY: 0,
+    scale: captureScale
   });
 
-  wrapper.remove();
+  // --- 4) Cleanup
+  snap.remove();
   return canvas;
 }
 
