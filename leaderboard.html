@@ -383,15 +383,12 @@ async function buildSnapshotCanvas() {
 
   let start, end;
   if (matchIndex < 10) {
-    // Top 10 block
     start = 0;
     end = Math.min(9, total - 1);
   } else if (matchIndex > total - 10) {
-    // Bottom 10 block
     start = Math.max(0, total - 10);
     end = total - 1;
   } else {
-    // Middle block (4 above, 5 below)
     start = matchIndex - 4;
     end = matchIndex + 5;
   }
@@ -431,15 +428,26 @@ async function buildSnapshotCanvas() {
   qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
   await new Promise(res => { qr.onload = res; });
 
-  // --- 4) Build footer (with line spacing fixed) ---
+  // --- 4) Build footer (cross-browser spacing) ---
   const footerHtml = `
-    <p style="font-size:11px;color:#ccc;text-align:center;margin-top:14px;line-height:1.5;">
-      <span style="display:block;">Data from tinyurl.com/britishclassicfl-leaderboard</span>
-      <span style="display:block;">Sponsored by the Sabado Sessions Podcast</span>
-    </p>
+    <div style="
+      font-size:11px;
+      color:#ccc;
+      text-align:center;
+      margin-top:18px;
+      line-height:1.6;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      gap:4px;
+    ">
+      <span>Data from tinyurl.com/britishclassicfl-leaderboard</span>
+      <span>Sponsored by the Sabado Sessions Podcast</span>
+    </div>
   `;
 
-  // --- 5) Compose main HTML inside snapshot ---
+  // --- 5) Compose snapshot HTML ---
   snap.innerHTML = `
     <div style="background:rgba(0,0,0,.55);padding:18px;position:relative;">
       <img src="${qr.src}" style="position:absolute;bottom:16px;left:18px;width:52px;height:52px;border-radius:6px;" />
@@ -459,11 +467,11 @@ async function buildSnapshotCanvas() {
         <tbody>${rowsHtml}</tbody>
       </table>
       ${footerHtml}
-      <div style="height:40px;width:100%;background:transparent;"></div>
+      <div style="height:52px;width:100%;background:transparent;"></div>
     </div>
   `;
 
-  // --- 6) Wrapper for full-height rendering (prevents cropping on Chrome iOS/Android) ---
+  // --- 6) Wrapper to guarantee full content capture ---
   const scrollWrapper = document.createElement('div');
   Object.assign(scrollWrapper.style, {
     position: 'fixed',
@@ -484,12 +492,12 @@ async function buildSnapshotCanvas() {
   scrollWrapper.appendChild(snap);
   document.body.appendChild(scrollWrapper);
 
-  // --- 7) Let the layout settle and measure true content height ---
+  // --- 7) Wait for layout to stabilise ---
   await new Promise(r => requestAnimationFrame(r));
   const snapHeight = snap.scrollHeight;
   console.log(`Snapshot true height: ${snapHeight}px`);
 
-  // --- 8) Capture the full content using enforced size parameters ---
+  // --- 8) Capture snapshot ---
   const canvas = await html2canvas(scrollWrapper, {
     backgroundColor: null,
     useCORS: true,
@@ -501,7 +509,7 @@ async function buildSnapshotCanvas() {
     windowHeight: snapHeight
   });
 
-  // --- 9) Cleanup DOM and return canvas ---
+  // --- 9) Cleanup ---
   scrollWrapper.remove();
   return canvas;
 }
