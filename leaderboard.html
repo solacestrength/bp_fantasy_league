@@ -377,99 +377,104 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function buildSnapshotCanvas() {
-    const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
-    const matchIndex = searchMatches[currentMatchIndex];
-    let start = Math.max(0, matchIndex - 4),
-        end = Math.min(allRows.length - 1, matchIndex + 5);
-    const visible = allRows.slice(start, end + 1);
+  const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
+  const matchIndex = searchMatches[currentMatchIndex];
+  let start = Math.max(0, matchIndex - 4),
+      end = Math.min(allRows.length - 1, matchIndex + 5);
+  const visible = allRows.slice(start, end + 1);
 
-    const rowsHtml = visible.map((r, i) => {
-      const actual = start + i;
-      const bold = actual === matchIndex ? 'font-weight:bold;' : '';
-      return `<tr style="${bold}">${r.map(c => `<td class='px-3 py-1 text-center'>${c}</td>`).join('')}</tr>`;
-    }).join('');
+  const rowsHtml = visible.map((r, i) => {
+    const actual = start + i;
+    const bold = actual === matchIndex ? 'font-weight:bold;' : '';
+    return `<tr style="${bold}">${r.map(c => `<td class='px-3 py-1 text-center'>${c}</td>`).join('')}</tr>`;
+  }).join('');
 
-    const snap = document.createElement('div');
-    Object.assign(snap.style, {
-      width: '600px',
-      borderRadius: '16px',
-      overflow: 'hidden',
-      position: 'relative',
-      background: '#000',
-      boxShadow: '0 10px 30px rgba(0,0,0,.35)',
-      backgroundImage: "url('image_leaderboard_shf.jpg')",
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      display: 'block',
-      isolation: 'isolate'
-    });
+  const snap = document.createElement('div');
+  Object.assign(snap.style, {
+    width: '600px',
+    borderRadius: '16px',
+    overflow: 'hidden',
+    position: 'relative',
+    background: '#000',
+    boxShadow: '0 10px 30px rgba(0,0,0,.35)',
+    backgroundImage: "url('image_leaderboard_shf.jpg')",
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    display: 'block',
+    isolation: 'isolate'
+  });
 
-    if (isAndroidChrome || isChromeIOS) snap.style.paddingBottom = '40px';
+  const qr = new Image();
+  qr.crossOrigin = 'anonymous';
+  qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
+  await new Promise(res => { qr.onload = res; });
 
-    const qr = new Image();
-    qr.crossOrigin = 'anonymous';
-    qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
-    await new Promise(res => { qr.onload = res; });
+  snap.innerHTML = `
+    <div style="background:rgba(0,0,0,.55);padding:18px 18px 14px;position:relative;">
+      <img src="${qr.src}" style="position:absolute;bottom:16px;left:18px;width:52px;height:52px;border-radius:6px;" />
+      <h2 style="text-align:center;font-size:20px;font-weight:700;margin-bottom:4px;">
+        British Classic Fantasy League 2025 🇬🇧
+      </h2>
+      <h3 style="text-align:center;font-size:16px;font-weight:600;margin-bottom:4px;">My League Ranking</h3>
+      <p style="text-align:center;font-size:12px;color:#d1d5db;opacity:.9;margin-bottom:12px;">
+        Entry Count – ${allRows.length}
+      </p>
+      <table style="width:100%;table-layout:fixed;border-collapse:collapse;">
+        <thead><tr>${headerRow.map(h => `<th style='padding:4px;font-weight:600;'>${h}</th>`).join('')}</tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+      <p style="font-size:11px;color:#ccc;text-align:center;margin-top:10px;line-height:1.4;">
+        Data from tinyurl.com/britishclassicfl-leaderboard<br>
+        Sponsored by the Sabado Sessions Podcast
+      </p>
+      <div style="height:40px;width:100%;background:transparent;"></div>
+    </div>`;
 
-    snap.innerHTML = `
-      <div style="background:rgba(0,0,0,.55);padding:18px 18px 14px;position:relative;">
-        <img src="${qr.src}" style="position:absolute;bottom:16px;left:18px;width:52px;height:52px;border-radius:6px;" />
-        <h2 style="text-align:center;font-size:20px;font-weight:700;margin-bottom:4px;">British Classic Fantasy League 2025 🇬🇧</h2>
-        <h3 style="text-align:center;font-size:16px;font-weight:600;margin-bottom:4px;">My League Ranking</h3>
-        <p style="text-align:center;font-size:12px;color:#d1d5db;opacity:.9;margin-bottom:12px;">Entry Count – ${allRows.length}</p>
-        <table style="width:100%;table-layout:fixed;border-collapse:collapse;">
-          <thead><tr>${headerRow.map(h => `<th style='padding:4px;font-weight:600;'>${h}</th>`).join('')}</tr></thead>
-          <tbody>${rowsHtml}</tbody>
-        </table>
-        <p style="font-size:11px;color:#ccc;text-align:center;margin-top:10px;line-height:1.4;">
-          Data from tinyurl.com/britishclassicfl-leaderboard<br>
-          Sponsored by the Sabado Sessions Podcast
-        </p>
-        <div style="height:32px;width:100%;background:transparent;"></div>
-      </div>`;
+  // --- Ensure full capture region ---
+  const prevScroll = window.scrollY;
+  const prevOverflow = document.body.style.overflow;
+  document.body.style.overflow = 'hidden';
+  window.scrollTo(0, 0);
 
-    /* ---------- FINAL CAPTURE: Chrome + iOS aspect-ratio fix ---------- */
-const wrapper = document.createElement('div');
-wrapper.style.position = 'fixed';
-wrapper.style.inset = '0';
-wrapper.style.display = 'flex';
-wrapper.style.justifyContent = 'center';
-wrapper.style.alignItems = 'flex-start';
-wrapper.style.background = 'transparent';
-wrapper.style.zIndex = '9999';
+  const wrapper = document.createElement('div');
+  Object.assign(wrapper.style, {
+    position: 'absolute',
+    top: '0',
+    left: '0',
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    background: 'transparent',
+    zIndex: '9999'
+  });
 
-// fixed box that preserves Safari proportions
-const safeBox = document.createElement('div');
-safeBox.style.width = '600px';
-safeBox.style.height = '750px'; // force 4:5 ratio for consistent geometry
-safeBox.style.display = 'flex';
-safeBox.style.justifyContent = 'center';
-safeBox.style.alignItems = 'flex-start';
-safeBox.style.overflow = 'hidden';
-safeBox.appendChild(snap);
+  const safeBox = document.createElement('div');
+  safeBox.style.width = '600px';
+  safeBox.style.minHeight = '780px'; // forces Chrome to paint full vertical
+  safeBox.style.display = 'flex';
+  safeBox.style.justifyContent = 'center';
+  safeBox.style.alignItems = 'flex-start';
+  safeBox.style.overflow = 'hidden';
+  safeBox.appendChild(snap);
+  wrapper.appendChild(safeBox);
+  document.body.appendChild(wrapper);
 
-wrapper.appendChild(safeBox);
-document.body.appendChild(wrapper);
+  const canvas = await html2canvas(wrapper, {
+    backgroundColor: null,
+    useCORS: true,
+    scale: 2,
+    windowWidth: 600,
+    windowHeight: 780, // ensures full frame rendered even if viewport smaller
+    scrollY: 0
+  });
 
-// Chrome iOS/Android full-height fix
-const isAnyChrome = isChromeIOS || isAndroidChrome;
-if (isAnyChrome) {
-  snap.style.minHeight = '750px';
-  snap.style.backgroundSize = 'cover';
-  snap.style.backgroundRepeat = 'no-repeat';
-  snap.style.backgroundPosition = 'center';
+  wrapper.remove();
+  document.body.style.overflow = prevOverflow;
+  window.scrollTo(0, prevScroll);
+  return canvas;
 }
-
-const canvas = await html2canvas(wrapper, {
-  backgroundColor: null,
-  scale: 2, // keep 2x crispness, prevent stretch
-  useCORS: true,
-  scrollY: 0
-});
-
-wrapper.remove();
-return canvas;
-  }
 
   document.getElementById('shareRankingBtn').addEventListener('click', shareRanking);
   shareFloatingBtn.addEventListener('click', shareRanking);
