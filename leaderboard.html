@@ -389,6 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return `<tr style="${bold}">${r.map(c => `<td class='px-3 py-1 text-center'>${c}</td>`).join('')}</tr>`;
   }).join('');
 
+  // --- Main snapshot ---
   const snap = document.createElement('div');
   Object.assign(snap.style, {
     width: '600px',
@@ -412,67 +413,60 @@ document.addEventListener('DOMContentLoaded', () => {
   snap.innerHTML = `
     <div style="background:rgba(0,0,0,.55);padding:18px 18px 14px;position:relative;">
       <img src="${qr.src}" style="position:absolute;bottom:16px;left:18px;width:52px;height:52px;border-radius:6px;" />
-      <h2 style="text-align:center;font-size:20px;font-weight:700;margin-bottom:4px;">
-        British Classic Fantasy League 2025 🇬🇧
-      </h2>
+      <h2 style="text-align:center;font-size:20px;font-weight:700;margin-bottom:4px;">British Classic Fantasy League 2025 🇬🇧</h2>
       <h3 style="text-align:center;font-size:16px;font-weight:600;margin-bottom:4px;">My League Ranking</h3>
-      <p style="text-align:center;font-size:12px;color:#d1d5db;opacity:.9;margin-bottom:12px;">
-        Entry Count – ${allRows.length}
-      </p>
+      <p style="text-align:center;font-size:12px;color:#d1d5db;opacity:.9;margin-bottom:12px;">Entry Count – ${allRows.length}</p>
       <table style="width:100%;table-layout:fixed;border-collapse:collapse;">
         <thead><tr>${headerRow.map(h => `<th style='padding:4px;font-weight:600;'>${h}</th>`).join('')}</tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>
-      <p style="font-size:11px;color:#ccc;text-align:center;margin-top:10px;line-height:1.4;">
+      <p style="font-size:11px;color:#ccc;text-align:center;margin-top:10px;line-height:1.6;">
         Data from tinyurl.com/britishclassicfl-leaderboard<br>
         Sponsored by the Sabado Sessions Podcast
       </p>
-      <div style="height:40px;width:100%;background:transparent;"></div>
+      <div style="height:50px;width:100%;background:transparent;"></div>
     </div>`;
 
-  // --- Ensure full capture region ---
-  const prevScroll = window.scrollY;
-  const prevOverflow = document.body.style.overflow;
-  document.body.style.overflow = 'hidden';
-  window.scrollTo(0, 0);
-
+  // --- Safe wrapper to guarantee full render ---
   const wrapper = document.createElement('div');
   Object.assign(wrapper.style, {
     position: 'absolute',
     top: '0',
     left: '0',
     width: '100%',
-    height: '100%',
+    minHeight: '1200px',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'flex-start',
     background: 'transparent',
-    zIndex: '9999'
+    zIndex: '9999',
+    padding: '80px 0'
   });
 
   const safeBox = document.createElement('div');
   safeBox.style.width = '600px';
-  safeBox.style.minHeight = '780px'; // forces Chrome to paint full vertical
+  safeBox.style.minHeight = '850px';
   safeBox.style.display = 'flex';
   safeBox.style.justifyContent = 'center';
   safeBox.style.alignItems = 'flex-start';
-  safeBox.style.overflow = 'hidden';
   safeBox.appendChild(snap);
+
   wrapper.appendChild(safeBox);
   document.body.appendChild(wrapper);
+
+  // --- Allow Chrome to "paint" offscreen properly ---
+  window.scrollTo(0, 0);
+  await new Promise(r => setTimeout(r, 100)); // short reflow wait
 
   const canvas = await html2canvas(wrapper, {
     backgroundColor: null,
     useCORS: true,
-    scale: 2,
-    windowWidth: 600,
-    windowHeight: 780, // ensures full frame rendered even if viewport smaller
-    scrollY: 0
+    scale: 2.5,
+    scrollY: -window.scrollY,
+    scrollX: 0
   });
 
   wrapper.remove();
-  document.body.style.overflow = prevOverflow;
-  window.scrollTo(0, prevScroll);
   return canvas;
 }
 
