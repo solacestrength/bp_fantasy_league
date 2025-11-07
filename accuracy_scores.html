@@ -261,6 +261,13 @@
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
 
+      const bottomBackToTop = document.getElementById('bottomBackToTop');
+  if (bottomBackToTop) {
+    bottomBackToTop.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
     /* ========== Accuracy table state ========== */
     const rowsPerPage = 50;
     let allRows = [];
