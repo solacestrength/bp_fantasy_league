@@ -228,36 +228,33 @@
 
 <script>
   
-// --- Plugin to truly center visible bars (geometry-based) ---
+// --- Stable bar centering plugin (post-layout correction, export-safe) ---
 const centerBarsPlugin = {
   id: 'centerBars',
-  afterLayout(chart, args, opts) {
-    if (!opts || !opts.enabled) return;
-
-    const x = chart.scales?.x;
-    if (!x || !x.ticks || x.ticks.length < 1) return;
+  afterDatasetsDraw(chart, args, opts) {
+    if (!opts?.enabled) return;
 
     const meta = chart.getDatasetMeta(0);
     const bars = meta?.data || [];
     if (!bars.length) return;
 
-    // Get actual bar pixel edges
-    const firstBar = bars[0];
-    const lastBar = bars[bars.length - 1];
-    const firstX = firstBar.x - firstBar.width / 2;
-    const lastX = lastBar.x + lastBar.width / 2;
+    const first = bars[0];
+    const last  = bars[bars.length - 1];
+    const firstX = first.x - first.width / 2;
+    const lastX  = last.x + last.width / 2;
 
+    // Find true visual midpoint of all bars
     const barsMid = (firstX + lastX) / 2;
-    const canvasMid = chart.width / 2;
-    const shift = canvasMid - barsMid;
+    const chartMid = chart.chartArea.left + chart.chartArea.width / 2;
+    const shift = chartMid - barsMid;
 
-    if (!isFinite(shift) || Math.abs(shift) < 0.5) return;
+    if (Math.abs(shift) < 0.5) return;
 
-    // Move entire x-scale and chart area together
-    chart.chartArea.left  += shift;
-    chart.chartArea.right += shift;
-    x.left  += shift;
-    x.right += shift;
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.translate(shift, 0);
+    bars.forEach(b => b.draw(ctx));
+    ctx.restore();
   }
 };
 
