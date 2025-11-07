@@ -276,18 +276,28 @@ document.addEventListener("DOMContentLoaded", () => {
   let searchMatches = [], currentMatchIndex = -1;
   let headerRow = [], contextualShareBtn = null;
 
-  async function loadLeaderboard() {
-    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=2003215108&single=true&output=csv";
-    const response = await fetch(csvUrl);
-    const text = await response.text();
-    const rows = text.trim().split("\n").map(r => r.split(","));
-    headerRow = rows.shift();
-    document.getElementById("leaderboardHeader").innerHTML =
-      headerRow.map(h => `<th class='px-3 py-2 text-center'>${h}</th>`).join("");
-    allRows = rows;
-    filteredRows = [...allRows];
-    renderTable();
-  }
+async function loadLeaderboard() {
+  const csvUrl =
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=2003215108&single=true&output=csv";
+  const response = await fetch(csvUrl);
+  const text = await response.text();
+  const rows = text.trim().split("\n").map(r => r.split(","));
+  headerRow = rows.shift();
+
+  // 👇 Detect which column is “Name” for search highlighting
+  nameColIdx = headerRow.findIndex(h =>
+    h.toLowerCase().includes("name")
+  );
+
+  document.getElementById("leaderboardHeader").innerHTML = headerRow
+    .map(h => `<th class='px-3 py-2 text-center'>${h}</th>`)
+    .join("");
+
+  allRows = rows;
+  filteredRows = [...allRows];
+  renderTable();
+}
+
 
 function renderTable() {
   const tbody = document.getElementById("leaderboardBody");
@@ -320,8 +330,6 @@ function renderTable() {
 
   renderPagination();
 }
-
- }
 
   function renderPagination() {
     const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
