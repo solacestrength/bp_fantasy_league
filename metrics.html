@@ -17,14 +17,14 @@
   <style>
     body {background:#0b0b0b;color:#f1f1f1;font-family:'Inter',sans-serif;}
     select {
-  background: #1f1f1f;       /* same as original */
-  border: 1px solid #333;    /* same as original */
-  color: #f1f1f1;
-  padding: 0.35rem 0.5rem;   /* tight, but you can keep your existing p-2 if you like */
-  border-radius: 0.375rem;   /* to match the rest of the UI */
+  background: #2f2f2f;        /* softer gray to match new theme */
+  border: 1px solid #555;     /* subtle contrast border */
+  color: #f1f1f1;             /* readable text */
+  padding: 0.35rem 0.5rem;    /* snug spacing like before */
+  border-radius: 0.375rem;    /* consistent rounding */
+  width: auto;                /* shrink-wrap to content */
+  min-width: 0;
   display: inline-block;
-  width: auto;               /* key: shrink to content */
-  min-width: 0;              /* prevent any sneaky defaults */
 }
     canvas {max-width:100%;height:auto!important;}
     .chart-container {max-width:600px;margin:0 auto;position:relative;}
