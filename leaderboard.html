@@ -176,7 +176,6 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-
   /* ---------- Burger Menu ---------- */
   const menuBtn = document.getElementById("menu-btn");
   const mobileMenu = document.getElementById("mobile-menu");
@@ -225,7 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 2500);
   }
 
-  /* ---------- Back-to-Top FAB ---------- */
+  /* ---------- Back-to-top FAB ---------- */
   const fab = document.getElementById("backToTopFab");
   let scrollTimer;
   window.addEventListener("scroll", () => {
@@ -243,9 +242,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }, 120);
   });
-  fab.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+  fab.addEventListener("click", () =>
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  );
 
-  /* ---------- Bottom Back-to-Top ---------- */
+  /* ---------- Bottom Back-to-top ---------- */
   const bottomBackToTop = document.getElementById("bottomBackToTop");
   if (bottomBackToTop) {
     bottomBackToTop.addEventListener("click", () =>
@@ -253,7 +254,7 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   }
 
-  /* ---------- Table Setup ---------- */
+  /* ---------- Table State ---------- */
   const rowsPerPage = 50;
   let allRows = [], filteredRows = [], currentPage = 1;
   let searchMatches = [], currentMatchIndex = -1;
@@ -280,6 +281,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("leaderboardHeader").innerHTML =
       headerRow.map(h => `<th class='px-3 py-2 text-center'>${h}</th>`).join("");
+
     allRows = rows;
     filteredRows = [...allRows];
     renderTable();
@@ -297,17 +299,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     filteredRows.slice(start, end).forEach((row, i) => {
       const globalIndex = start + i;
-      const highlight = searchMatches.length && currentMatchIndex >= 0 &&
-                        searchMatches[currentMatchIndex] === globalIndex;
+      const highlight =
+        searchMatches.length &&
+        currentMatchIndex >= 0 &&
+        searchMatches[currentMatchIndex] === globalIndex;
+
       const cls = highlight ? "pulse-row" : "";
       const tds = row.map((c, ci) => {
         let content = c;
-        if (hasQuery && ci === nameColIdx && regex)
+        if (hasQuery && ci === nameColIdx && regex) {
           content = c.replace(regex, "<strong>$1</strong>");
+        }
         return `<td class='px-3 py-2 text-center'>${content}</td>`;
       }).join("");
-      tbody.insertAdjacentHTML("beforeend", `<tr class="${cls}">${tds}</tr>`);
+
+      tbody.insertAdjacentHTML("beforeend", `<tr class="${cls}" data-global-index="${globalIndex}">${tds}</tr>`);
     });
+
     renderPagination();
   }
 
@@ -317,20 +325,32 @@ document.addEventListener("DOMContentLoaded", () => {
     const container = document.getElementById("paginationContainer");
     container.innerHTML = "";
     if (totalPages <= 1) return;
+
     const makeBtn = (t, h, d = false, a = false) => {
       const b = document.createElement("button");
       b.textContent = t;
       b.className = `px-2 py-1 mx-1 rounded ${a ? "bg-red-600 text-white" : "bg-gray-700/60 hover:bg-gray-600"}`;
-      b.disabled = d; b.onclick = h; container.appendChild(b);
+      b.disabled = d;
+      b.onclick = h;
+      container.appendChild(b);
     };
-    makeBtn("« Prev", () => { if (currentPage > 1) { currentPage--; renderTable(); } }, currentPage === 1);
+
+    makeBtn("« Prev", () => {
+      if (currentPage > 1) { currentPage--; renderTable(); }
+    }, currentPage === 1);
+
     const maxBtns = 5;
     let s = Math.max(1, currentPage - Math.floor(maxBtns / 2));
     let e = Math.min(totalPages, s + maxBtns - 1);
     if (e - s < maxBtns - 1) s = Math.max(1, e - maxBtns + 1);
-    for (let i = s; i <= e; i++)
+
+    for (let i = s; i <= e; i++) {
       makeBtn(i, () => { currentPage = i; renderTable(); }, false, i === currentPage);
-    makeBtn("Next »", () => { if (currentPage < totalPages) { currentPage++; renderTable(); } }, currentPage === totalPages);
+    }
+
+    makeBtn("Next »", () => {
+      if (currentPage < totalPages) { currentPage++; renderTable(); }
+    }, currentPage === totalPages);
   }
 
   /* ---------- Contextual Share ---------- */
@@ -339,72 +359,94 @@ document.addEventListener("DOMContentLoaded", () => {
     if (ex) ex.remove();
     contextualShareBtn = null;
   }
-  function insertContextualShare(row) {
+
+  function insertContextualShare(targetRow) {
     removeContextualShare();
-    if (!row) return;
+    if (!targetRow) return;
     const tr = document.createElement("tr");
     tr.className = "contextual-share-row";
     tr.innerHTML = `<td colspan="${headerRow.length}" class="text-center py-1">
       <button id="contextualShareBtn"
         class="bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1"
         style="min-width:130px;height:24px;">Share My Ranking</button></td>`;
-    row.parentNode.insertBefore(tr, row);
+    targetRow.parentNode.insertBefore(tr, targetRow);
     contextualShareBtn = document.getElementById("contextualShareBtn");
     contextualShareBtn.addEventListener("click", shareRanking);
   }
 
-  /* ---------- Smooth Scroll (Keyboard Stays Up) ---------- */
-  function scrollToHighlighted(force = false) {
+  /* ---------- Scroll-to-Match ---------- */
+  function scrollToHighlighted() {
+    if (!searchMatches.length || currentMatchIndex < 0) return;
     const tbody = document.getElementById("leaderboardBody");
-    if (!tbody) return;
-    let target = tbody.querySelector("tr.pulse-row");
-    if (!target && searchMatches.length && currentMatchIndex >= 0) {
-      const matchIdx = searchMatches[currentMatchIndex];
-      const start = (currentPage - 1) * rowsPerPage;
-      const rowIndex = matchIdx - start;
-      target = tbody.querySelectorAll("tr")[rowIndex] || null;
+    const rows = tbody.querySelectorAll("tr[data-global-index]");
+    if (!rows.length) return;
+
+    const targetGlobal = searchMatches[currentMatchIndex];
+    let targetRow = [...rows].find(r => parseInt(r.getAttribute("data-global-index")) === targetGlobal);
+    if (!targetRow) return;
+
+    const header = document.querySelector(".site-header");
+    const headerH = header ? header.offsetHeight : 0;
+    const table = document.getElementById("leaderboardTable");
+    const tableTopAbs = table.getBoundingClientRect().top + window.scrollY;
+    const rowRect = targetRow.getBoundingClientRect();
+    const rowHeight = rowRect.height || 32;
+    const totalRows = allRows.length;
+    const start = (currentPage - 1) * rowsPerPage;
+    const rowIndexOnPage = targetGlobal - start;
+
+    let dest;
+    if (rowIndexOnPage < 5) {
+      dest = tableTopAbs - headerH - 4;
+    } else if (totalRows - targetGlobal <= 5) {
+      dest = document.body.scrollHeight - window.innerHeight;
+    } else {
+      const desiredTop = headerH + rowHeight * 2;
+      const currentTopAbs = rowRect.top + window.scrollY;
+      dest = currentTopAbs - desiredTop;
     }
-    if (!target) return;
 
-    const rect = target.getBoundingClientRect();
-    const visible = rect.top >= 64 && rect.bottom <= window.innerHeight - 40;
-
-    if (!force && visible) {
-      insertContextualShare(target);
-      return;
-    }
-
-    // Keep keyboard up; just force scroll smoothly into view
-    setTimeout(() => {
-      target.scrollIntoView({ behavior: "smooth", block: "center" });
-      // Nudge in case of mobile viewport resize
-      setTimeout(() => window.scrollBy(0, -40), 200);
-      setTimeout(() => insertContextualShare(target), 250);
-    }, 80);
+    window.scrollTo({ top: dest, behavior: "smooth" });
+    setTimeout(() => insertContextualShare(targetRow), 250);
   }
 
-  /* ---------- Search Logic ---------- */
+  /* ---------- Search ---------- */
   searchInput.addEventListener("input", () => {
     const f = searchInput.value.trim().toLowerCase();
     clearBtn.classList.toggle("hidden", !searchInput.value);
-    searchMatches = []; currentMatchIndex = -1; removeContextualShare();
-    if (!f) { filteredRows = [...allRows]; currentPage = 1; renderTable(); return; }
+    searchMatches = [];
+    currentMatchIndex = -1;
+    removeContextualShare();
+    if (!f) {
+      filteredRows = [...allRows];
+      currentPage = 1;
+      renderTable();
+      return;
+    }
     filteredRows = [...allRows];
-    allRows.forEach((r, i) => { if (r.join(" ").toLowerCase().includes(f)) searchMatches.push(i); });
+    allRows.forEach((row, idx) => {
+      if (row.join(" ").toLowerCase().includes(f)) searchMatches.push(idx);
+    });
     if (searchMatches.length) {
       currentMatchIndex = 0;
       currentPage = Math.floor(searchMatches[0] / rowsPerPage) + 1;
-      renderTable(); scrollToHighlighted(false);
+      renderTable();
+      scrollToHighlighted();
     } else renderTable();
   });
 
   clearBtn.addEventListener("click", () => {
-    searchInput.value = ""; clearBtn.classList.add("hidden");
-    searchMatches = []; currentMatchIndex = -1; filteredRows = [...allRows];
-    currentPage = 1; removeContextualShare(); renderTable();
+    searchInput.value = "";
+    clearBtn.classList.add("hidden");
+    searchMatches = [];
+    currentMatchIndex = -1;
+    filteredRows = [...allRows];
+    currentPage = 1;
+    removeContextualShare();
+    renderTable();
   });
 
-  searchInput.addEventListener("keydown", e => {
+  searchInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && searchMatches.length) {
       e.preventDefault();
       if (searchMatches.length > 1) {
@@ -412,7 +454,7 @@ document.addEventListener("DOMContentLoaded", () => {
         currentPage = Math.floor(searchMatches[currentMatchIndex] / rowsPerPage) + 1;
         renderTable();
       }
-      scrollToHighlighted(true);
+      scrollToHighlighted();
     }
   });
 
@@ -437,11 +479,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const file = await buildSnapshotFile();
 
     if (isAndroidChrome) {
-      btn.textContent = "Generating..."; btn.disabled = true; btn.style.display = "none";
+      btn.textContent = "Generating...";
+      btn.disabled = true;
+      btn.style.display = "none";
       const newBtn = document.createElement("button");
       newBtn.textContent = "Share Generated Image";
-      newBtn.className = "bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1";
-      newBtn.style.minWidth = "150px"; newBtn.style.height = "24px";
+      newBtn.className =
+        "bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1";
+      newBtn.style.minWidth = "150px";
+      newBtn.style.height = "24px";
       btn.parentElement.appendChild(newBtn);
       newBtn.addEventListener("click", async () => {
         await performShare(file, "British Classic Fantasy League 2025 🇬🇧", "Check out my league ranking!");
@@ -460,18 +506,24 @@ document.addEventListener("DOMContentLoaded", () => {
         const url = URL.createObjectURL(file);
         if (confirm("Download image instead?")) {
           const link = document.createElement("a");
-          link.href = url; link.download = file.name;
-          document.body.appendChild(link); link.click(); link.remove();
+          link.href = url;
+          link.download = file.name;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
         }
       }
-    } catch (err) { console.error("Share failed:", err); }
+    } catch (err) {
+      console.error("Share failed:", err);
+    }
   }
 
-  /* ---------- Snapshot ---------- */
+  /* ---------- Snapshot Builder ---------- */
   async function buildSnapshotFile() {
     const total = allRows.length;
     const matchIndex = searchMatches[currentMatchIndex];
-    let start = Math.max(0, matchIndex - 4), end = Math.min(total - 1, matchIndex + 5);
+    let start = Math.max(0, matchIndex - 4);
+    let end = Math.min(total - 1, matchIndex + 5);
     const slice = allRows.slice(start, end + 1);
     while (slice.length < 10) slice.push(new Array(headerRow.length).fill(""));
     const rowsHtml = slice.map((r, i) => {
@@ -481,10 +533,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }).join("");
     const snapshot = document.createElement("div");
     Object.assign(snapshot.style, {
-      width: "600px", borderRadius: "16px", overflow: "hidden", background: "#000",
+      width: "600px",
+      borderRadius: "16px",
+      overflow: "hidden",
+      background: "#000",
       backgroundImage: "url('image_leaderboard_shf.jpg')",
-      backgroundSize: "cover", backgroundPosition: "center",
-      boxShadow: "0 10px 30px rgba(0,0,0,.35)", position: "relative", isolation: "isolate", zIndex: "9999"
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      boxShadow: "0 10px 30px rgba(0,0,0,.35)",
+      position: "relative",
+      isolation: "isolate",
+      zIndex: "9999"
     });
     const qr = new Image();
     qr.crossOrigin = "anonymous";
