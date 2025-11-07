@@ -227,42 +227,39 @@
   </div>
 
 <script>
-// --- Plugin to center histogram bars (final stable version, works on all Chart.js 3–4 builds) ---
+// --- Plugin to perfectly center histogram bars (final North Star version) ---
 const centerBarsPlugin = {
   id: 'centerBars',
-  afterRender(chart, args, opts) {
+  afterDraw(chart, args, opts) {
     if (!opts || !opts.enabled) return;
-
-    const x = chart.scales.x;
-    if (!x || !x.ticks || !x.ticks.length) return;
+    const x = chart.scales?.x;
+    const y = chart.scales?.y;
+    if (!x || !y || !x.ticks?.length) return;
 
     const n = x.ticks.length;
-    const target = chart.width / 2;
-    let midPixel;
-
-    if (n % 2 === 1) {
-      const midIndex = (n - 1) / 2;
-      midPixel = x.getPixelForTick(midIndex);
-    } else {
-      const midIndex1 = n / 2 - 1;
-      const midIndex2 = n / 2;
-      const p1 = x.getPixelForTick(midIndex1);
-      const p2 = x.getPixelForTick(midIndex2);
-      midPixel = (p1 + p2) / 2;
-    }
-
-    const shift = target - midPixel;
-    if (!isFinite(shift) || Math.abs(shift) < 1) return;
-
-    // Apply a transform to the canvas context instead of resizing the chart area
     const ctx = chart.ctx;
+    const chartMid = chart.chartArea.left + chart.chartArea.width / 2;
+
+    // Get first and last visible bar pixel
+    const first = x.getPixelForTick(0);
+    const last = x.getPixelForTick(n - 1);
+    const barsMid = (first + last) / 2;
+
+    // Compute shift to make bars’ visual midpoint match chart center
+    const shift = chartMid - barsMid;
+    if (Math.abs(shift) < 0.5) return; // Already centered
+
+    // Save, clear, and redraw translated bars only (without reflow)
     ctx.save();
-    ctx.translate(shift, 0); // horizontally center all bars visually
-    chart.update('none');
+    ctx.translate(shift, 0);
+
+    const meta = chart.getDatasetMeta(0);
+    meta.data.forEach(bar => bar.draw(ctx));
     ctx.restore();
   }
 };
 
+// Register both datalabels + centering plugin globally
 Chart.register(ChartDataLabels, centerBarsPlugin);
 
 const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
