@@ -312,24 +312,30 @@ function renderTable() {
       searchMatches.length && searchMatches[currentMatchIndex] === globalIndex;
     const cls = highlight ? "pulse-row" : "";
 
-    tbody.insertAdjacentHTML("beforeend", `<tr class="${cls}">${
-      row
-        .map((c, ci) => {
-          if (ci === nameColIdx && searchInput.value.trim()) {
-            const query = searchInput.value.trim();
-            const regex = new RegExp(`(${query})`, "ig");
-            const highlighted = c.replace(regex, "<strong>$1</strong>");
-            return `<td class='px-3 py-2 text-center'>${highlighted}</td>`;
-          } else {
-            return `<td class='px-3 py-2 text-center'>${c}</td>`;
-          }
-        })
-        .join("")
-    }</tr>`);
+    const rowHtml = row
+      .map((c, ci) => {
+        // Only bold match inside Name column (if found)
+        if (
+          nameColIdx >= 0 &&
+          ci === nameColIdx &&
+          searchInput.value.trim().length > 0
+        ) {
+          const query = searchInput.value.trim();
+          const regex = new RegExp(`(${query})`, "ig");
+          const highlighted = c.replace(regex, "<strong>$1</strong>");
+          return `<td class='px-3 py-2 text-center'>${highlighted}</td>`;
+        } else {
+          return `<td class='px-3 py-2 text-center'>${c}</td>`;
+        }
+      })
+      .join("");
+
+    tbody.insertAdjacentHTML("beforeend", `<tr class="${cls}">${rowHtml}</tr>`);
   });
 
   renderPagination();
 }
+
 
   function renderPagination() {
     const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
