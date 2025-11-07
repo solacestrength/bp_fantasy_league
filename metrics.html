@@ -227,33 +227,33 @@
   </div>
 
 <script>
-// --- Plugin to perfectly center bar groups with edge padding safeguard ---
+  
+// --- Plugin to truly center visible bars (geometry-based) ---
 const centerBarsPlugin = {
   id: 'centerBars',
   afterLayout(chart, args, opts) {
     if (!opts || !opts.enabled) return;
 
     const x = chart.scales?.x;
-    if (!x || !x.ticks || x.ticks.length < 2) return;
+    if (!x || !x.ticks || x.ticks.length < 1) return;
 
-    const firstCenter = x.getPixelForTick(0);
-    const lastCenter  = x.getPixelForTick(x.ticks.length - 1);
-    const barsMid     = (firstCenter + lastCenter) / 2;
-    const canvasMid   = chart.width / 2;
-    let shift         = canvasMid - barsMid;
+    const meta = chart.getDatasetMeta(0);
+    const bars = meta?.data || [];
+    if (!bars.length) return;
 
-    // --- Edge guard: detect bar clipping and add mild inward padding ---
-    const firstEdge = x.left;
-    const lastEdge  = x.right;
-    const barWidth  = (lastCenter - firstCenter) / (x.ticks.length - 1);
-    const edgePad   = barWidth * 0.5; // half-bar width padding each side
+    // Get actual bar pixel edges
+    const firstBar = bars[0];
+    const lastBar = bars[bars.length - 1];
+    const firstX = firstBar.x - firstBar.width / 2;
+    const lastX = lastBar.x + lastBar.width / 2;
 
-    // Check if first/last bars would clip and adjust shift accordingly
-    if (firstEdge + edgePad < chart.chartArea.left) shift += (chart.chartArea.left - (firstEdge + edgePad)) / 2;
-    if (lastEdge - edgePad > chart.chartArea.right) shift -= ((lastEdge - edgePad) - chart.chartArea.right) / 2;
+    const barsMid = (firstX + lastX) / 2;
+    const canvasMid = chart.width / 2;
+    const shift = canvasMid - barsMid;
 
     if (!isFinite(shift) || Math.abs(shift) < 0.5) return;
 
+    // Move entire x-scale and chart area together
     chart.chartArea.left  += shift;
     chart.chartArea.right += shift;
     x.left  += shift;
