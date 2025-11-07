@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let headerRow = [], nameColIdx = 1;
 
   async function loadScores() {
-    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSuA8YB98ghNeM-cS6Fs1pJNkEBOI0x7WKI4R0vtvAG68mo7PJZYVj2HsdxH3DDqvieaTpe9zUzJcNW/pub?gid=1841956952&single=true&output=csv";
+    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=1479863103&single=true&output=csv";
     const response = await fetch(csvUrl);
     const text = await response.text();
     const parsed = Papa.parse(text.trim(), { skipEmptyLines: true });
