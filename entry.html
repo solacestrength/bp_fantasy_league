@@ -196,15 +196,14 @@
         if(hasUnlocked){
           window.open('form.html?access=spotify','_blank','noopener,noreferrer');
         }
-
-        const bottomBackToTop = document.getElementById('bottomBackToTop');
+      });
+    }
+  const bottomBackToTop = document.getElementById('bottomBackToTop');
   if (bottomBackToTop) {
     bottomBackToTop.addEventListener('click', () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
-      });
-    }
   </script>
 </body>
 </html>
