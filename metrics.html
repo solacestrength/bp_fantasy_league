@@ -227,39 +227,42 @@
   </div>
 
 <script>
-// --- Plugin to perfectly center histogram bars (final North Star version) ---
+// --- Plugin to center histogram bars as a group (works for odd & even) ---
 const centerBarsPlugin = {
   id: 'centerBars',
-  afterDraw(chart, args, opts) {
+  afterLayout(chart, args, opts) {
     if (!opts || !opts.enabled) return;
-    const x = chart.scales?.x;
-    const y = chart.scales?.y;
-    if (!x || !y || !x.ticks?.length) return;
 
-    const n = x.ticks.length;
-    const ctx = chart.ctx;
-    const chartMid = chart.chartArea.left + chart.chartArea.width / 2;
+    // Only apply to category X scales with at least 2 ticks
+    const x = chart.scales && chart.scales.x;
+    if (!x || !x.ticks || x.ticks.length < 2) return;
 
-    // Get first and last visible bar pixel
-    const first = x.getPixelForTick(0);
-    const last = x.getPixelForTick(n - 1);
-    const barsMid = (first + last) / 2;
+    // Only bother for bar-type charts
+    const isBarChart =
+      chart.config.type === 'bar' ||
+      (chart.config.data.datasets || []).some(ds => ds.type === 'bar' || chart.config.type === 'bar');
+    if (!isBarChart) return;
 
-    // Compute shift to make bars’ visual midpoint match chart center
-    const shift = chartMid - barsMid;
-    if (Math.abs(shift) < 0.5) return; // Already centered
+    // Get center of first and last categories
+    const firstCenter = x.getPixelForTick(0);
+    const lastCenter  = x.getPixelForTick(x.ticks.length - 1);
+    const barsMid     = (firstCenter + lastCenter) / 2;
 
-    // Save, clear, and redraw translated bars only (without reflow)
-    ctx.save();
-    ctx.translate(shift, 0);
+    // Target is the visual center of the canvas
+    const canvasMid = chart.width / 2;
+    const shift = canvasMid - barsMid;
 
-    const meta = chart.getDatasetMeta(0);
-    meta.data.forEach(bar => bar.draw(ctx));
-    ctx.restore();
+    if (!isFinite(shift) || Math.abs(shift) < 0.5) return;
+
+    // Shift the chart area + x-scale together so bars, ticks & axis title all move
+    chart.chartArea.left  += shift;
+    chart.chartArea.right += shift;
+    x.left  += shift;
+    x.right += shift;
   }
 };
 
-// Register both datalabels + centering plugin globally
+// Register datalabels + centering plugin
 Chart.register(ChartDataLabels, centerBarsPlugin);
 
 const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
@@ -473,40 +476,44 @@ function renderCharts(g, w) {
       maintainAspectRatio: true,
       aspectRatio: 1,
       plugins: {
-        title: {
-          display: true,
-          text: 'Distribution of Predicted Winning Totals',
-          color: '#ccc',
-          font: { size: s.histTitle, weight: 'bold' },
-          padding: { bottom: 8 }
-        },
-        subtitle: {
-          display: true,
-          text: `Total Votes – ${N}`,
-          color: '#aaa',
-          font: { size: s.histSubtitle, weight: 'normal' },
-          padding: { top: 2, bottom: 12 }
-        },
-        legend: { display: false },
-        datalabels: {
-          color: '#fff',
-          font: { size: s.histBarLabel, weight: 'normal' },
-          formatter: (v) => {
-            if (v == null || isNaN(v)) return '';
-            return v > 0 ? v : '';
-          },
-          anchor: 'center',
-          align: (ctx) => {
-            const v = ctx.dataset.data[ctx.dataIndex] || 0;
-            const scale = ctx.chart.scales.y;
-            if (!scale) return 'center';
-            const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
-            const f = ctx.chart.options.plugins.datalabels.font.size || s.histBarLabel;
-            return (barH < f * 1.05) ? 'end' : 'center';
-          },
-          clamp: true
-        }
-      },
+  title: {
+    display: true,
+    text: 'Distribution of Predicted Winning Totals',
+    color: '#ccc',
+    font: { size: s.histTitle, weight: 'bold' },
+    padding: { bottom: 8 }
+  },
+  subtitle: {
+    display: true,
+    text: `Total Votes – ${N}`,
+    color: '#aaa',
+    font: { size: s.histSubtitle, weight: 'normal' },
+    padding: { top: 2, bottom: 12 }
+  },
+  legend: { display: false },
+  datalabels: {
+    color: '#fff',
+    font: { size: s.histBarLabel, weight: 'normal' },
+    formatter: (v) => {
+      if (v == null || isNaN(v)) return '';
+      return v > 0 ? v : '';
+    },
+    anchor: 'center',
+    align: (ctx) => {
+      const v = ctx.dataset.data[ctx.dataIndex] || 0;
+      const scale = ctx.chart.scales.y;
+      if (!scale) return 'center';
+      const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
+      const f = ctx.chart.options.plugins.datalabels.font.size || s.histBarLabel;
+      return (barH < f * 1.05) ? 'end' : 'center';
+    },
+    clamp: true
+  },
+  // --- Align bar group to true canvas center (both odd & even bin counts) ---
+  centerBars: {
+    enabled: true
+  }
+},
       scales: {
         x: {
           ticks: { color: '#ccc', font: { size: s.axisTick } },
