@@ -227,7 +227,45 @@
   </div>
 
 <script>
-Chart.register(ChartDataLabels);
+// --- Plugin to center histogram bars (handles odd + even bar counts) ---
+const centerBarsPlugin = {
+  id: 'centerBars',
+  afterLayout(chart, args, opts) {
+    if (!opts || !opts.enabled) return;
+
+    const x = chart.scales.x;
+    if (!x || !x.ticks || !x.ticks.length) return;
+
+    const n = x.ticks.length;
+    const target = chart.width / 2;
+    let midPixel;
+
+    if (n % 2 === 1) {
+      // Odd number of bars → use middle tick directly
+      const midIndex = (n - 1) / 2;
+      midPixel = x.getPixelForTick(midIndex);
+    } else {
+      // Even number → midpoint between the two central ticks
+      const midIndex1 = n / 2 - 1;
+      const midIndex2 = n / 2;
+      const p1 = x.getPixelForTick(midIndex1);
+      const p2 = x.getPixelForTick(midIndex2);
+      midPixel = (p1 + p2) / 2;
+    }
+
+    const shift = target - midPixel;
+    if (!isFinite(shift) || Math.abs(shift) < 1) return;
+
+    // Shift chart area and x-scale so bars move as a block
+    chart.chartArea.left  += shift;
+    chart.chartArea.right += shift;
+    x.left  += shift;
+    x.right += shift;
+  }
+};
+
+// Register both datalabels + centering plugin globally
+Chart.register(ChartDataLabels, centerBarsPlugin);
 
 const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
 
