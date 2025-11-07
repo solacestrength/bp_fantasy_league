@@ -316,34 +316,68 @@ document.addEventListener('DOMContentLoaded', () => {
     container.appendChild(btn);
   }
 
-  /* --- Floating Share button --- */
-  const searchInput = document.getElementById("searchInput");
-  const shareFloatingBtn = document.createElement('button');
-  shareFloatingBtn.id = 'floatingShareBtn';
-  shareFloatingBtn.textContent = "Share My Score";
-  shareFloatingBtn.className =
-    "hidden fixed bottom-20 right-6 bg-red-600 text-white px-4 py-2 rounded-full " +
-    "shadow-lg z-50 hover:bg-red-700 transition-opacity duration-700 ease-in-out";
-  document.body.appendChild(shareFloatingBtn);
+  /* --- Contextual Share button (aligned above highlighted row) --- */
+let contextualShareBtn = null;
 
-  let inactivityTimer;
-  function fadeOutShareButton() {
-    shareFloatingBtn.classList.add('fade-out');
-    setTimeout(() => {
-      shareFloatingBtn.classList.add('hidden');
-      shareFloatingBtn.classList.remove('fade-out');
-    }, 700);
+function insertContextualShare(targetRow) {
+  removeContextualShare();
+  if (!targetRow) return;
+
+  const btn = document.createElement('button');
+  btn.textContent = 'Share My Score';
+  btn.className =
+    'absolute bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1 z-40';
+  btn.style.minWidth = '130px';
+  btn.style.height = '24px';
+
+  const rect = targetRow.getBoundingClientRect();
+  const tableRect = document.getElementById('accuracyTable').getBoundingClientRect();
+
+  // position ABOVE the highlighted row and centre roughly over "Points"
+  const offsetY = window.scrollY + rect.top - 28;
+  const offsetX = tableRect.left + tableRect.width * 0.78 - btn.offsetWidth / 2;
+
+  btn.style.position = 'absolute';
+  btn.style.top = offsetY + 'px';
+  btn.style.left = offsetX + 'px';
+
+  document.body.appendChild(btn);
+  contextualShareBtn = btn;
+
+  btn.addEventListener('click', shareScore);
+}
+
+function removeContextualShare() {
+  if (contextualShareBtn) {
+    contextualShareBtn.remove();
+    contextualShareBtn = null;
   }
-  function resetInactivityTimer() {
-    clearTimeout(inactivityTimer);
-    if (!shareFloatingBtn.classList.contains('hidden')) {
-      inactivityTimer = setTimeout(() => {
-        fadeOutShareButton();
-      }, 10000);
-    }
-  }
-  window.addEventListener('scroll', resetInactivityTimer);
-  document.addEventListener('input', resetInactivityTimer);
+}
+
+/* --- Scroll helper: centre highlighted row and attach share button --- */
+function scrollToHighlighted() {
+  if (!searchMatches.length || currentMatchIndex < 0) return;
+
+  const matchIdx = searchMatches[currentMatchIndex];
+  const start = (currentPage - 1) * rowsPerPage;
+  const end = start + rowsPerPage - 1;
+  if (matchIdx < start || matchIdx > end) return;
+
+  const tbody = document.getElementById('accuracyBody');
+  const rows = tbody.querySelectorAll('tr');
+  const rowIndex = matchIdx - start;
+  const target = rows[rowIndex];
+  if (!target) return;
+
+  const rect = target.getBoundingClientRect();
+  const absoluteY = window.scrollY + rect.top;
+  const centerY = absoluteY - (window.innerHeight / 2) + (rect.height / 2);
+
+  window.scrollTo({ top: centerY, behavior: 'smooth' });
+
+  // Wait for scroll to settle, then re-attach the button
+  setTimeout(() => insertContextualShare(target), 400);
+}
 
   /* --- Scroll helper: centre highlighted row --- */
   function scrollToHighlighted() {
@@ -430,41 +464,79 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  /* --- Share logic (same visual as your "good" version) --- */
   async function shareScore() {
-    if (searchMatches.length === 0) {
-      alert("Please search for your name first.");
-      return;
-    }
+  if (searchMatches.length === 0) {
+    alert("Please search for your name first.");
+    return;
+  }
 
-    const { isChromeIOS, isAndroidChrome } = detectBrowserShareSupport();
+  const { isChromeIOS, isAndroidChrome } = detectBrowserShareSupport();
 
-    // Build snapshot once
+  const btn = contextualShareBtn;
+  if (!btn) return;
+
+  // --- Two-step flow for Android Chrome ---
+  if (isAndroidChrome) {
+    btn.textContent = "Generating...";
+    btn.disabled = true;
+
     const file = await buildSnapshotFile();
 
-    // Android Chrome: two-step flow (download or fallback share if supported)
-    if (isAndroidChrome) {
-      // Let user explicitly trigger share now that image is ready
+    // hide current button and replace with new "Share Generated Image"
+    btn.style.display = "none";
+    const newBtn = document.createElement("button");
+    newBtn.textContent = "Share Generated Image";
+    newBtn.className =
+      "absolute bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1 z-40";
+    newBtn.style.minWidth = "150px";
+    newBtn.style.height = "24px";
+
+    // same coordinates as old button
+    newBtn.style.top = btn.style.top;
+    newBtn.style.left = btn.style.left;
+
+    document.body.appendChild(newBtn);
+
+    newBtn.addEventListener("click", async () => {
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            title: 'My Accuracy Score',
-            text: 'Check out my accuracy score!',
-            files: [file]
-          });
-        } catch (err) {
-          console.error("Share failed:", err);
-        }
+        await navigator.share({
+          title: "My Accuracy Score",
+          text: "Check out my accuracy score!",
+          files: [file],
+        });
       } else {
-        const link = document.createElement('a');
+        const link = document.createElement("a");
         link.href = URL.createObjectURL(file);
-        link.download = 'my-accuracy-score.png';
+        link.download = "my-accuracy-score.png";
         document.body.appendChild(link);
         link.click();
         link.remove();
       }
-      return;
-    }
+      newBtn.remove();
+      removeContextualShare();
+    });
+
+    return; // close Android flow
+  }
+
+  // --- One-step flow (iOS Chrome + others) ---
+  const file = await buildSnapshotFile();
+
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    await navigator.share({
+      title: "My Accuracy Score",
+      text: "Check out my accuracy score!",
+      files: [file],
+    });
+  } else {
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(file);
+    link.download = "my-accuracy-score.png";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+}
 
     // iOS Chrome or others: best-effort native share, else download
     try {
