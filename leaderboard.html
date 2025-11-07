@@ -176,6 +176,7 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+
   /* ---------- Burger Menu ---------- */
   const menuBtn = document.getElementById("menu-btn");
   const mobileMenu = document.getElementById("mobile-menu");
@@ -244,7 +245,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   fab.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 
-  /* ---------- Bottom Back-to-Top Listener ---------- */
+  /* ---------- Bottom Back-to-Top ---------- */
   const bottomBackToTop = document.getElementById("bottomBackToTop");
   if (bottomBackToTop) {
     bottomBackToTop.addEventListener("click", () =>
@@ -352,7 +353,7 @@ document.addEventListener("DOMContentLoaded", () => {
     contextualShareBtn.addEventListener("click", shareRanking);
   }
 
-  /* ---------- Smooth Scroll Helper ---------- */
+  /* ---------- Smooth Scroll (Keyboard Stays Up) ---------- */
   function scrollToHighlighted(force = false) {
     const tbody = document.getElementById("leaderboardBody");
     if (!tbody) return;
@@ -366,13 +367,20 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!target) return;
 
     const rect = target.getBoundingClientRect();
-    const fullyVisible = rect.top >= 64 && rect.bottom <= window.innerHeight - 40;
-    if (!force && fullyVisible) { insertContextualShare(target); return; }
-    searchInput.blur(); // mobile keyboard fix
+    const visible = rect.top >= 64 && rect.bottom <= window.innerHeight - 40;
+
+    if (!force && visible) {
+      insertContextualShare(target);
+      return;
+    }
+
+    // Keep keyboard up; just force scroll smoothly into view
     setTimeout(() => {
       target.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Nudge in case of mobile viewport resize
+      setTimeout(() => window.scrollBy(0, -40), 200);
       setTimeout(() => insertContextualShare(target), 250);
-    }, 60);
+    }, 80);
   }
 
   /* ---------- Search Logic ---------- */
