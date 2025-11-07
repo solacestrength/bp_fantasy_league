@@ -310,10 +310,10 @@ tbody.insertAdjacentHTML("beforeend", `<tr class="${cls}">${
     }
   }).join("")
 }</tr>`);
-
-    });
+      
     renderPagination();
   }
+ }
 
   function renderPagination() {
     const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
