@@ -25,24 +25,24 @@
     animation: fadeInUp 1s ease-out forwards;
   }
 
-  /* Collapsible for Rules & Scoring */
-  .rules-collapsible {
+  /* Collapsible shared styles */
+  .rules-collapsible, .prizes-collapsible {
     max-height: 0;
     overflow: hidden;
     opacity: 0;
     transition: max-height 0.4s ease, opacity 0.3s ease;
   }
 
-  .rules-collapsible.open {
+  .rules-collapsible.open, .prizes-collapsible.open {
     opacity: 1;
     max-height: 1000px;
   }
 
-  .rules-arrow {
+  .rules-arrow, .prizes-arrow {
     transition: transform 0.3s ease;
   }
 
-  .rules-arrow.rotate {
+  .rules-arrow.rotate, .prizes-arrow.rotate {
     transform: rotate(180deg);
   }
   </style>
@@ -109,13 +109,26 @@
         </h2>
 
         <div class="space-y-8">
+          <!-- Collapsible Prizes -->
           <div>
-            <h3 class="text-xl font-semibold text-red-400 mb-2">Prizes</h3>
-            <ul class="list-disc list-inside text-gray-300 space-y-1">
-              <br /><li>First Place - <b>£80 Cash Prize</b> 💷💷</li>
-              <li>Second Place - <b>£40 Cash Prize</b> 💷</li>
-              <li>Third Place - <b>Bulk Protein Powder</b> 💪</li>
-            </ul>
+            <h3 id="prizesToggle"
+                class="flex items-center justify-between text-xl font-semibold text-red-400 mb-2 cursor-pointer select-none">
+              <span>Prizes</span>
+              <svg id="prizesArrow" xmlns="http://www.w3.org/2000/svg"
+                   class="w-5 h-5 text-red-500 prizes-arrow rotate"
+                   fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 9l-7 7-7-7" />
+              </svg>
+            </h3>
+
+            <div id="prizesContent" class="prizes-collapsible open mt-1">
+              <ul class="list-disc list-inside text-gray-300 space-y-1">
+                <br /><li>First Place - <b>£80 Cash Prize</b> 💷💷</li>
+                <li>Second Place - <b>£40 Cash Prize</b> 💷</li>
+                <li>Third Place - <b>Bulk Protein Powder</b> 💪</li>
+              </ul>
+            </div>
           </div>
 
           <div>
@@ -219,15 +232,25 @@
     });
   }
 
-  // Rules & Scoring collapsible
+  // === Collapsibles ===
   const rulesToggle = document.getElementById('rulesToggle');
   const rulesContent = document.getElementById('rulesContent');
   const rulesArrow = document.getElementById('rulesArrow');
+  const prizesToggle = document.getElementById('prizesToggle');
+  const prizesContent = document.getElementById('prizesContent');
+  const prizesArrow = document.getElementById('prizesArrow');
 
   if (rulesToggle && rulesContent && rulesArrow) {
     rulesToggle.addEventListener('click', () => {
       const isOpen = rulesContent.classList.toggle('open');
       rulesArrow.classList.toggle('rotate', isOpen);
+    });
+  }
+
+  if (prizesToggle && prizesContent && prizesArrow) {
+    prizesToggle.addEventListener('click', () => {
+      const isOpen = prizesContent.classList.toggle('open');
+      prizesArrow.classList.toggle('rotate', isOpen);
     });
   }
 
