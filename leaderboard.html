@@ -14,21 +14,7 @@
     .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
     .animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
 
-    #floatingShareBtn {
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.7s ease-in-out;
-    }
-    #floatingShareBtn:not(.hidden) {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    #floatingShareBtn.fade-out {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    /* --- Pulse highlight effect for full row --- */
+    /* Row pulse highlight */
     @keyframes pulse-row-red {
       0%   { background-color: rgba(239,68,68,0.3); }
       50%  { background-color: rgba(239,68,68,0.15); }
@@ -38,6 +24,11 @@
       animation: pulse-row-red 1.2s ease-in-out 1;
       background-color: rgba(239,68,68,0.3);
       font-weight: bold;
+    }
+
+    /* Back-to-top FAB transitions */
+    #backToTopFab {
+      transition: opacity 0.25s ease-in-out, transform 0.25s ease-in-out;
     }
   </style>
 </head>
@@ -60,9 +51,10 @@
         <div class="absolute right-4 top-1/2 -translate-y-1/2">
           <button id="menu-btn" aria-expanded="false"
             class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 6h16M4 12h16M4 18h16" />
+                d="M4 6h16M4 12h16M4 18h16"/>
             </svg>
             <span class="sr-only">Open menu</span>
           </button>
@@ -87,6 +79,7 @@
       <section class="w-full px-4">
         <div
           class="w-full max-w-3xl lg:max-w-4xl mx-auto bg-gray-800/60 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-gray-700">
+          
           <!-- Leaderboard header -->
           <div class="w-full mt-10 mb-6 flex flex-col sm:grid sm:grid-cols-3 items-center">
             <div class="hidden sm:block"></div>
@@ -94,20 +87,30 @@
             <div class="flex items-center space-x-2 mt-3 sm:mt-0 sm:justify-self-end">
               <button id="shareRankingBtn"
                 class="bg-red-600 hover:bg-red-500 text-white rounded-lg flex items-center justify-center"
-                style="height: 32px; width: 32px;" aria-label="Share Ranking">
+                style="height: 32px; width: 32px;"
+                aria-label="Share Ranking">
                 <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
                   alt="Share Icon" class="w-4 h-4 invert" />
               </button>
               <div class="relative">
                 <input type="text" id="searchInput" placeholder="Search"
-                  class="bg-gray-700/60 text-white placeholder-gray-400 text-sm rounded-lg pl-8 pr-2 py-1 focus:outline-none focus:ring-2 focus:ring-red-500"
-                  style="width: calc(11ch + 12px); height: 32px;" />
+                  class="bg-gray-700/60 text-white placeholder-gray-400 text-sm rounded-lg pl-8 pr-6 py-1
+                         focus:outline-none focus:ring-2 focus:ring-red-500"
+                  style="width: calc(11ch + 16px); height: 32px;" />
+                <!-- Left magnifier -->
                 <svg xmlns="http://www.w3.org/2000/svg"
-                  class="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none"
-                  viewBox="0 0 24 24" stroke="currentColor">
+                  class="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z" />
                 </svg>
+                <!-- Right clear × -->
+                <button id="clearSearchBtn"
+                  class="hidden absolute right-1.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full
+                         bg-gray-500/70 text-[10px] leading-[14px] flex items-center justify-center
+                         text-white hover:bg-red-500">
+                  ×
+                </button>
               </div>
             </div>
           </div>
@@ -122,315 +125,462 @@
             </table>
           </div>
 
-          <div id="paginationContainer" class="flex justify-center items-center mt-4 flex-wrap text-sm text-gray-300"></div>
-          <p class="text-xs text-gray-500 text-center mt-3">Data auto-updates from Google Sheets</p>
+          <div id="paginationContainer"
+               class="flex justify-center items-center mt-4 flex-wrap text-sm text-gray-300"></div>
+          <p class="text-xs text-gray-500 text-center mt-3">
+            Data auto-updates from Google Sheets
+          </p>
         </div>
       </section>
 
-<!-- View Leaderboard Button Container -->
-<div class="flex justify-center mt-8">
-  <a href="accuracy_scores.html"
-     class="bg-gray-800/60 border border-gray-700 text-gray-200 font-semibold px-6 py-3 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-base">
-     View Accuracy Scores
-  </a>
-</div>
+      <!-- View Accuracy Scores Button -->
+      <div class="flex justify-center mt-8">
+        <a href="accuracy_scores.html"
+          class="bg-gray-800/60 border border-gray-700 text-gray-200 font-semibold px-6 py-3 rounded-xl
+                 backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-base">
+          View Accuracy Scores
+        </a>
+      </div>
 
-<!-- Back to Top Button Container -->
-<div class="flex justify-center mt-4">
-  <a href="#top"
-     class="bg-gray-800/60 border border-gray-700 text-gray-300 font-semibold px-5 py-2 rounded-xl backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
-     Back to Top
-  </a>
-</div>
+      <!-- Back to Top Button (static link) -->
+      <div class="flex justify-center mt-4">
+        <a href="#top"
+          class="bg-gray-800/60 border border-gray-700 text-gray-300 font-semibold px-5 py-2 rounded-xl
+                 backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
+          Back to Top
+        </a>
+      </div>
+    </main>
 
-    <footer class="text-center text-gray-500 text-sm mt-16 pb-4">Sponsored by the Sabado Sessions Podcast</footer>
+    <footer class="text-center text-gray-500 text-sm mt-16 pb-4">
+      Sponsored by the Sabado Sessions Podcast
+    </footer>
   </div>
 
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  /* --- Burger / dropdown --- */
-  const menuBtn = document.getElementById('menu-btn');
-  const mobileMenu = document.getElementById('mobile-menu');
+  <!-- Floating Back-to-Top Arrow -->
+  <button id="backToTopFab"
+    class="fixed right-4 top-1/2 -translate-y-1/2 bg-red-600 hover:bg-red-500 text-white
+           w-12 h-12 rounded-full flex items-center justify-center shadow-lg opacity-0
+           pointer-events-none z-50">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none"
+         stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+    </svg>
+  </button>
 
-  menuBtn.addEventListener('click', (e) => {
-    const isOpen = mobileMenu.classList.contains('opacity-100');
-    mobileMenu.classList.toggle('opacity-100', !isOpen);
-    mobileMenu.classList.toggle('opacity-0', isOpen);
-    mobileMenu.classList.toggle('scale-y-100', !isOpen);
-    mobileMenu.classList.toggle('scale-y-0', isOpen);
-    menuBtn.setAttribute('aria-expanded', String(!isOpen));
-    e.stopPropagation();
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
-      mobileMenu.classList.remove('opacity-100', 'scale-y-100');
-      mobileMenu.classList.add('opacity-0', 'scale-y-0');
-      menuBtn.setAttribute('aria-expanded', 'false');
-    }
-  });
-
-  /* --- Leaderboard setup --- */
-  const rowsPerPage = 50;
-  let allRows = [], filteredRows = [], currentPage = 1;
-  let searchMatches = [], currentMatchIndex = -1;
-  let headerRow = [], nameColIdx = 1;
-  let contextualShareBtn = null;
-
-  const searchInput = document.getElementById("searchInput");
-
-  async function loadLeaderboard() {
-    const csvUrl =
-      "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=2003215108&single=true&output=csv";
-    const response = await fetch(csvUrl);
-    const text = await response.text();
-    const rows = text.trim().split("\n").map(r => r.split(","));
-    headerRow = rows.shift();
-    const idx = headerRow.findIndex(h => h.trim().toLowerCase() === 'name');
-    nameColIdx = idx >= 0 ? idx : 1;
-    document.getElementById("leaderboardHeader").innerHTML =
-      headerRow.map(h => `<th class='px-3 py-2 text-center'>${h}</th>`).join("");
-    allRows = rows;
-    filteredRows = [...allRows];
-    renderTable();
-  }
-
-  function renderTable() {
-    const tbody = document.getElementById("leaderboardBody");
-    tbody.innerHTML = "";
-    const start = (currentPage - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-
-    filteredRows.slice(start, end).forEach((row, idx) => {
-      const globalIndex = start + idx;
-      const isHighlighted = searchMatches.length && currentMatchIndex >= 0 && searchMatches[currentMatchIndex] === globalIndex;
-      const rowClass = isHighlighted ? "pulse-row" : "";
-      const tds = row.map(cell => `<td class="px-3 py-2 text-center">${cell}</td>`).join('');
-      tbody.insertAdjacentHTML("beforeend", `<tr class="${rowClass}">${tds}</tr>`);
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    /* --- Burger --- */
+    const menuBtn = document.getElementById('menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    menuBtn.addEventListener('click', (e) => {
+      const open = mobileMenu.classList.contains('opacity-100');
+      mobileMenu.classList.toggle('opacity-100', !open);
+      mobileMenu.classList.toggle('opacity-0', open);
+      mobileMenu.classList.toggle('scale-y-100', !open);
+      mobileMenu.classList.toggle('scale-y-0', open);
+      menuBtn.setAttribute('aria-expanded', String(!open));
+      e.stopPropagation();
+    });
+    document.addEventListener('click', (e) => {
+      if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+        mobileMenu.classList.remove('opacity-100', 'scale-y-100');
+        mobileMenu.classList.add('opacity-0', 'scale-y-0');
+      }
     });
 
-    renderPagination();
-  }
+    /* --- Core state --- */
+    const rowsPerPage = 50;
+    let allRows = [];
+    let filteredRows = [];
+    let currentPage = 1;
+    let searchMatches = [];
+    let currentMatchIndex = -1;
+    let headerRow = [];
+    let nameColIdx = 1;
+    let contextualShareBtn = null;
 
-  function renderPagination() {
-    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
-    const container = document.getElementById("paginationContainer");
-    container.innerHTML = "";
-    if (totalPages <= 1) return;
+    const searchInput = document.getElementById('searchInput');
+    const clearBtn = document.getElementById('clearSearchBtn');
 
-    const makeBtn = (label, handler, disabled = false, active = false) => {
-      const b = document.createElement("button");
-      b.textContent = label;
-      b.className =
-        `px-2 py-1 mx-1 rounded ${
-          active ? "bg-red-600 text-white" : "bg-gray-700/60 hover:bg-gray-600"
-        }`;
-      b.disabled = disabled;
-      b.onclick = handler;
-      container.appendChild(b);
-    };
-
-    makeBtn("« Prev", () => { if (currentPage > 1) { currentPage--; renderTable(); } }, currentPage === 1);
-    const maxButtons = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
-    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
-    if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
-    for (let i = startPage; i <= endPage; i++)
-      makeBtn(i, () => { currentPage = i; renderTable(); }, false, i === currentPage);
-    makeBtn("Next »", () => { if (currentPage < totalPages) { currentPage++; renderTable(); } }, currentPage === totalPages);
-  }
-
-  /* --- Contextual Share Button (Above Highlighted Row) --- */
-  function removeContextualShare() {
-    const existing = document.querySelector(".contextual-share-row");
-    if (existing) existing.remove();
-    contextualShareBtn = null;
-  }
-
-  function insertContextualShare(targetRow) {
-    removeContextualShare();
-    if (!targetRow) return;
-
-    const container = document.createElement("tr");
-    container.className = "contextual-share-row";
-    container.innerHTML = `
-      <td colspan="${headerRow.length}" class="text-center py-1">
-        <button id="contextualShareBtn"
-          class="bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1"
-          style="min-width:130px; height:24px;">
-          Share My Ranking
-        </button>
-      </td>
-    `;
-
-    targetRow.parentNode.insertBefore(container, targetRow);
-    contextualShareBtn = document.getElementById("contextualShareBtn");
-    contextualShareBtn.addEventListener("click", shareRanking);
-  }
-
-  function scrollToHighlighted() {
-    const tbody = document.getElementById("leaderboardBody");
-    const rows = tbody.querySelectorAll("tr");
-    if (!searchMatches.length || currentMatchIndex < 0) return;
-    const matchIdx = searchMatches[currentMatchIndex];
-    const start = (currentPage - 1) * rowsPerPage;
-    const rowIndex = matchIdx - start;
-    const target = rows[rowIndex];
-    if (!target) return;
-    target.scrollIntoView({ behavior: "smooth", block: "center" });
-    setTimeout(() => insertContextualShare(target), 350);
-  }
-
-  /* --- Search + Enter cycle --- */
-  searchInput.addEventListener("input", () => {
-    const filter = searchInput.value.trim().toLowerCase();
-    searchMatches = [];
-    currentMatchIndex = -1;
-    removeContextualShare();
-
-    if (!filter) { filteredRows = [...allRows]; currentPage = 1; renderTable(); return; }
-
-    allRows.forEach((row, idx) => {
-      if (row.join(" ").toLowerCase().includes(filter)) searchMatches.push(idx);
+    /* --- Search clear button visibility --- */
+    searchInput.addEventListener('input', () => {
+      clearBtn.classList.toggle('hidden', !searchInput.value);
     });
 
-    if (searchMatches.length) {
-      currentMatchIndex = 0;
-      currentPage = Math.floor(searchMatches[0] / rowsPerPage) + 1;
-      renderTable(); scrollToHighlighted();
-    } else {
+    clearBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      clearBtn.classList.add('hidden');
+      searchMatches = [];
+      currentMatchIndex = -1;
+      filteredRows = [...allRows];
+      currentPage = 1;
+      renderTable();
+      removeContextualShare();
+    });
+
+    /* --- Smart Back-to-Top FAB --- */
+    const fab = document.getElementById('backToTopFab');
+    const mainEl = document.querySelector('main');
+    let hideTimeout;
+    let lastScrollY = window.scrollY;
+
+    window.addEventListener('scroll', () => {
+      const rect = mainEl.getBoundingClientRect();
+      const topOut = rect.top < -30;
+      const bottomNear = rect.bottom <= window.innerHeight + 40;
+      const nowY = window.scrollY;
+      const activelyScrolling = nowY !== lastScrollY;
+      lastScrollY = nowY;
+
+      // hide immediately during scroll
+      fab.style.opacity = 0;
+      fab.style.pointerEvents = 'none';
+      fab.style.transform = 'translateY(-50%) scale(0.9)';
+
+      clearTimeout(hideTimeout);
+      hideTimeout = setTimeout(() => {
+        if (topOut && !bottomNear && !activelyScrolling) {
+          fab.style.opacity = 1;
+          fab.style.pointerEvents = 'auto';
+          fab.style.transform = 'translateY(-50%) scale(1)';
+        }
+      }, 250);
+    });
+
+    fab.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    /* --- Load leaderboard data --- */
+    async function loadLeaderboard() {
+      const csvUrl =
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=2003215108&single=true&output=csv";
+      const response = await fetch(csvUrl);
+      const text = await response.text();
+      const rows = text.trim().split("\n").map(r => r.split(","));
+      headerRow = rows.shift();
+      const idx = headerRow.findIndex(h => h.trim().toLowerCase() === 'name');
+      nameColIdx = idx >= 0 ? idx : 1;
+
+      document.getElementById("leaderboardHeader").innerHTML =
+        headerRow.map(h => `<th class='px-3 py-2 text-center'>${h}</th>`).join("");
+
+      allRows = rows;
+      filteredRows = [...allRows];
       renderTable();
     }
-  });
 
-  searchInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && searchMatches.length > 1) {
-      e.preventDefault();
-      currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
-      currentPage = Math.floor(searchMatches[currentMatchIndex] / rowsPerPage) + 1;
-      renderTable(); scrollToHighlighted();
-    }
-  });
+    /* --- Render table + pagination --- */
+    function renderTable() {
+      const tbody = document.getElementById("leaderboardBody");
+      tbody.innerHTML = "";
 
-  /* --- Browser Detection --- */
-  function detectBrowserShareSupport() {
-    const ua = navigator.userAgent.toLowerCase();
-    return {
-      isAndroidChrome: ua.includes("chrome") && ua.includes("android"),
-      isSafari: /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
-    };
-  }
+      const start = (currentPage - 1) * rowsPerPage;
+      const end = start + rowsPerPage;
 
-  /* --- Unified Share Logic --- */
-  async function shareRanking() {
-    if (!searchMatches.length) { alert("Please search for your name first."); return; }
+      filteredRows.slice(start, end).forEach((row, idx) => {
+        const globalIndex = start + idx;
+        const isHighlighted =
+          searchMatches.length &&
+          currentMatchIndex >= 0 &&
+          searchMatches[currentMatchIndex] === globalIndex;
 
-    const { isAndroidChrome } = detectBrowserShareSupport();
-    const btn = contextualShareBtn;
-    if (!btn) return;
+        const rowClass = isHighlighted ? "pulse-row" : "";
+        const tds = row.map(cell =>
+          `<td class="px-3 py-2 text-center">${cell}</td>`).join('');
 
-    if (isAndroidChrome) {
-      btn.textContent = "Generating...";
-      btn.disabled = true;
-      const file = await buildSnapshotFile();
-      btn.style.display = "none";
-
-      const newBtn = document.createElement("button");
-      newBtn.textContent = "Share Generated Image";
-      newBtn.className =
-        "bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1";
-      newBtn.style.minWidth = "150px";
-      newBtn.style.height = "24px";
-      btn.parentElement.appendChild(newBtn);
-
-      newBtn.addEventListener("click", async () => {
-        await performShare(file, "British Classic Fantasy League 2025 🇬🇧", "Check out my league ranking!");
-        removeContextualShare();
+        tbody.insertAdjacentHTML("beforeend", `<tr class="${rowClass}">${tds}</tr>`);
       });
-      return;
+
+      renderPagination();
     }
 
-    const file = await buildSnapshotFile();
-    await performShare(file, "British Classic Fantasy League 2025 🇬🇧", "Check out my league ranking!");
-  }
+    function renderPagination() {
+      const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+      const container = document.getElementById("paginationContainer");
+      container.innerHTML = "";
+      if (totalPages <= 1) return;
 
-  async function performShare(file, title, text) {
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ title, text, files: [file] });
-    } else {
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(file);
-      link.download = file.name;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      const makeBtn = (label, handler, disabled = false, active = false) => {
+        const b = document.createElement("button");
+        b.textContent = label;
+        b.className =
+          `px-2 py-1 mx-1 rounded ${
+            active ? "bg-red-600 text-white" : "bg-gray-700/60 hover:bg-gray-600"
+          }`;
+        b.disabled = disabled;
+        b.onclick = handler;
+        container.appendChild(b);
+      };
+
+      makeBtn("« Prev",
+        () => { if (currentPage > 1) { currentPage--; renderTable(); } },
+        currentPage === 1
+      );
+
+      const maxButtons = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+      let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+      if (endPage - startPage < maxButtons - 1) {
+        startPage = Math.max(1, endPage - maxButtons + 1);
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        makeBtn(
+          i,
+          () => { currentPage = i; renderTable(); },
+          false,
+          i === currentPage
+        );
+      }
+
+      makeBtn("Next »",
+        () => { if (currentPage < totalPages) { currentPage++; renderTable(); } },
+        currentPage === totalPages
+      );
     }
-  }
 
-  /* --- Snapshot Builder --- */
-  async function buildSnapshotFile() {
-    const total = allRows.length;
-    const matchIndex = searchMatches[currentMatchIndex];
-    let start = Math.max(0, matchIndex - 4);
-    let end = Math.min(total - 1, matchIndex + 5);
-    const slice = allRows.slice(start, end + 1);
-    while (slice.length < 10) slice.push(new Array(headerRow.length).fill(""));
+    /* --- Contextual Share row above highlighted --- */
+    function removeContextualShare() {
+      const existing = document.querySelector(".contextual-share-row");
+      if (existing) existing.remove();
+      contextualShareBtn = null;
+    }
 
-    const rowsHtml = slice.map((r, i) => {
-      const actual = start + i;
-      const bold = actual === matchIndex ? "font-weight:bold;" : "";
-      return `<tr style="${bold}">${r.map(c => `<td class='px-3 py-1 text-center'>${c}</td>`).join("")}</tr>`;
-    }).join("");
+    function insertContextualShare(targetRow) {
+      removeContextualShare();
+      if (!targetRow) return;
 
-    const snapshot = document.createElement("div");
-    Object.assign(snapshot.style, {
-      width: "600px",
-      borderRadius: "16px",
-      overflow: "hidden",
-      background: "#000",
-      backgroundImage: "url('image_leaderboard_shf.jpg')",
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      boxShadow: "0 10px 30px rgba(0,0,0,.35)",
-      position: "relative",
-      isolation: "isolate",
-      zIndex: "9999"
+      const tr = document.createElement("tr");
+      tr.className = "contextual-share-row";
+      tr.innerHTML = `
+        <td colspan="${headerRow.length}" class="text-center py-1">
+          <button id="contextualShareBtn"
+            class="bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1"
+            style="min-width:130px; height:24px;">
+            Share My Ranking
+          </button>
+        </td>
+      `;
+      targetRow.parentNode.insertBefore(tr, targetRow);
+
+      contextualShareBtn = document.getElementById("contextualShareBtn");
+      contextualShareBtn.addEventListener("click", shareRanking);
+    }
+
+    function scrollToHighlighted() {
+      if (!searchMatches.length || currentMatchIndex < 0) return;
+
+      const tbody = document.getElementById("leaderboardBody");
+      const rows = tbody.querySelectorAll("tr");
+
+      const matchIdx = searchMatches[currentMatchIndex];
+      const start = (currentPage - 1) * rowsPerPage;
+      const rowIndex = matchIdx - start;
+      const target = rows[rowIndex];
+      if (!target) return;
+
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(() => insertContextualShare(target), 350);
+    }
+
+    /* --- Search + Enter cycle --- */
+    searchInput.addEventListener("input", () => {
+      const filter = searchInput.value.trim().toLowerCase();
+      searchMatches = [];
+      currentMatchIndex = -1;
+      removeContextualShare();
+
+      if (!filter) {
+        filteredRows = [...allRows];
+        currentPage = 1;
+        renderTable();
+        return;
+      }
+
+      filteredRows = [...allRows];
+      allRows.forEach((row, idx) => {
+        if (row.join(" ").toLowerCase().includes(filter)) {
+          searchMatches.push(idx);
+        }
+      });
+
+      if (searchMatches.length) {
+        currentMatchIndex = 0;
+        currentPage = Math.floor(searchMatches[0] / rowsPerPage) + 1;
+        renderTable();
+        scrollToHighlighted();
+      } else {
+        renderTable();
+      }
     });
 
-    const qr = new Image();
-    qr.crossOrigin = "anonymous";
-    qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
-    await new Promise(res => qr.onload = res);
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && searchMatches.length > 1) {
+        e.preventDefault();
+        currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
+        currentPage = Math.floor(searchMatches[currentMatchIndex] / rowsPerPage) + 1;
+        renderTable();
+        scrollToHighlighted();
+      }
+    });
 
-    snapshot.innerHTML = `
-      <div style="background:rgba(0,0,0,.55);padding:18px;position:relative;">
-        <img src="${qr.src}" style="position:absolute;bottom:16px;left:18px;width:52px;height:52px;border-radius:6px;">
-        <h2 style="text-align:center;font-size:20px;font-weight:700;margin-bottom:4px;">British Classic Fantasy League 2025 🇬🇧</h2>
-        <h3 style="text-align:center;font-size:16px;font-weight:600;margin-bottom:4px;">My League Ranking</h3>
-        <p style="text-align:center;font-size:12px;color:#d1d5db;opacity:.9;margin-bottom:12px;">Entry Count – ${total}</p>
-        <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
-          <thead><tr>${headerRow.map(h => `<th style="padding:4px;text-align:center;font-weight:600;">${h}</th>`).join("")}</tr></thead>
-          <tbody>${rowsHtml}</tbody>
-        </table>
-        <p style="font-size:11px;color:#ccc;text-align:center;margin-top:18px;line-height:1.6;">
-          Data from tinyurl.com/britishclassicfl-leaderboard<br><br>Sponsored by the Sabado Sessions Podcast
-        </p>
-      </div>
-    `;
+    /* --- Browser detection --- */
+    function detectBrowserShareSupport() {
+      const ua = navigator.userAgent.toLowerCase();
+      return {
+        isAndroidChrome: ua.includes("chrome") && ua.includes("android")
+      };
+    }
 
-    document.body.appendChild(snapshot);
-    const canvas = await html2canvas(snapshot, { backgroundColor: null, scale: 2, useCORS: true, scrollY: 0 });
-    snapshot.remove();
+    /* --- Share logic (Android two-step, others one-step) --- */
+    async function shareRanking() {
+      if (!searchMatches.length) {
+        alert("Please search for your name first.");
+        return;
+      }
 
-    const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
-    return new File([blob], "league_ranking.png", { type: "image/png" });
-  }
+      const { isAndroidChrome } = detectBrowserShareSupport();
+      const btn = contextualShareBtn;
+      if (!btn) return;
 
-  /* --- Bind top-right icon + load data --- */
-  document.getElementById("shareRankingBtn").addEventListener("click", shareRanking);
-  loadLeaderboard();
-});
-</script>
+      const file = await buildSnapshotFile();
+
+      if (isAndroidChrome) {
+        btn.textContent = "Generating...";
+        btn.disabled = true;
+        btn.style.display = "none";
+
+        const newBtn = document.createElement("button");
+        newBtn.textContent = "Share Generated Image";
+        newBtn.className =
+          "bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1";
+        newBtn.style.minWidth = "150px";
+        newBtn.style.height = "24px";
+        btn.parentElement.appendChild(newBtn);
+
+        newBtn.addEventListener("click", async () => {
+          await performShare(file, "British Classic Fantasy League 2025 🇬🇧", "Check out my league ranking!");
+          newBtn.remove();
+          removeContextualShare();
+        });
+      } else {
+        await performShare(file, "British Classic Fantasy League 2025 🇬🇧", "Check out my league ranking!");
+      }
+    }
+
+    async function performShare(file, title, text) {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ title, text, files: [file] });
+      } else {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(file);
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }
+    }
+
+    /* --- Snapshot builder --- */
+    async function buildSnapshotFile() {
+      const total = allRows.length;
+      const matchIndex = searchMatches[currentMatchIndex];
+
+      let start = Math.max(0, matchIndex - 4);
+      let end = Math.min(total - 1, matchIndex + 5);
+      const slice = allRows.slice(start, end + 1);
+      while (slice.length < 10) {
+        slice.push(new Array(headerRow.length).fill(""));
+      }
+
+      const rowsHtml = slice.map((r, i) => {
+        const actual = start + i;
+        const bold = actual === matchIndex ? "font-weight:bold;" : "";
+        return `<tr style="${bold}">${
+          r.map(c => `<td class='px-3 py-1 text-center'>${c}</td>`).join("")
+        }</tr>`;
+      }).join("");
+
+      const wrapper = document.createElement("div");
+      Object.assign(wrapper.style, {
+        width: "600px",
+        borderRadius: "16px",
+        overflow: "hidden",
+        background: "#000",
+        backgroundImage: "url('image_leaderboard_shf.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        boxShadow: "0 10px 30px rgba(0,0,0,.35)",
+        position: "fixed",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        zIndex: "9999"
+      });
+
+      const qr = new Image();
+      qr.crossOrigin = "anonymous";
+      qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
+      await new Promise(res => qr.onload = res);
+
+      wrapper.innerHTML = `
+        <div style="background:rgba(0,0,0,.55);padding:18px;position:relative;">
+          <img src="${qr.src}"
+               style="position:absolute;bottom:16px;left:18px;width:52px;height:52px;border-radius:6px;" />
+          <h2 style="text-align:center;font-size:20px;font-weight:700;margin-bottom:4px;">
+            British Classic Fantasy League 2025 🇬🇧
+          </h2>
+          <h3 style="text-align:center;font-size:16px;font-weight:600;margin-bottom:4px;">
+            My League Ranking
+          </h3>
+          <p style="text-align:center;font-size:12px;color:#d1d5db;opacity:.9;margin-bottom:12px;">
+            Entry Count – ${total}
+          </p>
+          <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+            <thead>
+              <tr>
+                ${headerRow.map(h =>
+                  `<th style="padding:4px;text-align:center;font-weight:600;">${h}</th>`).join("")}
+              </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+          <p style="font-size:11px;color:#ccc;text-align:center;margin-top:18px;line-height:1.6;">
+            Data from tinyurl.com/britishclassicfl-leaderboard<br><br>
+            Sponsored by the Sabado Sessions Podcast
+          </p>
+        </div>
+      `;
+
+      document.body.appendChild(wrapper);
+
+      const canvas = await html2canvas(wrapper, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+        scrollY: 0
+      });
+
+      wrapper.remove();
+
+      const blob = await new Promise(res => canvas.toBlob(res, "image/png"));
+      return new File([blob], "league_ranking.png", { type: "image/png" });
+    }
+
+    /* --- Hook main share icon --- */
+    document.getElementById("shareRankingBtn").addEventListener("click", () => {
+      if (!searchMatches.length) {
+        alert("Please search for your name first so we can snapshot your row.");
+        return;
+      }
+      shareRanking();
+    });
+
+    loadLeaderboard();
+  });
+  </script>
 </body>
 </html>
