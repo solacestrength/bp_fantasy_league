@@ -36,24 +36,39 @@
     canvas {max-width:100%;height:auto!important;}
     .chart-container {max-width:600px;margin:0 auto;position:relative;}
 
-    /* === Balanced chart heights and scaling (North Star vFinal Unified) === */
-    @media (min-width:1024px){
-      .chart-container{max-width:480px;}
-      #womenDonut, #menDonut {height:375px !important;}
-      #womenHist, #menHist {
-        height:360px !important;
-        transform: scale(0.93);
-        transform-origin: top center;
-      }
-    }
-    @media (max-width:1023px){
-      #womenDonut, #menDonut {height:336px !important;}
-      #womenHist, #menHist {
-        height:360px !important;
-        transform: scale(0.90);
-        transform-origin: top center;
-      }
-    }
+/* === Balanced chart heights and scaling (North Star vFinal Unified) === */
+@media (min-width:1024px){
+  .chart-container{max-width:480px;}
+  #womenDonut, #menDonut,
+  #womenHist, #menHist {
+    aspect-ratio: 1 / 1 !important;   /* ⬅️ match donut lock */
+    width: 100% !important;
+    max-height: none !important;
+    object-fit: contain;
+  }
+  #womenDonut, #menDonut {height:375px !important;}
+  #womenHist, #menHist {
+    height:375px !important;          /* ⬅️ match donut height for parity */
+    transform: none !important;       /* ⬅️ remove scale-based distortion */
+    transform-origin: top center;
+  }
+}
+
+@media (max-width:1023px){
+  #womenDonut, #menDonut,
+  #womenHist, #menHist {
+    aspect-ratio: 1 / 1 !important;   /* ⬅️ keep square */
+    width: 100% !important;
+    max-height: none !important;
+    object-fit: contain;
+  }
+  #womenDonut, #menDonut {height:336px !important;}
+  #womenHist, #menHist {
+    height:336px !important;          /* ⬅️ same as donuts */
+    transform: none !important;       /* ⬅️ prevent double scaling */
+    transform-origin: top center;
+  }
+}
 
     /* === Preserve true aspect for donut charts (no stretch or squash) === */
 #womenDonut, #menDonut {
