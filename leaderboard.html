@@ -272,6 +272,7 @@ searchInput.addEventListener("input", () => {
     currentPage = Math.floor(matchIdx / rowsPerPage) + 1;
     renderTable();
     insertContextualShare();
+    scrollToHighlightedRow();
   } else {
     renderTable();
     removeContextualShare();
@@ -287,6 +288,7 @@ searchInput.addEventListener("keydown", (e) => {
     currentPage = Math.floor(matchIdx / rowsPerPage) + 1;
     renderTable();
     insertContextualShare();
+    scrollToHighlightedRow();
   }
 });
 
@@ -330,6 +332,16 @@ function insertContextualShare() {
 
   contextualShareBtn = document.getElementById("contextualShareBtn");
   contextualShareBtn.addEventListener("click", shareRanking);
+}
+
+function scrollToHighlightedRow() {
+  const highlighted = document.querySelector('#leaderboardBody tr.pulse-row');
+  if (highlighted) {
+    highlighted.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    });
+  }
 }
 
   /* --- Device detection helper --- */
