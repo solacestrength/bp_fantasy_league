@@ -24,10 +24,31 @@
   .animate-fade-in {
     animation: fadeInUp 1s ease-out forwards;
   }
-</style>
 
-<!-- Fixes for mobile menu stacking/pointer events -->
-<link rel="stylesheet" href="/assets/css/fix-dropdown.css">
+  /* Collapsible for Rules & Scoring */
+  .rules-collapsible {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.4s ease, opacity 0.3s ease;
+  }
+
+  .rules-collapsible.open {
+    opacity: 1;
+    max-height: 1000px;
+  }
+
+  .rules-arrow {
+    transition: transform 0.3s ease;
+  }
+
+  .rules-arrow.rotate {
+    transform: rotate(180deg);
+  }
+  </style>
+
+  <!-- Fixes for mobile menu stacking/pointer events -->
+  <link rel="stylesheet" href="/assets/css/fix-dropdown.css">
 </head>
 <body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
 
@@ -35,7 +56,6 @@
   <div class="absolute inset-0 bg-black/70 site-background-overlay"></div>
 
   <div class="relative z-10 flex flex-col flex-grow">
-  <!-- Header is no longer fixed; it sits in normal document flow (relative). -->
     <!-- Header -->
     <header class="site-header w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 relative z-50">
       <div class="w-full flex items-center justify-center px-4 py-3">
@@ -57,7 +77,7 @@
       </div>
     </header>
 
-    <!-- Dropdown menu (fixed outside transformed parent) -->
+    <!-- Dropdown menu -->
     <div id="mobile-menu" class="fixed top-16 right-4 w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-md shadow-lg z-50 scale-y-0 opacity-0 origin-top transition-transform duration-300 ease-in-out">
       <nav class="flex flex-col py-2 text-white">
         <a href="index.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Home</a>
@@ -68,77 +88,98 @@
       </nav>
     </div>
 
-  <!-- Main Content -->
-<main class="flex flex-col flex-grow justify-center items-center px-4 mt-10 md:mt-0 animate-fade-in min-h-screen">
-    <section class="max-w-3xl w-full bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-700 p-6">
-      <h2 class="text-l font-bold text-center mb-6">Welcome to the British Classic Fantasy League.
-        Think you know ball? Sign up <a href="entry.html"
-           target="_blank"
-           rel="noopener noreferrer"
-           class="underline hover:text-gray-300">
-           here</a> and test your powerlifting knowledge ahead of the 2025 British Classic for the chance to win some great prizes courtesy of our sponsors 
-        at the <a href="https://www.instagram.com/sabadosessionspodcast/?hl=en-gb"
-           target="_blank"
-           rel="noopener noreferrer"
-           class="underline hover:text-gray-300">
-           Sabado Sessions Podcast</a>!
-      </h2>
+    <!-- Main Content -->
+    <main class="flex flex-col flex-grow justify-center items-center px-4 mt-10 md:mt-0 animate-fade-in min-h-screen">
+      <section class="max-w-3xl w-full bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-700 p-6">
+        <h2 class="text-l font-bold text-center mb-6">
+          Welcome to the British Classic Fantasy League.
+          Think you know ball? Sign up
+          <a href="entry.html"
+             target="_blank"
+             rel="noopener noreferrer"
+             class="underline hover:text-gray-300">
+             here</a>
+          and test your powerlifting knowledge ahead of the 2025 British Classic for the chance to win some great prizes courtesy of our sponsors 
+          at the
+          <a href="https://www.instagram.com/sabadosessionspodcast/?hl=en-gb"
+             target="_blank"
+             rel="noopener noreferrer"
+             class="underline hover:text-gray-300">
+             Sabado Sessions Podcast</a>!
+        </h2>
 
-      <div class="space-y-8">
-        <div>
-          <h3 class="text-xl font-semibold text-red-400 mb-2">Prizes</h3>
-          <ul class="list-disc list-inside text-gray-300 space-y-1">
-            <br / ><li>First Place - <b>£80 Cash Prize</b> 💷💷</li>
-            <li>Second Place - <b>£40 Cash Prize</b> 💷</li>
-            <li>Third Place - <b>Bulk Protein Powder</b> 💪</li>
+        <div class="space-y-8">
+          <div>
+            <h3 class="text-xl font-semibold text-red-400 mb-2">Prizes</h3>
+            <ul class="list-disc list-inside text-gray-300 space-y-1">
+              <br /><li>First Place - <b>£80 Cash Prize</b> 💷💷</li>
+              <li>Second Place - <b>£40 Cash Prize</b> 💷</li>
+              <li>Third Place - <b>Bulk Protein Powder</b> 💪</li>
             </ul>
-        </div>
+          </div>
 
           <div>
-          <h3 class="text-xl font-semibold text-red-400 mb-2">Rules and Scoring</h3>
-          <ul class="list-disc list-inside text-gray-300 space-y-1">
-            <br / ><li>Each entrant predicts a winner for all male and female weight classes (8 per gender).</li><br />
-            <li>Assign a confidence level for your predictions. 1 = least confident and 16 = most confident. 
-                Each correct guess is added to your points total - highest score wins!
-                Placing more points on a prediction in a stacked weight class is high risk, high reward - choose wisely!</li><br />
-            <li>Entrants will also have the option to predict the winning total of each weight class (don't forget your chips/0.5kg multiples 🍟).<br / >
-              This will be used as a tiebreaker if required; if two or more entrants finish at the top of the leaderboard, the entrant who most 
-              accurately predicted all 16 winning totals will win.</li><br />
-            <li>Finally, entrants will also predict a male and female winner for the best lifter award. This is will be used as a final tie-breaker
-                if required.</li><br />
-             <li>Your responses will be emailed to you upon form completion. Please also check your spam/junk folders for these.</li><br />
-            <li>Entries close on Thursday 4th December 2025 at 11.59pm. You will be able to edit your responses in the Google form until this date. All the best!</li>
-          </ul>
-        </div>
-      </div>
-    </section>
+            <!-- Collapsible Rules and Scoring -->
+            <h3 id="rulesToggle"
+                class="flex items-center justify-between text-xl font-semibold text-red-400 mb-2 cursor-pointer select-none">
+              <span>Rules and Scoring</span>
+              <svg id="rulesArrow" xmlns="http://www.w3.org/2000/svg"
+                   class="w-5 h-5 text-red-500 rules-arrow"
+                   fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 9l-7 7-7-7" />
+              </svg>
+            </h3>
 
-<!-- Enter Now Button Container -->
-<div class="flex justify-center mt-8">
-  <a href="entry.html"
-     class="inline-flex items-center justify-center bg-gray-800/60 border border-gray-700
-            text-gray-200 font-semibold px-6 py-3 rounded-full backdrop-blur-sm shadow-lg
-            hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
-    Enter Now
-  </a>
-</div>
+            <div id="rulesContent" class="rules-collapsible mt-1">
+              <ul class="list-disc list-inside text-gray-300 space-y-1">
+                <br /><li>Each entrant predicts a winner for all male and female weight classes (8 per gender).</li><br />
+                <li>Assign a confidence level for your predictions. 1 = least confident and 16 = most confident. 
+                    Each correct guess is added to your points total - highest score wins!
+                    Placing more points on a prediction in a stacked weight class is high risk, high reward - choose wisely!</li><br />
+                <li>Entrants will also have the option to predict the winning total of each weight class (don't forget your chips/0.5kg multiples 🍟).<br />
+                  This will be used as a tiebreaker if required; if two or more entrants finish at the top of the leaderboard, the entrant who most 
+                  accurately predicted all 16 winning totals will win.</li><br />
+                <li>Finally, entrants will also predict a male and female winner for the best lifter award. This is will be used as a final tie-breaker
+                    if required.</li><br />
+                <li>Your responses will be emailed to you upon form completion. Please also check your spam/junk folders for these.</li><br />
+                <li>Entries close on Thursday 4th December 2025 at 11.59pm. You will be able to edit your responses in the Google form until this date. All the best!</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Enter Now Button Container -->
+      <div class="flex justify-center mt-8">
+        <a href="entry.html"
+           class="inline-flex items-center justify-center bg-gray-800/60 border border-gray-700
+                  text-gray-200 font-semibold px-6 py-3 rounded-full backdrop-blur-sm shadow-lg
+                  hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
+          Enter Now
+        </a>
+      </div>
 
       <!-- Back to Top Button (static link) -->
       <div class="flex justify-center mt-8">
-  <button id="bottomBackToTop"
-          class="bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full
-                 flex items-center justify-center backdrop-blur-sm shadow-lg
-                 hover:bg-gray-700/70 hover:text-red-400 transition">
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
-         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
-    </svg>
-  </button>
-</div>
+        <button id="bottomBackToTop"
+                class="bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full
+                       flex items-center justify-center backdrop-blur-sm shadow-lg
+                       hover:bg-gray-700/70 hover:text-red-400 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+          </svg>
+        </button>
+      </div>
+    </main>
 
-<footer class="text-center text-gray-500 text-sm py-4 bg-transparent">Sponsored by the Sabado Sessions Podcast</footer>
+    <footer class="text-center text-gray-500 text-sm py-4 bg-transparent">
+      Sponsored by the Sabado Sessions Podcast
+    </footer>
+  </div>
 
-<script>
+  <script>
   const menuBtn = document.getElementById('menu-btn');
   const mobileMenu = document.getElementById('mobile-menu');
 
@@ -171,16 +212,28 @@
     }
   });
 
-   const bottomBackToTop = document.getElementById('bottomBackToTop');
+  const bottomBackToTop = document.getElementById('bottomBackToTop');
   if (bottomBackToTop) {
     bottomBackToTop.addEventListener('click', () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
 
-  // Initialize menu as hidden (collapsed)
+  // Rules & Scoring collapsible
+  const rulesToggle = document.getElementById('rulesToggle');
+  const rulesContent = document.getElementById('rulesContent');
+  const rulesArrow = document.getElementById('rulesArrow');
+
+  if (rulesToggle && rulesContent && rulesArrow) {
+    rulesToggle.addEventListener('click', () => {
+      const isOpen = rulesContent.classList.toggle('open');
+      rulesArrow.classList.toggle('rotate', isOpen);
+    });
+  }
+
+  // Initialize menu as hidden
   toggleMenu(false);
-</script>
+  </script>
 
 </body>
 </html>
