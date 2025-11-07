@@ -16,7 +16,14 @@
 
   <style>
     body {background:#0b0b0b;color:#f1f1f1;font-family:'Inter',sans-serif;}
-    select {background:#1f1f1f;border:1px solid #333;}
+    select {
+  background: #1f1f1f;
+  border: 1px solid #333;
+  width: 180px;            /* ← restores the exact visual width */
+  border-radius: 0.375rem; /* smooth rounding to match theme */
+  color: #f1f1f1;
+  padding: 0.35rem 0.5rem;
+}
     canvas {max-width:100%;height:auto!important;}
     .chart-container {max-width:600px;margin:0 auto;position:relative;}
 
