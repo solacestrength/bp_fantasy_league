@@ -135,21 +135,26 @@
 
       <!-- View Accuracy Scores Button -->
       <div class="flex justify-center mt-8">
-        <a href="accuracy_scores.html"
-          class="bg-gray-800/60 border border-gray-700 text-gray-200 font-semibold px-6 py-3 rounded-xl
-                 backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-base">
-          View Accuracy Scores
-        </a>
-      </div>
+  <a href="accuracy_scores.html"
+     class="inline-flex items-center justify-center bg-gray-800/60 border border-gray-700
+            text-gray-200 font-semibold px-6 py-3 rounded-full backdrop-blur-sm shadow-lg
+            hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
+    View Accuracy Scores
+  </a>
+</div>
 
       <!-- Back to Top Button (static link) -->
-      <div class="flex justify-center mt-4">
-        <a href="#top"
-          class="bg-gray-800/60 border border-gray-700 text-gray-300 font-semibold px-5 py-2 rounded-xl
-                 backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
-          Back to Top
-        </a>
-      </div>
+      <div class="flex justify-center mt-3">
+  <button id="bottomBackToTop"
+          class="bg-gray-800/60 border border-gray-700 text-gray-200 w-10 h-10 rounded-full
+                 flex items-center justify-center backdrop-blur-sm shadow-lg
+                 hover:bg-gray-700/70 hover:text-red-400 transition">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+    </svg>
+  </button>
+</div>
     </main>
 
     <footer class="text-center text-gray-500 text-sm mt-16 pb-4">
@@ -240,6 +245,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 120);
   });
   fab.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+    const bottomBackToTop = document.getElementById('bottomBackToTop');
+  if (bottomBackToTop) {
+    bottomBackToTop.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
 
   /* ---------- Search Clear ---------- */
   const searchInput = document.getElementById("searchInput");
