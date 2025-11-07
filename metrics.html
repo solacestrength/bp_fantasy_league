@@ -317,11 +317,13 @@ function toggleSection(id){
   a.classList.toggle('rotate',o);
 }
 
-/* --- Device detection helper (Android two-step only) --- */
+/* --- Device detection helper (Android + iOS Chrome fallback) --- */
 function detectBrowserShareSupport() {
   const ua = navigator.userAgent.toLowerCase();
   return {
-    isAndroidChrome: ua.includes('android') && ua.includes('chrome') && !ua.includes('edge') && !ua.includes('opr')
+    isAndroidChrome:
+      ua.includes('android') && ua.includes('chrome') && !ua.includes('edge') && !ua.includes('opr'),
+    isChromeIOS: ua.includes('crios') // Chrome on iOS user agent
   };
 }
 
@@ -509,17 +511,30 @@ async function shareChart(id, g) {
     return;
   }
 
-  // ===== One-step for all other browsers =====
-  try {
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ title: 'British Classic Fantasy League 2025', text: 'Check out these stats!', files: [file] });
-    } else {
+  // ===== One-step for all other browsers (with iOS Chrome fallback) =====
+const { isChromeIOS } = detectBrowserShareSupport();
+try {
+  if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
+    await navigator.share({
+      title: 'British Classic Fantasy League 2025',
+      text: 'Check out these stats!',
+      files: [file]
+    });
+  } else {
+    const url = URL.createObjectURL(file);
+    if (confirm("Download image instead?")) {
       const link = document.createElement('a');
-      link.href = canvas.toDataURL('image/png');
+      link.href = url;
       link.download = fn;
+      document.body.appendChild(link);
       link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
     }
-  } catch (_) {}
+  }
+} catch (err) {
+  console.error("Share failed:", err);
+}
 
   // Restore original icon bar after one-step flow
   shareBar.innerHTML = '';
