@@ -173,11 +173,10 @@
     </svg>
   </button>
 
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-
-  /* ---------- Burger ---------- */
+  /* ---------- Burger Menu ---------- */
   const menuBtn = document.getElementById("menu-btn");
   const mobileMenu = document.getElementById("mobile-menu");
   menuBtn.addEventListener("click", (e) => {
@@ -195,11 +194,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  /* ---------- Toast warning ---------- */
+  /* ---------- Toast Warning ---------- */
   function showWarning(message) {
     const existing = document.getElementById("shareWarningToast");
     if (existing) existing.remove();
-
     const toast = document.createElement("div");
     toast.id = "shareWarningToast";
     toast.textContent = message;
@@ -226,7 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 2500);
   }
 
-  /* ---------- Back-to-top FAB ---------- */
+  /* ---------- Back-to-Top FAB ---------- */
   const fab = document.getElementById("backToTopFab");
   let scrollTimer;
   window.addEventListener("scroll", () => {
@@ -246,42 +244,39 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   fab.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 
-    const bottomBackToTop = document.getElementById('bottomBackToTop');
+  /* ---------- Bottom Back-to-Top Listener ---------- */
+  const bottomBackToTop = document.getElementById("bottomBackToTop");
   if (bottomBackToTop) {
-    bottomBackToTop.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
+    bottomBackToTop.addEventListener("click", () =>
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    );
   }
-
-  /* ---------- Search Clear ---------- */
-  const searchInput = document.getElementById("searchInput");
-  const clearBtn = document.getElementById("clearSearchBtn");
-  searchInput.addEventListener("input", () => {
-    clearBtn.classList.toggle("hidden", !searchInput.value);
-  });
-  clearBtn.addEventListener("click", () => {
-    searchInput.value = "";
-    clearBtn.classList.add("hidden");
-    filteredRows = [...allRows];
-    searchMatches = [];
-    currentMatchIndex = -1;
-    currentPage = 1;
-    renderTable();
-    removeContextualShare();
-  });
 
   /* ---------- Table Setup ---------- */
   const rowsPerPage = 50;
   let allRows = [], filteredRows = [], currentPage = 1;
   let searchMatches = [], currentMatchIndex = -1;
-  let headerRow = [], contextualShareBtn = null;
+  let headerRow = [], nameColIdx = -1, contextualShareBtn = null;
 
+  const searchInput = document.getElementById("searchInput");
+  const clearBtn = document.getElementById("clearSearchBtn");
+
+  function escapeRegExp(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  /* ---------- Load Leaderboard ---------- */
   async function loadLeaderboard() {
     const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=2003215108&single=true&output=csv";
     const response = await fetch(csvUrl);
     const text = await response.text();
-    const rows = text.trim().split("\n").map(r => r.split(","));
+    const rows = text.trim().split(/\r?\n/).map(l => l.split(","));
+    if (!rows.length) return;
+
     headerRow = rows.shift();
+    nameColIdx = headerRow.findIndex(h => /name|entrant/i.test(h.trim()));
+    if (nameColIdx < 0) nameColIdx = 1;
+
     document.getElementById("leaderboardHeader").innerHTML =
       headerRow.map(h => `<th class='px-3 py-2 text-center'>${h}</th>`).join("");
     allRows = rows;
@@ -289,21 +284,33 @@ document.addEventListener("DOMContentLoaded", () => {
     renderTable();
   }
 
+  /* ---------- Render Table ---------- */
   function renderTable() {
     const tbody = document.getElementById("leaderboardBody");
     tbody.innerHTML = "";
     const start = (currentPage - 1) * rowsPerPage;
     const end = start + rowsPerPage;
+    const query = searchInput.value.trim();
+    const hasQuery = !!query;
+    const regex = hasQuery ? new RegExp(`(${escapeRegExp(query)})`, "ig") : null;
+
     filteredRows.slice(start, end).forEach((row, i) => {
       const globalIndex = start + i;
-      const highlight = searchMatches.length && searchMatches[currentMatchIndex] === globalIndex;
+      const highlight = searchMatches.length && currentMatchIndex >= 0 &&
+                        searchMatches[currentMatchIndex] === globalIndex;
       const cls = highlight ? "pulse-row" : "";
-      tbody.insertAdjacentHTML("beforeend",
-        `<tr class="${cls}">${row.map(c => `<td class='px-3 py-2 text-center'>${c}</td>`).join("")}</tr>`);
+      const tds = row.map((c, ci) => {
+        let content = c;
+        if (hasQuery && ci === nameColIdx && regex)
+          content = c.replace(regex, "<strong>$1</strong>");
+        return `<td class='px-3 py-2 text-center'>${content}</td>`;
+      }).join("");
+      tbody.insertAdjacentHTML("beforeend", `<tr class="${cls}">${tds}</tr>`);
     });
     renderPagination();
   }
 
+  /* ---------- Pagination ---------- */
   function renderPagination() {
     const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
     const container = document.getElementById("paginationContainer");
@@ -313,9 +320,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const b = document.createElement("button");
       b.textContent = t;
       b.className = `px-2 py-1 mx-1 rounded ${a ? "bg-red-600 text-white" : "bg-gray-700/60 hover:bg-gray-600"}`;
-      b.disabled = d;
-      b.onclick = h;
-      container.appendChild(b);
+      b.disabled = d; b.onclick = h; container.appendChild(b);
     };
     makeBtn("« Prev", () => { if (currentPage > 1) { currentPage--; renderTable(); } }, currentPage === 1);
     const maxBtns = 5;
@@ -347,40 +352,59 @@ document.addEventListener("DOMContentLoaded", () => {
     contextualShareBtn.addEventListener("click", shareRanking);
   }
 
-  function scrollToHighlighted() {
-    if (!searchMatches.length || currentMatchIndex < 0) return;
+  /* ---------- Smooth Scroll Helper ---------- */
+  function scrollToHighlighted(force = false) {
     const tbody = document.getElementById("leaderboardBody");
-    const rows = tbody.querySelectorAll("tr");
-    const matchIdx = searchMatches[currentMatchIndex];
-    const start = (currentPage - 1) * rowsPerPage;
-    const rowIndex = matchIdx - start;
-    const target = rows[rowIndex];
+    if (!tbody) return;
+    let target = tbody.querySelector("tr.pulse-row");
+    if (!target && searchMatches.length && currentMatchIndex >= 0) {
+      const matchIdx = searchMatches[currentMatchIndex];
+      const start = (currentPage - 1) * rowsPerPage;
+      const rowIndex = matchIdx - start;
+      target = tbody.querySelectorAll("tr")[rowIndex] || null;
+    }
     if (!target) return;
-    target.scrollIntoView({ behavior: "smooth", block: "center" });
-    setTimeout(() => insertContextualShare(target), 350);
+
+    const rect = target.getBoundingClientRect();
+    const fullyVisible = rect.top >= 64 && rect.bottom <= window.innerHeight - 40;
+    if (!force && fullyVisible) { insertContextualShare(target); return; }
+    searchInput.blur(); // mobile keyboard fix
+    setTimeout(() => {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(() => insertContextualShare(target), 250);
+    }, 60);
   }
 
-  /* ---------- Search ---------- */
+  /* ---------- Search Logic ---------- */
   searchInput.addEventListener("input", () => {
     const f = searchInput.value.trim().toLowerCase();
-    searchMatches = [];
-    currentMatchIndex = -1;
-    removeContextualShare();
+    clearBtn.classList.toggle("hidden", !searchInput.value);
+    searchMatches = []; currentMatchIndex = -1; removeContextualShare();
     if (!f) { filteredRows = [...allRows]; currentPage = 1; renderTable(); return; }
+    filteredRows = [...allRows];
     allRows.forEach((r, i) => { if (r.join(" ").toLowerCase().includes(f)) searchMatches.push(i); });
     if (searchMatches.length) {
       currentMatchIndex = 0;
       currentPage = Math.floor(searchMatches[0] / rowsPerPage) + 1;
-      renderTable(); scrollToHighlighted();
+      renderTable(); scrollToHighlighted(false);
     } else renderTable();
   });
 
+  clearBtn.addEventListener("click", () => {
+    searchInput.value = ""; clearBtn.classList.add("hidden");
+    searchMatches = []; currentMatchIndex = -1; filteredRows = [...allRows];
+    currentPage = 1; removeContextualShare(); renderTable();
+  });
+
   searchInput.addEventListener("keydown", e => {
-    if (e.key === "Enter" && searchMatches.length > 1) {
+    if (e.key === "Enter" && searchMatches.length) {
       e.preventDefault();
-      currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
-      currentPage = Math.floor(searchMatches[currentMatchIndex] / rowsPerPage) + 1;
-      renderTable(); scrollToHighlighted();
+      if (searchMatches.length > 1) {
+        currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
+        currentPage = Math.floor(searchMatches[currentMatchIndex] / rowsPerPage) + 1;
+        renderTable();
+      }
+      scrollToHighlighted(true);
     }
   });
 
@@ -388,33 +412,28 @@ document.addEventListener("DOMContentLoaded", () => {
   function detectBrowserShareSupport() {
     const ua = navigator.userAgent.toLowerCase();
     return {
-      isAndroidChrome: ua.includes("chrome") && ua.includes("android"),
+      isAndroidChrome: ua.includes("android") && ua.includes("chrome") && !ua.includes("edge") && !ua.includes("opr"),
       isChromeIOS: ua.includes("crios")
     };
   }
 
-  /* ---------- Share ---------- */
+  /* ---------- Share Logic ---------- */
   async function shareRanking() {
     if (!searchMatches.length) {
       showWarning("Please search for your name before sharing.");
       return;
     }
-
     const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
     const btn = contextualShareBtn || document.getElementById("shareRankingBtn");
     if (!btn) return;
-
     const file = await buildSnapshotFile();
 
     if (isAndroidChrome) {
-      btn.textContent = "Generating...";
-      btn.disabled = true;
-      btn.style.display = "none";
+      btn.textContent = "Generating..."; btn.disabled = true; btn.style.display = "none";
       const newBtn = document.createElement("button");
       newBtn.textContent = "Share Generated Image";
       newBtn.className = "bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1";
-      newBtn.style.minWidth = "150px";
-      newBtn.style.height = "24px";
+      newBtn.style.minWidth = "150px"; newBtn.style.height = "24px";
       btn.parentElement.appendChild(newBtn);
       newBtn.addEventListener("click", async () => {
         await performShare(file, "British Classic Fantasy League 2025 🇬🇧", "Check out my league ranking!");
@@ -422,7 +441,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       return;
     }
-
     await performShare(file, "British Classic Fantasy League 2025 🇬🇧", "Check out my league ranking!", isChromeIOS);
   }
 
@@ -434,24 +452,18 @@ document.addEventListener("DOMContentLoaded", () => {
         const url = URL.createObjectURL(file);
         if (confirm("Download image instead?")) {
           const link = document.createElement("a");
-          link.href = url;
-          link.download = file.name;
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
+          link.href = url; link.download = file.name;
+          document.body.appendChild(link); link.click(); link.remove();
         }
       }
-    } catch (err) {
-      console.error("Share failed:", err);
-    }
+    } catch (err) { console.error("Share failed:", err); }
   }
 
   /* ---------- Snapshot ---------- */
   async function buildSnapshotFile() {
     const total = allRows.length;
     const matchIndex = searchMatches[currentMatchIndex];
-    let start = Math.max(0, matchIndex - 4);
-    let end = Math.min(total - 1, matchIndex + 5);
+    let start = Math.max(0, matchIndex - 4), end = Math.min(total - 1, matchIndex + 5);
     const slice = allRows.slice(start, end + 1);
     while (slice.length < 10) slice.push(new Array(headerRow.length).fill(""));
     const rowsHtml = slice.map((r, i) => {
@@ -461,17 +473,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }).join("");
     const snapshot = document.createElement("div");
     Object.assign(snapshot.style, {
-      width: "600px",
-      borderRadius: "16px",
-      overflow: "hidden",
-      background: "#000",
+      width: "600px", borderRadius: "16px", overflow: "hidden", background: "#000",
       backgroundImage: "url('image_leaderboard_shf.jpg')",
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      boxShadow: "0 10px 30px rgba(0,0,0,.35)",
-      position: "relative",
-      isolation: "isolate",
-      zIndex: "9999"
+      backgroundSize: "cover", backgroundPosition: "center",
+      boxShadow: "0 10px 30px rgba(0,0,0,.35)", position: "relative", isolation: "isolate", zIndex: "9999"
     });
     const qr = new Image();
     qr.crossOrigin = "anonymous";
@@ -498,6 +503,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return new File([blob], "league_ranking.png", { type: "image/png" });
   }
 
+  /* ---------- Init ---------- */
   document.getElementById("shareRankingBtn").addEventListener("click", shareRanking);
   loadLeaderboard();
 });
