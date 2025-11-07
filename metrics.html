@@ -213,165 +213,340 @@
 
 <script>
 Chart.register(ChartDataLabels);
-const SHEET_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
-let allData=[]; const charts={};
 
-function sizing(){
-  const d=window.matchMedia('(min-width:1024px)').matches;
-  return{
-    donutTitle:d?22:14, donutSubtitle:d?18:12, donutLegend:d?18:12, donutPercent:d?16:12,
-    histTitle:d?22:14, histSubtitle:d?18:12, axisTitle:d?18:12, axisTick:d?14:11, histBarLabel:d?12:10,
-    exportWidth:d?1024:780, qrSize:d?96:72, creditFont:d?18:13, headerFont:d?32:20, subFont:d?26:16
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
+
+let allData = [];
+const charts = {};
+
+function sizing() {
+  const d = window.matchMedia('(min-width:1024px)').matches;
+  return {
+    donutTitle:   d ? 22 : 14,
+    donutSubtitle:d ? 18 : 12,
+    donutLegend:  d ? 18 : 12,
+    donutPercent: d ? 16 : 12,
+    histTitle:    d ? 22 : 14,
+    histSubtitle: d ? 18 : 12,
+    axisTitle:    d ? 18 : 12,
+    axisTick:     d ? 14 : 11,
+    histBarLabel: d ? 12 : 10,
+    exportWidth:  d ? 1024 : 780,
+    qrSize:       d ? 96 : 72,
+    creditFont:   d ? 18 : 13,
+    headerFont:   d ? 32 : 20,
+    subFont:      d ? 26 : 16
   };
 }
 
-// MENU
-const menuBtn=document.getElementById('menu-btn');
-const mobileMenu=document.getElementById('mobile-menu');
-let menuVisible=false;
-menuBtn.addEventListener('click',e=>{menuVisible=!menuVisible;toggleMenu(menuVisible);e.stopPropagation();});
-document.addEventListener('click',e=>{if(!mobileMenu.contains(e.target)&&!menuBtn.contains(e.target)){if(menuVisible){menuVisible=false;toggleMenu(false);}}});
-function toggleMenu(show){
-  if(show){mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');mobileMenu.classList.add('scale-y-100','opacity-100');}
-  else{mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');mobileMenu.classList.remove('scale-y-100','opacity-100');}}
+/* ===== MOBILE MENU ===== */
+const menuBtn = document.getElementById('menu-btn');
+const mobileMenu = document.getElementById('mobile-menu');
+let menuVisible = false;
+
+function toggleMenu(show) {
+  if (show) {
+    mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');
+    mobileMenu.classList.add('scale-y-100','opacity-100');
+  } else {
+    mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');
+    mobileMenu.classList.remove('scale-y-100','opacity-100');
+  }
+}
 toggleMenu(false);
 
-// CSV PARSE + CHARTS
-Papa.parse(SHEET_URL,{download:true,header:true,complete:r=>{allData=r.data;setupDropdowns();}});
+if (menuBtn) {
+  menuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    menuVisible = !menuVisible;
+    toggleMenu(menuVisible);
+  });
+}
+document.addEventListener('click', (e) => {
+  if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target) && menuVisible) {
+    menuVisible = false;
+    toggleMenu(false);
+  }
+});
 
-function setupDropdowns(){
-  ['F','M'].forEach(g=>{
-    const d=allData.filter(r=>r.Gender===g);
-    const classes=[...new Set(d.map(r=>r.Class))].sort((a,b)=>parseFloat(a)-parseFloat(b));
-    const s=document.getElementById(g==='F'?'womenSelect':'menSelect');
-    s.innerHTML=classes.map(c=>`<option value="${c}">${c}kg</option>`).join('');
-    s.onchange=()=>renderCharts(g,s.value);
-    renderCharts(g,classes[0]);
+/* ===== LOAD CSV + INIT ===== */
+Papa.parse(SHEET_URL, {
+  download: true,
+  header: true,
+  complete: (r) => {
+    allData = r.data;
+    setupDropdowns();
+  }
+});
+
+function setupDropdowns() {
+  ['F', 'M'].forEach((g) => {
+    const d = allData.filter((r) => r.Gender === g);
+    const classes = [...new Set(d.map((r) => r.Class))].sort((a, b) => parseFloat(a) - parseFloat(b));
+    const select = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
+
+    select.innerHTML = classes.map((c) => `<option value="${c}">${c}kg</option>`).join('');
+    select.onchange = () => renderCharts(g, select.value);
+
+    if (classes[0]) {
+      renderCharts(g, classes[0]);
+    }
   });
 }
 
-function renderCharts(g,w){
-  const s=sizing();
-  const donutId=g==='F'?'womenDonut':'menDonut';
-  const histId=g==='F'?'womenHist':'menHist';
-  const rows=allData.filter(r=>r.Gender===g&&r.Class===w);
-  if(!rows.length)return;
+/* ===== RENDER CHARTS ===== */
+function renderCharts(g, w) {
+  const s = sizing();
+  const donutId = g === 'F' ? 'womenDonut' : 'menDonut';
+  const histId  = g === 'F' ? 'womenHist'  : 'menHist';
+  const rows = allData.filter(r => r.Gender === g && r.Class === w);
+  if (!rows.length) return;
 
-  const counts={}; rows.forEach(r=>counts[r.Athlete]=(counts[r.Athlete]||0)+1);
-  const dLabels=Object.keys(counts); const dData=Object.values(counts);
-  const total=dData.reduce((a,b)=>a+b,0);
-  const colors=['#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'];
-  if(charts[donutId]) charts[donutId].destroy();
-  charts[donutId]=new Chart(document.getElementById(donutId),{
-    type:'doughnut',
-    data:{labels:dLabels,datasets:[{data:dData,backgroundColor:colors,borderColor:'#111',borderWidth:1}]},
-    options:{
-      maintainAspectRatio:true,aspectRatio:1,cutout:'57%',
-      plugins:{
-        title:{display:true,text:'Share of Votes',color:'#ccc',font:{weight:'bold',size:s.donutTitle},padding:{bottom:8}},
-        subtitle:{display:true,text:`Total Votes – ${total}`,color:'#aaa',font:{size:s.donutSubtitle},padding:{top:2,bottom:12}},
-        legend:{position:'bottom',labels:{color:'#ccc',boxWidth:10,boxHeight:10,font:{size:s.donutLegend}}},
-        datalabels:{color:'#fff',font:{weight:'bold',size:s.donutPercent},formatter:v=>{const p=(v/total)*100;return p>=3?`${p.toFixed(1)}%`:'';},anchor:'center',align:'center',clamp:true}
-      }
-    },
-    plugins:[ChartDataLabels]
+  /* --- DONUT (baseline: unchanged) --- */
+  const counts = {};
+  rows.forEach(r => {
+    counts[r.Athlete] = (counts[r.Athlete] || 0) + 1;
   });
 
-// === Safeguard: enforce square aspect ratio on redraws ===
-charts[donutId].options.maintainAspectRatio = true;
-charts[donutId].options.aspectRatio = 1;
+  const dLabels = Object.keys(counts);
+  const dData   = Object.values(counts);
+  const total   = dData.reduce((a, b) => a + b, 0);
 
-  // Histogram
-  const vals=rows.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v)&&v>0);
-  if(!vals.length){if(charts[histId]) charts[histId].destroy();return;}
-  const N=vals.length,min=Math.min(...vals),max=Math.max(...vals);
-  const bins=Math.max(3,Math.round(Math.sqrt(N)));
-  const bw=(max-min)/bins||1;
-  const countsH=Array(bins).fill(0);
-  vals.forEach(v=>{let i=Math.floor((v-min)/bw);if(i>=bins)i=bins-1;if(i<0)i=0;countsH[i]++;});
-  const labelsH=Array.from({length:bins},(_,i)=>`${(min+i*bw).toFixed(0)}–${(min+(i+1)*bw).toFixed(0)}`);
-  const minC=Math.min(...countsH),maxC=Math.max(...countsH);
-  const yMin=Math.floor(minC/2);const span=maxC-yMin;const step=Math.max(1,Math.round(span/4));const yMax=Math.ceil(maxC/step)*step;
+  const colors = [
+    '#ef4444','#f97316','#facc15','#22c55e','#14b8a6',
+    '#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16',
+    '#d946ef','#fb7185'
+  ];
 
-  if(charts[histId]) charts[histId].destroy();
-  charts[histId]=new Chart(document.getElementById(histId),{
-    type:'bar',
-    data:{labels:labelsH,datasets:[{data:countsH,backgroundColor:'#3b82f6',borderRadius:5}]},
-    options:{
-      maintainAspectRatio:true,aspectRatio:(window.innerWidth>=1024?1.5:1.1),
-      plugins:{
-       title:{display:true,text:'Distribution of Predicted Winning Totals',color:'#ccc',
-       font:{size:s.donutTitle,weight:'bold'},padding:{bottom:8}},
-       subtitle:{display:true,text:`Total Votes – ${N}`,color:'#aaa',
-          font:{size:s.donutSubtitle},padding:{top:2,bottom:12}},
-        legend:{display:false},
-        datalabels:{
-          color:'#fff',formatter:(v)=>v>0?v:'',anchor:'center',
-                    align:(ctx)=>{
+  if (charts[donutId]) charts[donutId].destroy();
+  charts[donutId] = new Chart(document.getElementById(donutId), {
+    type: 'doughnut',
+    data: {
+      labels: dLabels,
+      datasets: [{
+        data: dData,
+        backgroundColor: colors,
+        borderColor: '#111',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      maintainAspectRatio: true,
+      aspectRatio: 1,
+      cutout: '57%',
+      plugins: {
+        title: {
+          display: true,
+          text: 'Share of Votes',
+          color: '#ccc',
+          font: { weight: 'bold', size: s.donutTitle },
+          padding: { bottom: 8 }
+        },
+        subtitle: {
+          display: true,
+          text: `Total Votes – ${total}`,
+          color: '#aaa',
+          font: { size: s.donutSubtitle },
+          padding: { top: 2, bottom: 12 }
+        },
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#ccc',
+            boxWidth: 10,
+            boxHeight: 10,
+            font: { size: s.donutLegend }
+          }
+        },
+        datalabels: {
+          color: '#fff',
+          font: { weight: 'bold', size: s.donutPercent },
+          formatter: (v) => {
+            const p = (v / total) * 100;
+            return p >= 3 ? `${p.toFixed(1)}%` : '';
+          },
+          anchor: 'center',
+          align: 'center',
+          clamp: true
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+
+  /* --- HISTOGRAM (patched to visually align with donut) --- */
+  const vals = rows
+    .map(r => parseFloat(r.PredictedTotal))
+    .filter(v => !isNaN(v) && v > 0);
+
+  if (!vals.length) {
+    if (charts[histId]) charts[histId].destroy();
+    return;
+  }
+
+  const N    = vals.length;
+  const min  = Math.min(...vals);
+  const max  = Math.max(...vals);
+  const bins = Math.max(3, Math.round(Math.sqrt(N)));
+  const bw   = (max - min) / bins || 1;
+
+  const countsH = Array(bins).fill(0);
+  vals.forEach(v => {
+    let i = Math.floor((v - min) / bw);
+    if (i >= bins) i = bins - 1;
+    if (i < 0) i = 0;
+    countsH[i]++;
+  });
+
+  const labelsH = Array.from({ length: bins }, (_, i) =>
+    `${(min + i * bw).toFixed(0)}–${(min + (i + 1) * bw).toFixed(0)}`
+  );
+
+  const minC = Math.min(...countsH);
+  const maxC = Math.max(...countsH);
+  const yMin = Math.floor(minC / 2);
+  const span = maxC - yMin;
+  const step = Math.max(1, Math.round(span / 4));
+  const yMax = Math.ceil(maxC / step) * step;
+
+  if (charts[histId]) charts[histId].destroy();
+  charts[histId] = new Chart(document.getElementById(histId), {
+    type: 'bar',
+    data: {
+      labels: labelsH,
+      datasets: [{
+        data: countsH,
+        backgroundColor: '#3b82f6',
+        borderRadius: 5
+      }]
+    },
+    options: {
+      // Key change: keep it square like donut; any "zoom" is from your CSS transform, not internal squash.
+      maintainAspectRatio: true,
+      aspectRatio: 1,
+      plugins: {
+        title: {
+          display: true,
+          text: 'Distribution of Predicted Winning Totals',
+          color: '#ccc',
+          font: { size: s.histTitle, weight: 'bold' },
+          padding: { bottom: 8 }
+        },
+        subtitle: {
+          display: true,
+          text: `Total Votes – ${N}`,
+          color: '#aaa',
+          font: { size: s.histSubtitle, weight: 'normal' },
+          padding: { top: 2, bottom: 12 }
+        },
+        legend: { display: false },
+        datalabels: {
+          color: '#fff',
+          font: { size: s.histBarLabel, weight: 'normal' },
+          formatter: (v) => {
+            if (v == null || isNaN(v)) return '';
+            return v > 0 ? v : '';
+          },
+          anchor: 'center',
+          align: (ctx) => {
             const v = ctx.dataset.data[ctx.dataIndex] || 0;
             const scale = ctx.chart.scales.y;
             if (!scale) return 'center';
             const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
-            const f = ctx.chart.options.plugins.datalabels?.font?.size || s.histBarLabel;
+            const f = ctx.chart.options.plugins.datalabels.font.size || s.histBarLabel;
             return (barH < f * 1.05) ? 'end' : 'center';
           },
-          offset:0,clamp:true,font:{size:s.histBarLabel,weight:'normal'}
+          clamp: true
         }
       },
-      scales:{
-        x:{
-          ticks:{color:'#ccc',font:{size:s.axisTick}},
-          title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:s.axisTitle,weight:'bold'}},
-          grid:{display:false}
+      scales: {
+        x: {
+          ticks: { color: '#ccc', font: { size: s.axisTick } },
+          title: {
+            display: true,
+            text: 'Predicted Total (kg)',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
         },
-        y:{
-          min:yMin,max:yMax,beginAtZero:false,
-          ticks:{color:'#ccc',font:{size:s.axisTick}},
-          title:{display:true,text:'Frequency',color:'#ccc',font:{size:s.axisTitle,weight:'bold'}},
-          grid:{display:false}
+        y: {
+          min: yMin,
+          max: yMax,
+          beginAtZero: false,
+          ticks: { color: '#ccc', font: { size: s.axisTick } },
+          title: {
+            display: true,
+            text: 'Frequency',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
         }
       }
     },
-    plugins:[ChartDataLabels]
+    plugins: [ChartDataLabels]
   });
 }
 
-// ======= COLLAPSIBLE =======
-function toggleSection(id){
-  const c=document.getElementById(id);
-  const a=document.getElementById(`arrow-${id}`);
-  const o=c.classList.toggle('open');
-  a.classList.toggle('rotate',o);
+/* ===== COLLAPSIBLE ===== */
+function toggleSection(id) {
+  const c = document.getElementById(id);
+  const a = document.getElementById(`arrow-${id}`);
+  if (!c || !a) return;
+
+  const open = c.classList.toggle('open');
+  a.classList.toggle('rotate', open);
 }
 
-/* --- Device detection helper (Android + iOS Chrome fallback) --- */
+/* ===== SHARE SUPPORT HELPERS (from your working version) ===== */
 function detectBrowserShareSupport() {
   const ua = navigator.userAgent.toLowerCase();
   return {
     isAndroidChrome:
       ua.includes('android') && ua.includes('chrome') && !ua.includes('edge') && !ua.includes('opr'),
-    isChromeIOS: ua.includes('crios') // Chrome on iOS user agent
+    isChromeIOS: ua.includes('crios')
   };
 }
 
-/* Tiny util: swap the button in the chart's top-right bar */
 function swapShareButtonFor(containerEl, newBtn) {
-  // containerEl is the <div class="flex justify-end mb-1"> right above the canvas
   containerEl.innerHTML = '';
   containerEl.appendChild(newBtn);
 }
 
-// ======= SHARE / EXPORT (Unified: one-step most browsers, two-step on Android Chrome) =======
+/* ===== FONT SCALING HELPER FOR EXPORT (SAFE) ===== */
+/* Scales all numeric font.size values in chart.options by factor, returns restore fn. */
+function scaleChartFonts(chart, factor) {
+  const edits = [];
+  function walk(obj) {
+    if (!obj || typeof obj !== 'object') return;
+    if (obj.font && typeof obj.font.size === 'number') {
+      edits.push({ font: obj.font, original: obj.font.size });
+      obj.font.size = Math.round(obj.font.size * factor);
+    }
+    for (const key in obj) {
+      if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
+      const val = obj[key];
+      if (val && typeof val === 'object') walk(val);
+    }
+  }
+  walk(chart.options);
+  return function restore() {
+    edits.forEach(e => { e.font.size = e.original; });
+  };
+}
+
+/* ===== SHARE / EXPORT (Histogram aligned to Donut) ===== */
 async function shareChart(id, g) {
-  const { isAndroidChrome } = detectBrowserShareSupport();
+  const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
   const s = sizing();
   const src = document.getElementById(id);
+  if (!src) return;
 
-  // The little share bar just above the canvas (same row as your original share icon)
-  const shareBar = src.previousElementSibling; // <div class="flex justify-end mb-1">
+  const shareBar = src.previousElementSibling; // the flex container with the share button
   if (!shareBar) return;
 
-  // Build the small pill button we’ll use for states
+  // Reusable pill button
   function makeBtn(text) {
     const b = document.createElement('button');
     b.className = "bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1";
@@ -381,30 +556,49 @@ async function shareChart(id, g) {
     return b;
   }
 
-  // Show "Generating…" in the same spot as the original icon/button
   const generatingBtn = makeBtn("Generating…");
   swapShareButtonFor(shareBar, generatingBtn);
 
-  // Let Chart.js settle and (temporarily) hide gridlines for a cleaner capture
   await new Promise(requestAnimationFrame);
-  const chart = src.chart || Chart.getChart(src);
+  const chart = Chart.getChart(src);
+  if (!chart) {
+    console.warn('Chart not ready');
+    return;
+  }
+
+  const sel = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
+  const w = sel ? sel.value : '';
+  const isDonut = id.includes('Donut');
+  const isMobile = window.innerWidth < 768;
+  const fn = `metrics_${g}_${w || 'class'}_${isDonut ? 'donut' : 'hist'}.png`;
+
+  // Make sure collapsible is visible for capture (no empty screenshot)
+  const parent = src.closest('.collapsible-content');
+  if (parent && parent.style.maxHeight === '0px') {
+    parent.style.maxHeight = parent.scrollHeight + 'px';
+    parent.style.opacity = '1';
+    await new Promise(requestAnimationFrame);
+  }
+
+  // Hide gridlines for cleaner export
   let prevScales = null;
-  if (chart) {
-    prevScales = JSON.parse(JSON.stringify(chart.options.scales || {}));
-    if (chart.options.scales?.x) chart.options.scales.x.grid.display = false;
-    if (chart.options.scales?.y) chart.options.scales.y.grid.display = false;
+  if (chart.options.scales) {
+    prevScales = JSON.parse(JSON.stringify(chart.options.scales));
+    if (chart.options.scales.x) chart.options.scales.x.grid.display = false;
+    if (chart.options.scales.y) chart.options.scales.y.grid.display = false;
     chart.update();
     await new Promise(requestAnimationFrame);
   }
 
-  // Read current selection (class + gender)
-  const sel = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
-  const w = sel.value;
-  const isDonut = id.includes('Donut');
-  const isMobile = window.innerWidth < 768;
-  const fn = `metrics_${g}_${w}_${isDonut ? 'donut' : 'hist'}.png`;
+  // *** NEW: scale histogram fonts by 0.85x to match donut export density ***
+  let restoreFonts = null;
+  if (!isDonut) {
+    restoreFonts = scaleChartFonts(chart, 0.85);
+    chart.update();
+    await new Promise(requestAnimationFrame);
+  }
 
-  // === Build export card (unchanged aesthetics) ===
+  // Build export card
   const card = document.createElement('div');
   card.style.position = 'relative';
   card.style.width = s.exportWidth + 'px';
@@ -438,13 +632,12 @@ async function shareChart(id, g) {
   header.style.margin = '0 0 4px 0';
 
   const sub = document.createElement('p');
-  sub.textContent = `${w}kg ${g === 'F' ? 'Women' : 'Men'}`;
+  sub.textContent = (w ? `${w}kg ` : '') + (g === 'F' ? 'Women' : 'Men');
   sub.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.25) + 'px';
   sub.style.fontWeight = '700';
   sub.style.color = '#ddd';
   sub.style.margin = '0 0 14px 0';
 
-  // Use the live canvas pixels
   const dataURL = src.toDataURL('image/png');
   const img = new Image();
   img.src = dataURL;
@@ -484,38 +677,53 @@ async function shareChart(id, g) {
   card.appendChild(qr);
   document.body.appendChild(card);
 
-  // Height / buffer (keeps exports balanced like your North Star)
   await new Promise(requestAnimationFrame);
+
   const naturalH = card.scrollHeight;
   const baseH = isDonut ? 860 : 820;
   const scaleFactor = isMobile ? 0.92 : 1.0;
   const fixedH = Math.min(naturalH * scaleFactor, s.exportWidth * scaleFactor);
-  const buffer = Math.round(fixedH * (isMobile ? (isDonut ? 0.15 : 0.22) : (isDonut ? 0.02 : 0.02)));
+  const buffer = Math.round(
+    fixedH * (isMobile ? (isDonut ? 0.15 : 0.22) : (isDonut ? 0.02 : 0.02))
+  );
+
   card.style.height = fixedH + buffer + 'px';
   card.style.maxHeight = fixedH + buffer + 'px';
   card.style.minHeight = (baseH * scaleFactor) + 'px';
+
   await new Promise(requestAnimationFrame);
 
-  // Capture
-  const canvas = await html2canvas(card, { backgroundColor: null, scale: 2, useCORS: true, scrollY: 0 });
+  const canvas = await html2canvas(card, {
+    backgroundColor: null,
+    scale: 2,
+    useCORS: true,
+    scrollY: 0
+  });
   card.remove();
 
-  // Restore gridlines
-  if (chart && prevScales) {
-    chart.options.scales = prevScales;
-    chart.update();
+  // Restore chart state
+  if (restoreFonts) {
+    restoreFonts();
   }
+  if (prevScales) {
+    chart.options.scales = prevScales;
+  }
+  chart.update();
 
-  const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+  const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
   const file = new File([blob], fn, { type: 'image/png' });
 
-  // ===== Two-step on Android Chrome =====
+  // Android Chrome: 2-step flow
   if (isAndroidChrome) {
     const shareBtn = makeBtn("Share Generated Image");
-    shareBtn.addEventListener('click', async () => {
+    shareBtn.onclick = async () => {
       try {
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({ title: 'British Classic Fantasy League 2025', text: 'Check out these stats!', files: [file] });
+          await navigator.share({
+            title: 'British Classic Fantasy League 2025',
+            text: 'Check out these stats!',
+            files: [file]
+          });
         } else {
           const link = document.createElement('a');
           link.href = URL.createObjectURL(blob);
@@ -523,33 +731,24 @@ async function shareChart(id, g) {
           link.click();
           URL.revokeObjectURL(link.href);
         }
-      } catch (_) {}
-      // After the share UI shows, remove the contextual button and restore the original icon bar
-      shareBar.innerHTML = '';
-      // Re-add your original icon (keeps your existing look)
-      const iconBtn = document.createElement('button');
-      iconBtn.className = "share-btn";
-      iconBtn.onclick = () => shareChart(id, g);
-      iconBtn.innerHTML = `<img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>`;
-      shareBar.appendChild(iconBtn);
-    });
-
+      } catch (e) {}
+      // restore original icon
+      resetShareIcon();
+    };
     swapShareButtonFor(shareBar, shareBtn);
     return;
   }
 
-  // ===== One-step for all other browsers (with iOS Chrome fallback) =====
-const { isChromeIOS } = detectBrowserShareSupport();
-try {
-  if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
-    await navigator.share({
-      title: 'British Classic Fantasy League 2025',
-      text: 'Check out these stats!',
-      files: [file]
-    });
-  } else {
-    const url = URL.createObjectURL(file);
-    if (confirm("Download image instead?")) {
+  // Everyone else: 1-step where possible, fallback to download
+  try {
+    if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        title: 'British Classic Fantasy League 2025',
+        text: 'Check out these stats!',
+        files: [file]
+      });
+    } else {
+      const url = URL.createObjectURL(file);
       const link = document.createElement('a');
       link.href = url;
       link.download = fn;
@@ -558,25 +757,32 @@ try {
       link.remove();
       URL.revokeObjectURL(url);
     }
+  } catch (err) {
+    console.error('Share failed:', err);
   }
-} catch (err) {
-  console.error("Share failed:", err);
+
+  resetShareIcon();
+
+  function resetShareIcon() {
+    shareBar.innerHTML = '';
+    const iconBtn = document.createElement('button');
+    iconBtn.className = 'share-btn';
+    iconBtn.onclick = () => shareChart(id, g);
+    iconBtn.innerHTML =
+      '<img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>';
+    shareBar.appendChild(iconBtn);
+  }
 }
 
-  // Restore original icon bar after one-step flow
-  shareBar.innerHTML = '';
-  const iconBtn = document.createElement('button');
-  iconBtn.className = "share-btn";
-  iconBtn.onclick = () => shareChart(id, g);
-  iconBtn.innerHTML = `<img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>`;
-  shareBar.appendChild(iconBtn);
+/* ===== BACK TO TOP BUTTON ===== */
+const bottomBackToTop = document.getElementById('bottomBackToTop');
+if (bottomBackToTop) {
+  bottomBackToTop.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 }
-   const bottomBackToTop = document.getElementById('bottomBackToTop');
-  if (bottomBackToTop) {
-    bottomBackToTop.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  }
 </script>
+</body>
+</html>
 </body>
 </html>
