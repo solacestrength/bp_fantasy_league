@@ -628,6 +628,7 @@ charts[histId] = new Chart(document.getElementById(histId), {
     }
   }
 });
+}
 
 /* --- COLLAPSIBLE SECTIONS (with zoom-to-fit scroll) --- */
 function toggleSection(id) {
@@ -641,7 +642,9 @@ function toggleSection(id) {
   // Smooth auto-scroll to make section visible ("zoom out" feel)
   if (open) {
     const wrapper = c.closest('.bg-gray-800\\/60') || c;
-    wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (wrapper) {
+      wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 }
 
