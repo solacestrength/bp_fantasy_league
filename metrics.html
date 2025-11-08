@@ -330,40 +330,44 @@ const centerBarsPlugin = {
     if (!opts || !opts.enabled) return;
 
     const meta = chart.getDatasetMeta(0);
-    const bars = meta && meta.data ? meta.data : [];
+    const bars = meta?.data || [];
     const area = chart.chartArea;
     if (!bars.length || !area) return;
 
-    // Undo previous shift (important on resize / re-render)
+    // Undo any previous shift
     const prevShift = chart.$centerBarsShift || 0;
-    if (prevShift) {
-      bars.forEach(b => { b.x -= prevShift; });
-    }
+    if (prevShift) bars.forEach(b => (b.x -= prevShift));
 
     const first = bars[0];
-    const last  = bars[bars.length - 1];
+    const last = bars[bars.length - 1];
     if (!first || !last) {
       chart.$centerBarsShift = 0;
       return;
     }
 
-    // Edges of the bar group
-    const leftEdge  = first.x - first.width / 2;
+    // Compute bar group span and offset correction for offset:true
+    const leftEdge = first.x - first.width / 2;
     const rightEdge = last.x + last.width / 2;
+    const barsSpan = rightEdge - leftEdge;
 
-    // Midpoints
-    const barsMid   = (leftEdge + rightEdge) / 2;
-    const chartMid  = (area.left + area.right) / 2;
+    // The visible midpoint of the group
+    const barsMid = leftEdge + barsSpan / 2;
+    const chartMid = (area.left + area.right) / 2;
 
-    const shift = chartMid - barsMid;
+    // If offset:true is used, Chart.js adds half a category width margin.
+    // Correct for that so the group truly centers.
+    const tickWidth = barsSpan / bars.length;
+    const offsetCorrection = chart.config.options.scales?.x?.offset ? tickWidth / 2 : 0;
+
+    const shift = (chartMid + offsetCorrection) - barsMid;
 
     if (Math.abs(shift) < 0.5) {
       chart.$centerBarsShift = 0;
       return;
     }
 
-    // Apply shift once; Chart.js will draw at these positions
-    bars.forEach(b => { b.x += shift; });
+    // Apply shift so Chart.js draws at correct centered positions
+    bars.forEach(b => (b.x += shift));
     chart.$centerBarsShift = shift;
   }
 };
