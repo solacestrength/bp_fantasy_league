@@ -514,72 +514,68 @@
       };
     }
 
-    /* ---------- Share Logic (Android one-tap safe) ---------- */
-    async function shareScore() {
-      if (!searchMatches.length) {
-        showWarning("Please search for your name before sharing.");
-        return;
+    /* ---------- Share Logic (Android Chrome: scroll freeze at tap) ---------- */
+async function shareScore() {
+  if (!searchMatches.length) {
+    showWarning("Please search for your name before sharing.");
+    return;
+  }
+
+  const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
+  const btn = contextualShareBtn || document.getElementById("shareRankingBtn");
+  if (!btn) return;
+
+  const usingContextual = (btn === contextualShareBtn);
+  const originalText = btn.textContent;
+
+  btn.disabled = true;
+  btn.textContent = "Generating…";
+
+  // ✅ TEMPORARY SCROLL FREEZE (prevents Chrome rebound)
+  const prevScroll = window.scrollY;
+  const prevStyle = document.body.style.overflow;
+  if (isAndroidChrome) {
+    document.body.style.overflow = "hidden";
+  }
+
+  try {
+    const file = await buildSnapshotFile();
+
+    const performNativeShare = async () => {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: "British Classic Fantasy League 2025 🇬🇧",
+          text: "Check out my accuracy score!",
+          files: [file],
+        });
+      } else {
+        const url = URL.createObjectURL(file);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
       }
+    };
 
-      const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
-      const btn = contextualShareBtn || headerShareBtn;
-      if (!btn) return;
+    // 🩺 Chrome fix: defer 50ms so share fires *after* scroll settle
+    await new Promise(res => setTimeout(res, 50));
+    await performNativeShare();
 
-      const usingContextual = (btn === contextualShareBtn);
-      const originalHTML = usingContextual
-        ? btn.textContent
-        : headerShareOriginalHTML || btn.innerHTML;
-
-      try {
-        btn.disabled = true;
-        btn.textContent = "Generating…";
-
-        const file = await buildSnapshotFile();
-
-        const doDownload = () => {
-          const url = URL.createObjectURL(file);
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = file.name;
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-          URL.revokeObjectURL(url);
-        };
-
-        if (isAndroidChrome) {
-          // Keep in same gesture frame as much as possible
-          await new Promise(requestAnimationFrame);
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              title: "British Classic Fantasy League 2025 🇬🇧",
-              text: "Check out my accuracy score!",
-              files: [file]
-            });
-          } else {
-            doDownload();
-          }
-        } else if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: "British Classic Fantasy League 2025 🇬🇧",
-            text: "Check out my accuracy score!",
-            files: [file]
-          });
-        } else {
-          doDownload();
-        }
-      } catch (err) {
-        console.error("Share failed:", err);
-      } finally {
-        btn.disabled = false;
-        if (usingContextual) {
-          btn.textContent = originalHTML || "Share My Score";
-        } else if (headerShareBtn) {
-          headerShareBtn.innerHTML = headerShareOriginalHTML || originalHTML;
-        }
-      }
+  } catch (err) {
+    console.error("Share failed:", err);
+  } finally {
+    // ✅ RESTORE state
+    if (isAndroidChrome) {
+      document.body.style.overflow = prevStyle;
+      window.scrollTo(0, prevScroll);
     }
-
+    btn.disabled = false;
+    btn.textContent = usingContextual ? originalText : "Share My Score";
+  }
+}
     /* ---------- Snapshot Builder ---------- */
     async function buildSnapshotFile() {
       const total = allRows.length;
