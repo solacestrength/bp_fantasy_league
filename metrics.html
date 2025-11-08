@@ -777,16 +777,22 @@ async function shareChart(id, g) {
   const src = document.getElementById(id);
   let src = document.getElementById(id);
 
-// 🧩 Wait for histogram layouts to settle before html2canvas
+let src = document.getElementById(id);
+
+// 🧩 Non-blocking histogram readiness check
 if (/Hist$/i.test(id)) {
-  // Wait up to 400 ms or until the chart has non-zero dimensions
-  let tries = 0;
-  while (tries < 8 && (!src || src.offsetWidth === 0 || src.offsetHeight === 0)) {
-    await new Promise(r => setTimeout(r, 50));
-    src = document.getElementById(id);
-    tries++;
-  }
-  await new Promise(r => setTimeout(r, 250)); // final paint flush
+  const checkHistogramReady = async () => {
+    let tries = 0;
+    while (tries < 8 && (!src || src.offsetWidth === 0 || src.offsetHeight === 0)) {
+      await new Promise(r => setTimeout(r, 50));
+      src = document.getElementById(id);
+      tries++;
+    }
+    // One more short delay for render flush
+    await new Promise(r => setTimeout(r, 150));
+  };
+  // fire and wait, but don't block UI thread
+  await checkHistogramReady();
 }
   if (!src) return;
 
