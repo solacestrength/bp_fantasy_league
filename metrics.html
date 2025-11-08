@@ -323,64 +323,7 @@
 
 <script>
 /* ========= PLUGINS ========= */
-
-const centerBarsPlugin = {
-  id: 'centerBars',
-  afterLayout(chart, args, opts) {
-    if (!opts || !opts.enabled) return;
-    if (chart.config.type !== 'bar') return;
-
-    // Wait one frame for chartArea to be fully calculated
-    requestAnimationFrame(() => {
-      const meta = chart.getDatasetMeta(0);
-      const bars = meta && meta.data ? meta.data : [];
-      const area = chart.chartArea;
-      if (!bars.length || !area) return;
-
-      // Store base padding once
-      if (!chart.$centerBarsBasePadding) {
-        const lp = (chart.options.layout && chart.options.layout.padding) || {};
-        chart.$centerBarsBasePadding = {
-          top: lp.top || 0,
-          right: lp.right || 0,
-          bottom: lp.bottom || 0,
-          left: lp.left || 0
-        };
-      }
-
-      // Reset padding before recalculating
-      const base = chart.$centerBarsBasePadding;
-      chart.options.layout = chart.options.layout || {};
-      chart.options.layout.padding = {
-        top: base.top,
-        right: base.right,
-        bottom: base.bottom,
-        left: base.left
-      };
-
-      const first = bars[0];
-      const last = bars[bars.length - 1];
-      if (!first || !last) return;
-
-      // Compute geometric center of bars vs chart
-      const leftEdge = first.x - first.width / 2;
-      const rightEdge = last.x + last.width / 2;
-      const barsMid = (leftEdge + rightEdge) / 2;
-      const chartMid = (area.left + area.right) / 2;
-      const shift = chartMid - barsMid;
-
-      if (Math.abs(shift) < 0.5) return; // already centered
-
-      // Apply symmetric layout padding shift (affects everything)
-      chart.options.layout.padding.left += shift;
-      chart.options.layout.padding.right -= shift;
-
-      chart.update('none');
-    });
-  }
-};
-
-Chart.register(ChartDataLabels, centerBarsPlugin);
+Chart.register(ChartDataLabels);
 
 /* ========= DATA / LAYOUT HELPERS ========= */
 
@@ -547,7 +490,7 @@ function renderCharts(g, w) {
     }
   });
 
-  /* --- HISTOGRAM (visually aligned + centered North Star version) --- */
+  /* --- HISTOGRAM (North Star alignment, no plugin) --- */
   const vals = rows
     .map(r => parseFloat(r.PredictedTotal))
     .filter(v => !isNaN(v) && v > 0);
@@ -592,14 +535,16 @@ function renderCharts(g, w) {
         backgroundColor: '#3b82f6',
         borderRadius: 5,
         barPercentage: 0.9,
-        categoryPercentage: 1.0
+        categoryPercentage: 0.9
       }]
     },
     options: {
       maintainAspectRatio: true,
       aspectRatio: 1,
+      layout: {
+        padding: { left: 12, right: 12, top: 0, bottom: 0 }
+      },
       plugins: {
-        centerBars: { enabled: true },
         title: {
           display: true,
           text: 'Distribution of Predicted Winning Totals',
@@ -659,53 +604,32 @@ function renderCharts(g, w) {
       }
     }
   });
-} // ✅ closes renderCharts
+}
 
+/* --- COLLAPSIBLE SECTIONS (with auto-resize for Chart.js) --- */
 function toggleSection(id) {
   const c = document.getElementById(id);
   const a = document.getElementById(`arrow-${id}`);
-  const main = document.querySelector('main');
-  if (!c || !a || !main) return;
+  if (!c || !a) return;
 
   const open = c.classList.toggle('open');
   a.classList.toggle('rotate', open);
 
-  // Smooth auto-scroll when opening
+  // Smooth scroll to section
   if (open) {
     const wrapper = c.closest('.bg-gray-800\\/60') || c;
     wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Resize any Chart.js instances inside after expanding
+    setTimeout(() => {
+      const canvases = c.querySelectorAll('canvas');
+      canvases.forEach(cv => {
+        const chart = Chart.getChart(cv);
+        if (chart) chart.resize();
+      });
+    }, 400);
   }
-
-  // Add/remove expanded layout to the main container
-  const anyOpen = document.querySelector('.collapsible-content.open');
-  if (anyOpen) {
-    main.classList.add('expanded');
-  } else {
-    main.classList.remove('expanded');
-  }
-
-  // Reposition buttons with smooth animation after expansion
-  setTimeout(repositionBottomButtons, 600);
 }
-
-/* --- Smoothly reposition bottom buttons --- */
-function repositionBottomButtons() {
-  const main = document.querySelector('main');
-  const leaderboard = document.querySelector('a[href="leaderboard.html"]')?.closest('div');
-  const backToTop = document.getElementById('bottomBackToTop')?.closest('div');
-  if (!main || !leaderboard || !backToTop) return;
-
-  const contentHeight = main.scrollHeight;
-  const windowHeight = window.innerHeight;
-  const offset = Math.max(24, windowHeight - contentHeight / 1.2);
-
-  [leaderboard, backToTop].forEach((el, i) => {
-    el.style.transition = 'margin-top 0.6s ease';
-    el.style.marginTop = (i === 0 ? offset : 16) + 'px';
-  });
-}
-
-window.addEventListener('resize', repositionBottomButtons);
 
 /* ========= SHARE / EXPORT + BACK TO TOP (unchanged from your working version) ========= */
 /* Keeping your existing shareChart + helpers exactly as-is to avoid regression.
