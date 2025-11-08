@@ -139,6 +139,14 @@
   .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
   .animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
   </style>
+  <style>
+/* Force histogram canvases to be pixel-centered on mobile */
+@media (max-width:1023px){
+  #womenHist, #menHist {
+    transform: translateX(4px) !important; /* nudges the bars visually to center */
+  }
+}
+</style>
 </head>
 
 <body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
@@ -554,6 +562,7 @@
         scales: {
           x: {
             offset: true, // centers bar cluster in chart area
+            grace: '5%',
             ticks: {
               color: '#ccc',
               font: { size: s.axisTick }
