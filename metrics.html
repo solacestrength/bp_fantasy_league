@@ -490,7 +490,7 @@ function renderCharts(g, w) {
     }
   });
 
-  /* --- HISTOGRAM (North Star alignment, no plugin) --- */
+  /* --- HISTOGRAM (visually aligned + centered) --- */
   const vals = rows
     .map(r => parseFloat(r.PredictedTotal))
     .filter(v => !isNaN(v) && v > 0);
@@ -535,16 +535,21 @@ function renderCharts(g, w) {
         backgroundColor: '#3b82f6',
         borderRadius: 5,
         barPercentage: 0.9,
-        categoryPercentage: 0.9
+        categoryPercentage: 1.0
       }]
     },
     options: {
       maintainAspectRatio: true,
       aspectRatio: 1,
+      // 🔥 VISUAL NUDGE: ensures y-axis label sits flush and bars are centered
       layout: {
-        padding: { left: 12, right: 12, top: 0, bottom: 0 }
+        padding: {
+          left: 24,
+          right: 4
+        }
       },
       plugins: {
+        centerBars: { enabled: true },
         title: {
           display: true,
           text: 'Distribution of Predicted Winning Totals',
@@ -604,7 +609,7 @@ function renderCharts(g, w) {
       }
     }
   });
-}
+} // ✅ closes renderCharts
 
 /* --- COLLAPSIBLE SECTIONS (with auto-resize for Chart.js) --- */
 function toggleSection(id) {
