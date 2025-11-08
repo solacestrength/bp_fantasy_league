@@ -324,37 +324,64 @@
 <script>
 /* ========= PLUGINS ========= */
 
-const centerBarsPlugin = {
-  id: 'centerBars',
-  afterDatasetsDraw(chart, args, opts) {
-    if (!opts?.enabled) return;
+/**
+ * centerHistAreaPlugin
+ * - Runs once per histogram chart.
+ * - Measures chartArea center vs canvas center.
+ * - Adjusts RIGHT padding so bars (and axes/titles) sit visually centered
+ *   within the canvas/card.
+ * - No redrawing hacks, no infinite loops.
+ */
+const centerHistAreaPlugin = {
+  id: 'centerHistArea',
+  afterLayout(chart, args, opts) {
+    if (!opts || !opts.enabled) return;
+    if (chart.config.type !== 'bar') return;
+    if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return; // only our histograms
+    if (chart.$histCentered) return; // run once
 
-    const meta = chart.getDatasetMeta(0);
-    const bars = meta?.data || [];
-    if (!bars.length) return;
+    const area = chart.chartArea;
+    if (!area) return;
 
-    const first = bars[0];
-    const last  = bars[bars.length - 1];
-    if (!first || !last) return;
+    const canvasMid = chart.width / 2;
+    const areaMid = (area.left + area.right) / 2;
+    const diff = areaMid - canvasMid; // >0 = too far right, <0 = too far left
 
-    const firstX = first.x - first.width / 2;
-    const lastX  = last.x + last.width / 2;
+    if (Math.abs(diff) < 1) {
+      chart.$histCentered = true;
+      return;
+    }
 
-    const barsMid  = (firstX + lastX) / 2;
-    const chartMid = chart.chartArea.left + chart.chartArea.width / 2;
-    const shift    = chartMid - barsMid;
+    // Base padding (ensure numeric)
+    const layout = chart.options.layout || {};
+    const padding = layout.padding || {};
+    const baseTop = +padding.top || 0;
+    const baseLeft = +padding.left || 0;
+    const baseBottom = +padding.bottom || 0;
+    const baseRight = +padding.right || 0;
 
-    if (Math.abs(shift) < 0.5) return;
+    // We shift by adjusting RIGHT padding only:
+    // newMid = oldMid - t/2 ; solve t so newMid == canvasMid -> t = 2 * diff
+    let extraRight = 2 * diff; // can be positive or negative
+    let newRight = baseRight + extraRight;
+    if (newRight < 0) newRight = 0; // clamp
 
-    const ctx = chart.ctx;
-    ctx.save();
-    ctx.translate(shift, 0);
-    bars.forEach(b => b.draw(ctx));
-    ctx.restore();
+    chart.options.layout = {
+      ...layout,
+      padding: {
+        top: baseTop,
+        left: baseLeft,
+        bottom: baseBottom,
+        right: newRight
+      }
+    };
+
+    chart.$histCentered = true;
+    chart.update('none');
   }
 };
 
-Chart.register(ChartDataLabels, centerBarsPlugin);
+Chart.register(ChartDataLabels, centerHistAreaPlugin);
 
 /* ========= DATA / LAYOUT HELPERS ========= */
 
@@ -573,7 +600,7 @@ function renderCharts(g, w) {
       maintainAspectRatio: true,
       aspectRatio: 1,
       plugins: {
-        centerBars: { enabled: true },
+        centerHistArea: { enabled: true },
         title: {
           display: true,
           text: 'Distribution of Predicted Winning Totals',
