@@ -44,45 +44,50 @@
   }
 
   /* === Histogram Containers === */
-  .hist-wrapper {
-    position: relative;
-    width: 100%;
-    max-width: 900px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
+.hist-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
 
-  /* Canvas inside histogram */
+/* Stable, JS-managed canvas sizing */
+.hist-wrapper canvas {
+  display: block;
+  width: 100% !important;
+  height: auto !important;
+  max-height: 520px;
+  aspect-ratio: 1.2 / 1; /* gives balanced look for axes */
+  border-radius: 12px;
+}
+
+/* Mobile tuning (taller but controlled) */
+@media (max-width: 480px) {
   .hist-wrapper canvas {
-    width: 100% !important;
-    height: auto !important;
-    border-radius: 12px;
-    aspect-ratio: unset; /* Let JS control height dynamically */
+    aspect-ratio: 0.9 / 1;
+    max-height: 500px;
   }
+}
 
-  /* === Responsive chart height tuning === */
-  @media (max-width: 480px) {
-    .hist-wrapper canvas {
-      height: 85vw !important; /* taller for mobile, optically centered */
-    }
+/* Tablet */
+@media (min-width: 481px) and (max-width: 1024px) {
+  .hist-wrapper canvas {
+    aspect-ratio: 1.1 / 1;
+    max-height: 560px;
   }
+}
 
-  @media (min-width: 481px) and (max-width: 1024px) {
-    .hist-wrapper canvas {
-      height: 70vw !important;
-      max-height: 600px;
-    }
+/* Desktop */
+@media (min-width: 1025px) {
+  .hist-wrapper canvas {
+    aspect-ratio: 1.2 / 1;
+    max-height: 600px;
   }
-
-  @media (min-width: 1025px) {
-    .hist-wrapper canvas {
-      height: 60vw !important;
-      max-height: 520px;
-    }
-  }
+}
 
   /* === Dropdown & Share Button Placement === */
   .chart-header {
