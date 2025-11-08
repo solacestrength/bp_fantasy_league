@@ -775,6 +775,7 @@ async function shareChart(id, g) {
   const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
   const s = sizing();
   const src = document.getElementById(id);
+  if (/Hist$/i.test(id)) await new Promise(r => setTimeout(r, 100)); 
   if (!src) return;
 
   const shareBar = src.previousElementSibling;
