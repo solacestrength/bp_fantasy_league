@@ -382,6 +382,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* ---------- Precise Scroll-to-Match Logic ---------- */
   function scrollToHighlighted() {
+    if (scrollLock) return;
     if (!searchMatches.length || currentMatchIndex < 0) return;
     const tbody = document.getElementById("accuracyBody");
     const rows = tbody.querySelectorAll("tr[data-global-index]");
@@ -473,12 +474,16 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  /* ---------- Share Logic (Unified Single-Tap Safe Android Fix) ---------- */
+  /* ---------- Share Logic (Scroll-Locked Single-Tap Android Fix) ---------- */
 async function shareScore() {
   if (!searchMatches.length) {
     showWarning("Please search for your name before sharing.");
     return;
   }
+
+  // Lock scrolling so Android doesn't jump the view back up
+  scrollLock = true;
+  document.body.style.overflow = "hidden";
 
   const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
   const btn = contextualShareBtn || document.getElementById("shareRankingBtn");
@@ -487,16 +492,12 @@ async function shareScore() {
   btn.textContent = "Generating…";
   btn.disabled = true;
 
-  // --- Start snapshot creation immediately in same gesture frame ---
-  const buildPromise = buildSnapshotFile();
+  try {
+    const file = await buildSnapshotFile();
 
-  // Use microtask to yield control but preserve gesture context for share
-  queueMicrotask(async () => {
-    try {
-      const file = await buildPromise;
-
-      // --- Android Chrome ---
-      if (isAndroidChrome) {
+    // --- Android Chrome (true one-step, no scroll bounce) ---
+    if (isAndroidChrome) {
+      try {
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
             title: "British Classic Fantasy League 2025 🇬🇧",
@@ -513,37 +514,45 @@ async function shareScore() {
           link.remove();
           URL.revokeObjectURL(url);
         }
+      } catch (err) {
+        console.error("Android share failed:", err);
+      } finally {
         btn.textContent = "Share My Score";
         btn.disabled = false;
-        return;
+        // unlock scroll again
+        scrollLock = false;
+        document.body.style.overflow = "";
       }
-
-      // --- Everyone else (iOS Chrome, Safari, Desktop) ---
-      if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: "British Classic Fantasy League 2025 🇬🇧",
-          text: "Check out my accuracy score!",
-          files: [file],
-        });
-      } else {
-        const url = URL.createObjectURL(file);
-        if (confirm("Download image instead?")) {
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = file.name;
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-        }
-        URL.revokeObjectURL(url);
-      }
-    } catch (err) {
-      console.error("Share failed:", err);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Share My Score";
+      return;
     }
-  });
+
+    // --- Everyone else ---
+    if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        title: "British Classic Fantasy League 2025 🇬🇧",
+        text: "Check out my accuracy score!",
+        files: [file],
+      });
+    } else {
+      const url = URL.createObjectURL(file);
+      if (confirm("Download image instead?")) {
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
+      URL.revokeObjectURL(url);
+    }
+  } catch (err) {
+    console.error("Share failed:", err);
+  } finally {
+    scrollLock = false;
+    document.body.style.overflow = "";
+    btn.disabled = false;
+    btn.textContent = "Share My Score";
+  }
 }
 
   async function performShare(file, title, text, isChromeIOS = false) {
