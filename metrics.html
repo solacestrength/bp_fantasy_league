@@ -104,10 +104,12 @@
       opacity: 0;
       transition: max-height .5s ease, opacity .4s ease;
     }
-    .collapsible-content.open {
-      opacity: 1;
-      max-height: 1000px;
-    }
+  .collapsible-content.open {
+    opacity: 1;
+    max-height: 1000px;
+    width: 100vw;                       /* span full viewport width */
+    margin-left: calc(-50vw + 50%);     /* center perfectly relative to page */
+  }
     .arrow {
       transition: transform .4s ease;
     }
@@ -331,7 +333,37 @@ const centerHistogramPlugin = {
 
     const barsMid   = (first.x + last.x) / 2;
     const canvasMid = chart.width / 2;
-    const shift     = canvasMid - barsMid;
+    // --- Stable bar centering plugin (post-layout correction, export-safe) ---
+const centerBarsPlugin = {
+  id: 'centerBars',
+  afterDatasetsDraw(chart, args, opts) {
+    if (!opts?.enabled) return;
+
+    const meta = chart.getDatasetMeta(0);
+    const bars = meta?.data || [];
+    if (!bars.length) return;
+
+    const first = bars[0];
+    const last  = bars[bars.length - 1];
+    const firstX = first.x - first.width / 2;
+    const lastX  = last.x + last.width / 2;
+
+    // Find true visual midpoint of all bars
+    const barsMid = (firstX + lastX) / 2;
+    const chartMid = chart.chartArea.left + chart.chartArea.width / 2;
+
+    // 🔧 Fine-tuned centering offset (+2px right shift)
+    const shift = (chartMid - barsMid) + 2;
+
+    if (Math.abs(shift) < 0.5) return;
+
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.translate(shift, 0);
+    bars.forEach(b => b.draw(ctx));
+    ctx.restore();
+  }
+};
 
     if (Math.abs(shift) < 0.5) {
       chart.$centerShift = 0;
