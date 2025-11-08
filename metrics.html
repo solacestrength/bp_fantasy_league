@@ -326,27 +326,45 @@
 
 const centerBarsPlugin = {
   id: 'centerBars',
-  afterDatasetsDraw(chart, args, opts) {
-    if (!opts?.enabled) return;
+  beforeDatasetsDraw(chart, args, opts) {
+    if (!opts || !opts.enabled) return;
+
     const meta = chart.getDatasetMeta(0);
-    if (!meta || !meta.data?.length) return;
+    const bars = meta && meta.data ? meta.data : [];
+    const area = chart.chartArea;
+    if (!bars.length || !area) return;
 
-    const bars = meta.data;
-    const first = bars[0];
-    const last = bars[bars.length - 1];
-    if (!first || !last) return;
-
-    const chartArea = chart.chartArea;
-    const barsSpan = (last.x + last.width / 2) - (first.x - first.width / 2);
-    const offset = (chartArea.width - barsSpan) / 2;
-
-    if (Math.abs(offset) > 0.5) {
-      const ctx = chart.ctx;
-      ctx.save();
-      ctx.translate(offset, 0);
-      bars.forEach(b => b.draw(ctx));
-      ctx.restore();
+    // Undo previous shift (important on resize / re-render)
+    const prevShift = chart.$centerBarsShift || 0;
+    if (prevShift) {
+      bars.forEach(b => { b.x -= prevShift; });
     }
+
+    const first = bars[0];
+    const last  = bars[bars.length - 1];
+    if (!first || !last) {
+      chart.$centerBarsShift = 0;
+      return;
+    }
+
+    // Edges of the bar group
+    const leftEdge  = first.x - first.width / 2;
+    const rightEdge = last.x + last.width / 2;
+
+    // Midpoints
+    const barsMid   = (leftEdge + rightEdge) / 2;
+    const chartMid  = (area.left + area.right) / 2;
+
+    const shift = chartMid - barsMid;
+
+    if (Math.abs(shift) < 0.5) {
+      chart.$centerBarsShift = 0;
+      return;
+    }
+
+    // Apply shift once; Chart.js will draw at these positions
+    bars.forEach(b => { b.x += shift; });
+    chart.$centerBarsShift = shift;
   }
 };
 
