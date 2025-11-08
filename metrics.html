@@ -111,6 +111,19 @@
     max-height: 1000px;
   }
 
+    /* Prevent right-side gaps and horizontal scroll */
+body, html {
+  overflow-x: hidden;
+}
+
+/* When any collapsible section is open, let the main container stretch */
+main.expanded {
+  width: 100vw;
+  max-width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  transition: all 0.6s ease;
+}
+
   /* --- Full-width expansion on mobile only --- */
   @media (max-width: 1023px) {
     .collapsible-content.open {
@@ -330,11 +343,9 @@ const centerBarsPlugin = {
     const last  = bars[bars.length - 1];
     if (!first || !last) return;
 
-    // edges of first & last bars
     const firstX = first.x - first.width / 2;
     const lastX  = last.x + last.width / 2;
 
-    // midpoint of all bars vs chart drawing area center
     const barsMid  = (firstX + lastX) / 2;
     const chartMid = chart.chartArea.left + chart.chartArea.width / 2;
     const shift    = chartMid - barsMid;
@@ -517,136 +528,164 @@ function renderCharts(g, w) {
   });
 
   /* --- HISTOGRAM (visually aligned + centered North Star version) --- */
-const vals = rows
-  .map(r => parseFloat(r.PredictedTotal))
-  .filter(v => !isNaN(v) && v > 0);
+  const vals = rows
+    .map(r => parseFloat(r.PredictedTotal))
+    .filter(v => !isNaN(v) && v > 0);
 
-if (!vals.length) {
+  if (!vals.length) {
+    if (charts[histId]) charts[histId].destroy();
+    return;
+  }
+
+  const N    = vals.length;
+  const min  = Math.min(...vals);
+  const max  = Math.max(...vals);
+  const bins = Math.max(3, Math.round(Math.sqrt(N)));
+  const bw   = (max - min) / bins || 1;
+
+  const countsH = Array(bins).fill(0);
+  vals.forEach(v => {
+    let i = Math.floor((v - min) / bw);
+    if (i >= bins) i = bins - 1;
+    if (i < 0) i = 0;
+    countsH[i]++;
+  });
+
+  const labelsH = Array.from({ length: bins }, (_, i) =>
+    `${(min + i * bw).toFixed(0)}–${(min + (i + 1) * bw).toFixed(0)}`
+  );
+
+  const minC = Math.min(...countsH);
+  const maxC = Math.max(...countsH);
+  const yMin = Math.floor(minC / 2);
+  const span = maxC - yMin;
+  const step = Math.max(1, Math.round(span / 4));
+  const yMax = Math.ceil(maxC / step) * step;
+
   if (charts[histId]) charts[histId].destroy();
-  return;
-}
-
-const N    = vals.length;
-const min  = Math.min(...vals);
-const max  = Math.max(...vals);
-const bins = Math.max(3, Math.round(Math.sqrt(N)));
-const bw   = (max - min) / bins || 1;
-
-const countsH = Array(bins).fill(0);
-vals.forEach(v => {
-  let i = Math.floor((v - min) / bw);
-  if (i >= bins) i = bins - 1;
-  if (i < 0) i = 0;
-  countsH[i]++;
-});
-
-const labelsH = Array.from({ length: bins }, (_, i) =>
-  `${(min + i * bw).toFixed(0)}–${(min + (i + 1) * bw).toFixed(0)}`
-);
-
-const minC = Math.min(...countsH);
-const maxC = Math.max(...countsH);
-const yMin = Math.floor(minC / 2);
-const span = maxC - yMin;
-const step = Math.max(1, Math.round(span / 4));
-const yMax = Math.ceil(maxC / step) * step;
-
-if (charts[histId]) charts[histId].destroy();
-charts[histId] = new Chart(document.getElementById(histId), {
-  type: 'bar',
-  data: {
-    labels: labelsH,
-    datasets: [{
-      data: countsH,
-      backgroundColor: '#3b82f6',
-      borderRadius: 5,
-      barPercentage: 0.9,
-      categoryPercentage: 1.0
-    }]
-  },
-  options: {
-    maintainAspectRatio: true,
-    aspectRatio: 1,
-    plugins: {
-      centerBars: { enabled: true }, // ✅ activates centering plugin
-      title: {
-        display: true,
-        text: 'Distribution of Predicted Winning Totals',
-        color: '#ccc',
-        font: { size: s.histTitle, weight: 'bold' },
-        padding: { bottom: 8 }
-      },
-      subtitle: {
-        display: true,
-        text: `Total Votes – ${N}`,
-        color: '#aaa',
-        font: { size: s.histSubtitle, weight: 'normal' },
-        padding: { top: 2, bottom: 12 }
-      },
-      legend: { display: false },
-      datalabels: {
-        color: '#fff',
-        font: { size: s.histBarLabel, weight: 'normal' },
-        formatter: (v) => v > 0 ? v : '',
-        anchor: 'center',
-        align: (ctx) => {
-          const v = ctx.dataset.data[ctx.dataIndex] || 0;
-          const scale = ctx.chart.scales.y;
-          if (!scale) return 'center';
-          const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
-          const f = ctx.chart.options.plugins.datalabels.font.size || s.histBarLabel;
-          return (barH < f * 1.05) ? 'end' : 'center';
-        },
-        clamp: true
-      }
+  charts[histId] = new Chart(document.getElementById(histId), {
+    type: 'bar',
+    data: {
+      labels: labelsH,
+      datasets: [{
+        data: countsH,
+        backgroundColor: '#3b82f6',
+        borderRadius: 5,
+        barPercentage: 0.9,
+        categoryPercentage: 1.0
+      }]
     },
-    scales: {
-      x: {
-        offset: true,
-        ticks: { color: '#ccc', font: { size: s.axisTick } },
+    options: {
+      maintainAspectRatio: true,
+      aspectRatio: 1,
+      plugins: {
+        centerBars: { enabled: true },
         title: {
           display: true,
-          text: 'Predicted Total (kg)',
+          text: 'Distribution of Predicted Winning Totals',
           color: '#ccc',
-          font: { size: s.axisTitle, weight: 'bold' }
+          font: { size: s.histTitle, weight: 'bold' },
+          padding: { bottom: 8 }
         },
-        grid: { display: false }
+        subtitle: {
+          display: true,
+          text: `Total Votes – ${N}`,
+          color: '#aaa',
+          font: { size: s.histSubtitle, weight: 'normal' },
+          padding: { top: 2, bottom: 12 }
+        },
+        legend: { display: false },
+        datalabels: {
+          color: '#fff',
+          font: { size: s.histBarLabel, weight: 'normal' },
+          formatter: (v) => v > 0 ? v : '',
+          anchor: 'center',
+          align: (ctx) => {
+            const v = ctx.dataset.data[ctx.dataIndex] || 0;
+            const scale = ctx.chart.scales.y;
+            if (!scale) return 'center';
+            const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
+            const f = ctx.chart.options.plugins.datalabels.font.size || s.histBarLabel;
+            return (barH < f * 1.05) ? 'end' : 'center';
+          },
+          clamp: true
+        }
       },
-      y: {
-        min: yMin,
-        max: yMax,
-        beginAtZero: false,
-        ticks: { color: '#ccc', font: { size: s.axisTick } },
-        title: {
-          display: true,
-          text: 'Vote Count',
-          color: '#ccc',
-          font: { size: s.axisTitle, weight: 'bold' }
+      scales: {
+        x: {
+          offset: true,
+          ticks: { color: '#ccc', font: { size: s.axisTick } },
+          title: {
+            display: true,
+            text: 'Predicted Total (kg)',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
         },
-        grid: { display: false }
+        y: {
+          min: yMin,
+          max: yMax,
+          beginAtZero: false,
+          ticks: { color: '#ccc', font: { size: s.axisTick } },
+          title: {
+            display: true,
+            text: 'Vote Count',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
+        }
       }
     }
-  }
-});
-}
+  });
+} // ✅ closes renderCharts
 
-/* --- COLLAPSIBLE SECTIONS (with zoom-to-fit scroll) --- */
 function toggleSection(id) {
   const c = document.getElementById(id);
   const a = document.getElementById(`arrow-${id}`);
-  if (!c || !a) return;
+  const main = document.querySelector('main');
+  if (!c || !a || !main) return;
 
   const open = c.classList.toggle('open');
   a.classList.toggle('rotate', open);
 
-  // Smooth auto-scroll to make section visible ("zoom out" feel)
+  // Smooth auto-scroll when opening
   if (open) {
     const wrapper = c.closest('.bg-gray-800\\/60') || c;
-    if (wrapper) {
-      wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+
+  // Add/remove expanded layout to the main container
+  const anyOpen = document.querySelector('.collapsible-content.open');
+  if (anyOpen) {
+    main.classList.add('expanded');
+  } else {
+    main.classList.remove('expanded');
+  }
+
+  // Reposition buttons with smooth animation after expansion
+  setTimeout(repositionBottomButtons, 600);
 }
+
+/* --- Smoothly reposition bottom buttons --- */
+function repositionBottomButtons() {
+  const main = document.querySelector('main');
+  const leaderboard = document.querySelector('a[href="leaderboard.html"]')?.closest('div');
+  const backToTop = document.getElementById('bottomBackToTop')?.closest('div');
+  if (!main || !leaderboard || !backToTop) return;
+
+  const contentHeight = main.scrollHeight;
+  const windowHeight = window.innerHeight;
+  const offset = Math.max(24, windowHeight - contentHeight / 1.2);
+
+  [leaderboard, backToTop].forEach((el, i) => {
+    el.style.transition = 'margin-top 0.6s ease';
+    el.style.marginTop = (i === 0 ? offset : 16) + 'px';
+  });
+}
+
+window.addEventListener('resize', repositionBottomButtons);
 
 /* ========= SHARE / EXPORT + BACK TO TOP (unchanged from your working version) ========= */
 /* Keeping your existing shareChart + helpers exactly as-is to avoid regression.
