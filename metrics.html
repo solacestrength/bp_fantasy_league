@@ -327,30 +327,30 @@
 /**
  * centerHistAreaPlugin
  * --------------------
- * Shifts chart area horizontally so bars are visually centered
- * within the full canvas/card.
+ * Centers the HISTOGRAM chartArea (bars + axes) horizontally in the canvas
+ * by adjusting padding once after initial layout.
  */
 const centerHistAreaPlugin = {
   id: 'centerHistArea',
   afterLayout(chart, args, opts) {
     if (!opts || !opts.enabled) return;
     if (chart.config.type !== 'bar') return;
-    if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return; // only our histograms
-    if (chart.$histCentered) return; // run once
+    if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return; // only histograms
+    if (chart.$histAreaCentered) return;
 
     const area = chart.chartArea;
     if (!area) return;
 
     const canvasMid = chart.width / 2;
     const areaMid = (area.left + area.right) / 2;
-    const diff = areaMid - canvasMid; // >0 = too far right, <0 = too far left
+    const diff = areaMid - canvasMid; // >0 = too far right
 
     if (Math.abs(diff) < 1) {
-      chart.$histCentered = true;
+      chart.$histAreaCentered = true;
       return;
     }
 
-    // Base padding (ensure numeric)
+    // Base padding (numeric)
     const layout = chart.options.layout || {};
     const padding = layout.padding || {};
     const baseTop = +padding.top || 0;
@@ -358,11 +358,11 @@ const centerHistAreaPlugin = {
     const baseBottom = +padding.bottom || 0;
     const baseRight = +padding.right || 0;
 
-    // Shift by adjusting RIGHT padding only:
-    // newMid = oldMid - t/2 ; solve t so newMid == canvasMid -> t = 2 * diff
-    let extraRight = 2 * diff; // can be positive or negative
+    // Adjust RIGHT padding only so newMid == canvasMid
+    // newMid = oldMid - t/2  =>  t = 2 * diff
+    let extraRight = 2 * diff;
     let newRight = baseRight + extraRight;
-    if (newRight < 0) newRight = 0; // clamp
+    if (newRight < 0) newRight = 0;
 
     chart.options.layout = {
       ...layout,
@@ -374,7 +374,7 @@ const centerHistAreaPlugin = {
       }
     };
 
-    chart.$histCentered = true;
+    chart.$histAreaCentered = true;
     chart.update('none');
   }
 };
@@ -382,55 +382,106 @@ const centerHistAreaPlugin = {
 /**
  * centerHistTitlesPlugin
  * ----------------------
- * Runs before Chart.js draws anything.
- * Adjusts layout padding symmetrically so titles/subtitles are visually centered,
- * matching the canvas midpoint instead of the shifted chartArea.
- * Has zero impact on bars or axes since area centering runs after this.
+ * For HISTOGRAMS ONLY:
+ * - Reads the configured title/subtitle.
+ * - Disables the built-in title/subtitle for those charts.
+ * - Redraws them manually, perfectly centered on the CANVAS,
+ *   independent of any padding shifts from centerHistAreaPlugin.
+ * Bars/axes are untouched.
  */
 const centerHistTitlesPlugin = {
   id: 'centerHistTitles',
-  beforeLayout(chart, args, opts) {
-    if (!opts?.enabled) return;
+
+  beforeInit(chart, args, opts) {
+    if (!opts || !opts.enabled) return;
     if (chart.config.type !== 'bar') return;
-    if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return; // histograms only
-    if (!chart.chartArea || chart.$histTitlesAdjusted) return;
+    if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return;
 
-    const area = chart.chartArea;
-    const layout = chart.options.layout || {};
-    const padding = layout.padding || {};
+    const plugins = chart.options.plugins || {};
+    const t = plugins.title || {};
+    const s = plugins.subtitle || {};
 
-    // Ensure numeric
-    const baseTop = +padding.top || 0;
-    const baseRight = +padding.right || 0;
-    const baseBottom = +padding.bottom || 0;
-    const baseLeft = +padding.left || 0;
+    // Store originals so we can use their text + styles
+    chart.$histTitle = { ...t };
+    chart.$histSubtitle = { ...s };
 
-    // Compute horizontal offset between chartArea and canvas mid
-    const canvasMid = chart.width / 2;
-    const areaMid = (area.left + area.right) / 2;
-    const diff = areaMid - canvasMid;
+    // Turn OFF built-in drawing only for these hist charts
+    chart.options.plugins = {
+      ...plugins,
+      title: { ...t, display: false },
+      subtitle: { ...s, display: false }
+    };
+  },
 
-    // Titles are drawn relative to layout box center;
-    // adjust left/right padding symmetrically to re-center text
-    if (Math.abs(diff) > 0.5) {
-      chart.options.layout = {
-        ...layout,
-        padding: {
-          top: baseTop,
-          bottom: baseBottom,
-          left: baseLeft - diff,  // push left side out if bars shifted right
-          right: baseRight + diff // balance right padding
-        }
-      };
+  afterDraw(chart, args, opts) {
+    if (!opts || !opts.enabled) return;
+    if (chart.config.type !== 'bar') return;
+    if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return;
+
+    const { ctx, chartArea, width } = chart;
+    if (!ctx || !chartArea) return;
+
+    const title = chart.$histTitle;
+    const subtitle = chart.$histSubtitle;
+    if ((!title || !title.text) && (!subtitle || !subtitle.text)) return;
+
+    const centerX = width / 2;
+    let y = chartArea.top - 48; // base offset above plot area
+
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+
+    // Draw title (if configured)
+    if (title && title.display !== false && title.text) {
+      const font = title.font || {};
+      const size = font.size || 18;
+      const weight = font.weight || 'bold';
+      const family =
+        font.family || 'Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif';
+
+      ctx.font = `${weight} ${size}px ${family}`;
+      ctx.fillStyle = title.color || '#ccc';
+
+      if (Array.isArray(title.text)) {
+        title.text.forEach(line => {
+          ctx.fillText(line, centerX, y);
+          y += size + 4;
+        });
+      } else {
+        ctx.fillText(title.text, centerX, y);
+        y += size + 4;
+      }
     }
 
-    chart.$histTitlesAdjusted = true;
+    // Draw subtitle (if configured)
+    if (subtitle && subtitle.display !== false && subtitle.text) {
+      const font = subtitle.font || {};
+      const size = font.size || 14;
+      const weight = font.weight || 'normal';
+      const family =
+        font.family || 'Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif';
+
+      ctx.font = `${weight} ${size}px ${family}`;
+      ctx.fillStyle = subtitle.color || '#aaa';
+
+      if (Array.isArray(subtitle.text)) {
+        subtitle.text.forEach(line => {
+          ctx.fillText(line, centerX, y);
+          y += size + 2;
+        });
+      } else {
+        ctx.fillText(subtitle.text, centerX, y);
+        y += size + 2;
+      }
+    }
+
+    ctx.restore();
   }
 };
 
-// ✅ Register all globally
 Chart.register(ChartDataLabels, centerHistAreaPlugin, centerHistTitlesPlugin);
-
+  
 /* ========= DATA / LAYOUT HELPERS ========= */
 
 const SHEET_URL =
@@ -649,6 +700,7 @@ function renderCharts(g, w) {
       aspectRatio: 1,
       plugins: {
         centerHistArea: { enabled: true },
+        centerHistTitles: { enabled: true },
         title: {
           display: true,
           text: 'Distribution of Predicted Winning Totals',
