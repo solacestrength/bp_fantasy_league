@@ -326,17 +326,16 @@
 
 /**
  * centerHistAreaPlugin
- * --------------------
- * Centers the HISTOGRAM chartArea (bars + axes) horizontally in the canvas
- * by adjusting padding once after initial layout.
+ * - Shifts ONLY the chartArea horizontally via right padding
+ *   so the histogram bars/axes are visually centered in the canvas.
  */
 const centerHistAreaPlugin = {
   id: 'centerHistArea',
   afterLayout(chart, args, opts) {
     if (!opts || !opts.enabled) return;
     if (chart.config.type !== 'bar') return;
-    if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return; // only histograms
-    if (chart.$histAreaCentered) return;
+    if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return; // only our histograms
+    if (chart.$histCentered) return; // run once per instance
 
     const area = chart.chartArea;
     if (!area) return;
@@ -346,11 +345,10 @@ const centerHistAreaPlugin = {
     const diff = areaMid - canvasMid; // >0 = too far right
 
     if (Math.abs(diff) < 1) {
-      chart.$histAreaCentered = true;
+      chart.$histCentered = true;
       return;
     }
 
-    // Base padding (numeric)
     const layout = chart.options.layout || {};
     const padding = layout.padding || {};
     const baseTop = +padding.top || 0;
@@ -358,11 +356,11 @@ const centerHistAreaPlugin = {
     const baseBottom = +padding.bottom || 0;
     const baseRight = +padding.right || 0;
 
-    // Adjust RIGHT padding only so newMid == canvasMid
-    // newMid = oldMid - t/2  =>  t = 2 * diff
+    // Shift by adjusting RIGHT padding only.
+    // Derivation: need t so newMid = oldMid - t/2 == canvasMid => t = 2*diff
     let extraRight = 2 * diff;
     let newRight = baseRight + extraRight;
-    if (newRight < 0) newRight = 0;
+    if (newRight < 0) newRight = 0; // don’t go negative
 
     chart.options.layout = {
       ...layout,
@@ -374,73 +372,92 @@ const centerHistAreaPlugin = {
       }
     };
 
-    chart.$histAreaCentered = true;
+    chart.$histCentered = true;
     chart.update('none');
   }
 };
 
 /**
- * centerHistTitlesPlugin (stable)
- * -------------------------------
- * Fixes the title/subtitle horizontal alignment while preserving
- * all Chart.js layout space. Draws centered manually after layout.
+ * centerHistTitlesPlugin
+ * - Draws histogram title + subtitle manually, centered on CANVAS,
+ *   after centerHistAreaPlugin has shifted the chartArea.
+ * - Works ONLY on histograms; donuts remain untouched.
  */
 const centerHistTitlesPlugin = {
   id: 'centerHistTitles',
-  afterLayout(chart, args, opts) {
-    if (!opts?.enabled) return;
-    if (chart.config.type !== 'bar') return;
-    if (!/Hist$/i.test(chart.canvas.id)) return;
 
-    // Cache references after layout, keep native titles enabled
-    chart.$_histTitle = chart.options.plugins.title;
-    chart.$_histSubtitle = chart.options.plugins.subtitle;
-    chart.options.plugins.title.display = false;
-    chart.options.plugins.subtitle.display = false;
+  afterLayout(chart, args, opts) {
+    if (!opts || !opts.enabled) return;
+    if (chart.config.type !== 'bar') return;
+    if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return;
+
+    // Cache original title/subtitle config once
+    if (!chart.$histTitles) {
+      const p = chart.options.plugins || {};
+      chart.$histTitles = {
+        title: { ...(p.title || {}) },
+        subtitle: { ...(p.subtitle || {}) }
+      };
+    }
+
+    // Let Chart.js keep the reserved top space it already computed,
+    // but stop it from drawing its own copies.
+    if (chart.options.plugins?.title) {
+      chart.options.plugins.title.display = false;
+    }
+    if (chart.options.plugins?.subtitle) {
+      chart.options.plugins.subtitle.display = false;
+    }
   },
 
   afterDraw(chart, args, opts) {
-    if (!opts?.enabled) return;
+    if (!opts || !opts.enabled) return;
     if (chart.config.type !== 'bar') return;
-    if (!/Hist$/i.test(chart.canvas.id)) return;
+    if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return;
+    if (!chart.$histTitles) return;
 
-    const { ctx, chartArea, width } = chart;
+    const { ctx, width, chartArea } = chart;
     if (!ctx || !chartArea) return;
 
-    const t = chart.$_histTitle;
-    const s = chart.$_histSubtitle;
-    if ((!t?.display && !s?.display)) return;
-
-    const centerX = width / 2;
-    let y = chartArea.top - 48;
+    const { title, subtitle } = chart.$histTitles;
+    const canvasMid = width / 2;
 
     ctx.save();
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
+    ctx.textBaseline = 'middle';
 
-    if (t?.display && t.text) {
-      const f = t.font || {};
-      ctx.font = `${f.weight || 'bold'} ${f.size || 18}px ${
-        f.family || 'Inter, sans-serif'
-      }`;
-      ctx.fillStyle = t.color || '#ccc';
-      ctx.fillText(t.text, centerX, y);
-      y += (f.size || 18) + 4;
+    let y = chartArea.top - 32; // start above plot; tweak if needed
+
+    // Title
+    if (title && title.text && title.display !== false) {
+      const size = (title.font && title.font.size) ||  sSafe(title, 'fontSize', 16);
+      const weight = (title.font && title.font.weight) || 'bold';
+      ctx.font = `${weight} ${size}px Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.fillStyle = title.color || '#ccc';
+      ctx.fillText(title.text, canvasMid, y);
+      y += size + ((title.padding && title.padding.bottom) || 4);
     }
 
-    if (s?.display && s.text) {
-      const f = s.font || {};
-      ctx.font = `${f.weight || 'normal'} ${f.size || 14}px ${
-        f.family || 'Inter, sans-serif'
-      }`;
-      ctx.fillStyle = s.color || '#aaa';
-      ctx.fillText(s.text, centerX, y);
+    // Subtitle
+    if (subtitle && subtitle.text && subtitle.display !== false) {
+      const size = (subtitle.font && subtitle.font.size) || sSafe(subtitle, 'fontSize', 12);
+      const weight = (subtitle.font && subtitle.font.weight) || 'normal';
+      y += (subtitle.padding && subtitle.padding.top) || 0;
+      ctx.font = `${weight} ${size}px Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif`;
+      ctx.fillStyle = subtitle.color || '#aaa';
+      ctx.fillText(subtitle.text, canvasMid, y);
     }
 
     ctx.restore();
+
+    function sSafe(obj, key, fallback) {
+      // tiny helper so we don't explode if font shorthand changes
+      return (obj && obj[key]) || fallback;
+    }
   }
 };
 
+// Register everything
 Chart.register(ChartDataLabels, centerHistAreaPlugin, centerHistTitlesPlugin);
   
 /* ========= DATA / LAYOUT HELPERS ========= */
