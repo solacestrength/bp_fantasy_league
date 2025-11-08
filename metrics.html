@@ -395,6 +395,8 @@ const centerHistTitlesPlugin = {
     // Cache references after layout, keep native titles enabled
     chart.$_histTitle = chart.options.plugins.title;
     chart.$_histSubtitle = chart.options.plugins.subtitle;
+    chart.options.plugins.title.display = false;
+    chart.options.plugins.subtitle.display = false;
   },
 
   afterDraw(chart, args, opts) {
