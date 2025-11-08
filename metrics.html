@@ -326,8 +326,12 @@
 
 /**
  * centerHistAreaPlugin
- * - Shifts ONLY the chartArea horizontally via right padding
- *   so the histogram bars/axes are visually centered in the canvas.
+ * --------------------
+ * For histogram charts only:
+ * - Runs once after layout.
+ * - Compares chartArea center to canvas center.
+ * - Adjusts RIGHT padding so the plotting area (bars + axes) is visually centered.
+ * - No redraw hacks; guarded against infinite loops.
  */
 const centerHistAreaPlugin = {
   id: 'centerHistArea',
@@ -335,17 +339,17 @@ const centerHistAreaPlugin = {
     if (!opts || !opts.enabled) return;
     if (chart.config.type !== 'bar') return;
     if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return; // only our histograms
-    if (chart.$histCentered) return; // run once per instance
+    if (chart.$histAreaCentered) return; // run once per chart
 
     const area = chart.chartArea;
     if (!area) return;
 
     const canvasMid = chart.width / 2;
     const areaMid = (area.left + area.right) / 2;
-    const diff = areaMid - canvasMid; // >0 = too far right
+    const diff = areaMid - canvasMid; // >0 = area too far right
 
     if (Math.abs(diff) < 1) {
-      chart.$histCentered = true;
+      chart.$histAreaCentered = true;
       return;
     }
 
@@ -356,11 +360,11 @@ const centerHistAreaPlugin = {
     const baseBottom = +padding.bottom || 0;
     const baseRight = +padding.right || 0;
 
-    // Shift by adjusting RIGHT padding only.
-    // Derivation: need t so newMid = oldMid - t/2 == canvasMid => t = 2*diff
+    // Shift by modifying ONLY right padding:
+    // newMid = oldMid - t/2; solve for t so newMid == canvasMid => t = 2 * diff
     let extraRight = 2 * diff;
     let newRight = baseRight + extraRight;
-    if (newRight < 0) newRight = 0; // don’t go negative
+    if (newRight < 0) newRight = 0;
 
     chart.options.layout = {
       ...layout,
@@ -372,85 +376,77 @@ const centerHistAreaPlugin = {
       }
     };
 
-    chart.$histCentered = true;
+    chart.$histAreaCentered = true;
     chart.update('none');
   }
 };
 
 /**
- * centerHistTitlesPlugin – Final Kill Switch Version
- * ---------------------------------------------------
- * Disables built-in title/subtitle rendering at the plugin level
- * while preserving layout spacing, then draws one centered copy.
+ * centerHistTitlesPlugin
+ * ----------------------
+ * For histogram charts only:
+ * - Draws title + subtitle manually, centered on the CANVAS,
+ *   using the values from options.plugins.title/subtitle.
+ * - Ignores / does not affect donut charts.
+ * - Assumes the built-in title/subtitle plugins have been temporarily
+ *   unregistered during histogram creation (see renderCharts).
  */
 const centerHistTitlesPlugin = {
   id: 'centerHistTitles',
-
-  beforeInit(chart, args, opts) {
-    if (!opts?.enabled) return;
-    if (chart.config.type !== 'bar') return;
-    if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return;
-
-    // Hijack built-in title/subtitle plugin methods
-    const titlePlugin = Chart.registry.getPlugin('title');
-    const subtitlePlugin = Chart.registry.getPlugin('subtitle');
-
-    if (titlePlugin && !titlePlugin._muted) {
-      titlePlugin.beforeDraw = () => {}; // no-op
-      titlePlugin.afterDraw = () => {};
-      titlePlugin._muted = true;
-    }
-    if (subtitlePlugin && !subtitlePlugin._muted) {
-      subtitlePlugin.beforeDraw = () => {};
-      subtitlePlugin.afterDraw = () => {};
-      subtitlePlugin._muted = true;
-    }
-  },
-
   afterDraw(chart, args, opts) {
-    if (!opts?.enabled) return;
+    if (!opts || !opts.enabled) return;
     if (chart.config.type !== 'bar') return;
-    if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return;
+    if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return; // only histograms
 
-    const { ctx, width, chartArea } = chart;
-    if (!ctx || !chartArea) return;
+    const area = chart.chartArea;
+    const ctx = chart.ctx;
+    if (!area || !ctx) return;
 
-    const title = chart.options.plugins.title;
-    const subtitle = chart.options.plugins.subtitle;
+    const plugins = chart.options.plugins || {};
+    const t = plugins.title || {};
+    const s = plugins.subtitle || {};
 
-    const centerX = width / 2;
-    let y = chartArea.top - 36;
+    const hasTitle = t.display && t.text;
+    const hasSub = s.display && s.text;
+    if (!hasTitle && !hasSub) return;
+
+    const canvasMid = chart.width / 2;
 
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    if (title?.display && title.text) {
-      const size = title.font?.size || 18;
-      const weight = title.font?.weight || 'bold';
-      const family = title.font?.family || 'Inter, sans-serif';
+    // Title
+    if (hasTitle) {
+      const size = (t.font && t.font.size) || 18;
+      const weight = (t.font && t.font.weight) || 'bold';
+      const family = (t.font && t.font.family) || "Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
       ctx.font = `${weight} ${size}px ${family}`;
-      ctx.fillStyle = title.color || '#ccc';
-      ctx.fillText(title.text, centerX, y);
-      y += size + (title.padding?.bottom || 4);
+      ctx.fillStyle = t.color || '#ccc';
+
+      // If there is a subtitle, raise the title a bit higher
+      const y = area.top - (hasSub ? 30 : 20);
+      ctx.fillText(t.text, canvasMid, y);
     }
 
-    if (subtitle?.display && subtitle.text) {
-      const size = subtitle.font?.size || 14;
-      const weight = subtitle.font?.weight || 'normal';
-      const family = subtitle.font?.family || 'Inter, sans-serif';
+    // Subtitle
+    if (hasSub) {
+      const size = (s.font && s.font.size) || 14;
+      const weight = (s.font && s.font.weight) || 'normal';
+      const family = (s.font && s.font.family) || "Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
       ctx.font = `${weight} ${size}px ${family}`;
-      ctx.fillStyle = subtitle.color || '#aaa';
-      ctx.fillText(subtitle.text, centerX, y);
+      ctx.fillStyle = s.color || '#aaa';
+
+      const y = area.top - 10;
+      ctx.fillText(s.text, canvasMid, y);
     }
 
     ctx.restore();
   }
 };
 
-// Register everything
 Chart.register(ChartDataLabels, centerHistAreaPlugin, centerHistTitlesPlugin);
-  
+
 /* ========= DATA / LAYOUT HELPERS ========= */
 
 const SHEET_URL =
@@ -487,11 +483,11 @@ let menuVisible = false;
 
 function toggleMenu(show) {
   if (show) {
-    mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');
-    mobileMenu.classList.add('scale-y-100','opacity-100');
+    mobileMenu.classList.remove('scale-y-0', 'opacity-0', 'pointer-events-none');
+    mobileMenu.classList.add('scale-y-100', 'opacity-100');
   } else {
-    mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');
-    mobileMenu.classList.remove('scale-y-100','opacity-100');
+    mobileMenu.classList.add('scale-y-0', 'opacity-0', 'pointer-events-none');
+    mobileMenu.classList.remove('scale-y-100', 'opacity-100');
   }
 }
 toggleMenu(false);
@@ -531,7 +527,10 @@ function setupDropdowns() {
     const select = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
     if (!select) return;
 
-    select.innerHTML = classes.map((c) => `<option value="${c}">${c}kg</option>`).join('');
+    select.innerHTML = classes
+      .map((c) => `<option value="${c}">${c}kg</option>`)
+      .join('');
+
     select.onchange = () => renderCharts(g, select.value);
 
     if (classes[0]) renderCharts(g, classes[0]);
@@ -544,12 +543,15 @@ function renderCharts(g, w) {
   const s = sizing();
   const donutId = g === 'F' ? 'womenDonut' : 'menDonut';
   const histId  = g === 'F' ? 'womenHist'  : 'menHist';
+
   const rows = allData.filter(r => r.Gender === g && r.Class === w);
   if (!rows.length) return;
 
   /* --- DONUT --- */
   const counts = {};
-  rows.forEach(r => { counts[r.Athlete] = (counts[r.Athlete] || 0) + 1; });
+  rows.forEach(r => {
+    counts[r.Athlete] = (counts[r.Athlete] || 0) + 1;
+  });
 
   const dLabels = Object.keys(counts);
   const dData   = Object.values(counts);
@@ -562,6 +564,7 @@ function renderCharts(g, w) {
   ];
 
   if (charts[donutId]) charts[donutId].destroy();
+
   charts[donutId] = new Chart(document.getElementById(donutId), {
     type: 'doughnut',
     data: {
@@ -616,7 +619,8 @@ function renderCharts(g, w) {
     }
   });
 
-  /* --- HISTOGRAM (visually aligned + centered North Star version) --- */
+  /* --- HISTOGRAM --- */
+
   const vals = rows
     .map(r => parseFloat(r.PredictedTotal))
     .filter(v => !isNaN(v) && v > 0);
@@ -652,6 +656,13 @@ function renderCharts(g, w) {
   const yMax = Math.ceil(maxC / step) * step;
 
   if (charts[histId]) charts[histId].destroy();
+
+  // 🚫 Nuclear: temporarily remove native title/subtitle so they cannot draw.
+  const nativeTitle = Chart.registry.getPlugin('title');
+  const nativeSubtitle = Chart.registry.getPlugin('subtitle');
+  if (nativeTitle) Chart.unregister(nativeTitle);
+  if (nativeSubtitle) Chart.unregister(nativeSubtitle);
+
   charts[histId] = new Chart(document.getElementById(histId), {
     type: 'bar',
     data: {
@@ -667,36 +678,44 @@ function renderCharts(g, w) {
     options: {
       maintainAspectRatio: true,
       aspectRatio: 1,
+      layout: {
+        padding: { top: 60 } // space for our custom-drawn title/subtitle
+      },
       plugins: {
         centerHistArea: { enabled: true },
-        centerHistTitles: { enabled: true },
+        centerHistTitles: { enabled: true }, // our manual title renderer
+        // Titles kept in options so our plugin can read them
         title: {
           display: true,
           text: 'Distribution of Predicted Winning Totals',
           color: '#ccc',
           font: { size: s.histTitle, weight: 'bold' },
-          padding: { bottom: 8 }
+          padding: { bottom: 4 }
         },
         subtitle: {
           display: true,
           text: `Total Votes – ${N}`,
           color: '#aaa',
           font: { size: s.histSubtitle, weight: 'normal' },
-          padding: { top: 2, bottom: 12 }
+          padding: { top: 2 }
         },
         legend: { display: false },
         datalabels: {
           color: '#fff',
           font: { size: s.histBarLabel, weight: 'normal' },
-          formatter: (v) => v > 0 ? v : '',
+          formatter: (v) => (v > 0 ? v : ''),
           anchor: 'center',
           align: (ctx) => {
             const v = ctx.dataset.data[ctx.dataIndex] || 0;
             const scale = ctx.chart.scales.y;
             if (!scale) return 'center';
-            const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
-            const f = ctx.chart.options.plugins.datalabels.font.size || s.histBarLabel;
-            return (barH < f * 1.05) ? 'end' : 'center';
+            const barH =
+              scale.getPixelForValue(yMin + v) -
+              scale.getPixelForValue(yMin);
+            const f =
+              ctx.chart.options.plugins.datalabels.font.size ||
+              s.histBarLabel;
+            return barH < f * 1.05 ? 'end' : 'center';
           },
           clamp: true
         }
@@ -704,7 +723,10 @@ function renderCharts(g, w) {
       scales: {
         x: {
           offset: true,
-          ticks: { color: '#ccc', font: { size: s.axisTick } },
+          ticks: {
+            color: '#ccc',
+            font: { size: s.axisTick }
+          },
           title: {
             display: true,
             text: 'Predicted Total (kg)',
@@ -717,7 +739,10 @@ function renderCharts(g, w) {
           min: yMin,
           max: yMax,
           beginAtZero: false,
-          ticks: { color: '#ccc', font: { size: s.axisTick } },
+          ticks: {
+            color: '#ccc',
+            font: { size: s.axisTick }
+          },
           title: {
             display: true,
             text: 'Vote Count',
@@ -729,7 +754,13 @@ function renderCharts(g, w) {
       }
     }
   });
-} // ✅ closes renderCharts
+
+  // ✅ Restore native plugins so donut charts & any other charts behave normally
+  if (nativeTitle) Chart.register(nativeTitle);
+  if (nativeSubtitle) Chart.register(nativeSubtitle);
+} // closes renderCharts
+
+/* ========= COLLAPSIBLE SECTIONS & BOTTOM BUTTONS ========= */
 
 function toggleSection(id) {
   const c = document.getElementById(id);
@@ -740,13 +771,11 @@ function toggleSection(id) {
   const open = c.classList.toggle('open');
   a.classList.toggle('rotate', open);
 
-  // Smooth auto-scroll when opening
   if (open) {
     const wrapper = c.closest('.bg-gray-800\\/60') || c;
     wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  // Add/remove expanded layout to the main container
   const anyOpen = document.querySelector('.collapsible-content.open');
   if (anyOpen) {
     main.classList.add('expanded');
@@ -754,15 +783,18 @@ function toggleSection(id) {
     main.classList.remove('expanded');
   }
 
-  // Reposition buttons with smooth animation after expansion
   setTimeout(repositionBottomButtons, 600);
 }
 
-/* --- Smoothly reposition bottom buttons --- */
 function repositionBottomButtons() {
   const main = document.querySelector('main');
-  const leaderboard = document.querySelector('a[href="leaderboard.html"]')?.closest('div');
-  const backToTop = document.getElementById('bottomBackToTop')?.closest('div');
+  const leaderboard = document
+    .querySelector('a[href="leaderboard.html"]')
+    ?.closest('div');
+  const backToTop = document
+    .getElementById('bottomBackToTop')
+    ?.closest('div');
+
   if (!main || !leaderboard || !backToTop) return;
 
   const contentHeight = main.scrollHeight;
@@ -777,6 +809,8 @@ function repositionBottomButtons() {
 
 window.addEventListener('resize', repositionBottomButtons);
 
+/* ========= (Share / Export block starts below this line in your file) ========= */
+</script>
 /* ========= SHARE / EXPORT + BACK TO TOP (unchanged from your working version) ========= */
 /* Keeping your existing shareChart + helpers exactly as-is to avoid regression.
    Only difference above is the histogram centering plugin. */
