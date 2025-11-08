@@ -525,12 +525,12 @@ function renderCharts(g, w) {
   const step = Math.max(1, Math.round(span / 4));
   const yMax = Math.ceil(maxC / step) * step;
 
-  const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
 
-  // Key: shift the whole plot a bit left by giving *more right padding*
-  // so bars + axes visually sit central in the card.
-  const paddingLeft  = isMobile ? 14 : 26;  // keeps y-axis label readable
-  const paddingRight = isMobile ? 32 : 44;  // balances to center bars
+  // 🧭 Aggressive centering correction
+  // Shift chart leftwards by increasing right padding and tightening left padding.
+  const paddingLeft  = isMobile ? 10 : 22;
+  const paddingRight = isMobile ? 58 : 64;
 
   if (charts[histId]) charts[histId].destroy();
   charts[histId] = new Chart(document.getElementById(histId), {
