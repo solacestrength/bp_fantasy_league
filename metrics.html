@@ -325,69 +325,107 @@
 /* ========= PLUGINS ========= */
 
 /**
- * centerHistTranslate
- *
- * Centers the visible histogram block (bars + axes + titles)
- * within the canvas by applying a single horizontal translate.
- *
- * Key points:
- * - Only runs for bar charts whose canvas id ends with "Hist"
- *   (womenHist / menHist).
- * - No double-drawing, no layout mutation loops.
- * - Titles, axes, and bars all move together.
+ * centerHistAreaPlugin
+ * --------------------
+ * Shifts chart area horizontally so bars are visually centered
+ * within the full canvas/card.
  */
-const centerHistTranslate = {
-  id: 'centerHistTranslate',
-
-  beforeDraw(chart, args, opts) {
-    if (!opts?.enabled) return;
+const centerHistAreaPlugin = {
+  id: 'centerHistArea',
+  afterLayout(chart, args, opts) {
+    if (!opts || !opts.enabled) return;
     if (chart.config.type !== 'bar') return;
+    if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return; // only our histograms
+    if (chart.$histCentered) return; // run once
 
-    const id = chart.canvas?.id || '';
-    if (!/Hist$/i.test(id)) return; // only our histogram canvases
-
-    const meta = chart.getDatasetMeta(0);
-    const bars = meta?.data || [];
     const area = chart.chartArea;
-    if (!bars.length || !area) return;
+    if (!area) return;
 
-    const first = bars[0];
-    const last  = bars[bars.length - 1];
-    if (!first || !last) return;
-
-    // Left/right edges of the bar group
-    const firstX = first.x - first.width / 2;
-    const lastX  = last.x + last.width / 2;
-
-    const barsMid   = (firstX + lastX) / 2;
     const canvasMid = chart.width / 2;
-    const shift     = canvasMid - barsMid;
+    const areaMid = (area.left + area.right) / 2;
+    const diff = areaMid - canvasMid; // >0 = too far right, <0 = too far left
 
-    // If it's basically centered already, do nothing
-    if (Math.abs(shift) < 0.5) {
-      chart.$centerShift = 0;
+    if (Math.abs(diff) < 1) {
+      chart.$histCentered = true;
       return;
     }
 
-    chart.$centerShift = shift;
+    // Base padding (ensure numeric)
+    const layout = chart.options.layout || {};
+    const padding = layout.padding || {};
+    const baseTop = +padding.top || 0;
+    const baseLeft = +padding.left || 0;
+    const baseBottom = +padding.bottom || 0;
+    const baseRight = +padding.right || 0;
 
-    const ctx = chart.ctx;
-    ctx.save();
-    ctx.translate(shift, 0); // this affects everything drawn after: titles, axes, bars
-  },
+    // Shift by adjusting RIGHT padding only:
+    // newMid = oldMid - t/2 ; solve t so newMid == canvasMid -> t = 2 * diff
+    let extraRight = 2 * diff; // can be positive or negative
+    let newRight = baseRight + extraRight;
+    if (newRight < 0) newRight = 0; // clamp
 
-  afterDraw(chart) {
-    const shift = chart.$centerShift || 0;
-    if (!shift) return; // nothing was shifted
+    chart.options.layout = {
+      ...layout,
+      padding: {
+        top: baseTop,
+        left: baseLeft,
+        bottom: baseBottom,
+        right: newRight
+      }
+    };
 
-    const ctx = chart.ctx;
-    ctx.restore();
-    chart.$centerShift = 0;
+    chart.$histCentered = true;
+    chart.update('none');
   }
 };
 
-// Register datalabels + our centering plugin
-Chart.register(ChartDataLabels, centerHistTranslate);
+/**
+ * centerHistTitlesPlugin
+ * ----------------------
+ * Keeps histogram chart titles/subtitles visually centered
+ * even when centerHistAreaPlugin shifts chartArea padding.
+ * Does NOT affect bars or axes.
+ */
+const centerHistTitlesPlugin = {
+  id: 'centerHistTitles',
+  afterDraw(chart) {
+    if (chart.config.type !== 'bar') return;
+    if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return;
+
+    const { ctx, chartArea, width } = chart;
+    if (!ctx || !chartArea) return;
+
+    const canvasMid = width / 2;
+    const areaMid = (chartArea.left + chartArea.right) / 2;
+    const offset = canvasMid - areaMid; // how far the chartArea has shifted
+
+    if (Math.abs(offset) < 0.5) return;
+
+    const title = chart.options.plugins.title;
+    const subtitle = chart.options.plugins.subtitle;
+    if (title?.display || subtitle?.display) {
+      ctx.save();
+      ctx.translate(offset, 0); // move only text drawing horizontally
+
+      if (title?.display) {
+        const titlePlugin = Chart.registry.getPlugin('title');
+        titlePlugin?.beforeDraw?.(chart, {}, chart.options.plugins.title);
+        titlePlugin?.afterDraw?.(chart, {}, chart.options.plugins.title);
+      }
+
+      if (subtitle?.display) {
+        const subtitlePlugin = Chart.registry.getPlugin('subtitle');
+        subtitlePlugin?.beforeDraw?.(chart, {}, chart.options.plugins.subtitle);
+        subtitlePlugin?.afterDraw?.(chart, {}, chart.options.plugins.subtitle);
+      }
+
+      ctx.restore();
+    }
+  }
+};
+
+// ✅ Register all globally
+Chart.register(ChartDataLabels, centerHistAreaPlugin, centerHistTitlesPlugin);
 
 /* ========= DATA / LAYOUT HELPERS ========= */
 
@@ -606,7 +644,7 @@ function renderCharts(g, w) {
       maintainAspectRatio: true,
       aspectRatio: 1,
       plugins: {
-        centerHistTranslate: { enabled: true },
+        centerHistArea: { enabled: true },
         title: {
           display: true,
           text: 'Distribution of Predicted Winning Totals',
