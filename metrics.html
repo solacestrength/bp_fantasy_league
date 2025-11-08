@@ -20,7 +20,7 @@
     background: #0b0b0b;
     color: #f1f1f1;
     font-family: 'Inter', sans-serif;
-    overflow-x: hidden; /* prevent right-side blank strip */
+    overflow-x: hidden; /* safety: no horizontal scroll/blank strip */
   }
 
   /* === SELECT ELEMENTS === */
@@ -35,7 +35,8 @@
     display: inline-block;
   }
 
-  #womenSelect, #menSelect {
+  #womenSelect,
+  #menSelect {
     background-color: rgba(31, 41, 55, 0.6) !important;
     border: 1px solid #374151;
     color: #f1f1f1;
@@ -92,7 +93,8 @@
     }
   }
 
-  #womenDonut, #menDonut {
+  #womenDonut,
+  #menDonut {
     width: 100% !important;
     aspect-ratio: 1 / 1 !important;
     max-height: none !important;
@@ -109,16 +111,28 @@
 
   .collapsible-content.open {
     opacity: 1;
-    max-height: 1000px;
+    max-height: 1000px;  /* big enough for charts */
     padding-bottom: 1rem;
   }
 
-  /* ✅ Dynamic expansion + centering support */
-  main.expanded {
-    width: 100vw;
-    max-width: 100vw;
-    margin-left: calc(-50vw + 50%);
-    transition: all 0.6s ease;
+  /* Keep everything constrained inside the card on mobile too:
+     no width:100vw tricks here so dropdown + share never overflow */
+  @media (max-width: 1023px) {
+    .collapsible-content,
+    .collapsible-content.open {
+      width: 100%;
+      margin-left: 0;
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
+
+  .arrow {
+    transition: transform .4s ease;
+  }
+
+  .arrow.rotate {
+    transform: rotate(180deg);
   }
 
   /* === SHARE BUTTONS === */
@@ -130,11 +144,12 @@
     border-radius: .5rem;
     height: 36px;
     width: 36px;
-    transition: all 0.3s ease; /* smooth centering animation */
+    transition: background-color .2s ease, transform .2s ease;
   }
 
   .share-btn:hover {
     background-color: #ef4444;
+    transform: translateY(-1px);
   }
 
   .share-icon {
@@ -151,40 +166,6 @@
 
   .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
   .animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
-
-  /* --- Full-width expansion on mobile only --- */
-  @media (max-width: 1023px) {
-    .collapsible-content.open {
-      width: 100vw;
-      margin-left: calc(-50vw + 50%);
-      padding-left: max(1rem, env(safe-area-inset-left));
-      padding-right: max(1rem, env(safe-area-inset-right));
-    }
-
-    /* ✅ Center dropdowns & share buttons on mobile expansion */
-    .collapsible-content.open select {
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .collapsible-content.open .flex.justify-end {
-      justify-content: center !important;
-    }
-
-    .collapsible-content.open .share-btn {
-      margin-left: auto;
-      margin-right: auto;
-    }
-  }
-
-  .arrow {
-    transition: transform .4s ease;
-  }
-
-  .arrow.rotate {
-    transform: rotate(180deg);
-  }
 </style>
 </head>
 
