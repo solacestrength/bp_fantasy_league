@@ -326,49 +326,52 @@
 
 const centerBarsPlugin = {
   id: 'centerBars',
-  beforeDatasetsDraw(chart, args, opts) {
+  afterLayout(chart, args, opts) {
     if (!opts || !opts.enabled) return;
+    if (chart.config.type !== 'bar') return;
 
     const meta = chart.getDatasetMeta(0);
-    const bars = meta?.data || [];
+    const bars = meta && meta.data ? meta.data : [];
     const area = chart.chartArea;
     if (!bars.length || !area) return;
 
-    // Undo any previous shift
-    const prevShift = chart.$centerBarsShift || 0;
-    if (prevShift) bars.forEach(b => (b.x -= prevShift));
+    // 1) Capture the original padding once
+    if (!chart.$centerBarsBasePadding) {
+      const lp = (chart.options.layout && chart.options.layout.padding) || {};
+      chart.$centerBarsBasePadding = {
+        top: lp.top || 0,
+        right: lp.right || 0,
+        bottom: lp.bottom || 0,
+        left: lp.left || 0
+      };
+    }
 
+    // 2) Reset to original padding so we don't accumulate shifts
+    const base = chart.$centerBarsBasePadding;
+    chart.options.layout = chart.options.layout || {};
+    chart.options.layout.padding = {
+      top: base.top,
+      right: base.right,
+      bottom: base.bottom,
+      left: base.left
+    };
+
+    // 3) Recompute geometry with the reset padding
     const first = bars[0];
-    const last = bars[bars.length - 1];
-    if (!first || !last) {
-      chart.$centerBarsShift = 0;
-      return;
-    }
+    const last  = bars[bars.length - 1];
+    if (!first || !last) return;
 
-    // Compute bar group span and offset correction for offset:true
-    const leftEdge = first.x - first.width / 2;
+    const leftEdge  = first.x - first.width / 2;
     const rightEdge = last.x + last.width / 2;
-    const barsSpan = rightEdge - leftEdge;
+    const barsMid   = (leftEdge + rightEdge) / 2;
+    const chartMid  = (area.left + area.right) / 2;
 
-    // The visible midpoint of the group
-    const barsMid = leftEdge + barsSpan / 2;
-    const chartMid = (area.left + area.right) / 2;
+    const shift = chartMid - barsMid;
+    if (Math.abs(shift) < 0.5) return; // already visually centered
 
-    // If offset:true is used, Chart.js adds half a category width margin.
-    // Correct for that so the group truly centers.
-    const tickWidth = barsSpan / bars.length;
-    const offsetCorrection = chart.config.options.scales?.x?.offset ? tickWidth / 2 : 0;
-
-    const shift = (chartMid + offsetCorrection) - barsMid;
-
-    if (Math.abs(shift) < 0.5) {
-      chart.$centerBarsShift = 0;
-      return;
-    }
-
-    // Apply shift so Chart.js draws at correct centered positions
-    bars.forEach(b => (b.x += shift));
-    chart.$centerBarsShift = shift;
+    // 4) Apply symmetric padding adjustment so EVERYTHING moves together
+    chart.options.layout.padding.left  += shift;
+    chart.options.layout.padding.right -= shift;
   }
 };
 
