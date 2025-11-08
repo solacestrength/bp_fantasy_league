@@ -725,10 +725,7 @@ function scaleChartFonts(chart, factor) {
 async function shareChart(id, g) {
   const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
   const s = sizing();
-  const src = document.getElementById(id);
   let src = document.getElementById(id);
-
-let src = document.getElementById(id);
 
 // 🧩 Non-blocking histogram readiness check
 if (/Hist$/i.test(id)) {
