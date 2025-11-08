@@ -330,48 +330,53 @@ const centerBarsPlugin = {
     if (!opts || !opts.enabled) return;
     if (chart.config.type !== 'bar') return;
 
-    const meta = chart.getDatasetMeta(0);
-    const bars = meta && meta.data ? meta.data : [];
-    const area = chart.chartArea;
-    if (!bars.length || !area) return;
+    // Wait one frame for chartArea to be fully calculated
+    requestAnimationFrame(() => {
+      const meta = chart.getDatasetMeta(0);
+      const bars = meta && meta.data ? meta.data : [];
+      const area = chart.chartArea;
+      if (!bars.length || !area) return;
 
-    // 1) Capture the original padding once
-    if (!chart.$centerBarsBasePadding) {
-      const lp = (chart.options.layout && chart.options.layout.padding) || {};
-      chart.$centerBarsBasePadding = {
-        top: lp.top || 0,
-        right: lp.right || 0,
-        bottom: lp.bottom || 0,
-        left: lp.left || 0
+      // Store base padding once
+      if (!chart.$centerBarsBasePadding) {
+        const lp = (chart.options.layout && chart.options.layout.padding) || {};
+        chart.$centerBarsBasePadding = {
+          top: lp.top || 0,
+          right: lp.right || 0,
+          bottom: lp.bottom || 0,
+          left: lp.left || 0
+        };
+      }
+
+      // Reset padding before recalculating
+      const base = chart.$centerBarsBasePadding;
+      chart.options.layout = chart.options.layout || {};
+      chart.options.layout.padding = {
+        top: base.top,
+        right: base.right,
+        bottom: base.bottom,
+        left: base.left
       };
-    }
 
-    // 2) Reset to original padding so we don't accumulate shifts
-    const base = chart.$centerBarsBasePadding;
-    chart.options.layout = chart.options.layout || {};
-    chart.options.layout.padding = {
-      top: base.top,
-      right: base.right,
-      bottom: base.bottom,
-      left: base.left
-    };
+      const first = bars[0];
+      const last = bars[bars.length - 1];
+      if (!first || !last) return;
 
-    // 3) Recompute geometry with the reset padding
-    const first = bars[0];
-    const last  = bars[bars.length - 1];
-    if (!first || !last) return;
+      // Compute geometric center of bars vs chart
+      const leftEdge = first.x - first.width / 2;
+      const rightEdge = last.x + last.width / 2;
+      const barsMid = (leftEdge + rightEdge) / 2;
+      const chartMid = (area.left + area.right) / 2;
+      const shift = chartMid - barsMid;
 
-    const leftEdge  = first.x - first.width / 2;
-    const rightEdge = last.x + last.width / 2;
-    const barsMid   = (leftEdge + rightEdge) / 2;
-    const chartMid  = (area.left + area.right) / 2;
+      if (Math.abs(shift) < 0.5) return; // already centered
 
-    const shift = chartMid - barsMid;
-    if (Math.abs(shift) < 0.5) return; // already visually centered
+      // Apply symmetric layout padding shift (affects everything)
+      chart.options.layout.padding.left += shift;
+      chart.options.layout.padding.right -= shift;
 
-    // 4) Apply symmetric padding adjustment so EVERYTHING moves together
-    chart.options.layout.padding.left  += shift;
-    chart.options.layout.padding.right -= shift;
+      chart.update('none');
+    });
   }
 };
 
