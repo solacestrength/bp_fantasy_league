@@ -42,11 +42,12 @@
 
     /* === METRICS LAYOUT === */
     .chart-container {
-      max-width: 600px;
-      margin: 0 auto;
-      position: relative;
-      display: block;
-    }
+  max-width: 600px;
+  margin: 0 auto;
+  position: relative;
+  display: block;
+  width: 100%; /* NEW: ensures full usage of expanded area */
+}
 
     canvas {
       max-width: 100%;
@@ -105,11 +106,13 @@
       transition: max-height .5s ease, opacity .4s ease;
     }
   .collapsible-content.open {
-    opacity: 1;
-    max-height: 1000px;
-    width: 100vw;                       /* span full viewport width */
-    margin-left: calc(-50vw + 50%);     /* center perfectly relative to page */
-  }
+  opacity: 1;
+  max-height: 1000px;
+  width: 100vw;                       /* fill full viewport width */
+  margin-left: calc(-50vw + 50%);     /* center relative to viewport */
+  padding-left: max(1rem, env(safe-area-inset-left));  /* iPhone notch safe */
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
     .arrow {
       transition: transform .4s ease;
     }
