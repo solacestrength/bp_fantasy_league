@@ -525,6 +525,11 @@ function renderCharts(g, w) {
   const step = Math.max(1, Math.round(span / 4));
   const yMax = Math.ceil(maxC / step) * step;
 
+  // ✅ Responsive visual-centering tweak
+  const isMobile = window.matchMedia('(max-width: 768px)').matches;
+  const leftPad = isMobile ? 28 : 20;
+  const rightPad = isMobile ? 6 : 4;
+
   if (charts[histId]) charts[histId].destroy();
   charts[histId] = new Chart(document.getElementById(histId), {
     type: 'bar',
@@ -541,13 +546,7 @@ function renderCharts(g, w) {
     options: {
       maintainAspectRatio: true,
       aspectRatio: 1,
-      // 🔥 VISUAL NUDGE: ensures y-axis label sits flush and bars are centered
-      layout: {
-        padding: {
-          left: 24,
-          right: 4
-        }
-      },
+      layout: { padding: { left: leftPad, right: rightPad } },
       plugins: {
         centerBars: { enabled: true },
         title: {
@@ -608,6 +607,16 @@ function renderCharts(g, w) {
         }
       }
     }
+  });
+
+  // ✅ Automatically re-render histogram on resize/orientation change
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      if (charts[histId]) charts[histId].destroy();
+      renderCharts(g, w); // re-render same gender/class with new padding
+    }, 300);
   });
 } // ✅ closes renderCharts
 
