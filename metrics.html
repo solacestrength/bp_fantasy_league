@@ -15,83 +15,141 @@
   <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
 
   <style>
-    body {background:#0b0b0b;color:#f1f1f1;font-family:'Inter',sans-serif;}
-    select {
-  background: #2f2f2f;        /* softer gray to match new theme */
-  border: 1px solid #555;     /* subtle contrast border */
-  color: #f1f1f1;             /* readable text */
-  padding: 0.35rem 0.5rem;    /* snug spacing like before */
-  border-radius: 0.375rem;    /* consistent rounding */
-  width: auto;                /* shrink-wrap to content */
-  min-width: 0;
-  display: inline-block;
-}
+  /* === GLOBAL THEME === */
+  body {
+    background: #0b0b0b;
+    color: #f1f1f1;
+    font-family: 'Inter', sans-serif;
+  }
 
-    /* Force dropdowns to match container tone */
-#womenSelect, #menSelect {
-  background-color: rgba(31, 41, 55, 0.6) !important; /* same as bg-gray-800/60 */
-  border: 1px solid #374151; /* matches border-gray-700 */
-  color: #f1f1f1;
-}
-    canvas {max-width:100%;height:auto!important;}
-    .chart-container {max-width:600px;margin:0 auto;position:relative;}
+  /* === SELECT ELEMENTS === */
+  select {
+    background: #2f2f2f;        /* softer gray to match new theme */
+    border: 1px solid #555;     /* subtle contrast border */
+    color: #f1f1f1;             /* readable text */
+    padding: 0.35rem 0.5rem;    /* snug spacing like before */
+    border-radius: 0.375rem;    /* consistent rounding */
+    width: auto;                /* shrink-wrap to content */
+    min-width: 0;
+    display: inline-block;
+  }
 
-/* === Balanced chart heights and scaling (North Star vFinal Unified) === */
-@media (min-width:1024px){
-  .chart-container{max-width:480px;}
-  #womenDonut, #menDonut,
-  #womenHist, #menHist {
-    aspect-ratio: 1 / 1 !important;   /* ⬅️ match donut lock */
+  /* Force dropdowns to match container tone */
+  #womenSelect, #menSelect {
+    background-color: rgba(31, 41, 55, 0.6) !important; /* same as bg-gray-800/60 */
+    border: 1px solid #374151; /* matches border-gray-700 */
+    color: #f1f1f1;
+  }
+
+  /* === METRICS – NORTH STAR ALIGNMENT PACK (Final, Unified v1) === */
+
+  /* --- Chart Container (shared for donuts & histograms) --- */
+  .chart-container {
+    max-width: 600px;       /* locked visual width for symmetry */
+    margin: 0 auto;         /* centers the container on the page */
+    position: relative;     /* allows share button to position correctly */
+    display: block;         /* ensures no inline layout interference */
+  }
+
+  /* --- Canvas (ensures internal Chart.js drawing is centered) --- */
+  canvas {
+    max-width: 100%;
+    height: auto !important;
+    display: block;         /* block-level element for natural centering */
+    margin-left: auto;      /* horizontally center the canvas */
+    margin-right: auto;
+  }
+
+  /* --- Desktop: maintain visual parity between donut & histogram --- */
+  @media (min-width: 1024px) {
+    #womenDonut, #menDonut,
+    #womenHist, #menHist {
+      aspect-ratio: 1 / 1 !important;   /* keep square geometry */
+      width: 100% !important;
+      max-height: none !important;
+      object-fit: contain;
+    }
+
+    #womenDonut, #menDonut { height: 375px !important; }
+    #womenHist, #menHist {
+      height: 375px !important;          /* parity with donuts */
+      transform: none !important;        /* remove old scaling distortions */
+      transform-origin: top center;
+    }
+  }
+
+  /* --- Mobile: identical logic scaled down --- */
+  @media (max-width: 1023px) {
+    #womenDonut, #menDonut,
+    #womenHist, #menHist {
+      aspect-ratio: 1 / 1 !important;   /* keep square geometry */
+      width: 100% !important;
+      max-height: none !important;
+      object-fit: contain;
+    }
+
+    #womenDonut, #menDonut { height: 336px !important; }
+    #womenHist, #menHist {
+      height: 336px !important;          /* parity with donuts */
+      transform: none !important;
+      transform-origin: top center;
+    }
+  }
+
+  /* --- Preserve true aspect for donut charts (safety net) --- */
+  #womenDonut, #menDonut {
     width: 100% !important;
+    aspect-ratio: 1 / 1 !important;
     max-height: none !important;
     object-fit: contain;
   }
-  #womenDonut, #menDonut {height:375px !important;}
-  #womenHist, #menHist {
-    height:375px !important;          /* ⬅️ match donut height for parity */
-    transform: none !important;       /* ⬅️ remove scale-based distortion */
-    transform-origin: top center;
+
+  /* === COLLAPSIBLE SECTIONS === */
+  .collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height .5s ease, opacity .4s ease;
   }
-}
-
-@media (max-width:1023px){
-  #womenDonut, #menDonut,
-  #womenHist, #menHist {
-    aspect-ratio: 1 / 1 !important;   /* ⬅️ keep square */
-    width: 100% !important;
-    max-height: none !important;
-    object-fit: contain;
+  .collapsible-content.open {
+    opacity: 1;
+    max-height: 1000px;
   }
-  #womenDonut, #menDonut {height:336px !important;}
-  #womenHist, #menHist {
-    height:336px !important;          /* ⬅️ same as donuts */
-    transform: none !important;       /* ⬅️ prevent double scaling */
-    transform-origin: top center;
+  .arrow {
+    transition: transform .4s ease;
   }
-}
+  .arrow.rotate {
+    transform: rotate(180deg);
+  }
 
-    /* === Preserve true aspect for donut charts (no stretch or squash) === */
-#womenDonut, #menDonut {
-  width: 100% !important;
-  aspect-ratio: 1 / 1 !important;
-  max-height: none !important;
-  object-fit: contain;
-}
+  /* === SHARE BUTTONS === */
+  .share-btn {
+    background-color: #dc2626;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: .5rem;
+    height: 36px;
+    width: 36px;
+    transition: background-color .2s ease;
+  }
+  .share-btn:hover {
+    background-color: #ef4444;
+  }
+  .share-icon {
+    filter: invert(1);
+    height: 18px;
+    width: 18px;
+  }
 
-    .collapsible-content{max-height:0;overflow:hidden;opacity:0;
-      transition:max-height .5s ease,opacity .4s ease;}
-    .collapsible-content.open{opacity:1;max-height:1000px;}
-    .arrow{transition:transform .4s ease;}
-    .arrow.rotate{transform:rotate(180deg);}
-    .share-btn{background-color:#dc2626;display:flex;align-items:center;justify-content:center;
-      border-radius:.5rem;height:36px;width:36px;transition:background-color .2s ease;}
-    .share-btn:hover{background-color:#ef4444;}
-    .share-icon{filter:invert(1);height:18px;width:18px;}
-
-    @keyframes fadeInUp {0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:translateY(0);}}
-    .animate-fade-in-up{animation:fadeInUp 0.8s ease-out forwards;}
-    .animate-fade-in{animation:fadeInUp 1s ease-out forwards;}
-  </style>
+  /* === ANIMATIONS === */
+  @keyframes fadeInUp {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
+  .animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
+</style>
 </head>
 
 <body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
@@ -504,10 +562,6 @@ function renderCharts(g, w) {
     },
     clamp: true
   },
-  // --- Align bar group to true canvas center (both odd & even bin counts) ---
-  centerBars: {
-    enabled: true
-  }
 },
       scales: {
         x: {
