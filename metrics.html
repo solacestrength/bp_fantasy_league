@@ -562,33 +562,41 @@ charts[histId] = new Chart(document.getElementById(histId), {
       }
     },
     scales: {
-      x: {
-        type: 'category',           // ⬅️ ensures even spacing
-        offset: true,               // ⬅️ perfectly center first/last bars
-        ticks: { color: '#ccc', font: { size: s.axisTick } },
-        title: {
-          display: true,
-          text: 'Predicted Total (kg)',
-          color: '#ccc',
-          font: { size: s.axisTitle, weight: 'bold' }
-        },
-        grid: { display: false }
-      },
-      y: {
-        min: yMin,
-        max: yMax,
-        beginAtZero: false,
-        ticks: { color: '#ccc', font: { size: s.axisTick } },
-        title: {
-          display: true,
-          text: 'Vote Count',
-          color: '#ccc',
-          font: { size: s.axisTitle, weight: 'bold' }
-        },
-        grid: { display: false }
-      }
+  x: {
+    offset: true, // ✅ adds half-step padding left & right so bars are centered
+    ticks: {
+      color: '#ccc',
+      font: { size: s.axisTick }
+    },
+    title: {
+      display: true,
+      text: 'Predicted Total (kg)',
+      color: '#ccc',
+      font: { size: s.axisTitle, weight: 'bold' }
+    },
+    grid: {
+      display: false
     }
   },
+  y: {
+    min: yMin,
+    max: yMax,
+    beginAtZero: false,
+    ticks: {
+      color: '#ccc',
+      font: { size: s.axisTick }
+    },
+    title: {
+      display: true,
+      text: 'Vote Count',
+      color: '#ccc',
+      font: { size: s.axisTitle, weight: 'bold' }
+    },
+    grid: {
+      display: false
+    }
+  }
+},
   plugins: [ChartDataLabels]
 });
 }
