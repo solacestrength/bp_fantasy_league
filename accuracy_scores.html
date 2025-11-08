@@ -473,7 +473,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  /* ---------- Share Logic (Unified One-Step with Android Gesture Fix) ---------- */
+  /* ---------- Share Logic (Unified Single-Tap Safe Android Fix) ---------- */
 async function shareScore() {
   if (!searchMatches.length) {
     showWarning("Please search for your name before sharing.");
@@ -484,27 +484,19 @@ async function shareScore() {
   const btn = contextualShareBtn || document.getElementById("shareRankingBtn");
   if (!btn) return;
 
-  try {
-    // Feedback: generating snapshot
-    btn.textContent = "Generating…";
-    btn.disabled = true;
+  btn.textContent = "Generating…";
+  btn.disabled = true;
 
-    const file = await buildSnapshotFile();
+  // --- Start snapshot creation immediately in same gesture frame ---
+  const buildPromise = buildSnapshotFile();
 
-    // --- Android Chrome: one-step + gesture confirmation fix ---
-    if (isAndroidChrome) {
-      btn.textContent = "Sharing…";
-      await new Promise(requestAnimationFrame);
+  // Use microtask to yield control but preserve gesture context for share
+  queueMicrotask(async () => {
+    try {
+      const file = await buildPromise;
 
-      // 🧩 Gesture re-anchor: ensures share fires inside a fresh user gesture context
-      const proceed = confirm("Ready to share your score?");
-      if (!proceed) {
-        btn.textContent = "Share My Score";
-        btn.disabled = false;
-        return;
-      }
-
-      try {
+      // --- Android Chrome ---
+      if (isAndroidChrome) {
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
             title: "British Classic Fantasy League 2025 🇬🇧",
@@ -521,43 +513,37 @@ async function shareScore() {
           link.remove();
           URL.revokeObjectURL(url);
         }
-      } catch (err) {
-        console.error("Android share failed:", err);
-      } finally {
         btn.textContent = "Share My Score";
         btn.disabled = false;
+        return;
       }
-      return; // ✅ One-step complete for Android
-    }
 
-    // --- Everyone else (iOS Chrome, Safari, Desktop) ---
-    if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({
-        title: "British Classic Fantasy League 2025 🇬🇧",
-        text: "Check out my accuracy score!",
-        files: [file],
-      });
-    } else {
-      const url = URL.createObjectURL(file);
-      if (confirm("Download image instead?")) {
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = file.name;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+      // --- Everyone else (iOS Chrome, Safari, Desktop) ---
+      if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: "British Classic Fantasy League 2025 🇬🇧",
+          text: "Check out my accuracy score!",
+          files: [file],
+        });
+      } else {
+        const url = URL.createObjectURL(file);
+        if (confirm("Download image instead?")) {
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = file.name;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+        }
+        URL.revokeObjectURL(url);
       }
-      URL.revokeObjectURL(url);
-    }
-  } catch (err) {
-    console.error("Share failed:", err);
-  } finally {
-    // Restore button state if interrupted
-    if (btn) {
+    } catch (err) {
+      console.error("Share failed:", err);
+    } finally {
       btn.disabled = false;
       btn.textContent = "Share My Score";
     }
-  }
+  });
 }
 
   async function performShare(file, title, text, isChromeIOS = false) {
