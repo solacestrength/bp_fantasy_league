@@ -474,28 +474,30 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  /* ---------- Share Logic (Scroll-Locked Single-Tap Android Fix) ---------- */
+  /* ---------- Share Logic (Delayed Scroll Lock, One-Step Android Fix) ---------- */
 async function shareScore() {
   if (!searchMatches.length) {
     showWarning("Please search for your name before sharing.");
     return;
   }
 
-  // Lock scrolling so Android doesn't jump the view back up
-  scrollLock = true;
-  document.body.style.overflow = "hidden";
-
   const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
   const btn = contextualShareBtn || document.getElementById("shareRankingBtn");
   if (!btn) return;
 
+  // Show immediate feedback
   btn.textContent = "Generating…";
   btn.disabled = true;
+
+  // 🔹 Wait a short moment for the scroll animation to finish before locking
+  await new Promise(r => setTimeout(r, 250));
+  scrollLock = true;
+  document.body.style.overflow = "hidden";
 
   try {
     const file = await buildSnapshotFile();
 
-    // --- Android Chrome (true one-step, no scroll bounce) ---
+    // --- Android Chrome ---
     if (isAndroidChrome) {
       try {
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -517,16 +519,16 @@ async function shareScore() {
       } catch (err) {
         console.error("Android share failed:", err);
       } finally {
-        btn.textContent = "Share My Score";
-        btn.disabled = false;
-        // unlock scroll again
+        // 🟢 Restore scroll & button
         scrollLock = false;
         document.body.style.overflow = "";
+        btn.textContent = "Share My Score";
+        btn.disabled = false;
       }
       return;
     }
 
-    // --- Everyone else ---
+    // --- Everyone else (iOS Chrome, Safari, Desktop) ---
     if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
         title: "British Classic Fantasy League 2025 🇬🇧",
