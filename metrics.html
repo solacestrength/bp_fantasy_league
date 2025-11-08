@@ -490,7 +490,7 @@ function renderCharts(g, w) {
     }
   });
 
-  /* --- HISTOGRAM (visually aligned + centered) --- */
+  /* --- HISTOGRAM (fixed, stable centering) --- */
   const vals = rows
     .map(r => parseFloat(r.PredictedTotal))
     .filter(v => !isNaN(v) && v > 0);
@@ -525,10 +525,12 @@ function renderCharts(g, w) {
   const step = Math.max(1, Math.round(span / 4));
   const yMax = Math.ceil(maxC / step) * step;
 
-  // ✅ Responsive visual-centering tweak
   const isMobile = window.matchMedia('(max-width: 768px)').matches;
-  const leftPad = isMobile ? 28 : 20;
-  const rightPad = isMobile ? 6 : 4;
+
+  // Key: shift the whole plot a bit left by giving *more right padding*
+  // so bars + axes visually sit central in the card.
+  const paddingLeft  = isMobile ? 14 : 26;  // keeps y-axis label readable
+  const paddingRight = isMobile ? 32 : 44;  // balances to center bars
 
   if (charts[histId]) charts[histId].destroy();
   charts[histId] = new Chart(document.getElementById(histId), {
@@ -546,9 +548,15 @@ function renderCharts(g, w) {
     options: {
       maintainAspectRatio: true,
       aspectRatio: 1,
-      layout: { padding: { left: leftPad, right: rightPad } },
+      layout: {
+        padding: {
+          top: 0,
+          bottom: 0,
+          left: paddingLeft,
+          right: paddingRight
+        }
+      },
       plugins: {
-        centerBars: { enabled: true },
         title: {
           display: true,
           text: 'Distribution of Predicted Winning Totals',
@@ -608,17 +616,7 @@ function renderCharts(g, w) {
       }
     }
   });
-
-  // ✅ Automatically re-render histogram on resize/orientation change
-  let resizeTimeout;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-      if (charts[histId]) charts[histId].destroy();
-      renderCharts(g, w); // re-render same gender/class with new padding
-    }, 300);
-  });
-} // ✅ closes renderCharts
+} // closes renderCharts
 
 /* --- COLLAPSIBLE SECTIONS (with auto-resize for Chart.js) --- */
 function toggleSection(id) {
