@@ -328,29 +328,25 @@ const centerBarsPlugin = {
   id: 'centerBars',
   afterDatasetsDraw(chart, args, opts) {
     if (!opts?.enabled) return;
-
     const meta = chart.getDatasetMeta(0);
-    const bars = meta?.data || [];
-    if (!bars.length) return;
+    if (!meta || !meta.data?.length) return;
 
+    const bars = meta.data;
     const first = bars[0];
-    const last  = bars[bars.length - 1];
+    const last = bars[bars.length - 1];
     if (!first || !last) return;
 
-    const firstX = first.x - first.width / 2;
-    const lastX  = last.x + last.width / 2;
+    const chartArea = chart.chartArea;
+    const barsSpan = (last.x + last.width / 2) - (first.x - first.width / 2);
+    const offset = (chartArea.width - barsSpan) / 2;
 
-    const barsMid  = (firstX + lastX) / 2;
-    const chartMid = chart.chartArea.left + chart.chartArea.width / 2;
-    const shift    = chartMid - barsMid;
-
-    if (Math.abs(shift) < 0.5) return;
-
-    const ctx = chart.ctx;
-    ctx.save();
-    ctx.translate(shift, 0);
-    bars.forEach(b => b.draw(ctx));
-    ctx.restore();
+    if (Math.abs(offset) > 0.5) {
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.translate(offset, 0);
+      bars.forEach(b => b.draw(ctx));
+      ctx.restore();
+    }
   }
 };
 
