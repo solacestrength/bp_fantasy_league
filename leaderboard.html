@@ -467,34 +467,85 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  /* ---------- Share Logic ---------- */
-  async function shareRanking() {
-    if (!searchMatches.length) {
-      showWarning("Please search for your name before sharing.");
-      return;
-    }
-    const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
-    const btn = contextualShareBtn || document.getElementById("shareRankingBtn");
-    if (!btn) return;
+  /* ---------- Share Logic (Unified, One-Step Android Fix) ---------- */
+async function shareRanking() {
+  if (!searchMatches.length) {
+    showWarning("Please search for your name before sharing.");
+    return;
+  }
+
+  const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
+  const btn = contextualShareBtn || document.getElementById("shareRankingBtn");
+  if (!btn) return;
+
+  try {
+    // Show feedback while snapshot is being prepared
+    btn.textContent = "Generating…";
+    btn.disabled = true;
+
     const file = await buildSnapshotFile();
 
+    // --- Android Chrome: now uses SAME button, no DOM replacement ---
     if (isAndroidChrome) {
-      btn.textContent = "Generating...";
-      btn.disabled = true;
-      btn.style.display = "none";
-      const newBtn = document.createElement("button");
-      newBtn.textContent = "Share Generated Image";
-      newBtn.className =
-        "bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1";
-      newBtn.style.minWidth = "150px";
-      newBtn.style.height = "24px";
-      btn.parentElement.appendChild(newBtn);
-      newBtn.addEventListener("click", async () => {
-        await performShare(file, "British Classic Fantasy League 2025 🇬🇧", "Check out my league ranking!");
-        removeContextualShare();
-      });
-      return;
+      btn.textContent = "Sharing…";
+
+      await new Promise(requestAnimationFrame);
+
+      try {
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: "British Classic Fantasy League 2025 🇬🇧",
+            text: "Check out my league ranking!",
+            files: [file],
+          });
+        } else {
+          const url = URL.createObjectURL(file);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = file.name;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+        }
+      } catch (err) {
+        console.error("Android share failed:", err);
+      } finally {
+        btn.textContent = "Share My Ranking";
+        btn.disabled = false;
+      }
+      return; // ✅ stop here for Android, one-step complete
     }
+
+    // --- Everyone else (iOS Chrome, Safari, Desktop) ---
+    if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        title: "British Classic Fantasy League 2025 🇬🇧",
+        text: "Check out my league ranking!",
+        files: [file],
+      });
+    } else {
+      const url = URL.createObjectURL(file);
+      if (confirm("Download image instead?")) {
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
+      URL.revokeObjectURL(url);
+    }
+  } catch (err) {
+    console.error("Share failed:", err);
+  } finally {
+    // Restore button state if something interrupted the share
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Share My Ranking";
+    }
+  }
+}
     await performShare(file, "British Classic Fantasy League 2025 🇬🇧", "Check out my league ranking!", isChromeIOS);
   }
 
