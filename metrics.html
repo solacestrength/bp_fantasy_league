@@ -322,69 +322,8 @@
   </div>
 
 <script>
-/* ========= PLUGINS ========= */
-/**
- * centerHistAreaPlugin
- * --------------------
- * For histogram charts only:
- * - Measures chartArea center vs canvas center.
- * - Adjusts RIGHT padding so the plot area (bars + axes) is visually centered
- *   within the canvas/card.
- * - Leaves titles/subtitles/labels alone (Chart.js handles them).
- */
-const centerHistAreaPlugin = {
-  id: 'centerHistArea',
-  afterLayout(chart, args, opts) {
-    if (!opts || !opts.enabled) return;
-    if (chart.config.type !== 'bar') return;
-    if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return; // only our histograms
 
-    // Avoid loops: only run once per layout cycle
-    if (chart.$histCentered) return;
-
-    const area = chart.chartArea;
-    if (!area) return;
-
-    const canvasMid = chart.width / 2;
-    const areaMid = (area.left + area.right) / 2;
-    const diff = areaMid - canvasMid; // >0 = plot too far right
-
-    // If it's basically centered already, mark & bail
-    if (Math.abs(diff) < 1) {
-      chart.$histCentered = true;
-      return;
-    }
-
-    // Get existing padding (numeric)
-    const layout = chart.options.layout || {};
-    const padding = layout.padding || {};
-    const baseTop = +padding.top || 0;
-    const baseLeft = +padding.left || 0;
-    const baseBottom = +padding.bottom || 0;
-    const baseRight = +padding.right || 0;
-
-    // Shift using RIGHT padding only so left axis / labels stay intact.
-    // Derivation: to move plot center left by `diff`, we change right padding by 2*diff.
-    let extraRight = 2 * diff;
-    let newRight = baseRight + extraRight;
-    if (newRight < 0) newRight = 0; // clamp, no negative padding
-
-    chart.options.layout = {
-      ...layout,
-      padding: {
-        top: baseTop,
-        right: newRight,
-        bottom: baseBottom,
-        left: baseLeft
-      }
-    };
-
-    chart.$histCentered = true;
-    chart.update('none'); // apply without triggering another full animation
-  }
-};
-
-Chart.register(ChartDataLabels, centerHistAreaPlugin);
+Chart.register(ChartDataLabels);
 
 /* ========= DATA / LAYOUT HELPERS ========= */
 
@@ -587,82 +526,94 @@ function renderCharts(g, w) {
   const yMax = Math.ceil(maxC / step) * step;
 
   if (charts[histId]) charts[histId].destroy();
-  charts[histId] = new Chart(document.getElementById(histId), {
-    type: 'bar',
-    data: {
-      labels: labelsH,
-      datasets: [{
-        data: countsH,
-        backgroundColor: '#3b82f6',
-        borderRadius: 5,
-        barPercentage: 0.9,
-        categoryPercentage: 1.0
-      }]
+const isDesktop = window.matchMedia('(min-width:1024px)').matches;
+
+charts[histId] = new Chart(document.getElementById(histId), {
+  type: 'bar',
+  data: {
+    labels: labelsH,
+    datasets: [{
+      data: countsH,
+      backgroundColor: '#3b82f6',
+      borderRadius: 5,
+      barPercentage: 0.9,
+      categoryPercentage: 1.0
+    }]
+  },
+  options: {
+    maintainAspectRatio: true,
+    aspectRatio: 1,
+    layout: {
+      padding: {
+        // brute-force manual offset — tune these values visually
+        top: 24,
+        bottom: 24,
+        left: isDesktop ? 40 : 28,   // more space for axis titles on desktop
+        right: isDesktop ? 0 : 0     // keep balanced
+      }
     },
-    options: {
-      maintainAspectRatio: true,
-      aspectRatio: 1,
-      plugins: {
-        centerHistArea: { enabled: true },
+    plugins: {
+      title: {
+        display: true,
+        text: 'Distribution of Predicted Winning Totals',
+        color: '#ccc',
+        font: { size: s.histTitle, weight: 'bold' },
+        padding: { bottom: 8 },
+        align: 'center'  // force title center
+      },
+      subtitle: {
+        display: true,
+        text: `Total Votes – ${N}`,
+        color: '#aaa',
+        font: { size: s.histSubtitle, weight: 'normal' },
+        padding: { top: 2, bottom: 12 },
+        align: 'center'
+      },
+      legend: { display: false },
+      datalabels: {
+        color: '#fff',
+        font: { size: s.histBarLabel, weight: 'normal' },
+        formatter: (v) => v > 0 ? v : '',
+        anchor: 'center',
+        align: (ctx) => {
+          const v = ctx.dataset.data[ctx.dataIndex] || 0;
+          const scale = ctx.chart.scales.y;
+          if (!scale) return 'center';
+          const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
+          const f = ctx.chart.options.plugins.datalabels.font.size || s.histBarLabel;
+          return (barH < f * 1.05) ? 'end' : 'center';
+        },
+        clamp: true
+      }
+    },
+    scales: {
+      x: {
+        offset: true,
+        ticks: { color: '#ccc', font: { size: s.axisTick } },
         title: {
           display: true,
-          text: 'Distribution of Predicted Winning Totals',
+          text: 'Predicted Total (kg)',
           color: '#ccc',
-          font: { size: s.histTitle, weight: 'bold' },
-          padding: { bottom: 8 }
+          font: { size: s.axisTitle, weight: 'bold' }
         },
-        subtitle: {
-          display: true,
-          text: `Total Votes – ${N}`,
-          color: '#aaa',
-          font: { size: s.histSubtitle, weight: 'normal' },
-          padding: { top: 2, bottom: 12 }
-        },
-        legend: { display: false },
-        datalabels: {
-          color: '#fff',
-          font: { size: s.histBarLabel, weight: 'normal' },
-          formatter: (v) => v > 0 ? v : '',
-          anchor: 'center',
-          align: (ctx) => {
-            const v = ctx.dataset.data[ctx.dataIndex] || 0;
-            const scale = ctx.chart.scales.y;
-            if (!scale) return 'center';
-            const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
-            const f = ctx.chart.options.plugins.datalabels.font.size || s.histBarLabel;
-            return (barH < f * 1.05) ? 'end' : 'center';
-          },
-          clamp: true
-        }
+        grid: { display: false }
       },
-      scales: {
-        x: {
-          offset: true,
-          ticks: { color: '#ccc', font: { size: s.axisTick } },
-          title: {
-            display: true,
-            text: 'Predicted Total (kg)',
-            color: '#ccc',
-            font: { size: s.axisTitle, weight: 'bold' }
-          },
-          grid: { display: false }
+      y: {
+        min: yMin,
+        max: yMax,
+        beginAtZero: false,
+        ticks: { color: '#ccc', font: { size: s.axisTick } },
+        title: {
+          display: true,
+          text: 'Vote Count',
+          color: '#ccc',
+          font: { size: s.axisTitle, weight: 'bold' }
         },
-        y: {
-          min: yMin,
-          max: yMax,
-          beginAtZero: false,
-          ticks: { color: '#ccc', font: { size: s.axisTick } },
-          title: {
-            display: true,
-            text: 'Vote Count',
-            color: '#ccc',
-            font: { size: s.axisTitle, weight: 'bold' }
-          },
-          grid: { display: false }
-        }
+        grid: { display: false }
       }
     }
-  });
+  }
+});
 
   // Clear "centered" flag so the plugin can re-run cleanly after any redraw
   const histChart = charts[histId];
