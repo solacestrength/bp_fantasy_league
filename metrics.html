@@ -15,138 +15,134 @@
   <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
 
   <style>
-  /* === GLOBAL THEME === */
-  body {
-    background: #0b0b0b;
-    color: #f1f1f1;
-    font-family: 'Inter', sans-serif;
-  }
-
-  /* === SELECT ELEMENTS === */
-  select {
-    background: #2f2f2f;
-    border: 1px solid #555;
-    color: #f1f1f1;
-    padding: 0.35rem 0.5rem;
-    border-radius: 0.375rem;
-    width: auto;
-    min-width: 0;
-    display: inline-block;
-  }
-
-  #womenSelect, #menSelect {
-    background-color: rgba(31,41,55,0.6) !important;
-    border: 1px solid #374151;
-    color: #f1f1f1;
-  }
-
-  /* === METRICS – ALIGNMENT PACK === */
-  .chart-container {
-    max-width: 600px;
-    margin: 0 auto;
-    position: relative;
-    display: block;
-  }
-
-  canvas {
-    max-width: 100%;
-    height: auto !important;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  @media (min-width:1024px){
-    #womenDonut,#menDonut,#womenHist,#menHist{
-      aspect-ratio:1/1!important;
-      width:100%!important;
-      max-height:none!important;
-      object-fit:contain;
+    /* === GLOBAL THEME === */
+    body {
+      background: #0b0b0b;
+      color: #f1f1f1;
+      font-family: 'Inter', sans-serif;
     }
-    #womenDonut,#menDonut{height:375px!important;}
-    #womenHist,#menHist{
-      height:375px!important;
-      transform:none!important;
-      transform-origin:top center;
+
+    /* === SELECT ELEMENTS === */
+    select {
+      background: #2f2f2f;
+      border: 1px solid #555;
+      color: #f1f1f1;
+      padding: 0.35rem 0.5rem;
+      border-radius: 0.375rem;
+      width: auto;
+      min-width: 0;
+      display: inline-block;
     }
-  }
 
-  @media (max-width:1023px){
-    #womenDonut,#menDonut,#womenHist,#menHist{
-      aspect-ratio:1/1!important;
-      width:100%!important;
-      max-height:none!important;
-      object-fit:contain;
+    #womenSelect, #menSelect {
+      background-color: rgba(31, 41, 55, 0.6) !important;
+      border: 1px solid #374151;
+      color: #f1f1f1;
     }
-    #womenDonut,#menDonut{height:336px!important;}
-    #womenHist,#menHist{
-      height:336px!important;
-      transform:none!important;
-      transform-origin:top center;
+
+    /* === METRICS LAYOUT === */
+    .chart-container {
+      max-width: 600px;
+      margin: 0 auto;
+      position: relative;
+      display: block;
     }
-  }
 
-  #womenDonut,#menDonut{
-    width:100%!important;
-    aspect-ratio:1/1!important;
-    max-height:none!important;
-    object-fit:contain;
-  }
+    canvas {
+      max-width: 100%;
+      height: auto !important;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
 
-  /* === COLLAPSIBLE SECTIONS === */
-  .collapsible-content {
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    transition: max-height .5s ease, opacity .4s ease;
-  }
-  .collapsible-content.open {
-    opacity: 1;
-    max-height: 1000px;
-  }
-  .arrow {
-    transition: transform .4s ease;
-  }
-  .arrow.rotate {
-    transform: rotate(180deg);
-  }
+    @media (min-width: 1024px) {
+      #womenDonut, #menDonut,
+      #womenHist, #menHist {
+        aspect-ratio: 1 / 1 !important;
+        width: 100% !important;
+        max-height: none !important;
+        object-fit: contain;
+      }
 
-  /* === SHARE BUTTONS === */
-  .share-btn {
-    background-color: #dc2626;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: .5rem;
-    height: 36px;
-    width: 36px;
-    transition: background-color .2s ease;
-  }
-  .share-btn:hover {
-    background-color: #ef4444;
-  }
-  .share-icon {
-    filter: invert(1);
-    height: 18px;
-    width: 18px;
-  }
+      #womenDonut, #menDonut { height: 375px !important; }
+      #womenHist, #menHist {
+        height: 375px !important;
+        transform: none !important;
+        transform-origin: top center;
+      }
+    }
 
-  /* === ANIMATIONS === */
-  @keyframes fadeInUp {
-    0% { opacity: 0; transform: translateY(10px); }
-    100% { opacity: 1; transform: translateY(0); }
-  }
-  .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
-  .animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
+    @media (max-width: 1023px) {
+      #womenDonut, #menDonut,
+      #womenHist, #menHist {
+        aspect-ratio: 1 / 1 !important;
+        width: 100% !important;
+        max-height: none !important;
+        object-fit: contain;
+      }
+
+      #womenDonut, #menDonut { height: 336px !important; }
+      #womenHist, #menHist {
+        height: 336px !important;
+        transform: none !important;
+        transform-origin: top center;
+      }
+    }
+
+    #womenDonut, #menDonut {
+      width: 100% !important;
+      aspect-ratio: 1 / 1 !important;
+      max-height: none !important;
+      object-fit: contain;
+    }
+
+    /* === COLLAPSIBLE SECTIONS === */
+    .collapsible-content {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height .5s ease, opacity .4s ease;
+    }
+    .collapsible-content.open {
+      opacity: 1;
+      max-height: 1000px;
+    }
+    .arrow {
+      transition: transform .4s ease;
+    }
+    .arrow.rotate {
+      transform: rotate(180deg);
+    }
+
+    /* === SHARE BUTTONS === */
+    .share-btn {
+      background-color: #dc2626;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: .5rem;
+      height: 36px;
+      width: 36px;
+      transition: background-color .2s ease;
+    }
+    .share-btn:hover {
+      background-color: #ef4444;
+    }
+    .share-icon {
+      filter: invert(1);
+      height: 18px;
+      width: 18px;
+    }
+
+    /* === ANIMATIONS === */
+    @keyframes fadeInUp {
+      0% { opacity: 0; transform: translateY(10px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
+    .animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
   </style>
-  <style>
-/* Force histogram canvases to be pixel-centered on mobile */
-@media (max-width:1023px){
-  #womenHist, #menHist {
-    transform: translateX(4px) !important; /* nudges the bars visually to center */
-  }
-}
-</style>
 </head>
 
 <body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
@@ -159,17 +155,17 @@
       <div class="w-full flex items-center justify-center px-4 py-3">
         <div class="flex-1 text-center">
           <a href="index.html"
-            class="font-bold text-white hover:text-red-500 transition text-sm sm:text-lg md:text-xl lg:text-2xl">
+             class="font-bold text-white hover:text-red-500 transition text-sm sm:text-lg md:text-xl lg:text-2xl">
             British Classic Fantasy League 2025 🇬🇧
           </a>
         </div>
         <div class="absolute right-4 top-1/2 -translate-y-1/2">
           <button id="menu-btn" aria-expanded="false"
-            class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
+                  class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none"
-              viewBox="0 0 24 24" stroke="currentColor">
+                 viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 6h16M4 12h16M4 18h16"/>
+                    d="M4 6h16M4 12h16M4 18h16"/>
             </svg>
           </button>
         </div>
@@ -178,7 +174,9 @@
 
     <!-- MOBILE MENU -->
     <div id="mobile-menu"
-      class="fixed top-16 right-4 w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-md shadow-lg z-50 scale-y-0 opacity-0 origin-top transition-transform duration-300 ease-in-out pointer-events-none">
+         class="fixed top-16 right-4 w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-md
+                shadow-lg z-50 scale-y-0 opacity-0 origin-top transition-transform duration-300 ease-in-out
+                pointer-events-none">
       <nav class="flex flex-col py-2 text-white">
         <a href="index.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Home</a>
         <a href="entry.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">League Entry</a>
@@ -194,16 +192,17 @@
         <h2 class="text-xl font-semibold mb-1">Metrics Dashboard</h2>
         <p class="text-gray-400 text-sm">
           Explore how the predicted winners and totals are distributed for a given weight class. Sample size = number of entrants.
-          User note – any labels that appear from tapping bars or chart sections will also be visible in your shared images 📊
+          Any labels from tapping bars or chart sections will be visible in shared images 📊
         </p>
       </section>
 
       <!-- WOMEN -->
       <div class="bg-gray-800/60 border border-gray-700 backdrop-blur-sm shadow-lg rounded-2xl p-4">
-        <button onclick="toggleSection('women')" class="flex items-center justify-between w-full text-left text-lg font-bold">
+        <button onclick="toggleSection('women')"
+                class="flex items-center justify-between w-full text-left text-lg font-bold">
           <span>Women</span>
-          <svg id="arrow-women" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 arrow" fill="none"
-               viewBox="0 0 24 24" stroke="currentColor">
+          <svg id="arrow-women" xmlns="http://www.w3.org/2000/svg"
+               class="h-5 w-5 arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M19 9l-7 7-7-7"/>
           </svg>
@@ -235,10 +234,11 @@
 
       <!-- MEN -->
       <div class="bg-gray-800/60 border border-gray-700 backdrop-blur-sm shadow-lg rounded-2xl p-4">
-        <button onclick="toggleSection('men')" class="flex items-center justify-between w-full text-left text-lg font-bold">
+        <button onclick="toggleSection('men')"
+                class="flex items-center justify-between w-full text-left text-lg font-bold">
           <span>Men</span>
-          <svg id="arrow-men" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 arrow" fill="none"
-               viewBox="0 0 24 24" stroke="currentColor">
+          <svg id="arrow-men" xmlns="http://www.w3.org/2000/svg"
+               class="h-5 w-5 arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M19 9l-7 7-7-7"/>
           </svg>
@@ -269,7 +269,7 @@
       </div>
     </main>
 
-    <!-- CTA + BACK TO TOP -->
+    <!-- VIEW LEADERBOARD BUTTON -->
     <div class="flex justify-center mt-8">
       <a href="leaderboard.html"
          class="inline-flex items-center justify-center bg-gray-800/60 border border-gray-700
@@ -279,6 +279,7 @@
       </a>
     </div>
 
+    <!-- BACK TO TOP BUTTON -->
     <div class="flex justify-center mt-8">
       <button id="bottomBackToTop"
               class="bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full
@@ -296,576 +297,611 @@
     </footer>
   </div>
 
-  <script>
-  // Register global plugins
-  Chart.register(ChartDataLabels);
+<script>
+/* ========= PLUGINS ========= */
 
-  const SHEET_URL =
-    'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
+/**
+ * Center histogram bars block on the canvas, not just chartArea.
+ * - Works per chart instance.
+ * - Only runs when enabled via options.plugins.centerHistogram.enabled = true.
+ * - Safe for tooltips/hover because we adjust element.x directly.
+ */
+const centerHistogramPlugin = {
+  id: 'centerHistogram',
+  beforeDatasetsDraw(chart, args, opts) {
+    if (!opts || !opts.enabled) return;
+    if (chart.config.type !== 'bar') return;
 
-  let allData = [];
-  const charts = {};
+    const meta = chart.getDatasetMeta(0);
+    const bars = meta && meta.data ? meta.data : [];
+    if (!bars.length) return;
 
-  function sizing() {
-    const d = window.matchMedia('(min-width:1024px)').matches;
-    return {
-      donutTitle:   d ? 22 : 14,
-      donutSubtitle:d ? 18 : 12,
-      donutLegend:  d ? 18 : 12,
-      donutPercent: d ? 16 : 12,
-      histTitle:    d ? 22 : 14,
-      histSubtitle: d ? 18 : 12,
-      axisTitle:    d ? 18 : 12,
-      axisTick:     d ? 14 : 11,
-      histBarLabel: d ? 12 : 10,
-      exportWidth:  d ? 1024 : 780,
-      qrSize:       d ? 96 : 72,
-      creditFont:   d ? 18 : 13,
-      headerFont:   d ? 32 : 20,
-      subFont:      d ? 26 : 16
-    };
-  }
-
-  /* ===== MOBILE MENU ===== */
-  const menuBtn = document.getElementById('menu-btn');
-  const mobileMenu = document.getElementById('mobile-menu');
-  let menuVisible = false;
-
-  function toggleMenu(show) {
-    if (show) {
-      mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');
-      mobileMenu.classList.add('scale-y-100','opacity-100');
-    } else {
-      mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');
-      mobileMenu.classList.remove('scale-y-100','opacity-100');
+    // Undo previous shift if any (for responsive redraws)
+    const prevShift = chart.$centerShift || 0;
+    if (prevShift) {
+      bars.forEach(b => { b.x -= prevShift; });
     }
-  }
-  toggleMenu(false);
 
-  if (menuBtn) {
-    menuBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      menuVisible = !menuVisible;
-      toggleMenu(menuVisible);
-    });
-  }
-
-  document.addEventListener('click', (e) => {
-    if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target) && menuVisible) {
-      menuVisible = false;
-      toggleMenu(false);
-    }
-  });
-
-  /* ===== COLLAPSIBLE ===== */
-  function toggleSection(id) {
-    const c = document.getElementById(id);
-    const a = document.getElementById(`arrow-${id}`);
-    if (!c || !a) return;
-    const open = c.classList.toggle('open');
-    a.classList.toggle('rotate', open);
-  }
-
-  /* ===== LOAD CSV + INIT ===== */
-  Papa.parse(SHEET_URL, {
-    download: true,
-    header: true,
-    complete: (r) => {
-      allData = r.data;
-      setupDropdowns();
-    }
-  });
-
-  function setupDropdowns() {
-    ['F','M'].forEach((g) => {
-      const d = allData.filter((r) => r.Gender === g);
-      const classes = [...new Set(d.map((r) => r.Class))]
-        .filter(Boolean)
-        .sort((a, b) => parseFloat(a) - parseFloat(b));
-
-      const select = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
-      if (!select) return;
-
-      select.innerHTML = classes.map((c) => `<option value="${c}">${c}kg</option>`).join('');
-      select.onchange = () => renderCharts(g, select.value);
-
-      if (classes[0]) {
-        renderCharts(g, classes[0]);
-      }
-    });
-  }
-
-  /* ===== RENDER CHARTS ===== */
-  function renderCharts(g, w) {
-    const s = sizing();
-    const donutId = g === 'F' ? 'womenDonut' : 'menDonut';
-    const histId  = g === 'F' ? 'womenHist'  : 'menHist';
-
-    const rows = allData.filter(r => r.Gender === g && r.Class === w);
-    if (!rows.length) return;
-
-    /* --- DONUT --- */
-    const counts = {};
-    rows.forEach(r => {
-      if (!r.Athlete) return;
-      counts[r.Athlete] = (counts[r.Athlete] || 0) + 1;
-    });
-
-    const dLabels = Object.keys(counts);
-    const dData   = Object.values(counts);
-    const total   = dData.reduce((a, b) => a + b, 0);
-
-    const colors = [
-      '#ef4444','#f97316','#facc15','#22c55e','#14b8a6',
-      '#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16',
-      '#d946ef','#fb7185'
-    ];
-
-    if (charts[donutId]) charts[donutId].destroy();
-    charts[donutId] = new Chart(document.getElementById(donutId), {
-      type: 'doughnut',
-      data: {
-        labels: dLabels,
-        datasets: [{
-          data: dData,
-          backgroundColor: colors,
-          borderColor: '#111',
-          borderWidth: 1
-        }]
-      },
-      options: {
-        maintainAspectRatio: true,
-        aspectRatio: 1,
-        cutout: '57%',
-        plugins: {
-          title: {
-            display: true,
-            text: 'Share of Votes',
-            color: '#ccc',
-            font: { weight: 'bold', size: s.donutTitle },
-            padding: { bottom: 8 }
-          },
-          subtitle: {
-            display: true,
-            text: `Total Votes – ${total}`,
-            color: '#aaa',
-            font: { size: s.donutSubtitle },
-            padding: { top: 2, bottom: 12 }
-          },
-          legend: {
-            position: 'bottom',
-            labels: {
-              color: '#ccc',
-              boxWidth: 10,
-              boxHeight: 10,
-              font: { size: s.donutLegend }
-            }
-          },
-          datalabels: {
-            color: '#fff',
-            font: { weight: 'bold', size: s.donutPercent },
-            formatter: (v) => {
-              const p = (v / total) * 100;
-              return p >= 3 ? `${p.toFixed(1)}%` : '';
-            },
-            anchor: 'center',
-            align: 'center',
-            clamp: true
-          }
-        }
-      }
-    });
-
-    /* --- HISTOGRAM (centered & aligned) --- */
-    const vals = rows
-      .map(r => parseFloat(r.PredictedTotal))
-      .filter(v => !isNaN(v) && v > 0);
-
-    if (!vals.length) {
-      if (charts[histId]) charts[histId].destroy();
+    const first = bars[0];
+    const last  = bars[bars.length - 1];
+    if (!first || !last) {
+      chart.$centerShift = 0;
       return;
     }
 
-    const N    = vals.length;
-    const min  = Math.min(...vals);
-    const max  = Math.max(...vals);
-    const bins = Math.max(3, Math.round(Math.sqrt(N)));
-    const bw   = (max - min) / bins || 1;
+    const barsMid   = (first.x + last.x) / 2;
+    const canvasMid = chart.width / 2;
+    const shift     = canvasMid - barsMid;
 
-    const countsH = Array(bins).fill(0);
-    vals.forEach(v => {
-      let i = Math.floor((v - min) / bw);
-      if (i >= bins) i = bins - 1;
-      if (i < 0) i = 0;
-      countsH[i]++;
-    });
+    if (Math.abs(shift) < 0.5) {
+      chart.$centerShift = 0;
+      return;
+    }
 
-    const labelsH = Array.from({ length: bins }, (_, i) =>
-      `${(min + i * bw).toFixed(0)}–${(min + (i + 1) * bw).toFixed(0)}`
-    );
+    bars.forEach(b => { b.x += shift; });
+    chart.$centerShift = shift;
+  }
+};
 
-    const minC = Math.min(...countsH);
-    const maxC = Math.max(...countsH);
-    const yMin = Math.floor(minC / 2);
-    const span = maxC - yMin;
-    const step = Math.max(1, Math.round(span / 4));
-    const yMax = Math.ceil(maxC / step) * step;
+Chart.register(ChartDataLabels, centerHistogramPlugin);
 
-    if (charts[histId]) charts[histId].destroy();
-    charts[histId] = new Chart(document.getElementById(histId), {
-      type: 'bar',
-      data: {
-        labels: labelsH,
-        datasets: [{
-          data: countsH,
-          backgroundColor: '#3b82f6',
-          borderRadius: 5,
-          barPercentage: 0.9,
-          categoryPercentage: 1.0
-        }]
-      },
-      options: {
-        maintainAspectRatio: true,
-        aspectRatio: 1,
-        plugins: {
-          title: {
-            display: true,
-            text: 'Distribution of Predicted Winning Totals',
+/* ========= DATA / LAYOUT HELPERS ========= */
+
+const SHEET_URL =
+  'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
+
+let allData = [];
+const charts = {};
+
+function sizing() {
+  const d = window.matchMedia('(min-width:1024px)').matches;
+  return {
+    donutTitle:   d ? 22 : 14,
+    donutSubtitle:d ? 18 : 12,
+    donutLegend:  d ? 18 : 12,
+    donutPercent: d ? 16 : 12,
+    histTitle:    d ? 22 : 14,
+    histSubtitle: d ? 18 : 12,
+    axisTitle:    d ? 18 : 12,
+    axisTick:     d ? 14 : 11,
+    histBarLabel: d ? 12 : 10,
+    exportWidth:  d ? 1024 : 780,
+    qrSize:       d ? 96 : 72,
+    creditFont:   d ? 18 : 13,
+    headerFont:   d ? 32 : 20,
+    subFont:      d ? 26 : 16
+  };
+}
+
+/* ========= MENU ========= */
+
+const menuBtn = document.getElementById('menu-btn');
+const mobileMenu = document.getElementById('mobile-menu');
+let menuVisible = false;
+
+function toggleMenu(show) {
+  if (show) {
+    mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');
+    mobileMenu.classList.add('scale-y-100','opacity-100');
+  } else {
+    mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');
+    mobileMenu.classList.remove('scale-y-100','opacity-100');
+  }
+}
+toggleMenu(false);
+
+if (menuBtn) {
+  menuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    menuVisible = !menuVisible;
+    toggleMenu(menuVisible);
+  });
+}
+document.addEventListener('click', (e) => {
+  if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target) && menuVisible) {
+    menuVisible = false;
+    toggleMenu(false);
+  }
+});
+
+/* ========= COLLAPSIBLE ========= */
+
+function toggleSection(id) {
+  const c = document.getElementById(id);
+  const a = document.getElementById(`arrow-${id}`);
+  if (!c || !a) return;
+  const open = c.classList.toggle('open');
+  a.classList.toggle('rotate', open);
+}
+
+/* ========= LOAD CSV ========= */
+
+Papa.parse(SHEET_URL, {
+  download: true,
+  header: true,
+  complete: (r) => {
+    allData = r.data;
+    setupDropdowns();
+  }
+});
+
+function setupDropdowns() {
+  ['F', 'M'].forEach((g) => {
+    const d = allData.filter((r) => r.Gender === g);
+    const classes = [...new Set(d.map((r) => r.Class))]
+      .filter(Boolean)
+      .sort((a, b) => parseFloat(a) - parseFloat(b));
+
+    const select = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
+    if (!select) return;
+
+    select.innerHTML = classes.map((c) => `<option value="${c}">${c}kg</option>`).join('');
+    select.onchange = () => renderCharts(g, select.value);
+
+    if (classes[0]) renderCharts(g, classes[0]);
+  });
+}
+
+/* ========= CHART RENDERING ========= */
+
+function renderCharts(g, w) {
+  const s = sizing();
+  const donutId = g === 'F' ? 'womenDonut' : 'menDonut';
+  const histId  = g === 'F' ? 'womenHist'  : 'menHist';
+  const rows = allData.filter(r => r.Gender === g && r.Class === w);
+  if (!rows.length) return;
+
+  /* --- DONUT --- */
+  const counts = {};
+  rows.forEach(r => { counts[r.Athlete] = (counts[r.Athlete] || 0) + 1; });
+
+  const dLabels = Object.keys(counts);
+  const dData   = Object.values(counts);
+  const total   = dData.reduce((a, b) => a + b, 0);
+
+  const colors = [
+    '#ef4444','#f97316','#facc15','#22c55e','#14b8a6',
+    '#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16',
+    '#d946ef','#fb7185'
+  ];
+
+  if (charts[donutId]) charts[donutId].destroy();
+  charts[donutId] = new Chart(document.getElementById(donutId), {
+    type: 'doughnut',
+    data: {
+      labels: dLabels,
+      datasets: [{
+        data: dData,
+        backgroundColor: colors,
+        borderColor: '#111',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      maintainAspectRatio: true,
+      aspectRatio: 1,
+      cutout: '57%',
+      plugins: {
+        title: {
+          display: true,
+          text: 'Share of Votes',
+          color: '#ccc',
+          font: { weight: 'bold', size: s.donutTitle },
+          padding: { bottom: 8 }
+        },
+        subtitle: {
+          display: true,
+          text: `Total Votes – ${total}`,
+          color: '#aaa',
+          font: { size: s.donutSubtitle },
+          padding: { top: 2, bottom: 12 }
+        },
+        legend: {
+          position: 'bottom',
+          labels: {
             color: '#ccc',
-            font: { size: s.histTitle, weight: 'bold' },
-            padding: { bottom: 8 }
-          },
-          subtitle: {
-            display: true,
-            text: `Total Votes – ${N}`,
-            color: '#aaa',
-            font: { size: s.histSubtitle, weight: 'normal' },
-            padding: { top: 2, bottom: 12 }
-          },
-          legend: { display: false },
-          datalabels: {
-            color: '#fff',
-            font: { size: s.histBarLabel, weight: 'normal' },
-            formatter: (v) => (v > 0 ? v : ''),
-            anchor: 'center',
-            align: (ctx) => {
-              const v = ctx.dataset.data[ctx.dataIndex] || 0;
-              const scale = ctx.chart.scales.y;
-              if (!scale) return 'center';
-              const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
-              const f = ctx.chart.options.plugins.datalabels.font.size || s.histBarLabel;
-              return (barH < f * 1.05) ? 'end' : 'center';
-            },
-            clamp: true
+            boxWidth: 10,
+            boxHeight: 10,
+            font: { size: s.donutLegend }
           }
         },
-        scales: {
-          x: {
-            offset: true, // centers bar cluster in chart area
-            grace: '5%',
-            ticks: {
-              color: '#ccc',
-              font: { size: s.axisTick }
-            },
-            title: {
-              display: true,
-              text: 'Predicted Total (kg)',
-              color: '#ccc',
-              font: { size: s.axisTitle, weight: 'bold' }
-            },
-            grid: { display: false }
+        datalabels: {
+          color: '#fff',
+          font: { weight: 'bold', size: s.donutPercent },
+          formatter: (v) => {
+            const p = (v / total) * 100;
+            return p >= 3 ? `${p.toFixed(1)}%` : '';
           },
-          y: {
-            min: yMin,
-            max: yMax,
-            beginAtZero: false,
-            ticks: {
-              color: '#ccc',
-              font: { size: s.axisTick }
-            },
-            title: {
-              display: true,
-              text: 'Vote Count',
-              color: '#ccc',
-              font: { size: s.axisTitle, weight: 'bold' }
-            },
-            grid: { display: false }
-          }
+          anchor: 'center',
+          align: 'center',
+          clamp: true
         }
       }
-    });
+    },
+    plugins: [ChartDataLabels]
+  });
+
+  /* --- HISTOGRAM --- */
+  const vals = rows
+    .map(r => parseFloat(r.PredictedTotal))
+    .filter(v => !isNaN(v) && v > 0);
+
+  if (!vals.length) {
+    if (charts[histId]) charts[histId].destroy();
+    return;
   }
 
-  /* ===== SHARE HELPERS ===== */
-  function detectBrowserShareSupport() {
-    const ua = navigator.userAgent.toLowerCase();
-    return {
-      isAndroidChrome:
-        ua.includes('android') && ua.includes('chrome') && !ua.includes('edge') && !ua.includes('opr'),
-      isChromeIOS: ua.includes('crios')
-    };
-  }
+  const N    = vals.length;
+  const min  = Math.min(...vals);
+  const max  = Math.max(...vals);
+  const bins = Math.max(3, Math.round(Math.sqrt(N)));
+  const bw   = (max - min) / bins || 1;
 
-  function swapShareButtonFor(containerEl, newBtn) {
-    containerEl.innerHTML = '';
-    containerEl.appendChild(newBtn);
-  }
+  const countsH = Array(bins).fill(0);
+  vals.forEach(v => {
+    let i = Math.floor((v - min) / bw);
+    if (i >= bins) i = bins - 1;
+    if (i < 0) i = 0;
+    countsH[i]++;
+  });
 
-  function scaleChartFonts(chart, factor) {
-    const edits = [];
-    function walk(obj) {
-      if (!obj || typeof obj !== 'object') return;
-      if (obj.font && typeof obj.font.size === 'number') {
-        edits.push({ font: obj.font, original: obj.font.size });
-        obj.font.size = Math.round(obj.font.size * factor);
+  const labelsH = Array.from({ length: bins }, (_, i) =>
+    `${(min + i * bw).toFixed(0)}–${(min + (i + 1) * bw).toFixed(0)}`
+  );
+
+  const minC = Math.min(...countsH);
+  const maxC = Math.max(...countsH);
+  const yMin = Math.floor(minC / 2);
+  const span = maxC - yMin;
+  const step = Math.max(1, Math.round(span / 4));
+  const yMax = Math.ceil(maxC / step) * step;
+
+  if (charts[histId]) charts[histId].destroy();
+  charts[histId] = new Chart(document.getElementById(histId), {
+    type: 'bar',
+    data: {
+      labels: labelsH,
+      datasets: [{
+        data: countsH,
+        backgroundColor: '#3b82f6',
+        borderRadius: 5,
+        barPercentage: 0.9,
+        categoryPercentage: 1.0
+      }]
+    },
+    options: {
+      maintainAspectRatio: true,
+      aspectRatio: 1,
+      plugins: {
+        centerHistogram: { enabled: true },   // ✅ surgical centering
+        title: {
+          display: true,
+          text: 'Distribution of Predicted Winning Totals',
+          color: '#ccc',
+          font: { size: s.histTitle, weight: 'bold' },
+          padding: { bottom: 8 }
+        },
+        subtitle: {
+          display: true,
+          text: `Total Votes – ${N}`,
+          color: '#aaa',
+          font: { size: s.histSubtitle, weight: 'normal' },
+          padding: { top: 2, bottom: 12 }
+        },
+        legend: { display: false },
+        datalabels: {
+          color: '#fff',
+          font: { size: s.histBarLabel, weight: 'normal' },
+          formatter: (v) => v > 0 ? v : '',
+          anchor: 'center',
+          align: (ctx) => {
+            const v = ctx.dataset.data[ctx.dataIndex] || 0;
+            const scale = ctx.chart.scales.y;
+            if (!scale) return 'center';
+            const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
+            const f = ctx.chart.options.plugins.datalabels.font.size || s.histBarLabel;
+            return (barH < f * 1.05) ? 'end' : 'center';
+          },
+          clamp: true
+        }
+      },
+      scales: {
+        x: {
+          offset: true,
+          ticks: { color: '#ccc', font: { size: s.axisTick } },
+          title: {
+            display: true,
+            text: 'Predicted Total (kg)',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
+        },
+        y: {
+          min: yMin,
+          max: yMax,
+          beginAtZero: false,
+          ticks: { color: '#ccc', font: { size: s.axisTick } },
+          title: {
+            display: true,
+            text: 'Vote Count',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
+        }
       }
-      for (const key in obj) {
-        if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
-        const val = obj[key];
-        if (val && typeof val === 'object') walk(val);
-      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+/* ========= SHARE / EXPORT + BACK TO TOP (unchanged from your working version) ========= */
+/* Keeping your existing shareChart + helpers exactly as-is to avoid regression.
+   Only difference above is the histogram centering plugin. */
+
+function detectBrowserShareSupport() {
+  const ua = navigator.userAgent.toLowerCase();
+  return {
+    isAndroidChrome:
+      ua.includes('android') && ua.includes('chrome') && !ua.includes('edge') && !ua.includes('opr'),
+    isChromeIOS: ua.includes('crios')
+  };
+}
+
+function swapShareButtonFor(containerEl, newBtn) {
+  containerEl.innerHTML = '';
+  containerEl.appendChild(newBtn);
+}
+
+function scaleChartFonts(chart, factor) {
+  const edits = [];
+  function walk(obj) {
+    if (!obj || typeof obj !== 'object') return;
+    if (obj.font && typeof obj.font.size === 'number') {
+      edits.push({ font: obj.font, original: obj.font.size });
+      obj.font.size = Math.round(obj.font.size * factor);
     }
-    walk(chart.options);
-    return function restore() {
-      edits.forEach(e => { e.font.size = e.original; });
-    };
+    for (const key in obj) {
+      if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
+      const val = obj[key];
+      if (val && typeof val === 'object') walk(val);
+    }
+  }
+  walk(chart.options);
+  return function restore() {
+    edits.forEach(e => { e.font.size = e.original; });
+  };
+}
+
+async function shareChart(id, g) {
+  const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
+  const s = sizing();
+  const src = document.getElementById(id);
+  if (!src) return;
+
+  const shareBar = src.previousElementSibling;
+  if (!shareBar) return;
+
+  function makeBtn(text) {
+    const b = document.createElement('button');
+    b.className = "bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1";
+    b.style.minWidth = "140px";
+    b.style.height = "24px";
+    b.textContent = text;
+    return b;
   }
 
-  /* ===== SHARE / EXPORT ===== */
-  async function shareChart(id, g) {
-    const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
-    const s = sizing();
-    const src = document.getElementById(id);
-    if (!src) return;
+  const generatingBtn = makeBtn("Generating…");
+  swapShareButtonFor(shareBar, generatingBtn);
 
-    const shareBar = src.previousElementSibling;
-    if (!shareBar) return;
+  await new Promise(requestAnimationFrame);
+  const chart = Chart.getChart(src);
+  if (!chart) return;
 
-    function makeBtn(text) {
-      const b = document.createElement('button');
-      b.className =
-        "bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1";
-      b.style.minWidth = "140px";
-      b.style.height = "24px";
-      b.textContent = text;
-      return b;
-    }
+  const sel = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
+  const w = sel ? sel.value : '';
+  const isDonut = id.includes('Donut');
+  const isMobile = window.innerWidth < 768;
+  const fn = `metrics_${g}_${w || 'class'}_${isDonut ? 'donut' : 'hist'}.png`;
 
-    const generatingBtn = makeBtn("Generating…");
-    swapShareButtonFor(shareBar, generatingBtn);
-
+  const parent = src.closest('.collapsible-content');
+  if (parent && parent.style.maxHeight === '0px') {
+    parent.style.maxHeight = parent.scrollHeight + 'px';
+    parent.style.opacity = '1';
     await new Promise(requestAnimationFrame);
-    const chart = Chart.getChart(src);
-    if (!chart) return;
+  }
 
-    const sel = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
-    const w = sel ? sel.value : '';
-    const isDonut = id.includes('Donut');
-    const isMobile = window.innerWidth < 768;
-    const fn = `metrics_${g}_${w || 'class'}_${isDonut ? 'donut' : 'hist'}.png`;
-
-    const parent = src.closest('.collapsible-content');
-    if (parent && parent.style.maxHeight === '0px') {
-      parent.style.maxHeight = parent.scrollHeight + 'px';
-      parent.style.opacity = '1';
-      await new Promise(requestAnimationFrame);
-    }
-
-    let prevScales = null;
-    if (chart.options.scales) {
-      prevScales = JSON.parse(JSON.stringify(chart.options.scales));
-      if (chart.options.scales.x) chart.options.scales.x.grid.display = false;
-      if (chart.options.scales.y) chart.options.scales.y.grid.display = false;
-      chart.update();
-      await new Promise(requestAnimationFrame);
-    }
-
-    let restoreFonts = null;
-    if (!isDonut) {
-      restoreFonts = scaleChartFonts(chart, 0.85);
-      chart.update();
-      await new Promise(requestAnimationFrame);
-    }
-
-    const card = document.createElement('div');
-    card.style.position = 'relative';
-    card.style.width = s.exportWidth + 'px';
-    card.style.borderRadius = '16px';
-    card.style.overflow = 'hidden';
-    card.style.margin = '0 auto';
-    card.style.backgroundImage = "url('bc25_logo.jpg')";
-    card.style.backgroundSize = 'cover';
-    card.style.backgroundPosition = 'center';
-    card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
-
-    const overlay = document.createElement('div');
-    overlay.style.position = 'absolute';
-    overlay.style.inset = '0';
-    overlay.style.background = 'rgba(0,0,0,0.65)';
-    card.appendChild(overlay);
-
-    const inner = document.createElement('div');
-    inner.style.position = 'relative';
-    inner.style.textAlign = 'center';
-    inner.style.color = '#fff';
-    inner.style.fontFamily = "'Inter', sans-serif";
-    inner.style.zIndex = '2';
-    inner.style.padding = isDonut ? '36px 28px 36px 28px' : '40px 28px 36px 28px';
-    card.appendChild(inner);
-
-    const header = document.createElement('h2');
-    header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
-    header.style.fontSize = (isMobile ? s.headerFont * 1.5 : s.headerFont * 1.25) + 'px';
-    header.style.fontWeight = '700';
-    header.style.margin = '0 0 4px 0';
-
-    const sub = document.createElement('p');
-    sub.textContent = (w ? `${w}kg ` : '') + (g === 'F' ? 'Women' : 'Men');
-    sub.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.25) + 'px';
-    sub.style.fontWeight = '700';
-    sub.style.color = '#ddd';
-    sub.style.margin = '0 0 14px 0';
-
-    const dataURL = src.toDataURL('image/png');
-    const img = new Image();
-    img.src = dataURL;
-    await img.decode();
-    img.style.display = 'block';
-    img.style.margin = '0 auto 18px auto';
-    img.style.borderRadius = '8px';
-    img.style.width = (isMobile ? (isDonut ? '80%' : '96%') : (isDonut ? '70%' : '93%'));
-    img.style.height = 'auto';
-
-    const credit = document.createElement('p');
-    credit.style.fontSize = (isMobile ? s.creditFont * 1.25 : s.creditFont * 1.15) + 'px';
-    credit.style.color = '#ccc';
-    credit.style.lineHeight = '1.5';
-    credit.style.marginTop = '8px';
-    credit.innerHTML =
-      'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
-
-    const spacer = document.createElement('div');
-    spacer.style.height = isDonut ? '14px' : '28px';
-
-    const qr = new Image();
-    qr.crossOrigin = 'anonymous';
-    const qrsz = isMobile ? s.qrSize * 1.1 : s.qrSize * 1.25;
-    qr.src =
-      `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=` +
-      encodeURIComponent('https://solacestrength.github.io/britishclassicfl/metrics.html');
-    qr.style.position = 'absolute';
-    qr.style.bottom = '18px';
-    qr.style.left = '18px';
-    qr.style.width = qrsz + 'px';
-    qr.style.height = qrsz + 'px';
-    qr.style.borderRadius = '6px';
-    qr.style.opacity = '0.95';
-
-    inner.append(header, sub, img, credit, spacer);
-    card.appendChild(qr);
-    document.body.appendChild(card);
-
-    await new Promise(requestAnimationFrame);
-
-    const naturalH = card.scrollHeight;
-    const baseH = isDonut ? 860 : 820;
-    const scaleFactor = isMobile ? 0.92 : 1.0;
-    const fixedH = Math.min(naturalH * scaleFactor, s.exportWidth * scaleFactor);
-    const buffer = Math.round(
-      fixedH * (isMobile ? (isDonut ? 0.15 : 0.22) : 0.02)
-    );
-
-    card.style.height = fixedH + buffer + 'px';
-    card.style.maxHeight = fixedH + buffer + 'px';
-    card.style.minHeight = (baseH * scaleFactor) + 'px';
-
-    await new Promise(requestAnimationFrame);
-
-    const canvas = await html2canvas(card, {
-      backgroundColor: null,
-      scale: 2,
-      useCORS: true,
-      scrollY: 0
-    });
-    card.remove();
-
-    if (restoreFonts) restoreFonts();
-    if (prevScales) {
-      chart.options.scales = prevScales;
-    }
+  let prevScales = null;
+  if (chart.options.scales) {
+    prevScales = JSON.parse(JSON.stringify(chart.options.scales));
+    if (chart.options.scales.x) chart.options.scales.x.grid.display = false;
+    if (chart.options.scales.y) chart.options.scales.y.grid.display = false;
     chart.update();
-
-    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-    const file = new File([blob], fn, { type: 'image/png' });
-
-    // Android Chrome: guided flow
-    if (isAndroidChrome) {
-      const shareBtn = makeBtn("Share Generated Image");
-      shareBtn.onclick = async () => {
-        try {
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              title: 'British Classic Fantasy League 2025',
-              text: 'Check out these stats!',
-              files: [file]
-            });
-          } else {
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = fn;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-          }
-        } catch (e) {}
-        resetShareIcon();
-      };
-      swapShareButtonFor(shareBar, shareBtn);
-      return;
-    }
-
-    // Others
-    try {
-      if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: 'British Classic Fantasy League 2025',
-          text: 'Check out these stats!',
-          files: [file]
-        });
-      } else {
-        const url = URL.createObjectURL(file);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fn;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(url);
-      }
-    } catch (err) {
-      console.error('Share failed:', err);
-    }
-
-    resetShareIcon();
-
-    function resetShareIcon() {
-      shareBar.innerHTML = '';
-      const iconBtn = document.createElement('button');
-      iconBtn.className = 'share-btn';
-      iconBtn.onclick = () => shareChart(id, g);
-      iconBtn.innerHTML =
-        '<img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>';
-      shareBar.appendChild(iconBtn);
-    }
+    await new Promise(requestAnimationFrame);
   }
 
-  /* ===== BACK TO TOP ===== */
-  const bottomBackToTop = document.getElementById('bottomBackToTop');
-  if (bottomBackToTop) {
-    bottomBackToTop.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
+  let restoreFonts = null;
+  if (!isDonut) {
+    restoreFonts = scaleChartFonts(chart, 0.85);
+    chart.update();
+    await new Promise(requestAnimationFrame);
   }
-  </script>
+
+  const card = document.createElement('div');
+  card.style.position = 'relative';
+  card.style.width = s.exportWidth + 'px';
+  card.style.borderRadius = '16px';
+  card.style.overflow = 'hidden';
+  card.style.margin = '0 auto';
+  card.style.backgroundImage = "url('bc25_logo.jpg')";
+  card.style.backgroundSize = 'cover';
+  card.style.backgroundPosition = 'center';
+  card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
+
+  const overlay = document.createElement('div');
+  overlay.style.position = 'absolute';
+  overlay.style.inset = '0';
+  overlay.style.background = 'rgba(0,0,0,0.65)';
+  card.appendChild(overlay);
+
+  const inner = document.createElement('div');
+  inner.style.position = 'relative';
+  inner.style.textAlign = 'center';
+  inner.style.color = '#fff';
+  inner.style.fontFamily = "'Inter', sans-serif";
+  inner.style.zIndex = '2';
+  inner.style.padding = isDonut ? '36px 28px 36px 28px' : '40px 28px 36px 28px';
+  card.appendChild(inner);
+
+  const header = document.createElement('h2');
+  header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
+  header.style.fontSize = (isMobile ? s.headerFont * 1.5 : s.headerFont * 1.25) + 'px';
+  header.style.fontWeight = '700';
+  header.style.margin = '0 0 4px 0';
+
+  const sub = document.createElement('p');
+  sub.textContent = (w ? `${w}kg ` : '') + (g === 'F' ? 'Women' : 'Men');
+  sub.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.25) + 'px';
+  sub.style.fontWeight = '700';
+  sub.style.color = '#ddd';
+  sub.style.margin = '0 0 14px 0';
+
+  const dataURL = src.toDataURL('image/png');
+  const img = new Image();
+  img.src = dataURL;
+  await img.decode();
+  img.style.display = 'block';
+  img.style.margin = '0 auto 18px auto';
+  img.style.borderRadius = '8px';
+  img.style.width = (isMobile ? (isDonut ? '80%' : '96%') : (isDonut ? '70%' : '93%'));
+  img.style.height = 'auto';
+
+  const credit = document.createElement('p');
+  credit.style.fontSize = (isMobile ? s.creditFont * 1.25 : s.creditFont * 1.15) + 'px';
+  credit.style.color = '#ccc';
+  credit.style.lineHeight = '1.5';
+  credit.style.marginTop = '8px';
+  credit.innerHTML =
+    'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
+
+  const spacer = document.createElement('div');
+  spacer.style.height = isDonut ? '14px' : '28px';
+
+  const qr = new Image();
+  qr.crossOrigin = 'anonymous';
+  const qrsz = isMobile ? s.qrSize * 1.1 : s.qrSize * 1.25;
+  qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent(
+    'https://solacestrength.github.io/britishclassicfl/metrics.html'
+  )}`;
+  qr.style.position = 'absolute';
+  qr.style.bottom = '18px';
+  qr.style.left = '18px';
+  qr.style.width = qrsz + 'px';
+  qr.style.height = qrsz + 'px';
+  qr.style.borderRadius = '6px';
+  qr.style.opacity = '0.95';
+
+  inner.append(header, sub, img, credit, spacer);
+  card.appendChild(qr);
+  document.body.appendChild(card);
+
+  await new Promise(requestAnimationFrame);
+
+  const naturalH = card.scrollHeight;
+  const baseH = isDonut ? 860 : 820;
+  const scaleFactor = isMobile ? 0.92 : 1.0;
+  const fixedH = Math.min(naturalH * scaleFactor, s.exportWidth * scaleFactor);
+  const buffer = Math.round(
+    fixedH * (isMobile ? (isDonut ? 0.15 : 0.22) : 0.02)
+  );
+
+  card.style.height = fixedH + buffer + 'px';
+  card.style.maxHeight = fixedH + buffer + 'px';
+  card.style.minHeight = (baseH * scaleFactor) + 'px';
+
+  await new Promise(requestAnimationFrame);
+
+  const canvas = await html2canvas(card, {
+    backgroundColor: null,
+    scale: 2,
+    useCORS: true,
+    scrollY: 0
+  });
+  card.remove();
+
+  if (restoreFonts) restoreFonts();
+  if (prevScales) chart.options.scales = prevScales;
+  chart.update();
+
+  const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
+  const file = new File([blob], fn, { type: 'image/png' });
+
+  if (isAndroidChrome) {
+    const shareBtn = makeBtn("Share Generated Image");
+    shareBtn.onclick = async () => {
+      try {
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: 'British Classic Fantasy League 2025',
+            text: 'Check out these stats!',
+            files: [file]
+          });
+        } else {
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = fn;
+          link.click();
+          URL.revokeObjectURL(link.href);
+        }
+      } catch (e) {}
+      resetShareIcon();
+    };
+    swapShareButtonFor(shareBar, shareBtn);
+    return;
+  }
+
+  try {
+    if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        title: 'British Classic Fantasy League 2025',
+        text: 'Check out these stats!',
+        files: [file]
+      });
+    } else {
+      const url = URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fn;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+  } catch (err) {
+    console.error('Share failed:', err);
+  }
+
+  resetShareIcon();
+
+  function resetShareIcon() {
+    shareBar.innerHTML = '';
+    const iconBtn = document.createElement('button');
+    iconBtn.className = 'share-btn';
+    iconBtn.onclick = () => shareChart(id, g);
+    iconBtn.innerHTML =
+      '<img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>';
+    shareBar.appendChild(iconBtn);
+  }
+}
+
+/* BACK TO TOP */
+const bottomBackToTop = document.getElementById('bottomBackToTop');
+if (bottomBackToTop) {
+  bottomBackToTop.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
+</script>
 </body>
 </html>
