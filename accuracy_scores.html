@@ -473,7 +473,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  /* ---------- Share Logic (Unified, One-Step Android Fix) ---------- */
+  /* ---------- Share Logic (Unified One-Step with Android Gesture Fix) ---------- */
 async function shareScore() {
   if (!searchMatches.length) {
     showWarning("Please search for your name before sharing.");
@@ -485,16 +485,24 @@ async function shareScore() {
   if (!btn) return;
 
   try {
-    // Show feedback while snapshot is being prepared
+    // Feedback: generating snapshot
     btn.textContent = "Generating…";
     btn.disabled = true;
 
     const file = await buildSnapshotFile();
 
-    // --- Android Chrome: same button, no DOM replacement ---
+    // --- Android Chrome: one-step + gesture confirmation fix ---
     if (isAndroidChrome) {
       btn.textContent = "Sharing…";
       await new Promise(requestAnimationFrame);
+
+      // 🧩 Gesture re-anchor: ensures share fires inside a fresh user gesture context
+      const proceed = confirm("Ready to share your score?");
+      if (!proceed) {
+        btn.textContent = "Share My Score";
+        btn.disabled = false;
+        return;
+      }
 
       try {
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -519,7 +527,7 @@ async function shareScore() {
         btn.textContent = "Share My Score";
         btn.disabled = false;
       }
-      return; // ✅ one-step complete for Android
+      return; // ✅ One-step complete for Android
     }
 
     // --- Everyone else (iOS Chrome, Safari, Desktop) ---
