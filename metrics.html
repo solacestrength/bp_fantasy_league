@@ -378,82 +378,74 @@ const centerHistAreaPlugin = {
 };
 
 /**
- * centerHistTitlesPlugin
- * - Draws histogram title + subtitle manually, centered on CANVAS,
- *   after centerHistAreaPlugin has shifted the chartArea.
- * - Works ONLY on histograms; donuts remain untouched.
+ * centerHistTitlesPlugin (final clean version)
+ * --------------------------------------------
+ * Preserves Chart.js layout spacing but disables the internal title/subtitle
+ * *just before* Chart.js draws them, then re-renders one centered copy.
  */
 const centerHistTitlesPlugin = {
   id: 'centerHistTitles',
 
-  afterLayout(chart, args, opts) {
-    if (!opts || !opts.enabled) return;
+  beforeDraw(chart, args, opts) {
+    if (!opts?.enabled) return;
     if (chart.config.type !== 'bar') return;
     if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return;
 
-    // Cache original title/subtitle config once
-    if (!chart.$histTitles) {
-      const p = chart.options.plugins || {};
-      chart.$histTitles = {
-        title: { ...(p.title || {}) },
-        subtitle: { ...(p.subtitle || {}) }
-      };
-    }
+    // Backup and temporarily disable titles so Chart.js doesn't draw them
+    const plugins = chart.options.plugins || {};
+    chart.$_histTitles = {
+      title: { ...(plugins.title || {}) },
+      subtitle: { ...(plugins.subtitle || {}) }
+    };
 
-    // Let Chart.js keep the reserved top space it already computed,
-    // but stop it from drawing its own copies.
-    if (chart.options.plugins?.title) {
-      chart.options.plugins.title.display = false;
-    }
-    if (chart.options.plugins?.subtitle) {
-      chart.options.plugins.subtitle.display = false;
-    }
+    if (plugins.title) plugins.title.display = false;
+    if (plugins.subtitle) plugins.subtitle.display = false;
   },
 
   afterDraw(chart, args, opts) {
-    if (!opts || !opts.enabled) return;
+    if (!opts?.enabled) return;
     if (chart.config.type !== 'bar') return;
     if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return;
-    if (!chart.$histTitles) return;
 
     const { ctx, width, chartArea } = chart;
-    if (!ctx || !chartArea) return;
+    if (!ctx || !chartArea || !chart.$_histTitles) return;
 
-    const { title, subtitle } = chart.$histTitles;
-    const canvasMid = width / 2;
+    const { title, subtitle } = chart.$_histTitles;
+    const centerX = width / 2;
+    let y = chartArea.top - 36; // vertical offset above plot area
 
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    let y = chartArea.top - 32; // start above plot; tweak if needed
-
     // Title
-    if (title && title.text && title.display !== false) {
-      const size = (title.font && title.font.size) ||  sSafe(title, 'fontSize', 16);
-      const weight = (title.font && title.font.weight) || 'bold';
-      ctx.font = `${weight} ${size}px Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif`;
+    if (title?.display && title.text) {
+      const size = title.font?.size || 18;
+      const weight = title.font?.weight || 'bold';
+      const family = title.font?.family || 'Inter, sans-serif';
+      ctx.font = `${weight} ${size}px ${family}`;
       ctx.fillStyle = title.color || '#ccc';
-      ctx.fillText(title.text, canvasMid, y);
-      y += size + ((title.padding && title.padding.bottom) || 4);
+      ctx.fillText(title.text, centerX, y);
+      y += size + (title.padding?.bottom || 4);
     }
 
     // Subtitle
-    if (subtitle && subtitle.text && subtitle.display !== false) {
-      const size = (subtitle.font && subtitle.font.size) || sSafe(subtitle, 'fontSize', 12);
-      const weight = (subtitle.font && subtitle.font.weight) || 'normal';
-      y += (subtitle.padding && subtitle.padding.top) || 0;
-      ctx.font = `${weight} ${size}px Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif`;
+    if (subtitle?.display && subtitle.text) {
+      const size = subtitle.font?.size || 14;
+      const weight = subtitle.font?.weight || 'normal';
+      const family = subtitle.font?.family || 'Inter, sans-serif';
+      ctx.font = `${weight} ${size}px ${family}`;
       ctx.fillStyle = subtitle.color || '#aaa';
-      ctx.fillText(subtitle.text, canvasMid, y);
+      ctx.fillText(subtitle.text, centerX, y);
     }
 
     ctx.restore();
 
-    function sSafe(obj, key, fallback) {
-      // tiny helper so we don't explode if font shorthand changes
-      return (obj && obj[key]) || fallback;
-    }
+    // Restore plugin settings for next layout cycle
+    if (chart.options.plugins?.title)
+      chart.options.plugins.title.display = chart.$_histTitles.title.display;
+    if (chart.options.plugins?.subtitle)
+      chart.options.plugins.subtitle.display = chart.$_histTitles.subtitle.display;
   }
 };
 
