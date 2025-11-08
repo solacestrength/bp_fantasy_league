@@ -478,119 +478,119 @@ function renderCharts(g, w) {
     plugins: [ChartDataLabels]
   });
 
-  /* --- HISTOGRAM (patched to visually align with donut) --- */
-  const vals = rows
-    .map(r => parseFloat(r.PredictedTotal))
-    .filter(v => !isNaN(v) && v > 0);
+  /* --- HISTOGRAM (visually aligned + centered North Star version) --- */
+const vals = rows
+  .map(r => parseFloat(r.PredictedTotal))
+  .filter(v => !isNaN(v) && v > 0);
 
-  if (!vals.length) {
-    if (charts[histId]) charts[histId].destroy();
-    return;
-  }
-
-  const N    = vals.length;
-  const min  = Math.min(...vals);
-  const max  = Math.max(...vals);
-  const bins = Math.max(3, Math.round(Math.sqrt(N)));
-  const bw   = (max - min) / bins || 1;
-
-  const countsH = Array(bins).fill(0);
-  vals.forEach(v => {
-    let i = Math.floor((v - min) / bw);
-    if (i >= bins) i = bins - 1;
-    if (i < 0) i = 0;
-    countsH[i]++;
-  });
-
-  const labelsH = Array.from({ length: bins }, (_, i) =>
-    `${(min + i * bw).toFixed(0)}–${(min + (i + 1) * bw).toFixed(0)}`
-  );
-
-  const minC = Math.min(...countsH);
-  const maxC = Math.max(...countsH);
-  const yMin = Math.floor(minC / 2);
-  const span = maxC - yMin;
-  const step = Math.max(1, Math.round(span / 4));
-  const yMax = Math.ceil(maxC / step) * step;
-
+if (!vals.length) {
   if (charts[histId]) charts[histId].destroy();
-  charts[histId] = new Chart(document.getElementById(histId), {
-    type: 'bar',
-    data: {
-      labels: labelsH,
-      datasets: [{
-        data: countsH,
-        backgroundColor: '#3b82f6',
-        borderRadius: 5
-      }]
-    },
-    options: {
-      // Key change: keep it square like donut; any "zoom" is from your CSS transform, not internal squash.
-      maintainAspectRatio: true,
-      aspectRatio: 1,
-      plugins: {
-  title: {
-    display: true,
-    text: 'Distribution of Predicted Winning Totals',
-    color: '#ccc',
-    font: { size: s.histTitle, weight: 'bold' },
-    padding: { bottom: 8 }
+  return;
+}
+
+const N    = vals.length;
+const min  = Math.min(...vals);
+const max  = Math.max(...vals);
+const bins = Math.max(3, Math.round(Math.sqrt(N)));
+const bw   = (max - min) / bins || 1;
+
+const countsH = Array(bins).fill(0);
+vals.forEach(v => {
+  let i = Math.floor((v - min) / bw);
+  if (i >= bins) i = bins - 1;
+  if (i < 0) i = 0;
+  countsH[i]++;
+});
+
+const labelsH = Array.from({ length: bins }, (_, i) =>
+  `${(min + i * bw).toFixed(0)}–${(min + (i + 1) * bw).toFixed(0)}`
+);
+
+const minC = Math.min(...countsH);
+const maxC = Math.max(...countsH);
+const yMin = Math.floor(minC / 2);
+const span = maxC - yMin;
+const step = Math.max(1, Math.round(span / 4));
+const yMax = Math.ceil(maxC / step) * step;
+
+if (charts[histId]) charts[histId].destroy();
+charts[histId] = new Chart(document.getElementById(histId), {
+  type: 'bar',
+  data: {
+    labels: labelsH,
+    datasets: [{
+      data: countsH,
+      backgroundColor: '#3b82f6',
+      borderRadius: 5,
+      barPercentage: 0.9,        // ⬅️ slightly narrower bars
+      categoryPercentage: 1.0    // ⬅️ full category width
+    }]
   },
-  subtitle: {
-    display: true,
-    text: `Total Votes – ${N}`,
-    color: '#aaa',
-    font: { size: s.histSubtitle, weight: 'normal' },
-    padding: { top: 2, bottom: 12 }
-  },
-  legend: { display: false },
-  datalabels: {
-    color: '#fff',
-    font: { size: s.histBarLabel, weight: 'normal' },
-    formatter: (v) => {
-      if (v == null || isNaN(v)) return '';
-      return v > 0 ? v : '';
-    },
-    anchor: 'center',
-    align: (ctx) => {
-      const v = ctx.dataset.data[ctx.dataIndex] || 0;
-      const scale = ctx.chart.scales.y;
-      if (!scale) return 'center';
-      const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
-      const f = ctx.chart.options.plugins.datalabels.font.size || s.histBarLabel;
-      return (barH < f * 1.05) ? 'end' : 'center';
-    },
-    clamp: true
-  },
-},
-      scales: {
-        x: {
-          ticks: { color: '#ccc', font: { size: s.axisTick } },
-          title: {
-            display: true,
-            text: 'Predicted Total (kg)',
-            color: '#ccc',
-            font: { size: s.axisTitle, weight: 'bold' }
-          },
-          grid: { display: false }
+  options: {
+    maintainAspectRatio: true,
+    aspectRatio: 1,
+    plugins: {
+      title: {
+        display: true,
+        text: 'Distribution of Predicted Winning Totals',
+        color: '#ccc',
+        font: { size: s.histTitle, weight: 'bold' },
+        padding: { bottom: 8 }
+      },
+      subtitle: {
+        display: true,
+        text: `Total Votes – ${N}`,
+        color: '#aaa',
+        font: { size: s.histSubtitle, weight: 'normal' },
+        padding: { top: 2, bottom: 12 }
+      },
+      legend: { display: false },
+      datalabels: {
+        color: '#fff',
+        font: { size: s.histBarLabel, weight: 'normal' },
+        formatter: (v) => v > 0 ? v : '',
+        anchor: 'center',
+        align: (ctx) => {
+          const v = ctx.dataset.data[ctx.dataIndex] || 0;
+          const scale = ctx.chart.scales.y;
+          if (!scale) return 'center';
+          const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
+          const f = ctx.chart.options.plugins.datalabels.font.size || s.histBarLabel;
+          return (barH < f * 1.05) ? 'end' : 'center';
         },
-        y: {
-          min: yMin,
-          max: yMax,
-          beginAtZero: false,
-          ticks: { color: '#ccc', font: { size: s.axisTick } },
-          title: {
-            display: true,
-            text: 'Vote Count',
-            color: '#ccc',
-            font: { size: s.axisTitle, weight: 'bold' }
-          },
-          grid: { display: false }
-        }
+        clamp: true
       }
     },
-    plugins: [ChartDataLabels]
-  });
+    scales: {
+      x: {
+        type: 'category',           // ⬅️ ensures even spacing
+        offset: true,               // ⬅️ perfectly center first/last bars
+        ticks: { color: '#ccc', font: { size: s.axisTick } },
+        title: {
+          display: true,
+          text: 'Predicted Total (kg)',
+          color: '#ccc',
+          font: { size: s.axisTitle, weight: 'bold' }
+        },
+        grid: { display: false }
+      },
+      y: {
+        min: yMin,
+        max: yMax,
+        beginAtZero: false,
+        ticks: { color: '#ccc', font: { size: s.axisTick } },
+        title: {
+          display: true,
+          text: 'Vote Count',
+          color: '#ccc',
+          font: { size: s.axisTitle, weight: 'bold' }
+        },
+        grid: { display: false }
+      }
+    }
+  },
+  plugins: [ChartDataLabels]
+});
 }
 
 /* ===== COLLAPSIBLE ===== */
