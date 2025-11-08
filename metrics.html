@@ -388,39 +388,41 @@ const centerHistAreaPlugin = {
  */
 const centerHistTitlesPlugin = {
   id: 'centerHistTitles',
-  afterDraw(chart) {
+  afterDraw(chart, args, opts) {
     if (chart.config.type !== 'bar') return;
     if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return;
 
     const { ctx, chartArea, width } = chart;
     if (!ctx || !chartArea) return;
 
+    // Calculate offset from chart area mid to canvas mid
     const canvasMid = width / 2;
     const areaMid = (chartArea.left + chartArea.right) / 2;
-    const offset = canvasMid - areaMid; // how far the chartArea has shifted
+    const offset = canvasMid - areaMid;
 
-    if (Math.abs(offset) < 0.5) return;
+    if (Math.abs(offset) < 1) return;
 
-    const title = chart.options.plugins.title;
-    const subtitle = chart.options.plugins.subtitle;
-    if (title?.display || subtitle?.display) {
-      ctx.save();
-      ctx.translate(offset, 0); // move only text drawing horizontally
+    // Extract plugin configs
+    const { title, subtitle } = chart.options.plugins || {};
+    if (!title?.display && !subtitle?.display) return;
 
-      if (title?.display) {
-        const titlePlugin = Chart.registry.getPlugin('title');
-        titlePlugin?.beforeDraw?.(chart, {}, chart.options.plugins.title);
-        titlePlugin?.afterDraw?.(chart, {}, chart.options.plugins.title);
-      }
+    // --- Shift the coordinate system only while drawing titles ---
+    ctx.save();
+    ctx.translate(offset, 0);
 
-      if (subtitle?.display) {
-        const subtitlePlugin = Chart.registry.getPlugin('subtitle');
-        subtitlePlugin?.beforeDraw?.(chart, {}, chart.options.plugins.subtitle);
-        subtitlePlugin?.afterDraw?.(chart, {}, chart.options.plugins.subtitle);
-      }
+    // Manually render both plugins using internal API
+    const titlePlugin = Chart.registry.getPlugin('title');
+    const subtitlePlugin = Chart.registry.getPlugin('subtitle');
 
-      ctx.restore();
+    if (title?.display && titlePlugin?.afterDraw) {
+      titlePlugin.afterDraw(chart, args, title);
     }
+
+    if (subtitle?.display && subtitlePlugin?.afterDraw) {
+      subtitlePlugin.afterDraw(chart, args, subtitle);
+    }
+
+    ctx.restore();
   }
 };
 
