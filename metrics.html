@@ -775,7 +775,19 @@ async function shareChart(id, g) {
   const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
   const s = sizing();
   const src = document.getElementById(id);
-  if (/Hist$/i.test(id)) await new Promise(r => setTimeout(r, 100)); 
+  let src = document.getElementById(id);
+
+// 🧩 Wait for histogram layouts to settle before html2canvas
+if (/Hist$/i.test(id)) {
+  // Wait up to 400 ms or until the chart has non-zero dimensions
+  let tries = 0;
+  while (tries < 8 && (!src || src.offsetWidth === 0 || src.offsetHeight === 0)) {
+    await new Promise(r => setTimeout(r, 50));
+    src = document.getElementById(id);
+    tries++;
+  }
+  await new Promise(r => setTimeout(r, 250)); // final paint flush
+}
   if (!src) return;
 
   const shareBar = src.previousElementSibling;
