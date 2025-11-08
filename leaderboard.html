@@ -176,451 +176,290 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+  /* ---------- Device detection ---------- */
+  const ua = navigator.userAgent.toLowerCase();
+  const isAndroidChrome =
+    ua.includes("android") &&
+    ua.includes("chrome") &&
+    !ua.includes("edge") &&
+    !ua.includes("opr") &&
+    !ua.includes("opera");
+
   /* ---------- Burger Menu ---------- */
   const menuBtn = document.getElementById("menu-btn");
   const mobileMenu = document.getElementById("mobile-menu");
-  menuBtn.addEventListener("click", (e) => {
-    const open = mobileMenu.classList.contains("opacity-100");
-    mobileMenu.classList.toggle("opacity-100", !open);
-    mobileMenu.classList.toggle("opacity-0", open);
-    mobileMenu.classList.toggle("scale-y-100", !open);
-    mobileMenu.classList.toggle("scale-y-0", open);
-    e.stopPropagation();
-  });
-  document.addEventListener("click", (e) => {
-    if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
-      mobileMenu.classList.remove("opacity-100", "scale-y-100");
-      mobileMenu.classList.add("opacity-0", "scale-y-0");
-    }
-  });
-
-  /* ---------- Toast Warning ---------- */
-  function showWarning(message) {
-    const existing = document.getElementById("shareWarningToast");
-    if (existing) existing.remove();
-    const toast = document.createElement("div");
-    toast.id = "shareWarningToast";
-    toast.textContent = message;
-    Object.assign(toast.style, {
-      position: "fixed",
-      top: "18px",
-      left: "50%",
-      transform: "translateX(-50%)",
-      background: "rgba(239,68,68,0.9)",
-      color: "white",
-      padding: "8px 14px",
-      borderRadius: "8px",
-      fontSize: "13px",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
-      zIndex: 9999,
-      opacity: 0,
-      transition: "opacity 0.4s ease-in-out"
+  if (menuBtn && mobileMenu) {
+    menuBtn.addEventListener("click", (e) => {
+      const open = mobileMenu.classList.contains("opacity-100");
+      mobileMenu.classList.toggle("opacity-100", !open);
+      mobileMenu.classList.toggle("opacity-0", open);
+      mobileMenu.classList.toggle("scale-y-100", !open);
+      mobileMenu.classList.toggle("scale-y-0", open);
+      mobileMenu.classList.toggle("pointer-events-none", open);
+      e.stopPropagation();
     });
-    document.body.appendChild(toast);
-    requestAnimationFrame(() => toast.style.opacity = 1);
-    setTimeout(() => {
-      toast.style.opacity = 0;
-      setTimeout(() => toast.remove(), 400);
-    }, 2500);
-  }
-
-  /* ---------- Back-to-top FAB ---------- */
-  const fab = document.getElementById("backToTopFab");
-  let scrollTimer;
-  window.addEventListener("scroll", () => {
-    const y = window.scrollY;
-    const nearTop = y < 150;
-    const nearBottom = y + window.innerHeight > document.body.scrollHeight - 150;
-    fab.style.opacity = 0;
-    fab.style.pointerEvents = "none";
-    clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(() => {
-      if (!nearTop && !nearBottom) {
-        fab.style.opacity = 1;
-        fab.style.pointerEvents = "auto";
-        fab.style.transform = "translateY(-50%) scale(1)";
+    document.addEventListener("click", (e) => {
+      if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+        mobileMenu.classList.remove("opacity-100","scale-y-100");
+        mobileMenu.classList.add("opacity-0","scale-y-0","pointer-events-none");
       }
-    }, 120);
-  });
-  fab.addEventListener("click", () =>
-    window.scrollTo({ top: 0, behavior: "smooth" })
-  );
-
-  /* ---------- Bottom Back-to-top ---------- */
-  const bottomBackToTop = document.getElementById("bottomBackToTop");
-  if (bottomBackToTop) {
-    bottomBackToTop.addEventListener("click", () =>
-      window.scrollTo({ top: 0, behavior: "smooth" })
-    );
-  }
-
-  /* ---------- Table State ---------- */
-  const rowsPerPage = 50;
-  let allRows = [], filteredRows = [], currentPage = 1;
-  let searchMatches = [], currentMatchIndex = -1;
-  let headerRow = [], nameColIdx = -1, contextualShareBtn = null;
-
-  const searchInput = document.getElementById("searchInput");
-  const clearBtn = document.getElementById("clearSearchBtn");
-
-  function escapeRegExp(str) {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  }
-
-  /* ---------- Load Leaderboard ---------- */
-  async function loadLeaderboard() {
-    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=2003215108&single=true&output=csv";
-    const response = await fetch(csvUrl);
-    const text = await response.text();
-    const rows = text.trim().split(/\r?\n/).map(l => l.split(","));
-    if (!rows.length) return;
-
-    headerRow = rows.shift();
-    nameColIdx = headerRow.findIndex(h => /name|entrant/i.test(h.trim()));
-    if (nameColIdx < 0) nameColIdx = 1;
-
-    document.getElementById("leaderboardHeader").innerHTML =
-      headerRow.map(h => `<th class='px-3 py-2 text-center'>${h}</th>`).join("");
-
-    allRows = rows;
-    filteredRows = [...allRows];
-    renderTable();
-  }
-
-  /* ---------- Render Table ---------- */
-  function renderTable() {
-    const tbody = document.getElementById("leaderboardBody");
-    tbody.innerHTML = "";
-    const start = (currentPage - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-    const query = searchInput.value.trim();
-    const hasQuery = !!query;
-    const regex = hasQuery ? new RegExp(`(${escapeRegExp(query)})`, "ig") : null;
-
-    filteredRows.slice(start, end).forEach((row, i) => {
-      const globalIndex = start + i;
-      const highlight =
-        searchMatches.length &&
-        currentMatchIndex >= 0 &&
-        searchMatches[currentMatchIndex] === globalIndex;
-
-      const cls = highlight ? "pulse-row" : "";
-      const tds = row.map((c, ci) => {
-        let content = c;
-        if (hasQuery && ci === nameColIdx && regex) {
-          content = c.replace(regex, "<strong>$1</strong>");
-        }
-        return `<td class='px-3 py-2 text-center'>${content}</td>`;
-      }).join("");
-
-      tbody.insertAdjacentHTML("beforeend", `<tr class="${cls}" data-global-index="${globalIndex}">${tds}</tr>`);
     });
+  }
 
+  /* ---------- Toast ---------- */
+  function showWarning(msg){
+    const old=document.getElementById("shareWarningToast");
+    if(old)old.remove();
+    const t=document.createElement("div");
+    t.id="shareWarningToast";t.textContent=msg;
+    Object.assign(t.style,{position:"fixed",top:"18px",left:"50%",transform:"translateX(-50%)",
+      background:"rgba(239,68,68,0.9)",color:"#fff",padding:"8px 14px",borderRadius:"8px",
+      fontSize:"13px",boxShadow:"0 2px 8px rgba(0,0,0,.25)",zIndex:9999,opacity:0,
+      transition:"opacity .4s ease-in-out"});
+    document.body.appendChild(t);requestAnimationFrame(()=>t.style.opacity=1);
+    setTimeout(()=>{t.style.opacity=0;setTimeout(()=>t.remove(),400)},2500);
+  }
+
+  /* ---------- FAB ---------- */
+  const fab=document.getElementById("backToTopFab");let scrollTimer;
+  window.addEventListener("scroll",()=>{
+    const y=window.scrollY;
+    const nearTop=y<150,nearBottom=y+window.innerHeight>document.body.scrollHeight-150;
+    fab.style.opacity=0;fab.style.pointerEvents="none";fab.style.transform="translateY(-50%) scale(0.9)";
+    clearTimeout(scrollTimer);
+    scrollTimer=setTimeout(()=>{
+      if(!nearTop&&!nearBottom){fab.style.opacity=1;fab.style.pointerEvents="auto";
+        fab.style.transform="translateY(-50%) scale(1)";}
+    },120);
+  });
+  fab.addEventListener("click",()=>window.scrollTo({top:0,behavior:"smooth"}));
+  const bottomBtn=document.getElementById("bottomBackToTop");
+  if(bottomBtn)bottomBtn.addEventListener("click",()=>window.scrollTo({top:0,behavior:"smooth"}));
+
+  /* ---------- State ---------- */
+  const rowsPerPage=50;
+  let allRows=[],filteredRows=[],currentPage=1,searchMatches=[],currentMatchIndex=-1;
+  let headerRow=[],nameColIdx=-1,contextualShareBtn=null;
+  const searchInput=document.getElementById("searchInput");
+  const clearBtn=document.getElementById("clearSearchBtn");
+
+  function escapeRegExp(s){return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");}
+
+  /* ---------- Load CSV ---------- */
+  async function loadLeaderboard(){
+    const url="https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=2003215108&single=true&output=csv";
+    const res=await fetch(url);const text=await res.text();
+    const rows=text.trim().split(/\r?\n/).map(l=>l.split(","));
+    if(!rows.length)return;
+    headerRow=rows.shift();
+    nameColIdx=headerRow.findIndex(h=>/name|entrant/i.test(h.trim()));
+    if(nameColIdx<0)nameColIdx=1;
+    document.getElementById("leaderboardHeader").innerHTML=
+      headerRow.map(h=>`<th class="px-3 py-2 text-center">${h}</th>`).join("");
+    allRows=rows;filteredRows=[...allRows];renderTable();
+  }
+
+  /* ---------- Contextual Share ---------- */
+  function removeContextualShare(){
+    const ex=document.querySelector(".contextual-share-row");
+    if(ex)ex.remove();contextualShareBtn=null;
+  }
+  function insertContextualShare(targetRow){
+    removeContextualShare();
+    if(!targetRow||!headerRow.length)return;
+    const tr=document.createElement("tr");
+    tr.className="contextual-share-row";
+    tr.innerHTML=`<td colspan="${headerRow.length}" class="text-center py-1">
+      <button id="contextualShareBtn"
+        class="bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1"
+        style="min-width:130px;height:24px;">Share My Ranking</button></td>`;
+    targetRow.parentNode.insertBefore(tr,targetRow);
+    contextualShareBtn=document.getElementById("contextualShareBtn");
+    contextualShareBtn.addEventListener("click",shareRanking);
+  }
+
+  /* ---------- Render ---------- */
+  function renderTable(){
+    const tbody=document.getElementById("leaderboardBody");
+    const pagination=document.getElementById("paginationContainer");
+    tbody.innerHTML="";if(pagination)pagination.innerHTML="";
+
+    const query=(searchInput?.value||"").trim().toLowerCase();
+    const hasQuery=!!query;
+
+    // Android Chrome: single-row mode
+    if(isAndroidChrome&&hasQuery&&searchMatches.length&&currentMatchIndex>=0){
+      const idx=searchMatches[currentMatchIndex];
+      const row=allRows[idx];
+      if(row){
+        const html=row.map((c,ci)=>{
+          let content=c;
+          if(ci===nameColIdx&&query){
+            const re=new RegExp(`(${escapeRegExp(query)})`,"ig");
+            content=c.replace(re,"<strong>$1</strong>");
+          }
+          return `<td class="px-3 py-2 text-center">${content}</td>`;
+        }).join("");
+        const tr=document.createElement("tr");
+        tr.className="pulse-row";tr.setAttribute("data-global-index",idx);
+        tr.innerHTML=html;tbody.appendChild(tr);
+        insertContextualShare(tr);
+      }
+      return;
+    }
+
+    // Default multi-row view
+    const start=(currentPage-1)*rowsPerPage,end=start+rowsPerPage;
+    const regex=hasQuery?new RegExp(`(${escapeRegExp(query)})`,"ig"):null;
+    filteredRows.slice(start,end).forEach((row,i)=>{
+      const global=start+i;
+      const highlight=searchMatches.length&&currentMatchIndex>=0&&searchMatches[currentMatchIndex]===global;
+      const cls=highlight?"pulse-row":"";
+      const tds=row.map((c,ci)=>{
+        let content=c;
+        if(hasQuery&&ci===nameColIdx&&regex)content=c.replace(regex,"<strong>$1</strong>");
+        return `<td class="px-3 py-2 text-center">${content}</td>`;
+      }).join("");
+      tbody.insertAdjacentHTML("beforeend",`<tr class="${cls}" data-global-index="${global}">${tds}</tr>`);
+    });
     renderPagination();
   }
 
   /* ---------- Pagination ---------- */
-  function renderPagination() {
-    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
-    const container = document.getElementById("paginationContainer");
-    container.innerHTML = "";
-    if (totalPages <= 1) return;
-
-    const makeBtn = (t, h, d = false, a = false) => {
-      const b = document.createElement("button");
-      b.textContent = t;
-      b.className = `px-2 py-1 mx-1 rounded ${a ? "bg-red-600 text-white" : "bg-gray-700/60 hover:bg-gray-600"}`;
-      b.disabled = d;
-      b.onclick = h;
-      container.appendChild(b);
+  function renderPagination(){
+    const container=document.getElementById("paginationContainer");
+    if(!container)return;
+    const totalPages=Math.ceil(filteredRows.length/rowsPerPage);
+    if(totalPages<=1){container.innerHTML="";return;}
+    const make=(t,h,d=false,a=false)=>{
+      const b=document.createElement("button");
+      b.textContent=t;
+      b.className=`px-2 py-1 mx-1 rounded ${a?"bg-red-600 text-white":"bg-gray-700/60 hover:bg-gray-600"}`;
+      b.disabled=d;b.onclick=h;container.appendChild(b);
     };
-
-    makeBtn("« Prev", () => {
-      if (currentPage > 1) { currentPage--; renderTable(); }
-    }, currentPage === 1);
-
-    const maxBtns = 5;
-    let s = Math.max(1, currentPage - Math.floor(maxBtns / 2));
-    let e = Math.min(totalPages, s + maxBtns - 1);
-    if (e - s < maxBtns - 1) s = Math.max(1, e - maxBtns + 1);
-
-    for (let i = s; i <= e; i++) {
-      makeBtn(i, () => { currentPage = i; renderTable(); }, false, i === currentPage);
-    }
-
-    makeBtn("Next »", () => {
-      if (currentPage < totalPages) { currentPage++; renderTable(); }
-    }, currentPage === totalPages);
+    make("« Prev",()=>{if(currentPage>1){currentPage--;renderTable();}},currentPage===1);
+    const maxBtns=5;let s=Math.max(1,currentPage-Math.floor(maxBtns/2));
+    let e=Math.min(totalPages,s+maxBtns-1);if(e-s<maxBtns-1)s=Math.max(1,e-maxBtns+1);
+    for(let i=s;i<=e;i++){make(i,()=>{currentPage=i;renderTable();},false,i===currentPage);}
+    make("Next »",()=>{if(currentPage<totalPages){currentPage++;renderTable();}},currentPage===totalPages);
   }
 
-  /* ---------- Contextual Share ---------- */
-  function removeContextualShare() {
-    const ex = document.querySelector(".contextual-share-row");
-    if (ex) ex.remove();
-    contextualShareBtn = null;
-  }
-
-  function insertContextualShare(targetRow) {
-    removeContextualShare();
-    if (!targetRow) return;
-    const tr = document.createElement("tr");
-    tr.className = "contextual-share-row";
-    tr.innerHTML = `<td colspan="${headerRow.length}" class="text-center py-1">
-      <button id="contextualShareBtn"
-        class="bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1"
-        style="min-width:130px;height:24px;">Share My Ranking</button></td>`;
-    targetRow.parentNode.insertBefore(tr, targetRow);
-    contextualShareBtn = document.getElementById("contextualShareBtn");
-    contextualShareBtn.addEventListener("click", shareRanking);
-  }
-
-  /* ---------- Scroll-to-Match ---------- */
-  function scrollToHighlighted() {
-    if (!searchMatches.length || currentMatchIndex < 0) return;
-    const tbody = document.getElementById("leaderboardBody");
-    const rows = tbody.querySelectorAll("tr[data-global-index]");
-    if (!rows.length) return;
-
-    const targetGlobal = searchMatches[currentMatchIndex];
-    let targetRow = [...rows].find(r => parseInt(r.getAttribute("data-global-index")) === targetGlobal);
-    if (!targetRow) return;
-
-    const header = document.querySelector(".site-header");
-    const headerH = header ? header.offsetHeight : 0;
-    const table = document.getElementById("leaderboardTable");
-    const tableTopAbs = table.getBoundingClientRect().top + window.scrollY;
-    const rowRect = targetRow.getBoundingClientRect();
-    const rowHeight = rowRect.height || 32;
-    const totalRows = allRows.length;
-    const start = (currentPage - 1) * rowsPerPage;
-    const rowIndexOnPage = targetGlobal - start;
-
+  /* ---------- Scroll to Highlight (non-Android) ---------- */
+  function scrollToHighlighted(){
+    if(isAndroidChrome)return;
+    if(!searchMatches.length||currentMatchIndex<0)return;
+    const tbody=document.getElementById("leaderboardBody");
+    const rows=tbody.querySelectorAll("tr[data-global-index]");
+    const targetGlobal=searchMatches[currentMatchIndex];
+    const row=[...rows].find(r=>+r.dataset.globalIndex===targetGlobal);
+    if(!row)return;
+    const header=document.querySelector(".site-header");
+    const headerH=header?header.offsetHeight:0;
+    const table=document.getElementById("leaderboardTable");
+    const tableTop=table.getBoundingClientRect().top+window.scrollY;
+    const rowRect=row.getBoundingClientRect(),rowH=rowRect.height||32;
+    const total=allRows.length,start=(currentPage-1)*rowsPerPage,rowIdx=targetGlobal-start;
     let dest;
-    if (rowIndexOnPage < 5) {
-      dest = tableTopAbs - headerH - 4;
-    } else if (totalRows - targetGlobal <= 5) {
-      dest = document.body.scrollHeight - window.innerHeight;
-    } else {
-      const desiredTop = headerH + rowHeight * 2;
-      const currentTopAbs = rowRect.top + window.scrollY;
-      dest = currentTopAbs - desiredTop;
-    }
-
-    window.scrollTo({ top: dest, behavior: "smooth" });
-    setTimeout(() => insertContextualShare(targetRow), 250);
+    if(rowIdx<5)dest=tableTop-headerH-4;
+    else if(total-targetGlobal<=5)dest=document.body.scrollHeight-window.innerHeight;
+    else dest=rowRect.top+window.scrollY-(headerH+rowH*2);
+    window.scrollTo({top:dest,behavior:"smooth"});
+    setTimeout(()=>insertContextualShare(row),250);
   }
 
   /* ---------- Search ---------- */
-  searchInput.addEventListener("input", () => {
-    const f = searchInput.value.trim().toLowerCase();
-    clearBtn.classList.toggle("hidden", !searchInput.value);
-    searchMatches = [];
-    currentMatchIndex = -1;
-    removeContextualShare();
-    if (!f) {
-      filteredRows = [...allRows];
-      currentPage = 1;
-      renderTable();
-      return;
-    }
-    filteredRows = [...allRows];
-    allRows.forEach((row, idx) => {
-      if (row.join(" ").toLowerCase().includes(f)) searchMatches.push(idx);
-    });
-    if (searchMatches.length) {
-      currentMatchIndex = 0;
-      currentPage = Math.floor(searchMatches[0] / rowsPerPage) + 1;
-      renderTable();
-      scrollToHighlighted();
-    } else renderTable();
+  searchInput.addEventListener("input",()=>{
+    const f=searchInput.value.trim().toLowerCase();
+    clearBtn.classList.toggle("hidden",!f);
+    searchMatches=[];currentMatchIndex=-1;removeContextualShare();
+    if(!f){filteredRows=[...allRows];currentPage=1;renderTable();return;}
+    filteredRows=[...allRows];
+    allRows.forEach((row,i)=>{if(row.join(" ").toLowerCase().includes(f))searchMatches.push(i);});
+    if(searchMatches.length){
+      currentMatchIndex=0;
+      if(isAndroidChrome)renderTable();
+      else{currentPage=Math.floor(searchMatches[0]/rowsPerPage)+1;renderTable();scrollToHighlighted();}
+    }else renderTable();
   });
-
-  clearBtn.addEventListener("click", () => {
-    searchInput.value = "";
-    clearBtn.classList.add("hidden");
-    searchMatches = [];
-    currentMatchIndex = -1;
-    filteredRows = [...allRows];
-    currentPage = 1;
-    removeContextualShare();
-    renderTable();
-  });
-
-  searchInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && searchMatches.length) {
+  searchInput.addEventListener("keydown",e=>{
+    if(e.key==="Enter"&&searchMatches.length){
       e.preventDefault();
-      if (searchMatches.length > 1) {
-        currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
-        currentPage = Math.floor(searchMatches[currentMatchIndex] / rowsPerPage) + 1;
-        renderTable();
+      if(searchMatches.length>1)
+        currentMatchIndex=(currentMatchIndex+1)%searchMatches.length;
+      if(isAndroidChrome)renderTable();
+      else{
+        currentPage=Math.floor(searchMatches[currentMatchIndex]/rowsPerPage)+1;
+        renderTable();scrollToHighlighted();
       }
-      scrollToHighlighted();
     }
   });
+  clearBtn.addEventListener("click",()=>{
+    searchInput.value="";clearBtn.classList.add("hidden");
+    searchMatches=[];currentMatchIndex=-1;filteredRows=[...allRows];
+    currentPage=1;removeContextualShare();renderTable();
+  });
 
-  /* ---------- Device Detection ---------- */
-  function detectBrowserShareSupport() {
-    const ua = navigator.userAgent.toLowerCase();
-    return {
-      isAndroidChrome: ua.includes("android") && ua.includes("chrome") && !ua.includes("edge") && !ua.includes("opr"),
-      isChromeIOS: ua.includes("crios")
-    };
+  /* ---------- Share ---------- */
+  function detectBrowserShareSupport(){
+    return {isAndroidChrome,isChromeIOS:ua.includes("crios")};
   }
-
-  /* ---------- Share Logic (Unified, One-Step Android Fix) ---------- */
-async function shareRanking() {
-  if (!searchMatches.length) {
-    showWarning("Please search for your name before sharing.");
-    return;
-  }
-
-  const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
-  const btn = contextualShareBtn || document.getElementById("shareRankingBtn");
-  if (!btn) return;
-
-  try {
-    // Show feedback while snapshot is being prepared
-    btn.textContent = "Generating…";
-    btn.disabled = true;
-
-    const file = await buildSnapshotFile();
-
-    // --- Android Chrome: now uses SAME button, no DOM replacement ---
-    if (isAndroidChrome) {
-      btn.textContent = "Sharing…";
-
-      await new Promise(requestAnimationFrame);
-
-      try {
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: "British Classic Fantasy League 2025 🇬🇧",
-            text: "Check out my league ranking!",
-            files: [file],
-          });
-        } else {
-          const url = URL.createObjectURL(file);
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = file.name;
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-          URL.revokeObjectURL(url);
-        }
-      } catch (err) {
-        console.error("Android share failed:", err);
-      } finally {
-        btn.textContent = "Share My Ranking";
-        btn.disabled = false;
+  async function shareRanking(){
+    if(!searchMatches.length){showWarning("Please search for your name before sharing.");return;}
+    const {isChromeIOS}=detectBrowserShareSupport();
+    const btn=contextualShareBtn||document.getElementById("shareRankingBtn");
+    if(!btn)return;
+    const original=btn.textContent;
+    btn.disabled=true;if(btn===contextualShareBtn)btn.textContent="Generating…";
+    try{
+      const file=await buildSnapshotFile();
+      if(!isChromeIOS&&navigator.canShare&&navigator.canShare({files:[file]}))
+        await navigator.share({title:"British Classic Fantasy League 2025 🇬🇧",
+          text:"Check out my league ranking!",files:[file]});
+      else{
+        const url=URL.createObjectURL(file);
+        const a=document.createElement("a");a.href=url;a.download=file.name;
+        document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
       }
-      return; // ✅ stop here for Android, one-step complete
-    }
-
-    // --- Everyone else (iOS Chrome, Safari, Desktop) ---
-    if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({
-        title: "British Classic Fantasy League 2025 🇬🇧",
-        text: "Check out my league ranking!",
-        files: [file],
-      });
-    } else {
-      const url = URL.createObjectURL(file);
-      if (confirm("Download image instead?")) {
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = file.name;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-      }
-      URL.revokeObjectURL(url);
-    }
-  } catch (err) {
-    console.error("Share failed:", err);
-  } finally {
-    // Restore button state if something interrupted the share
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "Share My Ranking";
-    }
-  }
-}
-
-  async function performShare(file, title, text, isChromeIOS = false) {
-    try {
-      if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ title, text, files: [file] });
-      } else {
-        const url = URL.createObjectURL(file);
-        if (confirm("Download image instead?")) {
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = file.name;
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-        }
-      }
-    } catch (err) {
-      console.error("Share failed:", err);
-    }
+    }catch(e){console.error(e);}
+    finally{btn.disabled=false;if(btn===contextualShareBtn)btn.textContent=original;}
   }
 
-  /* ---------- Snapshot Builder ---------- */
-  async function buildSnapshotFile() {
-    const total = allRows.length;
-    const matchIndex = searchMatches[currentMatchIndex];
-    let start = Math.max(0, matchIndex - 4);
-    let end = Math.min(total - 1, matchIndex + 5);
-    const slice = allRows.slice(start, end + 1);
-    while (slice.length < 10) slice.push(new Array(headerRow.length).fill(""));
-    const rowsHtml = slice.map((r, i) => {
-      const actual = start + i;
-      const bold = actual === matchIndex ? "font-weight:bold;" : "";
-      return `<tr style="${bold}">${r.map(c => `<td class='px-3 py-1 text-center'>${c}</td>`).join("")}</tr>`;
+  /* ---------- Snapshot ---------- */
+  async function buildSnapshotFile(){
+    const total=allRows.length,idx=searchMatches[currentMatchIndex]??0;
+    let s=Math.max(0,idx-4),e=Math.min(total-1,idx+5);
+    const slice=allRows.slice(s,e+1);
+    while(slice.length<10)slice.push(new Array(headerRow.length).fill(""));
+    const rowsHtml=slice.map((r,i)=>{
+      const actual=s+i,bold=actual===idx?"font-weight:bold;":"";
+      return `<tr style="${bold}">${r.map(c=>`<td class="px-3 py-1 text-center">${c}</td>`).join("")}</tr>`;
     }).join("");
-    const snapshot = document.createElement("div");
-    Object.assign(snapshot.style, {
-      width: "600px",
-      borderRadius: "16px",
-      overflow: "hidden",
-      background: "#000",
-      backgroundImage: "url('image_leaderboard_shf.jpg')",
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      boxShadow: "0 10px 30px rgba(0,0,0,.35)",
-      position: "relative",
-      isolation: "isolate",
-      zIndex: "9999"
-    });
-    const qr = new Image();
-    qr.crossOrigin = "anonymous";
-    qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
-    await new Promise(res => qr.onload = res);
-    snapshot.innerHTML = `
-      <div style="background:rgba(0,0,0,.55);padding:18px;position:relative;">
-        <img src="${qr.src}" style="position:absolute;bottom:16px;left:18px;width:52px;height:52px;border-radius:6px;">
-        <h2 style="text-align:center;font-size:20px;font-weight:700;margin-bottom:4px;">British Classic Fantasy League 2025 🇬🇧</h2>
-        <h3 style="text-align:center;font-size:16px;font-weight:600;margin-bottom:4px;">My League Ranking</h3>
-        <p style="text-align:center;font-size:12px;color:#d1d5db;opacity:.9;margin-bottom:12px;">Entry Count – ${total}</p>
-        <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
-          <thead><tr>${headerRow.map(h => `<th style="padding:4px;text-align:center;font-weight:600;">${h}</th>`).join("")}</tr></thead>
-          <tbody>${rowsHtml}</tbody>
-        </table>
-        <p style="font-size:11px;color:#ccc;text-align:center;margin-top:18px;line-height:1.6;">
-          Data from tinyurl.com/britishclassicfl-leaderboard<br><br>Sponsored by the Sabado Sessions Podcast
-        </p>
-      </div>`;
-    document.body.appendChild(snapshot);
-    const canvas = await html2canvas(snapshot, { backgroundColor: null, scale: 2, useCORS: true, scrollY: 0 });
-    snapshot.remove();
-    const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
-    return new File([blob], "league_ranking.png", { type: "image/png" });
+    const div=document.createElement("div");
+    Object.assign(div.style,{width:"600px",borderRadius:"16px",overflow:"hidden",background:"#000",
+      backgroundImage:"url('image_leaderboard_shf.jpg')",backgroundSize:"cover",backgroundPosition:"center",
+      boxShadow:"0 10px 30px rgba(0,0,0,.35)",position:"relative",zIndex:9999});
+    const qr=new Image();qr.crossOrigin="anonymous";
+    qr.src=`https://api.qrserver.com/v1/create-qr-code/?size=75x75&data=${encodeURIComponent(window.location.href)}`;
+    await new Promise(res=>qr.onload=res);
+    div.innerHTML=`<div style="background:rgba(0,0,0,.55);padding:18px;position:relative;">
+      <img src="${qr.src}" style="position:absolute;bottom:16px;left:18px;width:52px;height:52px;border-radius:6px;">
+      <h2 style="text-align:center;font-size:20px;font-weight:700;margin-bottom:4px;">British Classic Fantasy League 2025 🇬🇧</h2>
+      <h3 style="text-align:center;font-size:16px;font-weight:600;margin-bottom:4px;">My League Ranking</h3>
+      <p style="text-align:center;font-size:12px;color:#d1d5db;opacity:.9;margin-bottom:12px;">Entry Count – ${total}</p>
+      <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+        <thead><tr>${headerRow.map(h=>`<th style="padding:4px;text-align:center;font-weight:600;">${h}</th>`).join("")}</tr></thead>
+        <tbody>${rowsHtml}</tbody></table>
+      <p style="font-size:11px;color:#ccc;text-align:center;margin-top:18px;line-height:1.6;">
+        Data from tinyurl.com/britishclassicfl-leaderboard<br><br>Sponsored by the Sabado Sessions Podcast</p></div>`;
+    document.body.appendChild(div);
+    const canvas=await html2canvas(div,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
+    div.remove();
+    const blob=await new Promise(r=>canvas.toBlob(r,"image/png"));
+    return new File([blob],"league_ranking.png",{type:"image/png"});
   }
 
   /* ---------- Init ---------- */
-  document.getElementById("shareRankingBtn").addEventListener("click", shareRanking);
+  document.getElementById("shareRankingBtn").addEventListener("click",shareRanking);
   loadLeaderboard();
 });
 </script>
