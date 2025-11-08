@@ -378,28 +378,33 @@ const centerHistAreaPlugin = {
 };
 
 /**
- * centerHistTitlesPlugin (final clean version)
- * --------------------------------------------
- * Preserves Chart.js layout spacing but disables the internal title/subtitle
- * *just before* Chart.js draws them, then re-renders one centered copy.
+ * centerHistTitlesPlugin – Final Kill Switch Version
+ * ---------------------------------------------------
+ * Disables built-in title/subtitle rendering at the plugin level
+ * while preserving layout spacing, then draws one centered copy.
  */
 const centerHistTitlesPlugin = {
   id: 'centerHistTitles',
 
-  beforeDraw(chart, args, opts) {
+  beforeInit(chart, args, opts) {
     if (!opts?.enabled) return;
     if (chart.config.type !== 'bar') return;
     if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return;
 
-    // Backup and temporarily disable titles so Chart.js doesn't draw them
-    const plugins = chart.options.plugins || {};
-    chart.$_histTitles = {
-      title: { ...(plugins.title || {}) },
-      subtitle: { ...(plugins.subtitle || {}) }
-    };
+    // Hijack built-in title/subtitle plugin methods
+    const titlePlugin = Chart.registry.getPlugin('title');
+    const subtitlePlugin = Chart.registry.getPlugin('subtitle');
 
-    if (plugins.title) plugins.title.display = false;
-    if (plugins.subtitle) plugins.subtitle.display = false;
+    if (titlePlugin && !titlePlugin._muted) {
+      titlePlugin.beforeDraw = () => {}; // no-op
+      titlePlugin.afterDraw = () => {};
+      titlePlugin._muted = true;
+    }
+    if (subtitlePlugin && !subtitlePlugin._muted) {
+      subtitlePlugin.beforeDraw = () => {};
+      subtitlePlugin.afterDraw = () => {};
+      subtitlePlugin._muted = true;
+    }
   },
 
   afterDraw(chart, args, opts) {
@@ -408,17 +413,18 @@ const centerHistTitlesPlugin = {
     if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return;
 
     const { ctx, width, chartArea } = chart;
-    if (!ctx || !chartArea || !chart.$_histTitles) return;
+    if (!ctx || !chartArea) return;
 
-    const { title, subtitle } = chart.$_histTitles;
+    const title = chart.options.plugins.title;
+    const subtitle = chart.options.plugins.subtitle;
+
     const centerX = width / 2;
-    let y = chartArea.top - 36; // vertical offset above plot area
+    let y = chartArea.top - 36;
 
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Title
     if (title?.display && title.text) {
       const size = title.font?.size || 18;
       const weight = title.font?.weight || 'bold';
@@ -429,7 +435,6 @@ const centerHistTitlesPlugin = {
       y += size + (title.padding?.bottom || 4);
     }
 
-    // Subtitle
     if (subtitle?.display && subtitle.text) {
       const size = subtitle.font?.size || 14;
       const weight = subtitle.font?.weight || 'normal';
@@ -440,12 +445,6 @@ const centerHistTitlesPlugin = {
     }
 
     ctx.restore();
-
-    // Restore plugin settings for next layout cycle
-    if (chart.options.plugins?.title)
-      chart.options.plugins.title.display = chart.$_histTitles.title.display;
-    if (chart.options.plugins?.subtitle)
-      chart.options.plugins.subtitle.display = chart.$_histTitles.subtitle.display;
   }
 };
 
