@@ -387,7 +387,7 @@ function sizing() {
     donutSubtitle:d ? 18 : 12,
     donutLegend:  d ? 18 : 12,
     donutPercent: d ? 16 : 12,
-    histTitle:    d ? 22 : 14,  // (kept for potential future use)
+    histTitle:    d ? 22 : 14,
     histSubtitle: d ? 18 : 12,
     axisTitle:    d ? 18 : 12,
     axisTick:     d ? 14 : 11,
@@ -401,7 +401,6 @@ function sizing() {
 }
 
 /* ========= MENU ========= */
-
 const menuBtn = document.getElementById('menu-btn');
 const mobileMenu = document.getElementById('mobile-menu');
 let menuVisible = false;
@@ -432,7 +431,6 @@ document.addEventListener('click', (e) => {
 });
 
 /* ========= LOAD CSV ========= */
-
 Papa.parse(SHEET_URL, {
   download: true,
   header: true,
@@ -460,7 +458,6 @@ function setupDropdowns() {
 }
 
 /* ========= CHART RENDERING ========= */
-
 function renderCharts(g, w) {
   const s = sizing();
   const donutId = g === 'F' ? 'womenDonut' : 'menDonut';
@@ -511,7 +508,7 @@ function renderCharts(g, w) {
           text: `Total Votes – ${total}`,
           color: '#aaa',
           font: { size: s.donutSubtitle },
-          padding: { top: 2, bottom: 12 } // donut spacing preserved
+          padding: { top: 2, bottom: 18 } // ✅ restored donut spacing
         },
         legend: {
           position: 'bottom',
@@ -538,20 +535,17 @@ function renderCharts(g, w) {
   });
 
   /* --- HISTOGRAM --- */
-  const vals = rows
-    .map(r => parseFloat(r.PredictedTotal))
-    .filter(v => !isNaN(v) && v > 0);
-
+  const vals = rows.map(r => parseFloat(r.PredictedTotal)).filter(v => !isNaN(v) && v > 0);
   if (!vals.length) {
     if (charts[histId]) charts[histId].destroy();
     return;
   }
 
-  const N    = vals.length;
-  const min  = Math.min(...vals);
-  const max  = Math.max(...vals);
+  const N = vals.length;
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
   const bins = Math.max(3, Math.round(Math.sqrt(N)));
-  const bw   = (max - min) / bins || 1;
+  const bw = (max - min) / bins || 1;
 
   const countsH = Array(bins).fill(0);
   vals.forEach(v => {
@@ -636,9 +630,9 @@ function renderCharts(g, w) {
     }
   });
 
-  charts[histId].$histCentered = false; // allow plugin to run freshly
+  charts[histId].$histCentered = false;
 }
-
+  
 /* ========= COLLAPSIBLE SECTIONS ========= */
 
 function toggleSection(id) {
