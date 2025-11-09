@@ -603,29 +603,22 @@ function renderCharts(g, w) {
       },
       scales: {
         x: {
-          offset: true,
-          ticks: { color: '#ccc', font: { size: s.axisTick } },
-          title: {
-            display: true,
-            text: 'Predicted Total (kg)',
-            color: '#ccc',
-            font: { size: s.axisTitle, weight: 'bold' }
-          },
-          grid: { display: false }
-        },
-        y: {
-          min: yMin,
-          max: yMax,
-          beginAtZero: false,
-          ticks: { color: '#ccc', font: { size: s.axisTick } },
-          title: {
-            display: true,
-            text: `Vote Count (Total = ${N})`,
-            color: '#ccc',
-            font: { size: s.axisTitle, weight: 'bold' }
-          },
-          grid: { display: false }
-        }
+  offset: true,
+  ticks: {
+    color: '#ccc',
+    font: { size: s.axisTick },
+    autoSkip: false,          // ✅ force all labels to render
+    maxRotation: 50,          // ✅ angle so they fit nicely
+    minRotation: 50
+  },
+  title: {
+    display: true,
+    text: 'Predicted Total (kg)',
+    color: '#ccc',
+    font: { size: s.axisTitle, weight: 'bold' }
+  },
+  grid: { display: false }
+}
       }
     }
   });
