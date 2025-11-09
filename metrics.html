@@ -708,22 +708,37 @@ function swapShareButtonFor(containerEl, newBtn) {
 }
 
 function scaleChartFonts(chart, factor) {
-  const edits = [];
-  function walk(obj) {
-    if (!obj || typeof obj !== 'object') return;
-    if (obj.font && typeof obj.font.size === 'number') {
-      edits.push({ font: obj.font, original: obj.font.size });
-      obj.font.size = Math.round(obj.font.size * factor);
-    }
-    for (const key in obj) {
-      if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
-      const val = obj[key];
-      if (val && typeof val === 'object') walk(val);
+  const originalFonts = {};
+
+  function walk(obj, path = []) {
+    for (const [key, val] of Object.entries(obj)) {
+      const fullPath = [...path, key];
+      if (val && typeof val === "object") {
+        // 🎯 only scale if 'size' is numeric, and ignore functions
+        if ("size" in val && typeof val.size === "number") {
+          const p = fullPath.join(".");
+          if (!(p in originalFonts)) originalFonts[p] = val.size;
+          val.size = val.size * factor;
+        } else {
+          walk(val, fullPath);
+        }
+      }
     }
   }
-  walk(chart.options);
-  return function restore() {
-    edits.forEach(e => { e.font.size = e.original; });
+
+  try {
+    walk(chart.options);
+  } catch (err) {
+    console.warn("Font scaling skipped:", err);
+  }
+
+  return () => {
+    for (const [path, size] of Object.entries(originalFonts)) {
+      const keys = path.split(".");
+      let o = chart.options;
+      for (const k of keys.slice(0, -1)) o = o?.[k];
+      if (o) o[keys.at(-1)] = size;
+    }
   };
 }
 
