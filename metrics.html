@@ -765,7 +765,6 @@ async function shareChart(id, g) {
 
   const generatingBtn = makeBtn("Generating…");
   swapShareButtonFor(shareBar, generatingBtn);
-
   await new Promise(requestAnimationFrame);
 
   const chart = Chart.getChart(src);
@@ -797,6 +796,19 @@ async function shareChart(id, g) {
     if (chart.options.scales.y?.grid) chart.options.scales.y.grid.display = false;
   }
 
+  // 🔧 Temporary export-only title/subtitle reduction for histograms
+  let histTitleRestore = null;
+  if (!isDonut && chart.options.plugins?.title && chart.options.plugins?.subtitle) {
+    const t = chart.options.plugins.title;
+    const sT = chart.options.plugins.subtitle;
+    histTitleRestore = {
+      title: t.font.size,
+      subtitle: sT.font.size
+    };
+    t.font.size = Math.round(t.font.size * 0.85);
+    sT.font.size = Math.round(sT.font.size * 0.85);
+  }
+
   chart.update();
   await new Promise(requestAnimationFrame);
 
@@ -826,10 +838,9 @@ async function shareChart(id, g) {
   inner.style.zIndex = '2';
   inner.style.padding = isDonut
     ? '36px 28px 36px 28px'
-    : '40px 28px 44px 28px'; // a bit more for hist credits
+    : '40px 28px 44px 28px';
   card.appendChild(inner);
 
-  // Header and Sub
   const header = document.createElement('h2');
   header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
   header.style.fontSize = (isMobile ? s.headerFont * 1.5 : s.headerFont * 1.25) + 'px';
@@ -871,7 +882,7 @@ async function shareChart(id, g) {
 
   // Spacer to prevent cropping
   const spacer = document.createElement('div');
-  spacer.style.height = isDonut ? '18px' : '48px'; // hist gets bigger buffer
+  spacer.style.height = isDonut ? '18px' : '48px';
   inner.appendChild(spacer);
 
   // QR
@@ -893,10 +904,11 @@ async function shareChart(id, g) {
   document.body.appendChild(card);
   await new Promise(requestAnimationFrame);
 
-  // --- Robust height ---
+  // --- Robust height calculation (fix cropped background / credits) ---
   const naturalH = card.scrollHeight;
-  const baseH = isDonut ? 860 : 940;
-  const buffer = isDonut ? 40 : 100;
+  const scaleFactor = isMobile ? 0.92 : 1.0;
+  const baseH = isDonut ? 860 : 980;
+  const buffer = Math.round((isDonut ? 0.06 : 0.14) * s.exportWidth);
   const finalH = Math.max(baseH, naturalH + buffer);
   card.style.height = finalH + 'px';
   card.style.maxHeight = finalH + 'px';
@@ -904,7 +916,7 @@ async function shareChart(id, g) {
 
   await new Promise(requestAnimationFrame);
 
-  // --- Render capture ---
+  // Capture
   const canvas = await html2canvas(card, {
     backgroundColor: null,
     scale: 2,
@@ -913,7 +925,16 @@ async function shareChart(id, g) {
   });
   card.remove();
 
-  // Restore chart scales only (no font restore)
+  // 🧩 Restore histogram export-only font sizes
+  if (histTitleRestore) {
+    const t = chart.options.plugins.title;
+    const sT = chart.options.plugins.subtitle;
+    if (t && sT) {
+      t.font.size = histTitleRestore.title;
+      sT.font.size = histTitleRestore.subtitle;
+    }
+  }
+
   if (prevScales) chart.options.scales = prevScales;
   chart.update();
 
@@ -922,7 +943,7 @@ async function shareChart(id, g) {
 
   const file = new File([blob], filename, { type: 'image/png' });
 
-  // --- Share or fallback download ---
+  // Share / fallback
   try {
     if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
