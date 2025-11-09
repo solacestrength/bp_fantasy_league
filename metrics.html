@@ -725,28 +725,25 @@ function scaleChartFonts(chart, factor) {
 async function shareChart(id, g) {
   const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
   const s = sizing();
-  let src = document.getElementById(id);
 
-  // 🧩 Non-blocking histogram readiness check
-  if (/Hist$/i.test(id)) {
-    const checkHistogramReady = async () => {
-      let tries = 0;
-      while (tries < 8 && (!src || src.offsetWidth === 0 || src.offsetHeight === 0)) {
-        await new Promise(r => setTimeout(r, 50));
-        src = document.getElementById(id);
-        tries++;
-      }
-      // one more short delay for render flush
-      await new Promise(r => setTimeout(r, 150));
-    };
-    await checkHistogramReady();
-  }
+  const src = document.getElementById(id);
   if (!src) return;
 
   const shareBar = src.previousElementSibling;
   if (!shareBar) return;
 
-  // --- small UI helper ---
+  // --- helper to restore the red icon button ---
+  function resetShareIcon() {
+    shareBar.innerHTML = '';
+    const iconBtn = document.createElement('button');
+    iconBtn.className = 'share-btn';
+    iconBtn.onclick = () => shareChart(id, g);
+    iconBtn.innerHTML =
+      '<img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>';
+    shareBar.appendChild(iconBtn);
+  }
+
+  // --- helper for the temporary text button ---
   function makeBtn(text) {
     const b = document.createElement('button');
     b.className = "bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1";
@@ -756,243 +753,226 @@ async function shareChart(id, g) {
     return b;
   }
 
-  // --- swap to generating state ---
+  // show "Generating…" immediately
   const generatingBtn = makeBtn("Generating…");
   swapShareButtonFor(shareBar, generatingBtn);
 
-  // --- make sure chart is stable before snapshot ---
-  await new Promise(requestAnimationFrame);
-  for (let i = 0; i < 3; i++) await new Promise(requestAnimationFrame);
-
-  const chart = Chart.getChart(src);
-  if (!chart) {
-    console.warn(`Chart.js could not find a chart for #${id}.`);
-    resetShareIcon();
-    return;
-  }
-
-  const sel = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
-  const w = sel ? sel.value : '';
-  const isDonut = id.includes('Donut');
-  const isMobile = window.innerWidth < 768;
-  const fn = `metrics_${g}_${w || 'class'}_${isDonut ? 'donut' : 'hist'}.png`;
-
-  const parent = src.closest('.collapsible-content');
-  if (parent && parent.style.maxHeight === '0px') {
-    parent.style.maxHeight = parent.scrollHeight + 'px';
-    parent.style.opacity = '1';
-    await new Promise(requestAnimationFrame);
-  }
-
-  // --- hide chart gridlines for cleaner capture ---
-  let prevScales = null;
-  if (chart.options.scales) {
-    prevScales = JSON.parse(JSON.stringify(chart.options.scales));
-    if (chart.options.scales.x) chart.options.scales.x.grid.display = false;
-    if (chart.options.scales.y) chart.options.scales.y.grid.display = false;
-    chart.update();
-    await new Promise(requestAnimationFrame);
-  }
-
-  // --- font scaling for histograms ---
-  let restoreFonts = null;
-  if (!isDonut) {
-    restoreFonts = scaleChartFonts(chart, 0.85);
-    chart.update();
-    await new Promise(requestAnimationFrame);
-  }
-
-  // --- build export card ---
-  const card = document.createElement('div');
-  card.style.position = 'relative';
-  card.style.width = s.exportWidth + 'px';
-  card.style.borderRadius = '16px';
-  card.style.overflow = 'hidden';
-  card.style.margin = '0 auto';
-  card.style.backgroundImage = "url('bc25_logo.jpg')";
-  card.style.backgroundSize = 'cover';
-  card.style.backgroundPosition = 'center';
-  card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
-
-  const overlay = document.createElement('div');
-  overlay.style.position = 'absolute';
-  overlay.style.inset = '0';
-  overlay.style.background = 'rgba(0,0,0,0.65)';
-  card.appendChild(overlay);
-
-  const inner = document.createElement('div');
-  inner.style.position = 'relative';
-  inner.style.textAlign = 'center';
-  inner.style.color = '#fff';
-  inner.style.fontFamily = "'Inter', sans-serif";
-  inner.style.zIndex = '2';
-  inner.style.padding = isDonut ? '36px 28px 36px 28px' : '40px 28px 36px 28px';
-  card.appendChild(inner);
-
-  const header = document.createElement('h2');
-  header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
-  header.style.fontSize = (isMobile ? s.headerFont * 1.5 : s.headerFont * 1.25) + 'px';
-  header.style.fontWeight = '700';
-  header.style.margin = '0 0 4px 0';
-
-  const sub = document.createElement('p');
-  sub.textContent = (w ? `${w}kg ` : '') + (g === 'F' ? 'Women' : 'Men');
-  sub.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.25) + 'px';
-  sub.style.fontWeight = '700';
-  sub.style.color = '#ddd';
-  sub.style.margin = '0 0 14px 0';
-
-  const dataURL = src.toDataURL('image/png');
-  const img = new Image();
-  img.src = dataURL;
-  try { await img.decode(); } catch {}
-  img.style.display = 'block';
-  img.style.margin = '0 auto 18px auto';
-  img.style.borderRadius = '8px';
-  img.style.width = (isMobile ? (isDonut ? '80%' : '96%') : (isDonut ? '70%' : '93%'));
-  img.style.height = 'auto';
-
-  const credit = document.createElement('p');
-  credit.style.fontSize = (isMobile ? s.creditFont * 1.25 : s.creditFont * 1.15) + 'px';
-  credit.style.color = '#ccc';
-  credit.style.lineHeight = '1.5';
-  credit.style.marginTop = '8px';
-  credit.innerHTML =
-    'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
-
-  const spacer = document.createElement('div');
-  spacer.style.height = isDonut ? '14px' : '28px';
-
-  const qr = new Image();
-  qr.crossOrigin = 'anonymous';
-  const qrsz = isMobile ? s.qrSize * 1.1 : s.qrSize * 1.25;
-  qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent(
-    'https://solacestrength.github.io/britishclassicfl/metrics.html'
-  )}`;
-  qr.style.position = 'absolute';
-  qr.style.bottom = '18px';
-  qr.style.left = '18px';
-  qr.style.width = qrsz + 'px';
-  qr.style.height = qrsz + 'px';
-  qr.style.borderRadius = '6px';
-  qr.style.opacity = '0.95';
-
-  inner.append(header, sub, img, credit, spacer);
-  card.appendChild(qr);
-  document.body.appendChild(card);
-
-  await new Promise(requestAnimationFrame);
-
-  const naturalH = card.scrollHeight;
-  const baseH = isDonut ? 860 : 820;
-  const scaleFactor = isMobile ? 0.92 : 1.0;
-  const fixedH = Math.min(naturalH * scaleFactor, s.exportWidth * scaleFactor);
-  const buffer = Math.round(
-    fixedH * (isMobile ? (isDonut ? 0.15 : 0.22) : 0.02)
-  );
-
-  card.style.height = fixedH + buffer + 'px';
-  card.style.maxHeight = fixedH + buffer + 'px';
-  card.style.minHeight = (baseH * scaleFactor) + 'px';
-
-  await new Promise(requestAnimationFrame);
-
-  // --- robust html2canvas + blob handling ---
-  let canvas;
   try {
-    canvas = await Promise.race([
-      html2canvas(card, {
+    // small delay so Chart.js finishes any hover / animation frames
+    await new Promise(r => setTimeout(r, 250));
+
+    const chart = Chart.getChart(src);
+    if (!chart) {
+      console.warn(`No Chart instance found for #${id}`);
+      resetShareIcon();
+      return;
+    }
+
+    const sel = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
+    const w = sel ? sel.value : '';
+    const isDonut = id.includes('Donut');
+    const isMobile = window.innerWidth < 768;
+    const filename = `metrics_${g}_${w || 'class'}_${isDonut ? 'donut' : 'hist'}.png`;
+
+    // make sure the section is open if it was collapsed
+    const parent = src.closest('.collapsible-content');
+    if (parent && !parent.classList.contains('open')) {
+      parent.classList.add('open');
+      parent.style.maxHeight = parent.scrollHeight + 'px';
+      parent.style.opacity = '1';
+      await new Promise(r => setTimeout(r, 200));
+    }
+
+    // snapshot tweaks: hide grids, shrink fonts for hist
+    let prevScales = null;
+    let restoreFonts = null;
+
+    if (chart.options.scales) {
+      prevScales = JSON.parse(JSON.stringify(chart.options.scales));
+      if (chart.options.scales.x) chart.options.scales.x.grid.display = false;
+      if (chart.options.scales.y) chart.options.scales.y.grid.display = false;
+    }
+    if (!isDonut) {
+      restoreFonts = scaleChartFonts(chart, 0.85);
+    }
+    if (prevScales || restoreFonts) {
+      chart.update();
+      await new Promise(r => requestAnimationFrame(r));
+    }
+
+    // --- build export card wrapper ---
+    const card = document.createElement('div');
+    card.style.position = 'relative';
+    card.style.width = s.exportWidth + 'px';
+    card.style.borderRadius = '16px';
+    card.style.overflow = 'hidden';
+    card.style.margin = '0 auto';
+    card.style.backgroundImage = "url('bc25_logo.jpg')";
+    card.style.backgroundSize = 'cover';
+    card.style.backgroundPosition = 'center';
+    card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
+
+    const overlay = document.createElement('div');
+    overlay.style.position = 'absolute';
+    overlay.style.inset = '0';
+    overlay.style.background = 'rgba(0,0,0,0.65)';
+    card.appendChild(overlay);
+
+    const inner = document.createElement('div');
+    inner.style.position = 'relative';
+    inner.style.textAlign = 'center';
+    inner.style.color = '#fff';
+    inner.style.fontFamily = "'Inter', sans-serif";
+    inner.style.zIndex = '2';
+    inner.style.padding = isDonut ? '36px 28px 36px 28px' : '40px 28px 36px 28px';
+    card.appendChild(inner);
+
+    const header = document.createElement('h2');
+    header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
+    header.style.fontSize = (isMobile ? s.headerFont * 1.5 : s.headerFont * 1.25) + 'px';
+    header.style.fontWeight = '700';
+    header.style.margin = '0 0 4px 0';
+
+    const sub = document.createElement('p');
+    sub.textContent = (w ? `${w}kg ` : '') + (g === 'F' ? 'Women' : 'Men');
+    sub.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.25) + 'px';
+    sub.style.fontWeight = '700';
+    sub.style.color = '#ddd';
+    sub.style.margin = '0 0 14px 0';
+
+    // capture the chart as an image
+    const dataURL = src.toDataURL('image/png');
+    const img = new Image();
+    img.src = dataURL;
+    try { await img.decode(); } catch (e) {}
+    img.style.display = 'block';
+    img.style.margin = '0 auto 18px auto';
+    img.style.borderRadius = '8px';
+    img.style.width = (isMobile ? (isDonut ? '80%' : '96%') : (isDonut ? '70%' : '93%'));
+    img.style.height = 'auto';
+
+    const credit = document.createElement('p');
+    credit.style.fontSize = (isMobile ? s.creditFont * 1.25 : s.creditFont * 1.15) + 'px';
+    credit.style.color = '#ccc';
+    credit.style.lineHeight = '1.5';
+    credit.style.marginTop = '8px';
+    credit.innerHTML =
+      'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
+
+    const spacer = document.createElement('div');
+    spacer.style.height = isDonut ? '14px' : '28px';
+
+    const qr = new Image();
+    qr.crossOrigin = 'anonymous';
+    const qrsz = isMobile ? s.qrSize * 1.1 : s.qrSize * 1.25;
+    qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent(
+      'https://solacestrength.github.io/britishclassicfl/metrics.html'
+    )}`;
+    qr.style.position = 'absolute';
+    qr.style.bottom = '18px';
+    qr.style.left = '18px';
+    qr.style.width = qrsz + 'px';
+    qr.style.height = qrsz + 'px';
+    qr.style.borderRadius = '6px';
+    qr.style.opacity = '0.95';
+
+    inner.append(header, sub, img, credit, spacer);
+    card.appendChild(qr);
+    document.body.appendChild(card);
+
+    await new Promise(r => requestAnimationFrame(r));
+
+    // size the card sensibly, then capture
+    const naturalH = card.scrollHeight;
+    const baseH = isDonut ? 860 : 820;
+    const scaleFactor = isMobile ? 0.92 : 1.0;
+    const fixedH = Math.min(naturalH * scaleFactor, s.exportWidth * scaleFactor);
+    const buffer = Math.round(
+      fixedH * (isMobile ? (isDonut ? 0.15 : 0.22) : 0.02)
+    );
+
+    card.style.height = fixedH + buffer + 'px';
+    card.style.maxHeight = fixedH + buffer + 'px';
+    card.style.minHeight = (baseH * scaleFactor) + 'px';
+
+    await new Promise(r => requestAnimationFrame(r));
+
+    let canvas;
+    try {
+      canvas = await html2canvas(card, {
         backgroundColor: null,
         scale: 2,
         useCORS: true,
         scrollY: 0
-      }),
-      new Promise((_, reject) => setTimeout(() => reject('timeout'), 8000))
-    ]);
-  } catch (err) {
-    console.error('html2canvas failed or timed out:', err);
-    resetShareIcon();
-    card.remove();
-    return;
-  }
-
-  card.remove();
-
-  if (restoreFonts) restoreFonts();
-  if (prevScales) chart.options.scales = prevScales;
-  chart.update();
-
-  let blob;
-  try {
-    blob = await new Promise((resolve, reject) => {
-      canvas.toBlob((b) => (b ? resolve(b) : reject('toBlob failed')), 'image/png');
-    });
-  } catch (err) {
-    console.error('toBlob failed:', err);
-    resetShareIcon();
-    return;
-  }
-
-  const file = new File([blob], fn, { type: 'image/png' });
-
-  // --- Android Chrome two-step flow ---
-  if (isAndroidChrome) {
-    const shareBtn = makeBtn("Share Generated Image");
-    shareBtn.onclick = async () => {
-      try {
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: 'British Classic Fantasy League 2025',
-            text: 'Check out these stats!',
-            files: [file]
-          });
-        } else {
-          const link = document.createElement('a');
-          link.href = URL.createObjectURL(blob);
-          link.download = fn;
-          link.click();
-          URL.revokeObjectURL(link.href);
-        }
-      } catch (e) {}
-      resetShareIcon();
-    };
-    swapShareButtonFor(shareBar, shareBtn);
-    return;
-  }
-
-  // --- iOS / desktop fallback ---
-  try {
-    if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({
-        title: 'British Classic Fantasy League 2025',
-        text: 'Check out these stats!',
-        files: [file]
       });
+    } finally {
+      card.remove();
+    }
+
+    if (restoreFonts) restoreFonts();
+    if (prevScales) chart.options.scales = prevScales;
+    if (prevScales || restoreFonts) chart.update();
+
+    const blob = await new Promise((resolve, reject) => {
+      canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png');
+    });
+
+    // prefer native file share when fully supported
+    const supportsFileShare =
+      typeof File !== 'undefined' &&
+      navigator.canShare &&
+      (() => {
+        try {
+          const testFile = new File([blob], filename, { type: 'image/png' });
+          return navigator.canShare({ files: [testFile] });
+        } catch {
+          return false;
+        }
+      })();
+
+    if (supportsFileShare && !isChromeIOS) {
+      const file = new File([blob], filename, { type: 'image/png' });
+      try {
+        await navigator.share({
+          title: 'British Classic Fantasy League 2025',
+          text: 'Check out these stats!',
+          files: [file]
+        });
+      } catch (err) {
+        console.error('Native share cancelled/failed:', err);
+      }
+    } else if (isAndroidChrome) {
+      // two-step UI on Android Chrome
+      const shareBtn = makeBtn("Share Generated Image");
+      shareBtn.onclick = () => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        resetShareIcon();
+      };
+      swapShareButtonFor(shareBar, shareBtn);
+      return; // don't reset yet; happens after user taps
     } else {
-      const url = URL.createObjectURL(file);
+      // fallback: just download
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = fn;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
     }
+
+    resetShareIcon();
   } catch (err) {
-    console.error('Share failed:', err);
-  }
-
-  resetShareIcon();
-
-  // --- helper to revert the share icon ---
-  function resetShareIcon() {
-    shareBar.innerHTML = '';
-    const iconBtn = document.createElement('button');
-    iconBtn.className = 'share-btn';
-    iconBtn.onclick = () => shareChart(id, g);
-    iconBtn.innerHTML =
-      '<img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>';
-    shareBar.appendChild(iconBtn);
+    console.error('shareChart error:', err);
+    resetShareIcon();
   }
 }
 
