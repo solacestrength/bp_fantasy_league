@@ -20,7 +20,7 @@
     background: #0b0b0b;
     color: #f1f1f1;
     font-family: 'Inter', sans-serif;
-    overflow-x: hidden; /* safety: no horizontal scroll/blank strip */
+    overflow-x: hidden;
   }
 
   /* === SELECT ELEMENTS === */
@@ -43,6 +43,16 @@
     color: #f1f1f1;
   }
 
+  .drill-select {
+    width: 100%;
+    font-size: 0.75rem;
+    padding-top: 0.4rem;
+    padding-bottom: 0.4rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
   /* === METRICS LAYOUT === */
   .chart-container {
     max-width: 600px;
@@ -50,6 +60,7 @@
     position: relative;
     display: block;
     width: 100%;
+    transition: opacity 0.25s ease;
   }
 
   canvas {
@@ -118,7 +129,7 @@
 
   .collapsible-content.open {
     opacity: 1;
-    max-height: 1000px;  /* big enough for charts */
+    max-height: 1000px;
     padding-bottom: 1rem;
   }
 
@@ -161,6 +172,30 @@
     filter: invert(1);
     height: 18px;
     width: 18px;
+  }
+
+  /* === BACK PILL (Drilldown) === */
+  .back-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    background-color: #111827;
+    border: 1px solid #374151;
+    color: #e5e7eb;
+    font-size: 0.7rem;
+    font-weight: 500;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+    transition: all .2s ease;
+  }
+
+  .back-pill:hover {
+    background-color: #374151;
+    color: #f97316;
+    transform: translateY(-1px);
   }
 
   /* === ANIMATIONS === */
@@ -251,19 +286,17 @@
             <canvas id="womenDonut"></canvas>
           </div>
 
-          <!-- WOMEN DRILLDOWN (injected below donut) -->
-          <div class="chart-container mt-4" id="womenDrillWrapper" style="display:none;">
-            <select id="womenDrillSelect"
-                    class="drill-select p-2 rounded mb-3 text-xs sm:text-sm w-full"></select>
-            <div class="flex items-center justify-between mb-1">
-              <button type="button"
-                      class="text-xs text-gray-300 hover:text-red-400 underline"
-                      onclick="closeDrilldown('F')">
-                ↩ Back to doughnut
+          <!-- WOMEN DRILLDOWN -->
+          <div class="chart-container mt-4" id="womenDrillWrapper" style="display:none; opacity:0;">
+            <select id="womenDrillSelect" class="drill-select mb-3"></select>
+            <div class="flex items-center justify-between mb-2">
+              <button type="button" class="back-pill" onclick="closeDrilldown('F')">
+                <span>&larr;</span>
+                <span>Back to Doughnut</span>
               </button>
               <button class="share-btn" onclick="shareDrilldown('F')">
                 <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
-                     class="share-icon" alt="Share"/>
+                     class="share-icon" alt="Share Drilldown"/>
               </button>
             </div>
             <canvas id="womenDrill"></canvas>
@@ -308,18 +341,16 @@
           </div>
 
           <!-- MEN DRILLDOWN -->
-          <div class="chart-container mt-4" id="menDrillWrapper" style="display:none;">
-            <select id="menDrillSelect"
-                    class="drill-select p-2 rounded mb-3 text-xs sm:text-sm w-full"></select>
-            <div class="flex items-center justify-between mb-1">
-              <button type="button"
-                      class="text-xs text-gray-300 hover:text-red-400 underline"
-                      onclick="closeDrilldown('M')">
-                ↩ Back to doughnut
+          <div class="chart-container mt-4" id="menDrillWrapper" style="display:none; opacity:0;">
+            <select id="menDrillSelect" class="drill-select mb-3"></select>
+            <div class="flex items-center justify-between mb-2">
+              <button type="button" class="back-pill" onclick="closeDrilldown('M')">
+                <span>&larr;</span>
+                <span>Back to Doughnut</span>
               </button>
               <button class="share-btn" onclick="shareDrilldown('M')">
                 <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
-                     class="share-icon" alt="Share"/>
+                     class="share-icon" alt="Share Drilldown"/>
               </button>
             </div>
             <canvas id="menDrill"></canvas>
@@ -383,7 +414,6 @@ const centerHistAreaPlugin = {
     const canvasMid = chart.width / 2;
     const areaMid = (area.left + area.right) / 2;
     const diff = areaMid - canvasMid;
-
     if (Math.abs(diff) < 1) {
       chart.$histCentered = true;
       return;
@@ -485,23 +515,6 @@ Papa.parse(SHEET_URL, {
   }
 });
 
-function setupDropdowns() {
-  ['F', 'M'].forEach((g) => {
-    const d = allData.filter((r) => r.Gender === g);
-    const classes = [...new Set(d.map((r) => r.Class))]
-      .filter(Boolean)
-      .sort((a, b) => parseFloat(a) - parseFloat(b));
-
-    const select = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
-    if (!select) return;
-
-    select.innerHTML = classes.map((c) => `<option value="${c}">${c}kg</option>`).join('');
-    select.onchange = () => renderCharts(g, select.value);
-
-    if (classes[0]) renderCharts(g, classes[0]);
-  });
-}
-
 /* ========= DRILLDOWN STATE ========= */
 const drillState = {
   F: {
@@ -525,6 +538,57 @@ const drillState = {
     totalVotesInClass: 0
   }
 };
+
+/* ========= SETUP DROPDOWNS ========= */
+function setupDropdowns() {
+  ['F', 'M'].forEach((g) => {
+    const d = allData.filter((r) => r.Gender === g);
+    const classes = [...new Set(d.map((r) => r.Class))]
+      .filter(Boolean)
+      .sort((a, b) => parseFloat(a) - parseFloat(b));
+
+    const select = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
+    if (!select) return;
+
+    select.innerHTML = classes.map((c) => `<option value="${c}">${c}kg</option>`).join('');
+    select.onchange = () => {
+      const newClass = select.value;
+      renderCharts(g, newClass);
+
+      // If drilldown is open for this gender, update it to new class
+      const state = drillState[g];
+      if (state && state.wrapper.style.display === 'block') {
+        const rows = allData.filter(r => r.Gender === g && r.Class === newClass);
+        const firstAthlete = rows[0]?.Athlete;
+        if (firstAthlete) {
+          openDrilldown(g, newClass, firstAthlete, rows, { skipFade: true });
+        } else {
+          closeDrilldown(g);
+        }
+      }
+    };
+
+    if (classes[0]) renderCharts(g, classes[0]);
+  });
+}
+
+/* ========= FADE HELPERS ========= */
+function fadeIn(el) {
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.opacity = 0;
+  requestAnimationFrame(() => {
+    el.style.opacity = 1;
+  });
+}
+
+function fadeOut(el) {
+  if (!el) return;
+  el.style.opacity = 0;
+  setTimeout(() => {
+    el.style.display = 'none';
+  }, 250);
+}
 
 /* ========= CHART RENDERING ========= */
 function renderCharts(g, w) {
@@ -599,14 +663,19 @@ function renderCharts(g, w) {
           anchor: 'center',
           align: 'center',
           clamp: true
+        },
+        tooltip: {
+          callbacks: {
+            // keep default label (athlete + votes) for donut
+          }
         }
       },
-      // === DRILLDOWN: DOUBLE CLICK HANDLER ===
-      onClick: (evt, elements) => handleDonutClick(g, w, donutId, evt, elements, rows)
+      onClick: (evt, elements) =>
+        handleDonutClick(g, w, donutId, evt, elements, rows)
     }
   });
 
-  /* --- HISTOGRAM --- (unchanged) */
+  /* --- HISTOGRAM --- */
   const vals = rows
     .map(r => parseFloat(r.PredictedTotal))
     .filter(v => !isNaN(v) && v > 0);
@@ -674,6 +743,12 @@ function renderCharts(g, w) {
             return (barH < f * 1.05) ? 'end' : 'center';
           },
           clamp: true
+        },
+        tooltip: {
+          callbacks: {
+            title: (items) => (items[0]?.label) || '',
+            label: (ctx) => `🟦 Vote Count – ${ctx.parsed.y}`
+          }
         }
       },
       scales: {
@@ -720,7 +795,7 @@ function renderCharts(g, w) {
 
 /* ========= DRILLDOWN HELPERS ========= */
 
-// Double-click detection + trigger
+// Detect double-click on donut segment
 function handleDonutClick(g, w, donutId, evt, elements, rows) {
   if (!evt || !evt.native) return;
   const target = evt.native.target;
@@ -738,15 +813,13 @@ function handleDonutClick(g, w, donutId, evt, elements, rows) {
     const idx = elements[0].index;
     const chart = charts[donutId];
     if (!chart) return;
-
     const athlete = chart.data.labels[idx];
     if (!athlete) return;
-
-    openDrilldown(g, w, athlete, rows);
+    openDrilldown(g, w, athlete, rows, { skipFade: false });
   }
 }
 
-// Build athlete -> { votes:[], total } map for this class
+// Build athlete -> { votes:[], total } for this gender+class
 function buildDrillAthleteMap(rows) {
   const map = {};
   rows.forEach(r => {
@@ -767,22 +840,24 @@ function buildDrillAthleteMap(rows) {
   return map;
 }
 
-function openDrilldown(g, w, athlete, rows) {
+function openDrilldown(g, w, athlete, rows, opts = {}) {
   const state = drillState[g];
   if (!state) return;
 
-  // Prepare mapping
+  const donutContainerId = g === 'F' ? 'womenDonutContainer' : 'menDonutContainer';
+  const donutContainer = document.getElementById(donutContainerId);
+
   state.athleteMap = buildDrillAthleteMap(rows);
   state.currentAthlete = athlete;
   state.currentClass = w;
   state.totalVotesInClass = rows.length;
 
-  // Populate dropdown
+  // Dropdown options
   const names = Object.keys(state.athleteMap);
   state.select.innerHTML = '';
   names.forEach(name => {
     const meta = state.athleteMap[name];
-    const label = meta.total ? `${name} – ${meta.total}kg` : name;
+    const label = meta.total ? `${name} (${meta.total}kg)` : name;
     const opt = document.createElement('option');
     opt.value = name;
     opt.textContent = label;
@@ -790,17 +865,27 @@ function openDrilldown(g, w, athlete, rows) {
     state.select.appendChild(opt);
   });
 
-  // Show wrapper, hide donut
-  if (g === 'F') {
-    document.getElementById('womenDonutContainer').style.display = 'none';
-  } else {
-    document.getElementById('menDonutContainer').style.display = 'none';
+  // If no votes for chosen athlete, default to first with votes
+  if (!state.athleteMap[athlete]) {
+    const firstWithVotes = names.find(n => (state.athleteMap[n].votes || []).length);
+    if (firstWithVotes) {
+      state.currentAthlete = firstWithVotes;
+    }
   }
-  state.wrapper.style.display = 'block';
 
-  renderDrillChart(g, athlete);
+  // Show drill wrapper / hide donut with optional fade
+  if (!opts.skipFade) {
+    fadeOut(donutContainer);
+    fadeIn(state.wrapper);
+  } else {
+    donutContainer.style.display = 'none';
+    state.wrapper.style.display = 'block';
+    state.wrapper.style.opacity = 1;
+  }
 
-  // Change handler
+  renderDrillChart(g, state.currentAthlete);
+
+  // Dropdown change: update athlete in drilldown
   state.select.onchange = () => {
     const selAthlete = state.select.value;
     if (!selAthlete) return;
@@ -813,12 +898,11 @@ function closeDrilldown(g) {
   const state = drillState[g];
   if (!state) return;
 
-  state.wrapper.style.display = 'none';
-  if (g === 'F') {
-    document.getElementById('womenDonutContainer').style.display = 'block';
-  } else {
-    document.getElementById('menDonutContainer').style.display = 'block';
-  }
+  const donutContainerId = g === 'F' ? 'womenDonutContainer' : 'menDonutContainer';
+  const donutContainer = document.getElementById(donutContainerId);
+
+  fadeOut(state.wrapper);
+  fadeIn(donutContainer);
 
   if (state.chart) {
     state.chart.destroy();
@@ -827,6 +911,8 @@ function closeDrilldown(g) {
 
   state.currentAthlete = null;
   state.currentClass = null;
+  state.athleteMap = {};
+  state.totalVotesInClass = 0;
 }
 
 function renderDrillChart(g, athlete) {
@@ -869,6 +955,12 @@ function renderDrillChart(g, athlete) {
           anchor: 'center',
           align: 'center',
           clamp: true
+        },
+        tooltip: {
+          callbacks: {
+            title: (items) => (items[0]?.label) || '',
+            label: (ctx2) => `🟦 Vote Count – ${ctx2.parsed.y}`
+          }
         },
         title: { display: false }
       },
@@ -960,167 +1052,144 @@ window.addEventListener('resize', () => {
   });
 });
 
-/* ========= SHARE / EXPORT (EXISTING) ========= */
-function detectBrowserShareSupport(){
-  const ua=navigator.userAgent.toLowerCase();
-  return{
-    isAndroidChrome:ua.includes('android')&&ua.includes('chrome')&&!ua.includes('edge')&&!ua.includes('opr'),
-    isChromeIOS:ua.includes('crios')
+/* ========= SHARE / EXPORT HELPERS ========= */
+
+function detectBrowserShareSupport() {
+  const ua = navigator.userAgent.toLowerCase();
+  return {
+    isAndroidChrome: ua.includes('android') && ua.includes('chrome') && !ua.includes('edge') && !ua.includes('opr'),
+    isChromeIOS: ua.includes('crios')
   };
 }
 
-function swapShareButtonFor(containerEl,newBtn){
-  containerEl.innerHTML='';containerEl.appendChild(newBtn);
+function swapShareButtonFor(containerEl, newBtn){
+  containerEl.innerHTML = '';
+  containerEl.appendChild(newBtn);
 }
 
-function scaleChartFonts(chart,factor){
-  const edits=[];
-  function walk(obj){
-    if(!obj||typeof obj!=='object')return;
-    if(obj.font&&typeof obj.font.size==='number'){edits.push({font:obj.font,original:obj.font.size});obj.font.size=Math.round(obj.font.size*factor);}
-    for(const key in obj){if(Object.prototype.hasOwnProperty.call(obj,key))walk(obj[key]);}
-  }
-  walk(chart.options);
-  return function restore(){edits.forEach(e=>{e.font.size=e.original;});};
+function sanitizeFilename(str) {
+  return (str || 'value')
+    .toString()
+    .normalize('NFKD')
+    .replace(/[^\w\-]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .toLowerCase();
 }
 
-async function shareChart(id,g){
-  const {isAndroidChrome,isChromeIOS}=detectBrowserShareSupport();
-  const s=sizing();
-  const src=document.getElementById(id);
-  if(!src)return;
-  const shareBar=src.previousElementSibling;
-  if(!shareBar)return;
+/* ========= SHARE STANDARD CHARTS (DONUT + HIST) ========= */
+
+async function shareChart(id, g){
+  const {isAndroidChrome, isChromeIOS} = detectBrowserShareSupport();
+  const s = sizing();
+  const src = document.getElementById(id);
+  if(!src) return;
+  const shareBar = src.previousElementSibling;
+  if(!shareBar) return;
 
   function makeBtn(text){
-    const b=document.createElement('button');
-    b.className="bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1";
-    b.style.minWidth="140px";b.style.height="24px";b.textContent=text;return b;
+    const b = document.createElement('button');
+    b.className = "bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1";
+    b.style.minWidth = "140px";
+    b.style.height = "24px";
+    b.textContent = text;
+    return b;
   }
 
-  const generatingBtn=makeBtn("Generating…");
-  swapShareButtonFor(shareBar,generatingBtn);
+  const generatingBtn = makeBtn("Generating…");
+  swapShareButtonFor(shareBar, generatingBtn);
   await new Promise(requestAnimationFrame);
-  const chart=Chart.getChart(src);
-  if(!chart)return;
 
-  const sel=document.getElementById(g==='F'?'womenSelect':'menSelect');
-  const w=sel?sel.value:'';
-  const isDonut=id.includes('Donut');
-  const isMobile=window.innerWidth<768;
-  const fn=`metrics_${g}_${w||'class'}_${isDonut?'donut':'hist'}.png`;
+  const sel = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
+  const w = sel ? sel.value : '';
+  const isDonut = id.includes('Donut');
+  const isMobile = window.innerWidth < 768;
+  const fn = `metrics_${g}_${w || 'class'}_${isDonut?'donut':'hist'}.png`;
 
-  const card=document.createElement('div');
-  card.style.position='relative';
-  card.style.width=s.exportWidth+'px';
-  card.style.borderRadius='16px';
-  card.style.overflow='hidden';
-  card.style.margin='0 auto';
-  card.style.backgroundImage="url('bc25_logo.jpg')";
-  card.style.backgroundSize='cover';
-  card.style.backgroundPosition='center';
-  card.style.boxShadow='0 10px 25px rgba(0,0,0,0.35)';
+  const dataURL = src.toDataURL('image/png');
+  const img = new Image();
+  img.src = dataURL;
+  await img.decode();
 
-  const overlay=document.createElement('div');
-  overlay.style.position='absolute';
-  overlay.style.inset='0';
-  overlay.style.background='rgba(0,0,0,0.65)';
+  const card = document.createElement('div');
+  card.style.position = 'relative';
+  card.style.width = s.exportWidth + 'px';
+  card.style.borderRadius = '24px';
+  card.style.overflow = 'hidden';
+  card.style.margin = '0 auto';
+  card.style.backgroundImage = "url('bc25_logo.jpg')";
+  card.style.backgroundSize = 'cover';
+  card.style.backgroundPosition = 'center';
+  card.style.boxShadow = '0 16px 40px rgba(0,0,0,0.55)';
+
+  const overlay = document.createElement('div');
+  overlay.style.position = 'absolute';
+  overlay.style.inset = '0';
+  overlay.style.background = 'rgba(0,0,0,0.70)';
   card.appendChild(overlay);
 
-  const inner=document.createElement('div');
-  inner.style.position='relative';
-  inner.style.textAlign='center';
-  inner.style.color='#fff';
-  inner.style.fontFamily="'Inter', sans-serif";
-  inner.style.zIndex='2';
-  inner.style.padding=isDonut?'36px 28px 36px 28px':'40px 28px 36px 28px';
+  const inner = document.createElement('div');
+  inner.style.position = 'relative';
+  inner.style.textAlign = 'center';
+  inner.style.color = '#fff';
+  inner.style.fontFamily = "'Inter', sans-serif";
+  inner.style.zIndex = '2';
+  inner.style.padding = '32px 26px 26px 26px';
   card.appendChild(inner);
 
-  const header=document.createElement('h2');
-  header.textContent='British Classic Fantasy League 2025 🇬🇧';
-  header.style.fontSize=(isMobile?s.headerFont*1.5:s.headerFont*1.25)+'px';
-  header.style.fontWeight='700';
-  header.style.margin='0 0 4px 0';
+  const header = document.createElement('h2');
+  header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
+  header.style.fontSize = (isMobile?s.headerFont*1.4:s.headerFont*1.2) + 'px';
+  header.style.fontWeight = '700';
+  header.style.margin = '0 0 4px 0';
 
-  const sub=document.createElement('p');
-  const label=(w?`${w}kg `:'')+(g==='F'?'Women':'Men');
-  if(isDonut){
-    sub.textContent=label;
-  }else{
-    sub.innerHTML=`${label}<br>Distribution of Predicted Winning Totals`;
-  }
-  sub.style.fontSize=(isMobile?s.subFont*1.5:s.subFont*1.25)+'px';
-  sub.style.fontWeight='700';
-  sub.style.color='#ddd';
-  sub.style.margin='0 0 14px 0';
+  const sub = document.createElement('p');
+  const label = (w?`${w}kg `:'') + (g==='F'?'Women':'Men');
+  sub.innerHTML = isDonut
+    ? label
+    : `${label}<br>Distribution of Predicted Winning Totals`;
+  sub.style.fontSize = (isMobile?s.subFont*1.1:s.subFont) + 'px';
+  sub.style.fontWeight = '600';
+  sub.style.color = '#e5e7eb';
+  sub.style.margin = '0 0 18px 0';
 
-  const dataURL=src.toDataURL('image/png');
-  const img=new Image();
-  img.src=dataURL;
-  await img.decode();
-  img.style.display='block';
-  img.style.margin='0 auto 18px auto';
-  img.style.borderRadius='8px';
-  img.style.width=(isMobile?(isDonut?'80%':'96%'):(isDonut?'70%':'93%'));
-  img.style.height='auto';
+  img.style.display = 'block';
+  img.style.margin = '0 auto 16px auto';
+  img.style.borderRadius = '14px';
+  img.style.width = isDonut ? '72%' : '92%';
+  img.style.height = 'auto';
 
-  const credit=document.createElement('p');
-  credit.style.fontSize=(isMobile?s.creditFont*1.25:s.creditFont*1.15)+'px';
-  credit.style.color='#ccc';
-  credit.style.lineHeight='1.5';
-  credit.style.marginTop='8px';
-  credit.innerHTML='Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
+  const credit = document.createElement('p');
+  credit.style.fontSize = (isMobile?s.creditFont*0.9:s.creditFont*0.8) + 'px';
+  credit.style.color = '#d1d5db';
+  credit.style.lineHeight = '1.5';
+  credit.style.marginTop = '8px';
+  credit.innerHTML =
+    'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-  const qr=new Image();
-  const qrsz=isMobile?s.qrSize*1.1:s.qrSize*1.25;
-  qr.src=`https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent('https://solacestrength.github.io/britishclassicfl/metrics.html')}`;
-  qr.style.position='absolute';
-  qr.style.bottom='18px';
-  qr.style.left='18px';
-  qr.style.width=qrsz+'px';
-  qr.style.height=qrsz+'px';
-  qr.style.borderRadius='6px';
-  qr.style.opacity='0.95';
+  const qr = new Image();
+  const qrsz = s.qrSize;
+  qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent('https://solacestrength.github.io/britishclassicfl/metrics.html')}`;
+  qr.style.position = 'absolute';
+  qr.style.bottom = '18px';
+  qr.style.left = '18px';
+  qr.style.width = qrsz+'px';
+  qr.style.height = qrsz+'px';
+  qr.style.borderRadius = '6px';
 
-  inner.append(header,sub,img,credit);
+  inner.append(header, sub, img, credit);
   card.appendChild(qr);
   document.body.appendChild(card);
 
   await new Promise(requestAnimationFrame);
-  const canvas=await html2canvas(card,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
+  const canvas = await html2canvas(card,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
   card.remove();
 
-  const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));
-  const file=new File([blob],fn,{type:'image/png'});
-
-  const {isAndroidChrome:android,chomeIOS} = detectBrowserShareSupport();
-
-  if (android) {
-    const shareBtn = makeBtn("Share Generated Image");
-    shareBtn.onclick = async () => {
-      try {
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: 'British Classic Fantasy League 2025',
-            text: 'Check out these stats!',
-            files: [file]
-          });
-        } else {
-          const link = document.createElement('a');
-          link.href = URL.createObjectURL(blob);
-          link.download = fn;
-          link.click();
-          URL.revokeObjectURL(link.href);
-        }
-      } catch (e) {}
-      resetShareIcon();
-    };
-    swapShareButtonFor(shareBar, shareBtn);
-    return;
-  }
+  const blob = await new Promise(r => canvas.toBlob(r,'image/png'));
+  const file = new File([blob], fn, {type:'image/png'});
 
   try {
-    if (!chomeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
+    if (!isChromeIOS && navigator.canShare && navigator.canShare({files:[file]})) {
       await navigator.share({
         title: 'British Classic Fantasy League 2025',
         text: 'Check out these stats!',
@@ -1140,138 +1209,126 @@ async function shareChart(id,g){
     console.error('Share failed:', err);
   }
 
-  resetShareIcon();
-
-  function resetShareIcon() {
-    shareBar.innerHTML = '';
-    const iconBtn = document.createElement('button');
-    iconBtn.className = 'share-btn';
-    iconBtn.onclick = () => shareChart(id, g);
-    iconBtn.innerHTML =
-      '<img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>';
-    shareBar.appendChild(iconBtn);
-  }
+  // restore icon
+  shareBar.innerHTML =
+    '<button class="share-btn" onclick="shareChart(\''+id+'\', \''+g+'\')">' +
+    '<img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>' +
+    '</button>';
 }
 
-/* ========= DRILLDOWN SHARE ========= */
-
-function sanitizeFilename(str) {
-  return (str || 'value')
-    .toString()
-    .normalize('NFKD')
-    .replace(/[^\w\-]+/g, '_')
-    .replace(/_+/g, '_')
-    .replace(/^_+|_+$/g, '')
-    .toLowerCase();
-}
+/* ========= DRILLDOWN SHARE (MATCH HISTOGRAM STYLE) ========= */
 
 async function shareDrilldown(g) {
   const state = drillState[g];
   if (!state || !state.chart || !state.currentAthlete || !state.currentClass) return;
 
+  const {isAndroidChrome, isChromeIOS} = detectBrowserShareSupport();
   const s = sizing();
   const isMobile = window.innerWidth < 768;
 
-  const canvasEl = state.canvas;
-  const dataUrl = canvasEl.toDataURL('image/png');
-  const img = new Image();
-  img.src = dataUrl;
-  await img.decode();
-
   const athlete = state.currentAthlete;
-  const votesForAthlete = (state.athleteMap[athlete]?.votes || []).length;
+  const votes = state.athleteMap[athlete]?.votes || [];
+  const votesForAthlete = votes.length;
   const n = state.totalVotesInClass || votesForAthlete;
+  const totalKg = state.athleteMap[athlete]?.total;
+
+  const srcCanvas = state.canvas;
+  const chartDataUrl = srcCanvas.toDataURL('image/png');
+  const chartImg = new Image();
+  chartImg.src = chartDataUrl;
+  await chartImg.decode();
 
   const exportWidth = s.exportWidth;
-  const padding = 36;
-  const headerH = 120;
-  const footerH = 80;
+  const card = document.createElement('div');
+  card.style.position = 'relative';
+  card.style.width = exportWidth + 'px';
+  card.style.borderRadius = '24px';
+  card.style.overflow = 'hidden';
+  card.style.margin = '0 auto';
+  card.style.backgroundImage = "url('bc25_logo.jpg')";
+  card.style.backgroundSize = 'cover';
+  card.style.backgroundPosition = 'center';
+  card.style.boxShadow = '0 16px 40px rgba(0,0,0,0.55)';
 
-  const finalCanvas = document.createElement('canvas');
-  finalCanvas.width = exportWidth;
-  finalCanvas.height = headerH + footerH + Math.round(exportWidth * 0.6);
+  const overlay = document.createElement('div');
+  overlay.style.position = 'absolute';
+  overlay.style.inset = '0';
+  overlay.style.background = 'rgba(0,0,0,0.70)';
+  card.appendChild(overlay);
 
-  const ctx = finalCanvas.getContext('2d');
+  const inner = document.createElement('div');
+  inner.style.position = 'relative';
+  inner.style.color = '#fff';
+  inner.style.fontFamily = "'Inter', sans-serif";
+  inner.style.zIndex = '2';
+  inner.style.padding = '32px 26px 22px 26px';
+  card.appendChild(inner);
 
-  // Background + overlay
-  const bg = new Image();
-  bg.src = 'bc25_logo.jpg';
+  const header = document.createElement('h2');
+  header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
+  header.style.fontSize = (isMobile?s.headerFont*1.4:s.headerFont*1.2) + 'px';
+  header.style.fontWeight = '700';
+  header.style.margin = '0 0 6px 0';
 
-  await new Promise(resolve => {
-    bg.onload = resolve;
-    bg.onerror = resolve;
-  });
+  const sub1 = document.createElement('p');
+  sub1.textContent = totalKg ? `${athlete} (${totalKg}kg)` : athlete;
+  sub1.style.fontSize = (isMobile?s.subFont*1.1:s.subFont) + 'px';
+  sub1.style.fontWeight = '600';
+  sub1.style.margin = '0 0 4px 0';
 
-  ctx.drawImage(bg, 0, 0, finalCanvas.width, finalCanvas.height);
-  ctx.fillStyle = 'rgba(0,0,0,0.72)';
-  ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+  const sub2 = document.createElement('p');
+  sub2.textContent = `${votesForAthlete} votes out of ${n}`;
+  sub2.style.fontSize = (isMobile?16:15) + 'px';
+  sub2.style.color = '#d1d5db';
+  sub2.style.margin = '0 0 16px 0';
 
-  // Header
-  ctx.fillStyle = '#ffffff';
-  ctx.font = `600 ${isMobile ? s.headerFont*1.2 : s.headerFont}px Inter, system-ui, sans-serif`;
-  ctx.fillText('British Classic Fantasy League 2025 🇬🇧', padding, padding + 28);
+  chartImg.style.display = 'block';
+  chartImg.style.margin = '0 auto 16px auto';
+  chartImg.style.borderRadius = '14px';
+  chartImg.style.width = '92%';
+  chartImg.style.height = 'auto';
 
-  ctx.font = `600 ${isMobile ? s.subFont : s.subFont*0.9}px Inter, system-ui, sans-serif`;
-  ctx.fillText(athlete, padding, padding + 28 + 30);
+  const footer = document.createElement('div');
+  footer.style.display = 'flex';
+  footer.style.alignItems = 'center';
+  footer.style.marginTop = '4px';
 
-  ctx.fillStyle = '#d1d5db';
-  ctx.font = `400 ${isMobile ? 16 : 15}px Inter, system-ui, sans-serif`;
-  ctx.fillText(
-    `${votesForAthlete} votes out of ${n}`,
-    padding,
-    padding + 28 + 30 + 22
-  );
-
-  // Chart image
-  const chartY = headerH;
-  const chartWidth = exportWidth - padding * 2;
-  const chartHeight = finalCanvas.height - headerH - footerH;
-  ctx.drawImage(img, padding, chartY, chartWidth, chartHeight);
-
-  // QR bottom-left
   const qrSize = s.qrSize;
-  const qrCanvasWrapper = document.createElement('div');
-  new QRCode(qrCanvasWrapper, {
+  const qrWrapper = document.createElement('div');
+  qrWrapper.style.width = qrSize + 'px';
+  qrWrapper.style.height = qrSize + 'px';
+  qrWrapper.style.marginRight = '12px';
+  new QRCode(qrWrapper, {
     text: 'https://solacestrength.github.io/britishclassicfl/metrics.html',
     width: qrSize,
     height: qrSize,
     margin: 0
   });
 
-  await new Promise(res => setTimeout(res, 120));
-  const qrImg = qrCanvasWrapper.querySelector('img') || qrCanvasWrapper.querySelector('canvas');
-  if (qrImg) {
-    try {
-      ctx.drawImage(
-        qrImg,
-        padding,
-        finalCanvas.height - qrSize - padding,
-        qrSize,
-        qrSize
-      );
-    } catch (e) {
-      console.warn('QR draw failed, continuing without it', e);
-    }
-  }
+  const footerText = document.createElement('p');
+  footerText.style.fontSize = (isMobile?s.creditFont*0.8:s.creditFont*0.75) + 'px';
+  footerText.style.color = '#d1d5db';
+  footerText.style.lineHeight = '1.5';
+  footerText.innerHTML =
+    'Data from tinyurl.com/britishclassicfl-metrics<br/>Sponsored by the Sabado Sessions Podcast';
 
-  // Footer label
-  ctx.fillStyle = '#9ca3af';
-  ctx.font = `400 ${isMobile ? 13 : 14}px Inter, system-ui, sans-serif`;
-  ctx.fillText(
-    'British Classic Fantasy League 2025 – Metrics Drilldown',
-    padding + qrSize + 12,
-    finalCanvas.height - padding - Math.round(qrSize * 0.25)
-  );
+  footer.appendChild(qrWrapper);
+  footer.appendChild(footerText);
 
-  const blob = await new Promise(res => finalCanvas.toBlob(res, 'image/png'));
+  inner.append(header, sub1, sub2, chartImg, footer);
+  document.body.appendChild(card);
+
+  await new Promise(requestAnimationFrame);
+  const canvas = await html2canvas(card,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
+  card.remove();
+
+  const blob = await new Promise(res => canvas.toBlob(res,'image/png'));
   if (!blob) return;
   const fn = `metrics_drill_${g}_${sanitizeFilename(state.currentClass)}_${sanitizeFilename(athlete)}.png`;
   const file = new File([blob], fn, { type: 'image/png' });
 
-  const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
-
   try {
-    if (navigator.canShare && navigator.canShare({ files: [file] }) && !isChromeIOS) {
+    if (!isChromeIOS && navigator.canShare && navigator.canShare({files:[file]})) {
       await navigator.share({
         title: 'British Classic Fantasy League 2025 – Metrics Drilldown',
         text: 'Drilldown vote distribution snapshot.',
@@ -1289,7 +1346,7 @@ async function shareDrilldown(g) {
       alert('Image saved. You can now share it manually on your socials.');
     }
   } catch (err) {
-    console.error('Share failed, falling back to download.', err);
+    console.error('Share failed; falling back to download.', err);
     const url = URL.createObjectURL(file);
     const a = document.createElement('a');
     a.href = url;
