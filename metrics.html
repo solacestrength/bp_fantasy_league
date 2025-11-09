@@ -15,51 +15,158 @@
   <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
 
   <style>
-    body { background:#0b0b0b; color:#f1f1f1; font-family:'Inter',sans-serif; }
-    select { background:#1f1f1f; border:1px solid #333; color:#f1f1f1; }
-    canvas { max-width:100%; height:auto!important; }
-    .chart-container { max-width:600px; margin:0 auto; position:relative; }
+  /* === GLOBAL THEME === */
+  body {
+    background: #0b0b0b;
+    color: #f1f1f1;
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden; /* safety: no horizontal scroll/blank strip */
+  }
 
-    /* === YESSSSS layout balance (final stable visual baseline) === */
-    @media (min-width:1024px){
-      .chart-container{max-width:480px;}
-      #womenDonut, #menDonut {height:375px !important;}
-      #womenHist, #menHist {
-        height:360px !important;
-        transform:scale(0.93);
-        transform-origin:top center;
-      }
-    }
-    @media (max-width:1023px){
-      #womenDonut, #menDonut {height:336px !important;}
-      #womenHist, #menHist {
-        height:360px !important;
-        transform:scale(0.90);
-        transform-origin:top center;
-      }
+  /* === SELECT ELEMENTS === */
+  select {
+    background: #2f2f2f;
+    border: 1px solid #555;
+    color: #f1f1f1;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.375rem;
+    width: auto;
+    min-width: 0;
+    display: inline-block;
+  }
+
+  #womenSelect,
+  #menSelect {
+    background-color: rgba(31, 41, 55, 0.6) !important;
+    border: 1px solid #374151;
+    color: #f1f1f1;
+  }
+
+  /* === METRICS LAYOUT === */
+  .chart-container {
+    max-width: 600px;
+    margin: 0 auto;
+    position: relative;
+    display: block;
+    width: 100%;
+  }
+
+  canvas {
+    max-width: 100%;
+    height: auto !important;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  @media (min-width: 1024px) {
+    #womenDonut, #menDonut,
+    #womenHist, #menHist {
+      aspect-ratio: 1 / 1 !important;
+      width: 100% !important;
+      max-height: none !important;
+      object-fit: contain;
     }
 
-    #womenDonut, #menDonut {
-      width:100% !important;
-      aspect-ratio:1/1 !important;
-      max-height:none !important;
-      object-fit:contain;
+    #womenDonut, #menDonut { height: 375px !important; }
+    #womenHist, #menHist {
+      height: 375px !important;
+      transform: none !important;
+      transform-origin: top center;
+    }
+  }
+
+  @media (max-width: 1023px) {
+    #womenDonut, #menDonut,
+    #womenHist, #menHist {
+      aspect-ratio: 1 / 1 !important;
+      width: 100% !important;
+      max-height: none !important;
+      object-fit: contain;
     }
 
-    .collapsible-content{max-height:0;overflow:hidden;opacity:0;transition:max-height .5s ease,opacity .4s ease;}
-    .collapsible-content.open{opacity:1;max-height:1000px;}
-    .arrow{transition:transform .4s ease;}
-    .arrow.rotate{transform:rotate(180deg);}
-    .share-btn{background-color:#dc2626;display:flex;align-items:center;justify-content:center;
-      border-radius:.5rem;height:36px;width:36px;transition:background-color .2s ease;}
-    .share-btn:hover{background-color:#ef4444;}
-    .share-icon{filter:invert(1);height:18px;width:18px;}
-    .chart-section{background:rgba(15,15,15,0.8);border:1px solid rgba(60,60,60,0.9);
-      border-radius:0.75rem;padding:1rem;backdrop-filter:blur(4px);}
-    @keyframes fadeInUp{0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:translateY(0);}}
-    .animate-fade-in-up{animation:fadeInUp .8s ease-out forwards;}
-    .animate-fade-in{animation:fadeInUp 1s ease-out forwards;}
-  </style>
+    #womenDonut, #menDonut { height: 336px !important; }
+    #womenHist, #menHist {
+      height: 336px !important;
+      transform: none !important;
+      transform-origin: top center;
+    }
+  }
+
+  #womenDonut,
+  #menDonut {
+    width: 100% !important;
+    aspect-ratio: 1 / 1 !important;
+    max-height: none !important;
+    object-fit: contain;
+  }
+
+  /* === COLLAPSIBLE SECTIONS === */
+  .collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height .5s ease, opacity .4s ease;
+  }
+
+  .collapsible-content.open {
+    opacity: 1;
+    max-height: 1000px;  /* big enough for charts */
+    padding-bottom: 1rem;
+  }
+
+  /* Keep everything constrained inside the card on mobile too:
+     no width:100vw tricks here so dropdown + share never overflow */
+  @media (max-width: 1023px) {
+    .collapsible-content,
+    .collapsible-content.open {
+      width: 100%;
+      margin-left: 0;
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
+
+  .arrow {
+    transition: transform .4s ease;
+  }
+
+  .arrow.rotate {
+    transform: rotate(180deg);
+  }
+
+  /* === SHARE BUTTONS === */
+  .share-btn {
+    background-color: #dc2626;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: .5rem;
+    height: 36px;
+    width: 36px;
+    transition: background-color .2s ease, transform .2s ease;
+  }
+
+  .share-btn:hover {
+    background-color: #ef4444;
+    transform: translateY(-1px);
+  }
+
+  .share-icon {
+    filter: invert(1);
+    height: 18px;
+    width: 18px;
+  }
+
+  /* === ANIMATIONS === */
+  @keyframes fadeInUp {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
+  .animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
+</style>
 </head>
 
 <body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
@@ -67,31 +174,61 @@
   <div class="absolute inset-0 bg-black/70"></div>
 
   <div class="relative z-10 flex flex-col flex-grow animate-fade-in">
-    <header class="w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 relative z-50">
+    <!-- HEADER -->
+    <header class="site-header w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 relative z-50">
       <div class="w-full flex items-center justify-center px-4 py-3">
         <div class="flex-1 text-center">
           <a href="index.html"
-            class="font-bold text-white hover:text-red-500 transition text-sm sm:text-lg md:text-xl lg:text-2xl">
+             class="font-bold text-white hover:text-red-500 transition text-sm sm:text-lg md:text-xl lg:text-2xl">
             British Classic Fantasy League 2025 🇬🇧
           </a>
+        </div>
+        <div class="absolute right-4 top-1/2 -translate-y-1/2">
+          <button id="menu-btn" aria-expanded="false"
+                  class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none"
+                 viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
         </div>
       </div>
     </header>
 
+    <!-- MOBILE MENU -->
+    <div id="mobile-menu"
+         class="fixed top-16 right-4 w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-md
+                shadow-lg z-50 scale-y-0 opacity-0 origin-top transition-transform duration-300 ease-in-out
+                pointer-events-none">
+      <nav class="flex flex-col py-2 text-white">
+        <a href="index.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Home</a>
+        <a href="entry.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">League Entry</a>
+        <a href="leaderboard.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Leaderboard</a>
+        <a href="accuracy_scores.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Accuracy Scores</a>
+        <a href="metrics.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Metrics</a>
+      </nav>
+    </div>
+
+    <!-- MAIN -->
     <main class="max-w-5xl mx-auto p-6 space-y-8 mt-6 animate-fade-in-up">
       <section class="text-center">
         <h2 class="text-xl font-semibold mb-1">Metrics Dashboard</h2>
         <p class="text-gray-400 text-sm">
-          Explore how the predicted winners and totals are distributed for each class. Labels visible on tap will export too 📊
+          Explore how the predicted winners and totals are distributed for a given weight class. Sample size = number of entrants.
+          Any labels from interacting with bars or chart sections will be visible in shared images 📊
         </p>
       </section>
 
       <!-- WOMEN -->
-      <div class="chart-section">
-        <button onclick="toggleSection('women')" class="flex items-center justify-between w-full text-left text-lg font-bold">
+      <div class="bg-gray-800/60 border border-gray-700 backdrop-blur-sm shadow-lg rounded-2xl p-4">
+        <button onclick="toggleSection('women')"
+                class="flex items-center justify-between w-full text-left text-lg font-bold">
           <span>Women</span>
-          <svg id="arrow-women" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          <svg id="arrow-women" xmlns="http://www.w3.org/2000/svg"
+               class="h-5 w-5 arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 9l-7 7-7-7"/>
           </svg>
         </button>
         <div id="women" class="collapsible-content mt-4">
@@ -100,7 +237,8 @@
           <div class="chart-container">
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('womenDonut','F')">
-                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
+                     class="share-icon" alt="Share"/>
               </button>
             </div>
             <canvas id="womenDonut"></canvas>
@@ -109,7 +247,8 @@
           <div class="chart-container mt-6">
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('womenHist','F')">
-                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
+                     class="share-icon" alt="Share"/>
               </button>
             </div>
             <canvas id="womenHist"></canvas>
@@ -118,11 +257,14 @@
       </div>
 
       <!-- MEN -->
-      <div class="chart-section">
-        <button onclick="toggleSection('men')" class="flex items-center justify-between w-full text-left text-lg font-bold">
+      <div class="bg-gray-800/60 border border-gray-700 backdrop-blur-sm shadow-lg rounded-2xl p-4">
+        <button onclick="toggleSection('men')"
+                class="flex items-center justify-between w-full text-left text-lg font-bold">
           <span>Men</span>
-          <svg id="arrow-men" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          <svg id="arrow-men" xmlns="http://www.w3.org/2000/svg"
+               class="h-5 w-5 arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 9l-7 7-7-7"/>
           </svg>
         </button>
         <div id="men" class="collapsible-content mt-4">
@@ -131,7 +273,8 @@
           <div class="chart-container">
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('menDonut','M')">
-                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
+                     class="share-icon" alt="Share"/>
               </button>
             </div>
             <canvas id="menDonut"></canvas>
@@ -140,7 +283,8 @@
           <div class="chart-container mt-6">
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('menHist','M')">
-                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
+                     class="share-icon" alt="Share"/>
               </button>
             </div>
             <canvas id="menHist"></canvas>
@@ -149,16 +293,20 @@
       </div>
     </main>
 
+    <!-- VIEW LEADERBOARD BUTTON -->
     <div class="flex justify-center mt-8">
-      <a href="leaderboard.html" class="inline-flex items-center justify-center bg-gray-800/60 border border-gray-700
+      <a href="leaderboard.html"
+         class="inline-flex items-center justify-center bg-gray-800/60 border border-gray-700
                 text-gray-200 font-semibold px-6 py-3 rounded-full backdrop-blur-sm shadow-lg
                 hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
         View Leaderboard
       </a>
     </div>
 
+    <!-- BACK TO TOP BUTTON -->
     <div class="flex justify-center mt-8">
-      <button id="bottomBackToTop" class="bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full
+      <button id="bottomBackToTop"
+              class="bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full
                      flex items-center justify-center backdrop-blur-sm shadow-lg
                      hover:bg-gray-700/70 hover:text-red-400 transition">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
@@ -173,241 +321,684 @@
     </footer>
   </div>
 
-  <script>
-  Chart.register(ChartDataLabels);
-  const SHEET_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
-  let allData=[]; const charts={};
+<script>
+/* ========= PLUGINS ========= */
+/**
+ * centerHistAreaPlugin
+ * --------------------
+ * For histogram charts only:
+ * - Measures chartArea center vs canvas center.
+ * - Adjusts RIGHT padding so the plot area (bars + axes) is visually centered
+ *   within the canvas/card.
+ * - Leaves titles/subtitles/labels alone (Chart.js handles them).
+ */
+const centerHistAreaPlugin = {
+  id: 'centerHistArea',
+  afterLayout(chart, args, opts) {
+    if (!opts || !opts.enabled) return;
+    if (chart.config.type !== 'bar') return;
+    if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return; // only our histograms
 
-  function sizing(){
-    const d=window.matchMedia('(min-width:1024px)').matches;
-    return{
-      donutTitle:d?22:14, donutSubtitle:d?18:12, donutLegend:d?18:12, donutPercent:d?16:12,
-      histTitle:d?22:14, histSubtitle:d?18:12, axisTitle:d?18:12, axisTick:d?14:11, histBarLabel:d?12:10,
-      exportWidth:d?1024:780, qrSize:d?96:72, creditFont:d?18:13, headerFont:d?32:20, subFont:d?26:16
-    };
-  }
+    // Avoid loops: only run once per layout cycle
+    if (chart.$histCentered) return;
 
-  Papa.parse(SHEET_URL,{download:true,header:true,complete:r=>{allData=r.data;setupDropdowns();}});
+    const area = chart.chartArea;
+    if (!area) return;
 
-  function setupDropdowns(){
-    ['F','M'].forEach(g=>{
-      const d=allData.filter(r=>r.Gender===g);
-      const classes=[...new Set(d.map(r=>r.Class))].sort((a,b)=>parseFloat(a)-parseFloat(b));
-      const s=document.getElementById(g==='F'?'womenSelect':'menSelect');
-      s.innerHTML=classes.map(c=>`<option value="${c}">${c}kg</option>`).join('');
-      s.onchange=()=>renderCharts(g,s.value);
-      renderCharts(g,classes[0]);
-    });
-  }
+    const canvasMid = chart.width / 2;
+    const areaMid = (area.left + area.right) / 2;
+    const diff = areaMid - canvasMid; // >0 = plot too far right
 
-  function renderCharts(g,w){
-    const s=sizing();
-    const donutId=g==='F'?'womenDonut':'menDonut';
-    const histId=g==='F'?'womenHist':'menHist';
-    const rows=allData.filter(r=>r.Gender===g&&r.Class===w);
-    if(!rows.length)return;
+    // If it's basically centered already, mark & bail
+    if (Math.abs(diff) < 1) {
+      chart.$histCentered = true;
+      return;
+    }
 
-    const counts={}; rows.forEach(r=>counts[r.Athlete]=(counts[r.Athlete]||0)+1);
-    const dLabels=Object.keys(counts); const dData=Object.values(counts);
-    const total=dData.reduce((a,b)=>a+b,0);
-    const colors=['#ef4444','#f97316','#facc15','#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16','#d946ef','#fb7185'];
-    if(charts[donutId]) charts[donutId].destroy();
-    charts[donutId]=new Chart(document.getElementById(donutId),{
-      type:'doughnut',
-      data:{labels:dLabels,datasets:[{data:dData,backgroundColor:colors,borderColor:'#111',borderWidth:1}]},
-      options:{
-        maintainAspectRatio:true,aspectRatio:1,cutout:'57%',
-        plugins:{
-          title:{display:true,text:'Share of Votes',color:'#ccc',font:{weight:'bold',size:s.donutTitle},padding:{bottom:8}},
-          subtitle:{display:true,text:`Total Votes – ${total}`,color:'#aaa',font:{size:s.donutSubtitle},padding:{top:2,bottom:12}},
-          legend:{position:'bottom',labels:{color:'#ccc',boxWidth:10,boxHeight:10,font:{size:s.donutLegend}}},
-          datalabels:{color:'#fff',font:{weight:'bold',size:s.donutPercent},formatter:v=>{const p=(v/total)*100;return p>=3?`${p.toFixed(1)}%`:'';},anchor:'center',align:'center',clamp:true}
-        }
-      },
-      plugins:[ChartDataLabels]
-    });
+    // Get existing padding (numeric)
+    const layout = chart.options.layout || {};
+    const padding = layout.padding || {};
+    const baseTop = +padding.top || 0;
+    const baseLeft = +padding.left || 0;
+    const baseBottom = +padding.bottom || 0;
+    const baseRight = +padding.right || 0;
 
-    const vals=rows.map(r=>parseFloat(r.PredictedTotal)).filter(v=>!isNaN(v)&&v>0);
-    if(!vals.length){if(charts[histId]) charts[histId].destroy();return;}
-    const N=vals.length,min=Math.min(...vals),max=Math.max(...vals);
-    const bins=Math.max(3,Math.round(Math.sqrt(N)));
-    const bw=(max-min)/bins||1;
-    const countsH=Array(bins).fill(0);
-    vals.forEach(v=>{let i=Math.floor((v-min)/bw);if(i>=bins)i=bins-1;if(i<0)i=0;countsH[i]++;});
-    const labelsH=Array.from({length:bins},(_,i)=>`${(min+i*bw).toFixed(0)}–${(min+(i+1)*bw).toFixed(0)}`);
-    const minC=Math.min(...countsH),maxC=Math.max(...countsH);
-    const yMin=Math.floor(minC/2);const span=maxC-yMin;const step=Math.max(1,Math.round(span/4));const yMax=Math.ceil(maxC/step)*step;
+    // Shift using RIGHT padding only so left axis / labels stay intact.
+    // Derivation: to move plot center left by `diff`, we change right padding by 2*diff.
+    let extraRight = 2 * diff;
+    let newRight = baseRight + extraRight;
+    if (newRight < 0) newRight = 0; // clamp, no negative padding
 
-    if(charts[histId]) charts[histId].destroy();
-    charts[histId]=new Chart(document.getElementById(histId),{
-      type:'bar',
-      data:{labels:labelsH,datasets:[{data:countsH,backgroundColor:'#3b82f6',borderRadius:5}]},
-      options:{
-        maintainAspectRatio:true,aspectRatio:(window.innerWidth>=1024?1.5:1.1),
-        plugins:{
-          title:{display:true,text:'Distribution of Predicted Winning Totals',color:'#ccc',font:{size:s.histTitle,weight:'bold'},padding:{bottom:8}},
-          subtitle:{display:true,text:`Total Votes – ${N}`,color:'#aaa',font:{size:s.histSubtitle},padding:{top:2,bottom:12}},
-          legend:{display:false},
-          datalabels:{color:'#fff',formatter:v=>v>0?v:'',anchor:'center',align:'center',font:{size:s.histBarLabel,weight:'normal'},clamp:true}
-        },
-        scales:{
-          x:{ticks:{color:'#ccc',font:{size:s.axisTick}},title:{display:true,text:'Predicted Total (kg)',color:'#ccc',font:{size:s.axisTitle,weight:'bold'}},grid:{display:false}},
-          y:{min:yMin,max:yMax,beginAtZero:false,ticks:{color:'#ccc',font:{size:s.axisTick}},title:{display:true,text:'Vote Count',color:'#ccc',font:{size:s.axisTitle,weight:'bold'}},grid:{display:false}}
-        }
-      },
-      plugins:[ChartDataLabels]
-    });
-  }
-
-  function toggleSection(id){
-    const c=document.getElementById(id);
-    const a=document.getElementById(`arrow-${id}`);
-    const o=c.classList.toggle('open');
-    a.classList.toggle('rotate',o);
-  }
-
-  async function shareChart(id,g){
-    const s=sizing();
-    const src=document.getElementById(id);
-    const sel=document.getElementById(g==='F'?'womenSelect':'menSelect');
-    const w=sel.value;
-    const isDonut=id.includes('Donut');
-    const isMobile=window.innerWidth<768;
-
-    const fn=`metrics_${g}_${w}_${isDonut?'donut':'hist'}.png`;
-    const dataURL=src.toDataURL('image/png');
-    const img=new Image();
-    img.src=dataURL;
-    await img.decode();
-
-    const card=document.createElement('div');
-    card.style.position='relative';
-    card.style.width=s.exportWidth+'px';
-    card.style.borderRadius='16px';
-    card.style.overflow='hidden';
-    card.style.margin='0 auto';
-    card.style.backgroundImage="url('bc25_logo.jpg')";
-    card.style.backgroundSize='cover';
-    card.style.backgroundPosition='center';
-    card.style.boxShadow='0 10px 25px rgba(0,0,0,0.35)';
-
-    const overlay=document.createElement('div');
-    overlay.style.position='absolute';overlay.style.inset='0';
-        overlay.style.background='rgba(0,0,0,0.65)';
-    card.appendChild(overlay);
-
-    const inner=document.createElement('div');
-    inner.style.position='relative';
-    inner.style.textAlign='center';
-    inner.style.color='#fff';
-    inner.style.fontFamily="'Inter', sans-serif";
-    inner.style.zIndex='2';
-    inner.style.padding=isDonut?'36px 28px 36px 28px':'40px 28px 44px 28px';
-    card.appendChild(inner);
-
-    const header=document.createElement('h2');
-    header.textContent='British Classic Fantasy League 2025 🇬🇧';
-    header.style.fontSize=(isMobile?s.headerFont*1.5:s.headerFont*1.25)+'px';
-    header.style.fontWeight='700';
-    header.style.margin='0 0 4px 0';
-
-    const sub=document.createElement('p');
-    sub.textContent=(w?`${w}kg `:'')+(g==='F'?'Women':'Men');
-    sub.style.fontSize=(isMobile?s.subFont*1.5:s.subFont*1.25)+'px';
-    sub.style.fontWeight='700';
-    sub.style.color='#ddd';
-    sub.style.margin='0 0 10px 0';
-
-    inner.append(header,sub);
-
-    img.style.display='block';
-    img.style.margin='0 auto 18px auto';
-    img.style.borderRadius='8px';
-    img.style.width=isMobile?(isDonut?'80%':'96%'):(isDonut?'70%':'93%');
-    img.style.height='auto';
-    inner.appendChild(img);
-
-    const credit=document.createElement('p');
-    credit.style.fontSize=(isMobile?s.creditFont*1.15:s.creditFont)+'px';
-    credit.style.color='#ccc';
-    credit.style.lineHeight='1.5';
-    credit.style.marginTop='6px';
-    credit.innerHTML='Data from tinyurl.com/britishclassicfl-metrics<br>Sponsored by the Sabado Sessions Podcast';
-    inner.appendChild(credit);
-
-    const spacer=document.createElement('div');
-    spacer.style.height=isDonut?'18px':'48px';
-    inner.appendChild(spacer);
-
-    const qr=new Image();
-    qr.crossOrigin='anonymous';
-    const qrsz=isMobile?s.qrSize*1.1:s.qrSize*1.25;
-    qr.src=`https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent(
-      'https://solacestrength.github.io/britishclassicfl/metrics.html'
-    )}`;
-    qr.style.position='absolute';
-    qr.style.bottom='18px';
-    qr.style.left='18px';
-    qr.style.width=qrsz+'px';
-    qr.style.height=qrsz+'px';
-    qr.style.borderRadius='6px';
-    qr.style.opacity='0.95';
-    card.appendChild(qr);
-
-    document.body.appendChild(card);
-    await new Promise(requestAnimationFrame);
-
-    // Robust height and buffer (no cropping)
-    const naturalH=card.scrollHeight;
-    const baseH=isDonut?860:940;
-    const buffer=isDonut?40:100;
-    const finalH=Math.max(baseH,naturalH+buffer);
-    card.style.height=finalH+'px';
-    card.style.maxHeight=finalH+'px';
-    card.style.minHeight=finalH+'px';
-
-    await new Promise(requestAnimationFrame);
-
-    const canvas=await html2canvas(card,{
-      backgroundColor:null,
-      scale:2,
-      useCORS:true,
-      scrollY:0
-    });
-
-    card.remove();
-
-    const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));
-    const file=new File([blob],fn,{type:'image/png'});
-
-    try{
-      if(navigator.canShare && navigator.canShare({files:[file]})){
-        await navigator.share({
-          title:'British Classic Fantasy League 2025',
-          text:'Check out these stats!',
-          files:[file]
-        });
-      }else{
-        const link=document.createElement('a');
-        link.href=canvas.toDataURL('image/png');
-        link.download=fn;
-        link.click();
+    chart.options.layout = {
+      ...layout,
+      padding: {
+        top: baseTop,
+        right: newRight,
+        bottom: baseBottom,
+        left: baseLeft
       }
-    }catch(err){
-      console.error('Share failed:',err);
-      const fallback=document.createElement('a');
-      fallback.href=canvas.toDataURL('image/png');
-      fallback.download=fn;
-      fallback.click();
+    };
+
+    chart.$histCentered = true;
+    chart.update('none'); // apply without triggering another full animation
+  }
+};
+
+Chart.register(ChartDataLabels, centerHistAreaPlugin);
+
+/* ========= DATA / LAYOUT HELPERS ========= */
+
+const SHEET_URL =
+  'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
+
+let allData = [];
+const charts = {};
+
+function sizing() {
+  const d = window.matchMedia('(min-width:1024px)').matches;
+  return {
+    donutTitle:   d ? 22 : 14,
+    donutSubtitle:d ? 18 : 12,
+    donutLegend:  d ? 18 : 12,
+    donutPercent: d ? 16 : 12,
+    histTitle:    d ? 22 : 14,
+    histSubtitle: d ? 18 : 12,
+    axisTitle:    d ? 18 : 12,
+    axisTick:     d ? 14 : 11,
+    histBarLabel: d ? 12 : 10,
+    exportWidth:  d ? 1024 : 780,
+    qrSize:       d ? 96 : 72,
+    creditFont:   d ? 18 : 13,
+    headerFont:   d ? 32 : 20,
+    subFont:      d ? 26 : 16
+  };
+}
+
+/* ========= MENU ========= */
+
+const menuBtn = document.getElementById('menu-btn');
+const mobileMenu = document.getElementById('mobile-menu');
+let menuVisible = false;
+
+function toggleMenu(show) {
+  if (show) {
+    mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');
+    mobileMenu.classList.add('scale-y-100','opacity-100');
+  } else {
+    mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');
+    mobileMenu.classList.remove('scale-y-100','opacity-100');
+  }
+}
+toggleMenu(false);
+
+if (menuBtn) {
+  menuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    menuVisible = !menuVisible;
+    toggleMenu(menuVisible);
+  });
+}
+document.addEventListener('click', (e) => {
+  if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target) && menuVisible) {
+    menuVisible = false;
+    toggleMenu(false);
+  }
+});
+
+/* ========= LOAD CSV ========= */
+
+Papa.parse(SHEET_URL, {
+  download: true,
+  header: true,
+  complete: (r) => {
+    allData = r.data;
+    setupDropdowns();
+  }
+});
+
+function setupDropdowns() {
+  ['F', 'M'].forEach((g) => {
+    const d = allData.filter((r) => r.Gender === g);
+    const classes = [...new Set(d.map((r) => r.Class))]
+      .filter(Boolean)
+      .sort((a, b) => parseFloat(a) - parseFloat(b));
+
+    const select = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
+    if (!select) return;
+
+    select.innerHTML = classes.map((c) => `<option value="${c}">${c}kg</option>`).join('');
+    select.onchange = () => renderCharts(g, select.value);
+
+    if (classes[0]) renderCharts(g, classes[0]);
+  });
+}
+
+/* ========= CHART RENDERING ========= */
+
+function renderCharts(g, w) {
+  const s = sizing();
+  const donutId = g === 'F' ? 'womenDonut' : 'menDonut';
+  const histId  = g === 'F' ? 'womenHist'  : 'menHist';
+  const rows = allData.filter(r => r.Gender === g && r.Class === w);
+  if (!rows.length) return;
+
+  /* --- DONUT --- */
+  const counts = {};
+  rows.forEach(r => { counts[r.Athlete] = (counts[r.Athlete] || 0) + 1; });
+
+  const dLabels = Object.keys(counts);
+  const dData   = Object.values(counts);
+  const total   = dData.reduce((a, b) => a + b, 0);
+
+  const colors = [
+    '#ef4444','#f97316','#facc15','#22c55e','#14b8a6',
+    '#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16',
+    '#d946ef','#fb7185'
+  ];
+
+  if (charts[donutId]) charts[donutId].destroy();
+  charts[donutId] = new Chart(document.getElementById(donutId), {
+    type: 'doughnut',
+    data: {
+      labels: dLabels,
+      datasets: [{
+        data: dData,
+        backgroundColor: colors,
+        borderColor: '#111',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      maintainAspectRatio: true,
+      aspectRatio: 1,
+      cutout: '57%',
+      plugins: {
+        title: {
+          display: true,
+          text: 'Share of Votes',
+          color: '#ccc',
+          font: { weight: 'bold', size: s.donutTitle },
+          padding: { bottom: 8 }
+        },
+        subtitle: {
+          display: true,
+          text: `Total Votes – ${total}`,
+          color: '#aaa',
+          font: { size: s.donutSubtitle },
+          padding: { top: 2, bottom: 12 }
+        },
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#ccc',
+            boxWidth: 10,
+            boxHeight: 10,
+            font: { size: s.donutLegend }
+          }
+        },
+        datalabels: {
+          color: '#fff',
+          font: { weight: 'bold', size: s.donutPercent },
+          formatter: (v) => {
+            const p = (v / total) * 100;
+            return p >= 3 ? `${p.toFixed(1)}%` : '';
+          },
+          anchor: 'center',
+          align: 'center',
+          clamp: true
+        }
+      }
+    }
+  });
+
+  /* --- HISTOGRAM --- */
+  const vals = rows
+    .map(r => parseFloat(r.PredictedTotal))
+    .filter(v => !isNaN(v) && v > 0);
+
+  if (!vals.length) {
+    if (charts[histId]) charts[histId].destroy();
+    return;
+  }
+
+  const N    = vals.length;
+  const min  = Math.min(...vals);
+  const max  = Math.max(...vals);
+  const bins = Math.max(3, Math.round(Math.sqrt(N)));
+  const bw   = (max - min) / bins || 1;
+
+  const countsH = Array(bins).fill(0);
+  vals.forEach(v => {
+    let i = Math.floor((v - min) / bw);
+    if (i >= bins) i = bins - 1;
+    if (i < 0) i = 0;
+    countsH[i]++;
+  });
+
+  const labelsH = Array.from({ length: bins }, (_, i) =>
+    `${(min + i * bw).toFixed(0)}–${(min + (i + 1) * bw).toFixed(0)}`
+  );
+
+  const minC = Math.min(...countsH);
+  const maxC = Math.max(...countsH);
+  const yMin = Math.floor(minC / 2);
+  const span = maxC - yMin;
+  const step = Math.max(1, Math.round(span / 4));
+  const yMax = Math.ceil(maxC / step) * step;
+
+  if (charts[histId]) charts[histId].destroy();
+  charts[histId] = new Chart(document.getElementById(histId), {
+    type: 'bar',
+    data: {
+      labels: labelsH,
+      datasets: [{
+        data: countsH,
+        backgroundColor: '#3b82f6',
+        borderRadius: 5,
+        barPercentage: 0.9,
+        categoryPercentage: 1.0
+      }]
+    },
+    options: {
+      maintainAspectRatio: true,
+      aspectRatio: 1,
+      plugins: {
+        centerHistArea: { enabled: true },
+        title: {
+          display: true,
+          text: 'Distribution of Predicted Winning Totals',
+          color: '#ccc',
+          font: { size: s.histTitle, weight: 'bold' },
+          padding: { bottom: 8 }
+        },
+        subtitle: {
+          display: true,
+          text: `Total Votes – ${N}`,
+          color: '#aaa',
+          font: { size: s.histSubtitle, weight: 'normal' },
+          padding: { top: 2, bottom: 12 }
+        },
+        legend: { display: false },
+        datalabels: {
+          color: '#fff',
+          font: { size: s.histBarLabel, weight: 'normal' },
+          formatter: (v) => v > 0 ? v : '',
+          anchor: 'center',
+          align: (ctx) => {
+            const v = ctx.dataset.data[ctx.dataIndex] || 0;
+            const scale = ctx.chart.scales.y;
+            if (!scale) return 'center';
+            const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
+            const f = ctx.chart.options.plugins.datalabels.font.size || s.histBarLabel;
+            return (barH < f * 1.05) ? 'end' : 'center';
+          },
+          clamp: true
+        }
+      },
+      scales: {
+        x: {
+          offset: true,
+          ticks: { color: '#ccc', font: { size: s.axisTick } },
+          title: {
+            display: true,
+            text: 'Predicted Total (kg)',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
+        },
+        y: {
+          min: yMin,
+          max: yMax,
+          beginAtZero: false,
+          ticks: { color: '#ccc', font: { size: s.axisTick } },
+          title: {
+            display: true,
+            text: 'Vote Count',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+
+  // Clear "centered" flag so the plugin can re-run cleanly after any redraw
+  const histChart = charts[histId];
+  if (histChart) {
+    histChart.$histCentered = false;
+    histChart.update('none');
+  }
+} // end renderCharts
+
+/* ========= COLLAPSIBLE SECTIONS ========= */
+
+function toggleSection(id) {
+  const c = document.getElementById(id);
+  const a = document.getElementById(`arrow-${id}`);
+  const main = document.querySelector('main');
+  if (!c || !a || !main) return;
+
+  const open = c.classList.toggle('open');
+  a.classList.toggle('rotate', open);
+
+  if (open) {
+    const wrapper = c.closest('.bg-gray-800\\/60') || c;
+    wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  const anyOpen = document.querySelector('.collapsible-content.open');
+  if (anyOpen) {
+    main.classList.add('expanded');
+  } else {
+    main.classList.remove('expanded');
+  }
+
+  setTimeout(repositionBottomButtons, 600);
+}
+
+/* --- Smoothly reposition bottom buttons --- */
+function repositionBottomButtons() {
+  const main = document.querySelector('main');
+  const leaderboard = document.querySelector('a[href="leaderboard.html"]')?.closest('div');
+  const backToTop = document.getElementById('bottomBackToTop')?.closest('div');
+  if (!main || !leaderboard || !backToTop) return;
+
+  const contentHeight = main.scrollHeight;
+  const windowHeight = window.innerHeight;
+  const offset = Math.max(24, windowHeight - contentHeight / 1.2);
+
+  [leaderboard, backToTop].forEach((el, i) => {
+    el.style.transition = 'margin-top 0.6s ease';
+    el.style.marginTop = (i === 0 ? offset : 16) + 'px';
+  });
+}
+
+/* On resize / orientation change:
+   - keep buttons tidy
+   - allow hist centering plugin to re-run with new dimensions */
+window.addEventListener('resize', () => {
+  repositionBottomButtons();
+  Object.values(charts).forEach(chart => {
+    if (
+      chart &&
+      chart.config.type === 'bar' &&
+      chart.canvas &&
+      /Hist$/i.test(chart.canvas.id)
+    ) {
+      chart.$histCentered = false;
+      chart.update('none');
+    }
+  });
+});
+
+/* ========= SHARE / EXPORT + BACK TO TOP (unchanged from your working version) ========= */
+/* Keeping your existing shareChart + helpers exactly as-is to avoid regression.
+   Only difference above is the histogram centering plugin. */
+
+function detectBrowserShareSupport() {
+  const ua = navigator.userAgent.toLowerCase();
+  return {
+    isAndroidChrome:
+      ua.includes('android') && ua.includes('chrome') && !ua.includes('edge') && !ua.includes('opr'),
+    isChromeIOS: ua.includes('crios')
+  };
+}
+
+function swapShareButtonFor(containerEl, newBtn) {
+  containerEl.innerHTML = '';
+  containerEl.appendChild(newBtn);
+}
+
+function scaleChartFonts(chart, factor) {
+  const edits = [];
+  function walk(obj) {
+    if (!obj || typeof obj !== 'object') return;
+    if (obj.font && typeof obj.font.size === 'number') {
+      edits.push({ font: obj.font, original: obj.font.size });
+      obj.font.size = Math.round(obj.font.size * factor);
+    }
+    for (const key in obj) {
+      if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
+      const val = obj[key];
+      if (val && typeof val === 'object') walk(val);
     }
   }
+  walk(chart.options);
+  return function restore() {
+    edits.forEach(e => { e.font.size = e.original; });
+  };
+}
 
-  const bottomBackToTop=document.getElementById('bottomBackToTop');
-  if(bottomBackToTop){
-    bottomBackToTop.addEventListener('click',()=>{
-      window.scrollTo({top:0,behavior:'smooth'});
-    });
+async function shareChart(id, g) {
+  const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
+  const s = sizing();
+  const src = document.getElementById(id);
+  if (!src) return;
+
+  const shareBar = src.previousElementSibling;
+  if (!shareBar) return;
+
+  function makeBtn(text) {
+    const b = document.createElement('button');
+    b.className = "bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1";
+    b.style.minWidth = "140px";
+    b.style.height = "24px";
+    b.textContent = text;
+    return b;
   }
-  </script>
+
+  const generatingBtn = makeBtn("Generating…");
+  swapShareButtonFor(shareBar, generatingBtn);
+
+  await new Promise(requestAnimationFrame);
+  const chart = Chart.getChart(src);
+  if (!chart) return;
+
+  const sel = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
+  const w = sel ? sel.value : '';
+  const isDonut = id.includes('Donut');
+  const isMobile = window.innerWidth < 768;
+  const fn = `metrics_${g}_${w || 'class'}_${isDonut ? 'donut' : 'hist'}.png`;
+
+  const parent = src.closest('.collapsible-content');
+  if (parent && parent.style.maxHeight === '0px') {
+    parent.style.maxHeight = parent.scrollHeight + 'px';
+    parent.style.opacity = '1';
+    await new Promise(requestAnimationFrame);
+  }
+
+  let prevScales = null;
+  if (chart.options.scales) {
+    prevScales = JSON.parse(JSON.stringify(chart.options.scales));
+    if (chart.options.scales.x) chart.options.scales.x.grid.display = false;
+    if (chart.options.scales.y) chart.options.scales.y.grid.display = false;
+    chart.update();
+    await new Promise(requestAnimationFrame);
+  }
+
+  let restoreFonts = null;
+  if (!isDonut) {
+    restoreFonts = scaleChartFonts(chart, 0.85);
+    chart.update();
+    await new Promise(requestAnimationFrame);
+  }
+
+  const card = document.createElement('div');
+  card.style.position = 'relative';
+  card.style.width = s.exportWidth + 'px';
+  card.style.borderRadius = '16px';
+  card.style.overflow = 'hidden';
+  card.style.margin = '0 auto';
+  card.style.backgroundImage = "url('bc25_logo.jpg')";
+  card.style.backgroundSize = 'cover';
+  card.style.backgroundPosition = 'center';
+  card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
+
+  const overlay = document.createElement('div');
+  overlay.style.position = 'absolute';
+  overlay.style.inset = '0';
+  overlay.style.background = 'rgba(0,0,0,0.65)';
+  card.appendChild(overlay);
+
+  const inner = document.createElement('div');
+  inner.style.position = 'relative';
+  inner.style.textAlign = 'center';
+  inner.style.color = '#fff';
+  inner.style.fontFamily = "'Inter', sans-serif";
+  inner.style.zIndex = '2';
+  inner.style.padding = isDonut ? '36px 28px 36px 28px' : '40px 28px 36px 28px';
+  card.appendChild(inner);
+
+  const header = document.createElement('h2');
+  header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
+  header.style.fontSize = (isMobile ? s.headerFont * 1.5 : s.headerFont * 1.25) + 'px';
+  header.style.fontWeight = '700';
+  header.style.margin = '0 0 4px 0';
+
+  const sub = document.createElement('p');
+  sub.textContent = (w ? `${w}kg ` : '') + (g === 'F' ? 'Women' : 'Men');
+  sub.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.25) + 'px';
+  sub.style.fontWeight = '700';
+  sub.style.color = '#ddd';
+  sub.style.margin = '0 0 14px 0';
+
+  const dataURL = src.toDataURL('image/png');
+  const img = new Image();
+  img.src = dataURL;
+  await img.decode();
+  img.style.display = 'block';
+  img.style.margin = '0 auto 18px auto';
+  img.style.borderRadius = '8px';
+  img.style.width = (isMobile ? (isDonut ? '80%' : '96%') : (isDonut ? '70%' : '93%'));
+  img.style.height = 'auto';
+
+  const credit = document.createElement('p');
+  credit.style.fontSize = (isMobile ? s.creditFont * 1.25 : s.creditFont * 1.15) + 'px';
+  credit.style.color = '#ccc';
+  credit.style.lineHeight = '1.5';
+  credit.style.marginTop = '8px';
+  credit.innerHTML =
+    'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
+
+  const spacer = document.createElement('div');
+  spacer.style.height = isDonut ? '14px' : '28px';
+
+  const qr = new Image();
+  qr.crossOrigin = 'anonymous';
+  const qrsz = isMobile ? s.qrSize * 1.1 : s.qrSize * 1.25;
+  qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent(
+    'https://solacestrength.github.io/britishclassicfl/metrics.html'
+  )}`;
+  qr.style.position = 'absolute';
+  qr.style.bottom = '18px';
+  qr.style.left = '18px';
+  qr.style.width = qrsz + 'px';
+  qr.style.height = qrsz + 'px';
+  qr.style.borderRadius = '6px';
+  qr.style.opacity = '0.95';
+
+  inner.append(header, sub, img, credit, spacer);
+  card.appendChild(qr);
+  document.body.appendChild(card);
+
+  await new Promise(requestAnimationFrame);
+
+  const naturalH = card.scrollHeight;
+  const baseH = isDonut ? 860 : 820;
+  const scaleFactor = isMobile ? 0.92 : 1.0;
+  const fixedH = Math.min(naturalH * scaleFactor, s.exportWidth * scaleFactor);
+  const buffer = Math.round(
+    fixedH * (isMobile ? (isDonut ? 0.15 : 0.22) : 0.02)
+  );
+
+  card.style.height = fixedH + buffer + 'px';
+  card.style.maxHeight = fixedH + buffer + 'px';
+  card.style.minHeight = (baseH * scaleFactor) + 'px';
+
+  await new Promise(requestAnimationFrame);
+
+  const canvas = await html2canvas(card, {
+    backgroundColor: null,
+    scale: 2,
+    useCORS: true,
+    scrollY: 0
+  });
+  card.remove();
+
+  if (restoreFonts) restoreFonts();
+  if (prevScales) chart.options.scales = prevScales;
+  chart.update();
+
+  const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
+  const file = new File([blob], fn, { type: 'image/png' });
+
+  if (isAndroidChrome) {
+    const shareBtn = makeBtn("Share Generated Image");
+    shareBtn.onclick = async () => {
+      try {
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: 'British Classic Fantasy League 2025',
+            text: 'Check out these stats!',
+            files: [file]
+          });
+        } else {
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = fn;
+          link.click();
+          URL.revokeObjectURL(link.href);
+        }
+      } catch (e) {}
+      resetShareIcon();
+    };
+    swapShareButtonFor(shareBar, shareBtn);
+    return;
+  }
+
+  try {
+    if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        title: 'British Classic Fantasy League 2025',
+        text: 'Check out these stats!',
+        files: [file]
+      });
+    } else {
+      const url = URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fn;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+  } catch (err) {
+    console.error('Share failed:', err);
+  }
+
+  resetShareIcon();
+
+  function resetShareIcon() {
+    shareBar.innerHTML = '';
+    const iconBtn = document.createElement('button');
+    iconBtn.className = 'share-btn';
+    iconBtn.onclick = () => shareChart(id, g);
+    iconBtn.innerHTML =
+      '<img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>';
+    shareBar.appendChild(iconBtn);
+  }
+}
+
+/* BACK TO TOP */
+const bottomBackToTop = document.getElementById('bottomBackToTop');
+if (bottomBackToTop) {
+  bottomBackToTop.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
+</script>
 </body>
 </html>
