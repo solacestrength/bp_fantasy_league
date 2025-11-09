@@ -36,7 +36,8 @@
   }
 
   #womenSelect,
-  #menSelect {
+  #menSelect,
+  .drill-select {
     background-color: rgba(31, 41, 55, 0.6) !important;
     border: 1px solid #374151;
     color: #f1f1f1;
@@ -61,14 +62,17 @@
 
   @media (min-width: 1024px) {
     #womenDonut, #menDonut,
-    #womenHist, #menHist {
+    #womenHist, #menHist,
+    #womenDrill, #menDrill {
       aspect-ratio: 1 / 1 !important;
       width: 100% !important;
       max-height: none !important;
       object-fit: contain;
     }
 
-    #womenDonut, #menDonut { height: 375px !important; }
+    #womenDonut, #menDonut,
+    #womenDrill, #menDrill { height: 375px !important; }
+
     #womenHist, #menHist {
       height: 375px !important;
       transform: none !important;
@@ -78,14 +82,17 @@
 
   @media (max-width: 1023px) {
     #womenDonut, #menDonut,
-    #womenHist, #menHist {
+    #womenHist, #menHist,
+    #womenDrill, #menDrill {
       aspect-ratio: 1 / 1 !important;
       width: 100% !important;
       max-height: none !important;
       object-fit: contain;
     }
 
-    #womenDonut, #menDonut { height: 336px !important; }
+    #womenDonut, #menDonut,
+    #womenDrill, #menDrill { height: 336px !important; }
+
     #womenHist, #menHist {
       height: 336px !important;
       transform: none !important;
@@ -115,8 +122,6 @@
     padding-bottom: 1rem;
   }
 
-  /* Keep everything constrained inside the card on mobile too:
-     no width:100vw tricks here so dropdown + share never overflow */
   @media (max-width: 1023px) {
     .collapsible-content,
     .collapsible-content.open {
@@ -166,7 +171,7 @@
 
   .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
   .animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
-</style>
+  </style>
 </head>
 
 <body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
@@ -216,7 +221,8 @@
         <h2 class="text-xl font-semibold mb-1">Metrics Dashboard</h2>
         <p class="text-gray-400 text-sm">
           Explore how the predicted winners and totals are distributed for a given weight class. Sample size = number of entrants.
-          Any labels from interacting with bars or chart sections will be visible in shared images 📊
+          User note - any labels that appear from interacting with bars or chart sections will also be visible in your shared images.
+          Double click doughnut segments for more charts 📊
         </p>
       </section>
 
@@ -234,7 +240,8 @@
         <div id="women" class="collapsible-content mt-4">
           <select id="womenSelect" class="p-2 rounded mb-4 text-sm"></select>
 
-          <div class="chart-container">
+          <!-- WOMEN DONUT -->
+          <div class="chart-container" id="womenDonutContainer">
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('womenDonut','F')">
                 <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
@@ -244,6 +251,25 @@
             <canvas id="womenDonut"></canvas>
           </div>
 
+          <!-- WOMEN DRILLDOWN (injected below donut) -->
+          <div class="chart-container mt-4" id="womenDrillWrapper" style="display:none;">
+            <select id="womenDrillSelect"
+                    class="drill-select p-2 rounded mb-3 text-xs sm:text-sm w-full"></select>
+            <div class="flex items-center justify-between mb-1">
+              <button type="button"
+                      class="text-xs text-gray-300 hover:text-red-400 underline"
+                      onclick="closeDrilldown('F')">
+                ↩ Back to doughnut
+              </button>
+              <button class="share-btn" onclick="shareDrilldown('F')">
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
+                     class="share-icon" alt="Share"/>
+              </button>
+            </div>
+            <canvas id="womenDrill"></canvas>
+          </div>
+
+          <!-- WOMEN HISTOGRAM -->
           <div class="chart-container mt-6">
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('womenHist','F')">
@@ -270,7 +296,8 @@
         <div id="men" class="collapsible-content mt-4">
           <select id="menSelect" class="p-2 rounded mb-4 text-sm"></select>
 
-          <div class="chart-container">
+          <!-- MEN DONUT -->
+          <div class="chart-container" id="menDonutContainer">
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('menDonut','M')">
                 <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
@@ -280,6 +307,25 @@
             <canvas id="menDonut"></canvas>
           </div>
 
+          <!-- MEN DRILLDOWN -->
+          <div class="chart-container mt-4" id="menDrillWrapper" style="display:none;">
+            <select id="menDrillSelect"
+                    class="drill-select p-2 rounded mb-3 text-xs sm:text-sm w-full"></select>
+            <div class="flex items-center justify-between mb-1">
+              <button type="button"
+                      class="text-xs text-gray-300 hover:text-red-400 underline"
+                      onclick="closeDrilldown('M')">
+                ↩ Back to doughnut
+              </button>
+              <button class="share-btn" onclick="shareDrilldown('M')">
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
+                     class="share-icon" alt="Share"/>
+              </button>
+            </div>
+            <canvas id="menDrill"></canvas>
+          </div>
+
+          <!-- MEN HISTOGRAM -->
           <div class="chart-container mt-6">
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('menHist','M')">
@@ -293,28 +339,28 @@
       </div>
     </main>
 
-<!-- View Leaderboard Button Container -->
-      <div class="flex justify-center mt-8">
-  <a href="leaderboard.html"
-     class="inline-flex items-center justify-center bg-gray-800/60 border border-gray-700
-            text-gray-200 font-semibold px-6 py-3 rounded-full backdrop-blur-sm shadow-lg
-            hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
-    View Leaderboard
-  </a>
-</div>
+    <!-- VIEW LEADERBOARD BUTTON -->
+    <div class="flex justify-center mt-8">
+      <a href="leaderboard.html"
+         class="inline-flex items-center justify-center bg-gray-800/60 border border-gray-700
+                text-gray-200 font-semibold px-6 py-3 rounded-full backdrop-blur-sm shadow-lg
+                hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
+        View Leaderboard
+      </a>
+    </div>
 
-      <!-- Back to Top Button (static link) -->
-      <div class="flex justify-center mt-8">
-  <button id="bottomBackToTop"
-          class="bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full
-                 flex items-center justify-center backdrop-blur-sm shadow-lg
-                 hover:bg-gray-700/70 hover:text-red-400 transition">
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
-         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
-    </svg>
-  </button>
-</div>
+    <!-- BACK TO TOP BUTTON -->
+    <div class="flex justify-center mt-8">
+      <button id="bottomBackToTop"
+              class="bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full
+                     flex items-center justify-center backdrop-blur-sm shadow-lg
+                     hover:bg-gray-700/70 hover:text-red-400 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+        </svg>
+      </button>
+    </div>
 
     <footer class="text-center text-gray-500 text-sm py-4 bg-transparent">
       Sponsored by the Sabado Sessions Podcast
@@ -322,14 +368,13 @@
   </div>
 
 <script>
-/* ========= PLUGIN: CENTER HISTOGRAM AREA ========= */
-/* Keeps histogram plot area horizontally aligned with donut above. */
+/* ========= PLUGIN: CENTER HISTOGRAM / DRILL AREA ========= */
 const centerHistAreaPlugin = {
   id: 'centerHistArea',
   afterLayout(chart, args, opts) {
     if (!opts || !opts.enabled) return;
     if (chart.config.type !== 'bar') return;
-    if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return;
+    if (!chart.canvas || !/(Hist|Drill)$/i.test(chart.canvas.id)) return;
     if (chart.$histCentered) return;
 
     const area = chart.chartArea;
@@ -337,7 +382,7 @@ const centerHistAreaPlugin = {
 
     const canvasMid = chart.width / 2;
     const areaMid = (area.left + area.right) / 2;
-    const diff = areaMid - canvasMid; // >0 => too far right
+    const diff = areaMid - canvasMid;
 
     if (Math.abs(diff) < 1) {
       chart.$histCentered = true;
@@ -457,6 +502,30 @@ function setupDropdowns() {
   });
 }
 
+/* ========= DRILLDOWN STATE ========= */
+const drillState = {
+  F: {
+    wrapper: document.getElementById('womenDrillWrapper'),
+    select: document.getElementById('womenDrillSelect'),
+    canvas: document.getElementById('womenDrill'),
+    chart: null,
+    currentAthlete: null,
+    currentClass: null,
+    athleteMap: {},
+    totalVotesInClass: 0
+  },
+  M: {
+    wrapper: document.getElementById('menDrillWrapper'),
+    select: document.getElementById('menDrillSelect'),
+    canvas: document.getElementById('menDrill'),
+    chart: null,
+    currentAthlete: null,
+    currentClass: null,
+    athleteMap: {},
+    totalVotesInClass: 0
+  }
+};
+
 /* ========= CHART RENDERING ========= */
 function renderCharts(g, w) {
   const s = sizing();
@@ -480,7 +549,8 @@ function renderCharts(g, w) {
   ];
 
   if (charts[donutId]) charts[donutId].destroy();
-  charts[donutId] = new Chart(document.getElementById(donutId), {
+  const donutCtx = document.getElementById(donutId).getContext('2d');
+  charts[donutId] = new Chart(donutCtx, {
     type: 'doughnut',
     data: {
       labels: dLabels,
@@ -508,7 +578,7 @@ function renderCharts(g, w) {
           text: `Total Votes – ${total}`,
           color: '#aaa',
           font: { size: s.donutSubtitle },
-          padding: { top: 2, bottom: 18 } // ✅ restored donut spacing
+          padding: { top: 2, bottom: 18 }
         },
         legend: {
           position: 'bottom',
@@ -530,12 +600,16 @@ function renderCharts(g, w) {
           align: 'center',
           clamp: true
         }
-      }
+      },
+      // === DRILLDOWN: DOUBLE CLICK HANDLER ===
+      onClick: (evt, elements) => handleDonutClick(g, w, donutId, evt, elements, rows)
     }
   });
 
-  /* --- HISTOGRAM --- */
-  const vals = rows.map(r => parseFloat(r.PredictedTotal)).filter(v => !isNaN(v) && v > 0);
+  /* --- HISTOGRAM --- (unchanged) */
+  const vals = rows
+    .map(r => parseFloat(r.PredictedTotal))
+    .filter(v => !isNaN(v) && v > 0);
   if (!vals.length) {
     if (charts[histId]) charts[histId].destroy();
     return;
@@ -567,7 +641,8 @@ function renderCharts(g, w) {
   const yMax = Math.ceil(maxC / step) * step;
 
   if (charts[histId]) charts[histId].destroy();
-  charts[histId] = new Chart(document.getElementById(histId), {
+  const histCtx = document.getElementById(histId).getContext('2d');
+  charts[histId] = new Chart(histCtx, {
     type: 'bar',
     data: {
       labels: labelsH,
@@ -602,47 +677,237 @@ function renderCharts(g, w) {
         }
       },
       scales: {
-  x: {
-    offset: true,
-    ticks: {
-      color: '#ccc',
-      font: { size: s.axisTick },
-      autoSkip: false,
-      maxRotation: 60,
-      minRotation: 45,
-      callback: (value, index) => labelsH[index] || ''
-    },
-    title: {
-      display: true,
-      text: 'Predicted Total (kg)',
-      color: '#ccc',
-      font: { size: s.axisTitle, weight: 'bold' }
-    },
-    grid: { display: false }
-  }, // 👈 this comma is REQUIRED (separates x and y)
-  y: {
-    min: yMin,
-    max: yMax,
-    beginAtZero: false,
-    ticks: {
-      color: '#ccc',
-      font: { size: s.axisTick }
-    },
-    title: {
-      display: true,
-      text: `Vote Count (Total = ${N})`,
-      color: '#ccc',
-      font: { size: s.axisTitle, weight: 'bold' }
-    },
-    grid: { display: false }
-  }
- }
-}
+        x: {
+          offset: true,
+          ticks: {
+            color: '#ccc',
+            font: { size: s.axisTick },
+            autoSkip: false,
+            maxRotation: 60,
+            minRotation: 45,
+            callback: (value, index) => labelsH[index] || ''
+          },
+          title: {
+            display: true,
+            text: 'Predicted Total (kg)',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
+        },
+        y: {
+          min: yMin,
+          max: yMax,
+          beginAtZero: false,
+          ticks: {
+            color: '#ccc',
+            font: { size: s.axisTick }
+          },
+          title: {
+            display: true,
+            text: `Vote Count (Total = ${N})`,
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
+        }
+      }
+    }
   });
 
   charts[histId].$histCentered = false;
 }
-  
+
+/* ========= DRILLDOWN HELPERS ========= */
+
+// Double-click detection + trigger
+function handleDonutClick(g, w, donutId, evt, elements, rows) {
+  if (!evt || !evt.native) return;
+  const target = evt.native.target;
+  const now = Date.now();
+
+  if (!target.__lastClick) {
+    target.__lastClick = now;
+    return;
+  }
+
+  const diff = now - target.__lastClick;
+  target.__lastClick = now;
+
+  if (diff < 320 && elements && elements.length > 0) {
+    const idx = elements[0].index;
+    const chart = charts[donutId];
+    if (!chart) return;
+
+    const athlete = chart.data.labels[idx];
+    if (!athlete) return;
+
+    openDrilldown(g, w, athlete, rows);
+  }
+}
+
+// Build athlete -> { votes:[], total } map for this class
+function buildDrillAthleteMap(rows) {
+  const map = {};
+  rows.forEach(r => {
+    const name = r.Athlete;
+    if (!name) return;
+    const pts = parseInt(r.Points, 10);
+    const total = parseFloat(r.PredictedTotal);
+    if (!map[name]) {
+      map[name] = {
+        votes: [],
+        total: !isNaN(total) ? total : null
+      };
+    }
+    if (!isNaN(pts) && pts >= 1 && pts <= 16) {
+      map[name].votes.push(pts);
+    }
+  });
+  return map;
+}
+
+function openDrilldown(g, w, athlete, rows) {
+  const state = drillState[g];
+  if (!state) return;
+
+  // Prepare mapping
+  state.athleteMap = buildDrillAthleteMap(rows);
+  state.currentAthlete = athlete;
+  state.currentClass = w;
+  state.totalVotesInClass = rows.length;
+
+  // Populate dropdown
+  const names = Object.keys(state.athleteMap);
+  state.select.innerHTML = '';
+  names.forEach(name => {
+    const meta = state.athleteMap[name];
+    const label = meta.total ? `${name} – ${meta.total}kg` : name;
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = label;
+    if (name === athlete) opt.selected = true;
+    state.select.appendChild(opt);
+  });
+
+  // Show wrapper, hide donut
+  if (g === 'F') {
+    document.getElementById('womenDonutContainer').style.display = 'none';
+  } else {
+    document.getElementById('menDonutContainer').style.display = 'none';
+  }
+  state.wrapper.style.display = 'block';
+
+  renderDrillChart(g, athlete);
+
+  // Change handler
+  state.select.onchange = () => {
+    const selAthlete = state.select.value;
+    if (!selAthlete) return;
+    state.currentAthlete = selAthlete;
+    renderDrillChart(g, selAthlete);
+  };
+}
+
+function closeDrilldown(g) {
+  const state = drillState[g];
+  if (!state) return;
+
+  state.wrapper.style.display = 'none';
+  if (g === 'F') {
+    document.getElementById('womenDonutContainer').style.display = 'block';
+  } else {
+    document.getElementById('menDonutContainer').style.display = 'block';
+  }
+
+  if (state.chart) {
+    state.chart.destroy();
+    state.chart = null;
+  }
+
+  state.currentAthlete = null;
+  state.currentClass = null;
+}
+
+function renderDrillChart(g, athlete) {
+  const state = drillState[g];
+  if (!state || !state.athleteMap[athlete]) return;
+
+  const s = sizing();
+  const votes = state.athleteMap[athlete].votes || [];
+
+  const counts = Array(16).fill(0);
+  votes.forEach(v => {
+    if (v >= 1 && v <= 16) counts[v - 1]++;
+  });
+
+  if (state.chart) state.chart.destroy();
+
+  const ctx = state.canvas.getContext('2d');
+  state.chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: Array.from({ length: 16 }, (_, i) => i + 1),
+      datasets: [{
+        data: counts,
+        backgroundColor: '#3b82f6',
+        borderRadius: 5,
+        barPercentage: 0.9,
+        categoryPercentage: 1.0
+      }]
+    },
+    options: {
+      maintainAspectRatio: true,
+      aspectRatio: 1,
+      plugins: {
+        centerHistArea: { enabled: true },
+        legend: { display: false },
+        datalabels: {
+          color: '#fff',
+          font: { size: s.histBarLabel, weight: 'normal' },
+          formatter: (v) => v > 0 ? v : '',
+          anchor: 'center',
+          align: 'center',
+          clamp: true
+        },
+        title: { display: false }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: '#ccc',
+            font: { size: s.axisTick }
+          },
+          title: {
+            display: true,
+            text: 'Points / Confidence Level',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            color: '#ccc',
+            font: { size: s.axisTick },
+            precision: 0
+          },
+          title: {
+            display: true,
+            text: 'Vote Count',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+
+  state.chart.$histCentered = false;
+}
+
 /* ========= COLLAPSIBLE SECTIONS ========= */
 
 function toggleSection(id) {
@@ -688,14 +953,14 @@ window.addEventListener('resize', () => {
     if (chart &&
         chart.config.type === 'bar' &&
         chart.canvas &&
-        /Hist$/i.test(chart.canvas.id)) {
+        /(Hist|Drill)$/i.test(chart.canvas.id)) {
       chart.$histCentered = false;
       chart.update('none');
     }
   });
 });
 
-/* ========= SHARE / EXPORT ========= */
+/* ========= SHARE / EXPORT (EXISTING) ========= */
 function detectBrowserShareSupport(){
   const ua=navigator.userAgent.toLowerCase();
   return{
@@ -828,62 +1093,212 @@ async function shareChart(id,g){
   const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));
   const file=new File([blob],fn,{type:'image/png'});
 
-  if (isAndroidChrome) {
-  const shareBtn = makeBtn("Share Generated Image");
-  shareBtn.onclick = async () => {
-    try {
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: 'British Classic Fantasy League 2025',
-          text: 'Check out these stats!',
-          files: [file]
-        });
-      } else {
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = fn;
-        link.click();
-        URL.revokeObjectURL(link.href);
-      }
-    } catch (e) {}
-    resetShareIcon();
-  };
-  swapShareButtonFor(shareBar, shareBtn);
-  return;
+  const {isAndroidChrome:android,chomeIOS} = detectBrowserShareSupport();
+
+  if (android) {
+    const shareBtn = makeBtn("Share Generated Image");
+    shareBtn.onclick = async () => {
+      try {
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: 'British Classic Fantasy League 2025',
+            text: 'Check out these stats!',
+            files: [file]
+          });
+        } else {
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = fn;
+          link.click();
+          URL.revokeObjectURL(link.href);
+        }
+      } catch (e) {}
+      resetShareIcon();
+    };
+    swapShareButtonFor(shareBar, shareBtn);
+    return;
+  }
+
+  try {
+    if (!chomeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        title: 'British Classic Fantasy League 2025',
+        text: 'Check out these stats!',
+        files: [file]
+      });
+    } else {
+      const url = URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fn;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+  } catch (err) {
+    console.error('Share failed:', err);
+  }
+
+  resetShareIcon();
+
+  function resetShareIcon() {
+    shareBar.innerHTML = '';
+    const iconBtn = document.createElement('button');
+    iconBtn.className = 'share-btn';
+    iconBtn.onclick = () => shareChart(id, g);
+    iconBtn.innerHTML =
+      '<img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>';
+    shareBar.appendChild(iconBtn);
+  }
 }
 
-try {
-  if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
-    await navigator.share({
-      title: 'British Classic Fantasy League 2025',
-      text: 'Check out these stats!',
-      files: [file]
-    });
-  } else {
+/* ========= DRILLDOWN SHARE ========= */
+
+function sanitizeFilename(str) {
+  return (str || 'value')
+    .toString()
+    .normalize('NFKD')
+    .replace(/[^\w\-]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .toLowerCase();
+}
+
+async function shareDrilldown(g) {
+  const state = drillState[g];
+  if (!state || !state.chart || !state.currentAthlete || !state.currentClass) return;
+
+  const s = sizing();
+  const isMobile = window.innerWidth < 768;
+
+  const canvasEl = state.canvas;
+  const dataUrl = canvasEl.toDataURL('image/png');
+  const img = new Image();
+  img.src = dataUrl;
+  await img.decode();
+
+  const athlete = state.currentAthlete;
+  const votesForAthlete = (state.athleteMap[athlete]?.votes || []).length;
+  const n = state.totalVotesInClass || votesForAthlete;
+
+  const exportWidth = s.exportWidth;
+  const padding = 36;
+  const headerH = 120;
+  const footerH = 80;
+
+  const finalCanvas = document.createElement('canvas');
+  finalCanvas.width = exportWidth;
+  finalCanvas.height = headerH + footerH + Math.round(exportWidth * 0.6);
+
+  const ctx = finalCanvas.getContext('2d');
+
+  // Background + overlay
+  const bg = new Image();
+  bg.src = 'bc25_logo.jpg';
+
+  await new Promise(resolve => {
+    bg.onload = resolve;
+    bg.onerror = resolve;
+  });
+
+  ctx.drawImage(bg, 0, 0, finalCanvas.width, finalCanvas.height);
+  ctx.fillStyle = 'rgba(0,0,0,0.72)';
+  ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+
+  // Header
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `600 ${isMobile ? s.headerFont*1.2 : s.headerFont}px Inter, system-ui, sans-serif`;
+  ctx.fillText('British Classic Fantasy League 2025 🇬🇧', padding, padding + 28);
+
+  ctx.font = `600 ${isMobile ? s.subFont : s.subFont*0.9}px Inter, system-ui, sans-serif`;
+  ctx.fillText(athlete, padding, padding + 28 + 30);
+
+  ctx.fillStyle = '#d1d5db';
+  ctx.font = `400 ${isMobile ? 16 : 15}px Inter, system-ui, sans-serif`;
+  ctx.fillText(
+    `${votesForAthlete} votes out of ${n}`,
+    padding,
+    padding + 28 + 30 + 22
+  );
+
+  // Chart image
+  const chartY = headerH;
+  const chartWidth = exportWidth - padding * 2;
+  const chartHeight = finalCanvas.height - headerH - footerH;
+  ctx.drawImage(img, padding, chartY, chartWidth, chartHeight);
+
+  // QR bottom-left
+  const qrSize = s.qrSize;
+  const qrCanvasWrapper = document.createElement('div');
+  new QRCode(qrCanvasWrapper, {
+    text: 'https://solacestrength.github.io/britishclassicfl/metrics.html',
+    width: qrSize,
+    height: qrSize,
+    margin: 0
+  });
+
+  await new Promise(res => setTimeout(res, 120));
+  const qrImg = qrCanvasWrapper.querySelector('img') || qrCanvasWrapper.querySelector('canvas');
+  if (qrImg) {
+    try {
+      ctx.drawImage(
+        qrImg,
+        padding,
+        finalCanvas.height - qrSize - padding,
+        qrSize,
+        qrSize
+      );
+    } catch (e) {
+      console.warn('QR draw failed, continuing without it', e);
+    }
+  }
+
+  // Footer label
+  ctx.fillStyle = '#9ca3af';
+  ctx.font = `400 ${isMobile ? 13 : 14}px Inter, system-ui, sans-serif`;
+  ctx.fillText(
+    'British Classic Fantasy League 2025 – Metrics Drilldown',
+    padding + qrSize + 12,
+    finalCanvas.height - padding - Math.round(qrSize * 0.25)
+  );
+
+  const blob = await new Promise(res => finalCanvas.toBlob(res, 'image/png'));
+  if (!blob) return;
+  const fn = `metrics_drill_${g}_${sanitizeFilename(state.currentClass)}_${sanitizeFilename(athlete)}.png`;
+  const file = new File([blob], fn, { type: 'image/png' });
+
+  const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
+
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] }) && !isChromeIOS) {
+      await navigator.share({
+        title: 'British Classic Fantasy League 2025 – Metrics Drilldown',
+        text: 'Drilldown vote distribution snapshot.',
+        files: [file]
+      });
+    } else {
+      const url = URL.createObjectURL(file);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fn;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      alert('Image saved. You can now share it manually on your socials.');
+    }
+  } catch (err) {
+    console.error('Share failed, falling back to download.', err);
     const url = URL.createObjectURL(file);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fn;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fn;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
     URL.revokeObjectURL(url);
   }
-} catch (err) {
-  console.error('Share failed:', err);
-}
-
-resetShareIcon();
-
-function resetShareIcon() {
-  shareBar.innerHTML = '';
-  const iconBtn = document.createElement('button');
-  iconBtn.className = 'share-btn';
-  iconBtn.onclick = () => shareChart(id, g);
-  iconBtn.innerHTML =
-    '<img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>';
-  shareBar.appendChild(iconBtn);
-}
 }
 
 /* ========= BACK TO TOP ========= */
