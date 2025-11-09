@@ -673,86 +673,95 @@ function renderCharts(g, w) {
   const step = Math.max(1, Math.round(span / 4));
   const yMax = Math.ceil(maxC / step) * step;
 
-  if (charts[histId]) charts[histId].destroy();
-  charts[histId] = new Chart(document.getElementById(histId), {
-    type: 'bar',
-    data: {
-      labels: labelsH,
-      datasets: [{
-        data: countsH,
-        backgroundColor: '#3b82f6',
-        borderRadius: 5,
-        barPercentage: 0.9,
-        categoryPercentage: 1.0
-      }]
+  // after creating histogram chart
+if (charts[histId]) charts[histId].destroy();
+charts[histId] = new Chart(document.getElementById(histId), {
+  type: 'bar',
+  data: {
+    labels: labelsH,
+    datasets: [{
+      data: countsH,
+      backgroundColor: '#3b82f6',
+      borderRadius: 5,
+      barPercentage: 0.9,
+      categoryPercentage: 1.0
+    }]
+  },
+  options: {
+    maintainAspectRatio: true,
+    aspectRatio: 1,
+    plugins: {
+      centerHistArea: { enabled: true },
+      centerHistTitles: { enabled: true },
+      // 👇 disable built-in rendering so plugin draws once
+      title: {
+        display: true,
+        text: 'Distribution of Predicted Winning Totals',
+        color: '#ccc',
+        font: { size: s.histTitle, weight: 'bold' },
+        padding: { bottom: 8 },
+        fullSize: false
+      },
+      subtitle: {
+        display: true,
+        text: `Total Votes – ${N}`,
+        color: '#aaa',
+        font: { size: s.histSubtitle, weight: 'normal' },
+        padding: { top: 2, bottom: 12 },
+        fullSize: false
+      },
+      legend: { display: false },
+      datalabels: {
+        color: '#fff',
+        font: { size: s.histBarLabel, weight: 'normal' },
+        formatter: (v) => v > 0 ? v : '',
+        anchor: 'center',
+        align: (ctx) => {
+          const v = ctx.dataset.data[ctx.dataIndex] || 0;
+          const scale = ctx.chart.scales.y;
+          if (!scale) return 'center';
+          const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
+          const f = ctx.chart.options.plugins.datalabels.font.size || s.histBarLabel;
+          return (barH < f * 1.05) ? 'end' : 'center';
+        },
+        clamp: true
+      }
     },
-    options: {
-      maintainAspectRatio: true,
-      aspectRatio: 1,
-      plugins: {
-        centerHistArea: { enabled: true },
-        centerHistTitles: { enabled: true },
+    scales: {
+      x: {
+        offset: true,
+        ticks: { color: '#ccc', font: { size: s.axisTick } },
         title: {
           display: true,
-          text: 'Distribution of Predicted Winning Totals',
+          text: 'Predicted Total (kg)',
           color: '#ccc',
-          font: { size: s.histTitle, weight: 'bold' },
-          padding: { bottom: 8 }
+          font: { size: s.axisTitle, weight: 'bold' }
         },
-        subtitle: {
-          display: true,
-          text: `Total Votes – ${N}`,
-          color: '#aaa',
-          font: { size: s.histSubtitle, weight: 'normal' },
-          padding: { top: 2, bottom: 12 }
-        },
-        legend: { display: false },
-        datalabels: {
-          color: '#fff',
-          font: { size: s.histBarLabel, weight: 'normal' },
-          formatter: (v) => v > 0 ? v : '',
-          anchor: 'center',
-          align: (ctx) => {
-            const v = ctx.dataset.data[ctx.dataIndex] || 0;
-            const scale = ctx.chart.scales.y;
-            if (!scale) return 'center';
-            const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
-            const f = ctx.chart.options.plugins.datalabels.font.size || s.histBarLabel;
-            return (barH < f * 1.05) ? 'end' : 'center';
-          },
-          clamp: true
-        }
+        grid: { display: false }
       },
-      scales: {
-        x: {
-          offset: true,
-          ticks: { color: '#ccc', font: { size: s.axisTick } },
-          title: {
-            display: true,
-            text: 'Predicted Total (kg)',
-            color: '#ccc',
-            font: { size: s.axisTitle, weight: 'bold' }
-          },
-          grid: { display: false }
+      y: {
+        min: yMin,
+        max: yMax,
+        beginAtZero: false,
+        ticks: { color: '#ccc', font: { size: s.axisTick } },
+        title: {
+          display: true,
+          text: 'Vote Count',
+          color: '#ccc',
+          font: { size: s.axisTitle, weight: 'bold' }
         },
-        y: {
-          min: yMin,
-          max: yMax,
-          beginAtZero: false,
-          ticks: { color: '#ccc', font: { size: s.axisTick } },
-          title: {
-            display: true,
-            text: 'Vote Count',
-            color: '#ccc',
-            font: { size: s.axisTitle, weight: 'bold' }
-          },
-          grid: { display: false }
-        }
+        grid: { display: false }
       }
     }
-  });
-} // ✅ closes renderCharts
+  }
+});
 
+// 🔒 disable native draw *per instance*
+const c = charts[histId];
+if (c?.options?.plugins?.title) c.options.plugins.title.display = true;
+if (c?.options?.plugins?.subtitle) c.options.plugins.subtitle.display = true;
+c.$drawnTitles = false;
+  
 function toggleSection(id) {
   const c = document.getElementById(id);
   const a = document.getElementById(`arrow-${id}`);
