@@ -1091,22 +1091,29 @@ function sanitizeFilename(str) {
 }
 
 /* ========= SHARE STANDARD CHARTS ========= */
-
 async function shareChart(id, g) {
-  const {isChromeIOS} = detectBrowserShareSupport();
+  const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
   const s = sizing();
   const src = document.getElementById(id);
   if (!src) return;
+
   const shareBar = src.previousElementSibling;
   if (!shareBar) return;
 
-  function makeBtn(text){
+  function makeBtn(text) {
     const b = document.createElement('button');
     b.className = "bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1";
     b.style.minWidth = "140px";
     b.style.height = "24px";
     b.textContent = text;
     return b;
+  }
+
+  function resetShareIcon() {
+    shareBar.innerHTML =
+      '<button class="share-btn" onclick="shareChart(\'' + id + '\', \'' + g + '\')">' +
+      '<img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>' +
+      '</button>';
   }
 
   const generatingBtn = makeBtn("Generating…");
@@ -1117,13 +1124,15 @@ async function shareChart(id, g) {
   const w = sel ? sel.value : '';
   const isDonut = id.includes('Donut');
   const isMobile = window.innerWidth < 768;
-  const fn = `metrics_${g}_${w || 'class'}_${isDonut?'donut':'hist'}.png`;
+  const fn = `metrics_${g}_${w || 'class'}_${isDonut ? 'donut' : 'hist'}.png`;
 
+  // Capture chart as image
   const dataURL = src.toDataURL('image/png');
   const img = new Image();
   img.src = dataURL;
   await img.decode();
 
+  // Build share card
   const card = document.createElement('div');
   card.style.position = 'relative';
   card.style.width = s.exportWidth + 'px';
@@ -1152,16 +1161,16 @@ async function shareChart(id, g) {
 
   const header = document.createElement('h2');
   header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
-  header.style.fontSize = (isMobile?s.headerFont*1.4:s.headerFont*1.2) + 'px';
+  header.style.fontSize = (isMobile ? s.headerFont * 1.4 : s.headerFont * 1.2) + 'px';
   header.style.fontWeight = '700';
   header.style.margin = '0 0 6px 0';
 
   const sub = document.createElement('p');
-  const label = (w?`${w}kg `:'') + (g==='F'?'Women':'Men');
+  const label = (w ? `${w}kg ` : '') + (g === 'F' ? 'Women' : 'Men');
   sub.innerHTML = isDonut
     ? label
     : `${label}<br>Distribution of Predicted Winning Totals`;
-  sub.style.fontSize = (isMobile?s.subFont*1.5:s.subFont*1.5) + 'px';
+  sub.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.5) + 'px';
   sub.style.fontWeight = '600';
   sub.style.color = '#e5e7eb';
   sub.style.margin = '0 0 18px 0';
@@ -1173,7 +1182,7 @@ async function shareChart(id, g) {
   img.style.height = 'auto';
 
   const credit = document.createElement('p');
-  credit.style.fontSize = (isMobile?s.creditFont*1.5:s.creditFont*1.5) + 'px';
+  credit.style.fontSize = (isMobile ? s.creditFont * 1.5 : s.creditFont * 1.5) + 'px';
   credit.style.color = '#d1d5db';
   credit.style.lineHeight = '1.5';
   credit.style.marginTop = '8px';
@@ -1187,8 +1196,8 @@ async function shareChart(id, g) {
   qr.style.position = 'absolute';
   qr.style.bottom = '18px';
   qr.style.left = '18px';
-  qr.style.width = qrsz+'px';
-  qr.style.height = qrsz+'px';
+  qr.style.width = qrsz + 'px';
+  qr.style.height = qrsz + 'px';
   qr.style.borderRadius = '6px';
 
   inner.append(header, sub, img, credit);
@@ -1196,14 +1205,49 @@ async function shareChart(id, g) {
   document.body.appendChild(card);
 
   await new Promise(requestAnimationFrame);
-  const canvas = await html2canvas(card,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
+  const canvas = await html2canvas(card, { backgroundColor: null, scale: 2, useCORS: true, scrollY: 0 });
   card.remove();
 
-  const blob = await new Promise(r => canvas.toBlob(r,'image/png'));
-  const file = new File([blob], fn, {type:'image/png'});
+  const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+  if (!blob) {
+    resetShareIcon();
+    return;
+  }
+  const file = new File([blob], fn, { type: 'image/png' });
 
+  // Android Chrome: show dedicated share button so user gets full native sheet
+  if (isAndroidChrome) {
+    const shareBtn = makeBtn("Share Generated Image");
+    shareBtn.onclick = async () => {
+      try {
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: 'British Classic Fantasy League 2025',
+            text: 'Check out these stats!',
+            files: [file]
+          });
+        } else {
+          const url = URL.createObjectURL(file);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = fn;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+      resetShareIcon();
+    };
+    swapShareButtonFor(shareBar, shareBtn);
+    return;
+  }
+
+  // Other platforms: try native share; fallback to direct PNG download
   try {
-    if (!isChromeIOS && navigator.canShare && navigator.canShare({files:[file]})) {
+    if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
         title: 'British Classic Fantasy League 2025',
         text: 'Check out these stats!',
@@ -1223,19 +1267,15 @@ async function shareChart(id, g) {
     console.error('Share failed:', err);
   }
 
-  shareBar.innerHTML =
-    '<button class="share-btn" onclick="shareChart(\''+id+'\', \''+g+'\')">' +
-    '<img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>' +
-    '</button>';
+  resetShareIcon();
 }
 
 /* ========= DRILLDOWN SHARE ========= */
-
 async function shareDrilldown(g) {
   const state = drillState[g];
   if (!state || !state.chart || !state.currentAthlete || !state.currentClass) return;
 
-  const {isChromeIOS} = detectBrowserShareSupport();
+  const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
   const s = sizing();
   const isMobile = window.innerWidth < 768;
 
@@ -1243,6 +1283,7 @@ async function shareDrilldown(g) {
   const votes = state.athleteMap[athlete]?.votes || [];
   const votesForAthlete = votes.length;
   const n = state.totalVotesInClass || votesForAthlete;
+  const fn = `metrics_drill_${g}_${sanitizeFilename(state.currentClass)}_${sanitizeFilename(athlete)}.png`;
 
   const srcCanvas = state.canvas;
   const chartDataUrl = srcCanvas.toDataURL('image/png');
@@ -1279,19 +1320,19 @@ async function shareDrilldown(g) {
 
   const header = document.createElement('h2');
   header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
-  header.style.fontSize = (isMobile?s.headerFont*1.4:s.headerFont*1.2) + 'px';
+  header.style.fontSize = (isMobile ? s.headerFont * 1.4 : s.headerFont * 1.2) + 'px';
   header.style.fontWeight = '700';
   header.style.margin = '0 0 6px 0';
 
   const sub1 = document.createElement('p');
-  sub1.textContent = athlete; // use athlete string only
-  sub1.style.fontSize = (isMobile?s.subFont*1.5:s.subFont*1.5) + 'px';
+  sub1.textContent = athlete;
+  sub1.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.5) + 'px';
   sub1.style.fontWeight = '600';
   sub1.style.margin = '0 0 4px 0';
 
   const sub2 = document.createElement('p');
-  sub2.textContent = `${votesForAthlete} votes out of ${n}`;
-  sub2.style.fontSize = (isMobile?s.creditFont*1.5:s.creditFont*1.5) + 'px';
+  sub2.textContent = `${votesForAthlete} Votes Out of ${n}`;
+  sub2.style.fontSize = (isMobile ? s.creditFont * 1.5 : s.creditFont * 1.5) + 'px';
   sub2.style.color = '#d1d5db';
   sub2.style.margin = '0 0 18px 0';
 
@@ -1302,7 +1343,7 @@ async function shareDrilldown(g) {
   chartImg.style.height = 'auto';
 
   const credit = document.createElement('p');
-  credit.style.fontSize = (isMobile?s.creditFont*1.5:s.creditFont*1.5) + 'px';
+  credit.style.fontSize = (isMobile ? s.creditFont * 1.5 : s.creditFont * 1.5) + 'px';
   credit.style.color = '#d1d5db';
   credit.style.lineHeight = '1.5';
   credit.style.marginTop = '8px';
@@ -1327,23 +1368,23 @@ async function shareDrilldown(g) {
   document.body.appendChild(card);
 
   await new Promise(requestAnimationFrame);
-  const canvas = await html2canvas(card,{backgroundColor:null,scale:2,useCORS:true,scrollY:0});
+  const canvas = await html2canvas(card, { backgroundColor: null, scale: 2, useCORS: true, scrollY: 0 });
   card.remove();
 
-  const blob = await new Promise(res => canvas.toBlob(res,'image/png'));
+  const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
   if (!blob) return;
-  const fn = `metrics_drill_${g}_${sanitizeFilename(state.currentClass)}_${sanitizeFilename(athlete)}.png`;
-  const file = new File([blob], { type: 'image/png' });
+
+  const file = new File([blob], fn, { type: 'image/png' });
 
   try {
-    if (!isChromeIOS && navigator.canShare && navigator.canShare({files:[file]})) {
+    if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
         title: 'British Classic Fantasy League 2025 – Metrics Drilldown',
         text: 'Drilldown vote distribution snapshot.',
         files: [file]
       });
     } else {
-      const url = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(file);
       const a = document.createElement('a');
       a.href = url;
       a.download = fn;
@@ -1354,7 +1395,7 @@ async function shareDrilldown(g) {
     }
   } catch (err) {
     console.error('Share failed; falling back to download.', err);
-    const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(file);
     const a = document.createElement('a');
     a.href = url;
     a.download = fn;
