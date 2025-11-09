@@ -727,26 +727,26 @@ async function shareChart(id, g) {
   const s = sizing();
   let src = document.getElementById(id);
 
-// 🧩 Non-blocking histogram readiness check
-if (/Hist$/i.test(id)) {
-  const checkHistogramReady = async () => {
-    let tries = 0;
-    while (tries < 8 && (!src || src.offsetWidth === 0 || src.offsetHeight === 0)) {
-      await new Promise(r => setTimeout(r, 50));
-      src = document.getElementById(id);
-      tries++;
-    }
-    // One more short delay for render flush
-    await new Promise(r => setTimeout(r, 150));
-  };
-  // fire and wait, but don't block UI thread
-  await checkHistogramReady();
-}
+  // 🧩 Non-blocking histogram readiness check
+  if (/Hist$/i.test(id)) {
+    const checkHistogramReady = async () => {
+      let tries = 0;
+      while (tries < 8 && (!src || src.offsetWidth === 0 || src.offsetHeight === 0)) {
+        await new Promise(r => setTimeout(r, 50));
+        src = document.getElementById(id);
+        tries++;
+      }
+      // one more short delay for render flush
+      await new Promise(r => setTimeout(r, 150));
+    };
+    await checkHistogramReady();
+  }
   if (!src) return;
 
   const shareBar = src.previousElementSibling;
   if (!shareBar) return;
 
+  // --- small UI helper ---
   function makeBtn(text) {
     const b = document.createElement('button');
     b.className = "bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1";
@@ -756,22 +756,20 @@ if (/Hist$/i.test(id)) {
     return b;
   }
 
+  // --- swap to generating state ---
   const generatingBtn = makeBtn("Generating…");
   swapShareButtonFor(shareBar, generatingBtn);
 
-await new Promise(requestAnimationFrame);
-
-// ⏳ Small safety wait (helps with histograms)
-for (let i = 0; i < 3; i++) {
+  // --- make sure chart is stable before snapshot ---
   await new Promise(requestAnimationFrame);
-}
+  for (let i = 0; i < 3; i++) await new Promise(requestAnimationFrame);
 
-const chart = Chart.getChart(src);
-if (!chart) {
-  console.warn(`Chart.js could not find a chart for #${id}.`);
-  resetShareIcon(); // ✅ revert button so it never gets stuck
-  return;
-}
+  const chart = Chart.getChart(src);
+  if (!chart) {
+    console.warn(`Chart.js could not find a chart for #${id}.`);
+    resetShareIcon();
+    return;
+  }
 
   const sel = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
   const w = sel ? sel.value : '';
@@ -786,6 +784,7 @@ if (!chart) {
     await new Promise(requestAnimationFrame);
   }
 
+  // --- hide chart gridlines for cleaner capture ---
   let prevScales = null;
   if (chart.options.scales) {
     prevScales = JSON.parse(JSON.stringify(chart.options.scales));
@@ -795,6 +794,7 @@ if (!chart) {
     await new Promise(requestAnimationFrame);
   }
 
+  // --- font scaling for histograms ---
   let restoreFonts = null;
   if (!isDonut) {
     restoreFonts = scaleChartFonts(chart, 0.85);
@@ -802,6 +802,7 @@ if (!chart) {
     await new Promise(requestAnimationFrame);
   }
 
+  // --- build export card ---
   const card = document.createElement('div');
   card.style.position = 'relative';
   card.style.width = s.exportWidth + 'px';
@@ -844,7 +845,7 @@ if (!chart) {
   const dataURL = src.toDataURL('image/png');
   const img = new Image();
   img.src = dataURL;
-  await img.decode();
+  try { await img.decode(); } catch {}
   img.style.display = 'block';
   img.style.margin = '0 auto 18px auto';
   img.style.borderRadius = '8px';
@@ -896,21 +897,45 @@ if (!chart) {
 
   await new Promise(requestAnimationFrame);
 
-  const canvas = await html2canvas(card, {
-    backgroundColor: null,
-    scale: 2,
-    useCORS: true,
-    scrollY: 0
-  });
+  // --- robust html2canvas + blob handling ---
+  let canvas;
+  try {
+    canvas = await Promise.race([
+      html2canvas(card, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+        scrollY: 0
+      }),
+      new Promise((_, reject) => setTimeout(() => reject('timeout'), 8000))
+    ]);
+  } catch (err) {
+    console.error('html2canvas failed or timed out:', err);
+    resetShareIcon();
+    card.remove();
+    return;
+  }
+
   card.remove();
 
   if (restoreFonts) restoreFonts();
   if (prevScales) chart.options.scales = prevScales;
   chart.update();
 
-  const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
+  let blob;
+  try {
+    blob = await new Promise((resolve, reject) => {
+      canvas.toBlob((b) => (b ? resolve(b) : reject('toBlob failed')), 'image/png');
+    });
+  } catch (err) {
+    console.error('toBlob failed:', err);
+    resetShareIcon();
+    return;
+  }
+
   const file = new File([blob], fn, { type: 'image/png' });
 
+  // --- Android Chrome two-step flow ---
   if (isAndroidChrome) {
     const shareBtn = makeBtn("Share Generated Image");
     shareBtn.onclick = async () => {
@@ -935,6 +960,7 @@ if (!chart) {
     return;
   }
 
+  // --- iOS / desktop fallback ---
   try {
     if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
@@ -958,6 +984,7 @@ if (!chart) {
 
   resetShareIcon();
 
+  // --- helper to revert the share icon ---
   function resetShareIcon() {
     shareBar.innerHTML = '';
     const iconBtn = document.createElement('button');
