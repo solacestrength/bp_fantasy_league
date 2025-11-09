@@ -362,7 +362,6 @@ footer {
   </div>
 
 <script>
-
 Chart.register(ChartDataLabels);
 
 /* ========= DATA / LAYOUT HELPERS ========= */
@@ -371,6 +370,7 @@ const SHEET_URL =
 
 let allData = [];
 const charts = {};
+const HIST_TITLE_REDUCTION = 0.85; // 🔧 15% smaller hist titles/subtitles for visual parity
 
 function sizing() {
   const d = window.matchMedia('(min-width:1024px)').matches;
@@ -530,22 +530,22 @@ function renderCharts(g, w) {
   const vals = rows
     .map(r => parseFloat(r.PredictedTotal))
     .filter(v => !isNaN(v) && v > 0);
-
   if (!vals.length) {
     if (charts[histId]) charts[histId].destroy();
     return;
   }
 
-  const N    = vals.length;
-  const min  = Math.min(...vals);
-  const max  = Math.max(...vals);
+  const N = vals.length;
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
   const bins = Math.max(3, Math.round(Math.sqrt(N)));
-  const bw   = (max - min) / bins || 1;
+  const bw = (max - min) / bins || 1;
 
   const countsH = Array(bins).fill(0);
   vals.forEach(v => {
     let i = Math.floor((v - min) / bw);
     if (i >= bins) i = bins - 1;
+    if (i < 0) i = 0;
     countsH[i]++;
   });
 
@@ -561,6 +561,8 @@ function renderCharts(g, w) {
   const yMax = Math.ceil(maxC / step) * step;
 
   if (charts[histId]) charts[histId].destroy();
+  const isDesktop = window.matchMedia('(min-width:1024px)').matches;
+
   charts[histId] = new Chart(document.getElementById(histId), {
     type: 'bar',
     data: {
@@ -576,20 +578,30 @@ function renderCharts(g, w) {
     options: {
       maintainAspectRatio: true,
       aspectRatio: 1,
+      layout: {
+        padding: {
+          top: 24,
+          bottom: 24,
+          left: isDesktop ? 40 : 28,
+          right: isDesktop ? 0 : 0
+        }
+      },
       plugins: {
         title: {
           display: true,
           text: 'Distribution of Predicted Winning Totals',
           color: '#ccc',
-          font: { size: s.histTitle, weight: 'bold' },
-          padding: { bottom: 8 }
+          font: { size: s.histTitle * HIST_TITLE_REDUCTION, weight: 'bold' },
+          padding: { bottom: 8 },
+          align: 'center'
         },
         subtitle: {
           display: true,
           text: `Total Votes – ${N}`,
           color: '#aaa',
-          font: { size: s.histSubtitle, weight: 'normal' },
-          padding: { top: 2, bottom: 12 }
+          font: { size: s.histSubtitle * HIST_TITLE_REDUCTION, weight: 'normal' },
+          padding: { top: 2, bottom: 12 },
+          align: 'center'
         },
         legend: { display: false },
         datalabels: {
@@ -636,6 +648,13 @@ function renderCharts(g, w) {
       }
     }
   });
+
+  // Refresh hist instance for consistent redraw
+  const histChart = charts[histId];
+  if (histChart) {
+    histChart.$histCentered = false;
+    histChart.update('none');
+  }
 }
 
 /* ========= COLLAPSIBLE SECTIONS ========= */
@@ -663,7 +682,6 @@ function toggleSection(id) {
   setTimeout(repositionBottomButtons, 600);
 }
 
-/* --- Smoothly reposition bottom buttons --- */
 function repositionBottomButtons() {
   const main = document.querySelector('main');
   const leaderboard = document.querySelector('a[href="leaderboard.html"]')?.closest('div');
@@ -680,9 +698,14 @@ function repositionBottomButtons() {
   });
 }
 
-/* --- Re-run positioning on resize/orientation change --- */
 window.addEventListener('resize', () => {
   repositionBottomButtons();
+  Object.values(charts).forEach(chart => {
+    if (chart && chart.config.type === 'bar' && /Hist$/i.test(chart.canvas.id)) {
+      chart.$histCentered = false;
+      chart.update('none');
+    }
+  });
 });
 
  /* ========= SHARE / EXPORT SYSTEM ========= */
@@ -774,12 +797,6 @@ async function shareChart(id, g) {
     if (chart.options.scales.y?.grid) chart.options.scales.y.grid.display = false;
   }
 
-  // 🔧 Histogram ONLY: restore visual parity with donut by 0.85 font scale
-  let restoreFonts = null;
-  if (!isDonut) {
-    restoreFonts = scaleChartFonts(chart, 0.85);
-  }
-
   chart.update();
   await new Promise(requestAnimationFrame);
 
@@ -812,6 +829,7 @@ async function shareChart(id, g) {
     : '40px 28px 44px 28px'; // a bit more for hist credits
   card.appendChild(inner);
 
+  // Header and Sub
   const header = document.createElement('h2');
   header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
   header.style.fontSize = (isMobile ? s.headerFont * 1.5 : s.headerFont * 1.25) + 'px';
@@ -877,8 +895,8 @@ async function shareChart(id, g) {
 
   // --- Robust height ---
   const naturalH = card.scrollHeight;
-  const baseH = isDonut ? 860 : 940; // histogram taller
-  const buffer = isDonut ? 40 : 100; // ensure credits visible
+  const baseH = isDonut ? 860 : 940;
+  const buffer = isDonut ? 40 : 100;
   const finalH = Math.max(baseH, naturalH + buffer);
   card.style.height = finalH + 'px';
   card.style.maxHeight = finalH + 'px';
@@ -886,7 +904,7 @@ async function shareChart(id, g) {
 
   await new Promise(requestAnimationFrame);
 
-  // Render capture
+  // --- Render capture ---
   const canvas = await html2canvas(card, {
     backgroundColor: null,
     scale: 2,
@@ -895,8 +913,7 @@ async function shareChart(id, g) {
   });
   card.remove();
 
-  // Restore chart settings
-  if (restoreFonts) restoreFonts();
+  // Restore chart scales only (no font restore)
   if (prevScales) chart.options.scales = prevScales;
   chart.update();
 
