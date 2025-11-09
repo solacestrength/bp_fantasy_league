@@ -44,10 +44,11 @@
   }
 
   .drill-select {
-    width: 100%;
+    display: inline-block;
     font-size: 0.75rem;
     padding-top: 0.4rem;
     padding-bottom: 0.4rem;
+    max-width: 70%;
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
@@ -180,7 +181,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 1.1rem;
     border-radius: 999px;
     background-color: #111827;
     border: 1px solid #374151;
@@ -288,15 +289,17 @@
 
           <!-- WOMEN DRILLDOWN -->
           <div class="chart-container mt-4" id="womenDrillWrapper" style="display:none; opacity:0;">
-            <select id="womenDrillSelect" class="drill-select mb-3"></select>
-            <div class="flex items-center justify-between mb-2">
-              <button type="button" class="back-pill" onclick="closeDrilldown('F')">
-                <span>&larr;</span>
-                <span>Back to Doughnut</span>
-              </button>
+            <div class="flex items-center justify-between mb-2 gap-3">
+              <select id="womenDrillSelect" class="drill-select"></select>
               <button class="share-btn" onclick="shareDrilldown('F')">
                 <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
                      class="share-icon" alt="Share Drilldown"/>
+              </button>
+            </div>
+            <div class="mb-2">
+              <button type="button" class="back-pill" onclick="closeDrilldown('F')">
+                <span>&larr;</span>
+                <span>Back to Doughnut</span>
               </button>
             </div>
             <canvas id="womenDrill"></canvas>
@@ -342,15 +345,17 @@
 
           <!-- MEN DRILLDOWN -->
           <div class="chart-container mt-4" id="menDrillWrapper" style="display:none; opacity:0;">
-            <select id="menDrillSelect" class="drill-select mb-3"></select>
-            <div class="flex items-center justify-between mb-2">
-              <button type="button" class="back-pill" onclick="closeDrilldown('M')">
-                <span>&larr;</span>
-                <span>Back to Doughnut</span>
-              </button>
+            <div class="flex items-center justify-between mb-2 gap-3">
+              <select id="menDrillSelect" class="drill-select"></select>
               <button class="share-btn" onclick="shareDrilldown('M')">
                 <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
                      class="share-icon" alt="Share Drilldown"/>
+              </button>
+            </div>
+            <div class="mb-2">
+              <button type="button" class="back-pill" onclick="closeDrilldown('M')">
+                <span>&larr;</span>
+                <span>Back to Doughnut</span>
               </button>
             </div>
             <canvas id="menDrill"></canvas>
@@ -555,7 +560,6 @@ function setupDropdowns() {
       const newClass = select.value;
       renderCharts(g, newClass);
 
-      // If drilldown is open for this gender, update it to new class
       const state = drillState[g];
       if (state && state.wrapper.style.display === 'block') {
         const rows = allData.filter(r => r.Gender === g && r.Class === newClass);
@@ -577,17 +581,13 @@ function fadeIn(el) {
   if (!el) return;
   el.style.display = 'block';
   el.style.opacity = 0;
-  requestAnimationFrame(() => {
-    el.style.opacity = 1;
-  });
+  requestAnimationFrame(() => { el.style.opacity = 1; });
 }
 
 function fadeOut(el) {
   if (!el) return;
   el.style.opacity = 0;
-  setTimeout(() => {
-    el.style.display = 'none';
-  }, 250);
+  setTimeout(() => { el.style.display = 'none'; }, 250);
 }
 
 /* ========= CHART RENDERING ========= */
@@ -663,11 +663,6 @@ function renderCharts(g, w) {
           anchor: 'center',
           align: 'center',
           clamp: true
-        },
-        tooltip: {
-          callbacks: {
-            // keep default label (athlete + votes) for donut
-          }
         }
       },
       onClick: (evt, elements) =>
@@ -732,22 +727,15 @@ function renderCharts(g, w) {
         datalabels: {
           color: '#fff',
           font: { size: s.histBarLabel, weight: 'normal' },
-          formatter: (v) => v > 0 ? v : '',
+          formatter: (v) => v,
           anchor: 'center',
-          align: (ctx) => {
-            const v = ctx.dataset.data[ctx.dataIndex] || 0;
-            const scale = ctx.chart.scales.y;
-            if (!scale) return 'center';
-            const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
-            const f = ctx.chart.options.plugins.datalabels.font.size || s.histBarLabel;
-            return (barH < f * 1.05) ? 'end' : 'center';
-          },
+          align: 'center',
           clamp: true
         },
         tooltip: {
           callbacks: {
             title: (items) => (items[0]?.label) || '',
-            label: (ctx) => `🟦 Vote Count – ${ctx.parsed.y}`
+            label: (ctx) => `Vote Count - ${ctx.parsed.y}`
           }
         }
       },
@@ -758,8 +746,8 @@ function renderCharts(g, w) {
             color: '#ccc',
             font: { size: s.axisTick },
             autoSkip: false,
-            maxRotation: 60,
-            minRotation: 45,
+            maxRotation: 0,
+            minRotation: 0,
             callback: (value, index) => labelsH[index] || ''
           },
           title: {
@@ -795,7 +783,7 @@ function renderCharts(g, w) {
 
 /* ========= DRILLDOWN HELPERS ========= */
 
-// Detect double-click on donut segment
+// double-click donut -> drilldown
 function handleDonutClick(g, w, donutId, evt, elements, rows) {
   if (!evt || !evt.native) return;
   const target = evt.native.target;
@@ -819,7 +807,6 @@ function handleDonutClick(g, w, donutId, evt, elements, rows) {
   }
 }
 
-// Build athlete -> { votes:[], total } for this gender+class
 function buildDrillAthleteMap(rows) {
   const map = {};
   rows.forEach(r => {
@@ -852,7 +839,6 @@ function openDrilldown(g, w, athlete, rows, opts = {}) {
   state.currentClass = w;
   state.totalVotesInClass = rows.length;
 
-  // Dropdown options
   const names = Object.keys(state.athleteMap);
   state.select.innerHTML = '';
   names.forEach(name => {
@@ -865,15 +851,11 @@ function openDrilldown(g, w, athlete, rows, opts = {}) {
     state.select.appendChild(opt);
   });
 
-  // If no votes for chosen athlete, default to first with votes
   if (!state.athleteMap[athlete]) {
-    const firstWithVotes = names.find(n => (state.athleteMap[n].votes || []).length);
-    if (firstWithVotes) {
-      state.currentAthlete = firstWithVotes;
-    }
+    const fallback = names[0];
+    if (fallback) state.currentAthlete = fallback;
   }
 
-  // Show drill wrapper / hide donut with optional fade
   if (!opts.skipFade) {
     fadeOut(donutContainer);
     fadeIn(state.wrapper);
@@ -885,7 +867,6 @@ function openDrilldown(g, w, athlete, rows, opts = {}) {
 
   renderDrillChart(g, state.currentAthlete);
 
-  // Dropdown change: update athlete in drilldown
   state.select.onchange = () => {
     const selAthlete = state.select.value;
     if (!selAthlete) return;
@@ -915,12 +896,27 @@ function closeDrilldown(g) {
   state.totalVotesInClass = 0;
 }
 
+function getRedGradientColors() {
+  const colors = [];
+  const start = { r: 252, g: 165, b: 165 }; // light red
+  const end   = { r: 185, g: 28,  b: 28  }; // dark red
+  for (let i = 0; i < 16; i++) {
+    const t = i / 15;
+    const r = Math.round(start.r + (end.r - start.r) * t);
+    const g = Math.round(start.g + (end.g - start.g) * t);
+    const b = Math.round(start.b + (end.b - start.b) * t);
+    colors.push(`rgb(${r},${g},${b})`);
+  }
+  return colors;
+}
+
 function renderDrillChart(g, athlete) {
   const state = drillState[g];
   if (!state || !state.athleteMap[athlete]) return;
 
   const s = sizing();
   const votes = state.athleteMap[athlete].votes || [];
+  const colors = getRedGradientColors();
 
   const counts = Array(16).fill(0);
   votes.forEach(v => {
@@ -936,7 +932,7 @@ function renderDrillChart(g, athlete) {
       labels: Array.from({ length: 16 }, (_, i) => i + 1),
       datasets: [{
         data: counts,
-        backgroundColor: '#3b82f6',
+        backgroundColor: colors,
         borderRadius: 5,
         barPercentage: 0.9,
         categoryPercentage: 1.0
@@ -951,7 +947,7 @@ function renderDrillChart(g, athlete) {
         datalabels: {
           color: '#fff',
           font: { size: s.histBarLabel, weight: 'normal' },
-          formatter: (v) => v > 0 ? v : '',
+          formatter: (v) => v,
           anchor: 'center',
           align: 'center',
           clamp: true
@@ -959,7 +955,7 @@ function renderDrillChart(g, athlete) {
         tooltip: {
           callbacks: {
             title: (items) => (items[0]?.label) || '',
-            label: (ctx2) => `🟦 Vote Count – ${ctx2.parsed.y}`
+            label: (ctx2) => `Vote Count - ${ctx2.parsed.y}`
           }
         },
         title: { display: false }
@@ -968,7 +964,9 @@ function renderDrillChart(g, athlete) {
         x: {
           ticks: {
             color: '#ccc',
-            font: { size: s.axisTick }
+            font: { size: s.axisTick },
+            maxRotation: 0,
+            minRotation: 0
           },
           title: {
             display: true,
@@ -1062,7 +1060,7 @@ function detectBrowserShareSupport() {
   };
 }
 
-function swapShareButtonFor(containerEl, newBtn){
+function swapShareButtonFor(containerEl, newBtn) {
   containerEl.innerHTML = '';
   containerEl.appendChild(newBtn);
 }
@@ -1077,15 +1075,15 @@ function sanitizeFilename(str) {
     .toLowerCase();
 }
 
-/* ========= SHARE STANDARD CHARTS (DONUT + HIST) ========= */
+/* ========= SHARE STANDARD CHARTS ========= */
 
-async function shareChart(id, g){
-  const {isAndroidChrome, isChromeIOS} = detectBrowserShareSupport();
+async function shareChart(id, g) {
+  const {isChromeIOS} = detectBrowserShareSupport();
   const s = sizing();
   const src = document.getElementById(id);
-  if(!src) return;
+  if (!src) return;
   const shareBar = src.previousElementSibling;
-  if(!shareBar) return;
+  if (!shareBar) return;
 
   function makeBtn(text){
     const b = document.createElement('button');
@@ -1141,14 +1139,14 @@ async function shareChart(id, g){
   header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
   header.style.fontSize = (isMobile?s.headerFont*1.4:s.headerFont*1.2) + 'px';
   header.style.fontWeight = '700';
-  header.style.margin = '0 0 4px 0';
+  header.style.margin = '0 0 6px 0';
 
   const sub = document.createElement('p');
   const label = (w?`${w}kg `:'') + (g==='F'?'Women':'Men');
   sub.innerHTML = isDonut
     ? label
     : `${label}<br>Distribution of Predicted Winning Totals`;
-  sub.style.fontSize = (isMobile?s.subFont*1.1:s.subFont) + 'px';
+  sub.style.fontSize = (isMobile?s.subFont*1.5:s.subFont*1.5) + 'px';
   sub.style.fontWeight = '600';
   sub.style.color = '#e5e7eb';
   sub.style.margin = '0 0 18px 0';
@@ -1160,12 +1158,12 @@ async function shareChart(id, g){
   img.style.height = 'auto';
 
   const credit = document.createElement('p');
-  credit.style.fontSize = (isMobile?s.creditFont*0.9:s.creditFont*0.8) + 'px';
+  credit.style.fontSize = (isMobile?s.creditFont*1.5:s.creditFont*1.5) + 'px';
   credit.style.color = '#d1d5db';
   credit.style.lineHeight = '1.5';
   credit.style.marginTop = '8px';
   credit.innerHTML =
-    'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
+    'Data from tinyurl.com/britishclassicfl-metrics<br>Sponsored by the Sabado Sessions Podcast';
 
   const qr = new Image();
   const qrsz = s.qrSize;
@@ -1209,20 +1207,19 @@ async function shareChart(id, g){
     console.error('Share failed:', err);
   }
 
-  // restore icon
   shareBar.innerHTML =
     '<button class="share-btn" onclick="shareChart(\''+id+'\', \''+g+'\')">' +
     '<img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>' +
     '</button>';
 }
 
-/* ========= DRILLDOWN SHARE (MATCH HISTOGRAM STYLE) ========= */
+/* ========= DRILLDOWN SHARE ========= */
 
 async function shareDrilldown(g) {
   const state = drillState[g];
   if (!state || !state.chart || !state.currentAthlete || !state.currentClass) return;
 
-  const {isAndroidChrome, isChromeIOS} = detectBrowserShareSupport();
+  const {isChromeIOS} = detectBrowserShareSupport();
   const s = sizing();
   const isMobile = window.innerWidth < 768;
 
@@ -1258,10 +1255,11 @@ async function shareDrilldown(g) {
 
   const inner = document.createElement('div');
   inner.style.position = 'relative';
+  inner.style.textAlign = 'center';
   inner.style.color = '#fff';
   inner.style.fontFamily = "'Inter', sans-serif";
   inner.style.zIndex = '2';
-  inner.style.padding = '32px 26px 22px 26px';
+  inner.style.padding = '32px 26px 26px 26px';
   card.appendChild(inner);
 
   const header = document.createElement('h2');
@@ -1272,15 +1270,15 @@ async function shareDrilldown(g) {
 
   const sub1 = document.createElement('p');
   sub1.textContent = totalKg ? `${athlete} (${totalKg}kg)` : athlete;
-  sub1.style.fontSize = (isMobile?s.subFont*1.1:s.subFont) + 'px';
+  sub1.style.fontSize = (isMobile?s.subFont*1.5:s.subFont*1.5) + 'px';
   sub1.style.fontWeight = '600';
   sub1.style.margin = '0 0 4px 0';
 
   const sub2 = document.createElement('p');
   sub2.textContent = `${votesForAthlete} votes out of ${n}`;
-  sub2.style.fontSize = (isMobile?16:15) + 'px';
+  sub2.style.fontSize = 18 + 'px';
   sub2.style.color = '#d1d5db';
-  sub2.style.margin = '0 0 16px 0';
+  sub2.style.margin = '0 0 18px 0';
 
   chartImg.style.display = 'block';
   chartImg.style.margin = '0 auto 16px auto';
@@ -1288,16 +1286,19 @@ async function shareDrilldown(g) {
   chartImg.style.width = '92%';
   chartImg.style.height = 'auto';
 
-  const footer = document.createElement('div');
-  footer.style.display = 'flex';
-  footer.style.alignItems = 'center';
-  footer.style.marginTop = '4px';
+  const credit = document.createElement('p');
+  credit.style.fontSize = (isMobile?s.creditFont*1.5:s.creditFont*1.5) + 'px';
+  credit.style.color = '#d1d5db';
+  credit.style.lineHeight = '1.5';
+  credit.style.marginTop = '8px';
+  credit.innerHTML =
+    'Data from tinyurl.com/britishclassicfl-metrics<br>Sponsored by the Sabado Sessions Podcast';
 
   const qrSize = s.qrSize;
   const qrWrapper = document.createElement('div');
-  qrWrapper.style.width = qrSize + 'px';
-  qrWrapper.style.height = qrSize + 'px';
-  qrWrapper.style.marginRight = '12px';
+  qrWrapper.style.position = 'absolute';
+  qrWrapper.style.bottom = '18px';
+  qrWrapper.style.left = '18px';
   new QRCode(qrWrapper, {
     text: 'https://solacestrength.github.io/britishclassicfl/metrics.html',
     width: qrSize,
@@ -1305,17 +1306,8 @@ async function shareDrilldown(g) {
     margin: 0
   });
 
-  const footerText = document.createElement('p');
-  footerText.style.fontSize = (isMobile?s.creditFont*0.8:s.creditFont*0.75) + 'px';
-  footerText.style.color = '#d1d5db';
-  footerText.style.lineHeight = '1.5';
-  footerText.innerHTML =
-    'Data from tinyurl.com/britishclassicfl-metrics<br/>Sponsored by the Sabado Sessions Podcast';
-
-  footer.appendChild(qrWrapper);
-  footer.appendChild(footerText);
-
-  inner.append(header, sub1, sub2, chartImg, footer);
+  inner.append(header, sub1, sub2, chartImg, credit);
+  card.appendChild(qrWrapper);
   document.body.appendChild(card);
 
   await new Promise(requestAnimationFrame);
@@ -1343,7 +1335,6 @@ async function shareDrilldown(g) {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      alert('Image saved. You can now share it manually on your socials.');
     }
   } catch (err) {
     console.error('Share failed; falling back to download.', err);
