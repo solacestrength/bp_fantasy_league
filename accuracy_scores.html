@@ -689,6 +689,12 @@ document.addEventListener("DOMContentLoaded", () => {
     let start = Math.max(0, safeIndex - 4);
     let end = Math.min(total - 1, safeIndex + 5);
 
+// --- If user is within bottom 5 positions, show bottom 10 instead ---
+if (total - safeIndex <= 5) {
+  start = Math.max(0, total - 10);
+  end = total - 1;
+}
+
     const slice = allRows.slice(start, end + 1);
     while (slice.length < 10)
       slice.push(new Array(headerRow.length).fill(""));
