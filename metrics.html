@@ -749,6 +749,14 @@ async function shareChart(id, g) {
   const generatingBtn = makeBtn("Generating…");
   swapShareButtonFor(shareBar, generatingBtn);
 
+  // 🕐 Safety: revert after 8s if stuck
+  setTimeout(() => {
+    if (shareBar.textContent.includes('Generating')) {
+      resetShareIcon();
+      console.warn('Export timeout – share reset.');
+    }
+  }, 8000);
+
   await new Promise(requestAnimationFrame);
   const chart = Chart.getChart(src);
   if (!chart) {
@@ -770,7 +778,7 @@ async function shareChart(id, g) {
     await new Promise(requestAnimationFrame);
   }
 
-  // Hide grids for clean export
+  // Hide gridlines for clean export
   let prevScales = null;
   if (chart.options.scales) {
     prevScales = JSON.parse(JSON.stringify(chart.options.scales));
@@ -780,7 +788,7 @@ async function shareChart(id, g) {
     await new Promise(requestAnimationFrame);
   }
 
-  // Histogram only: scale chart fonts down by ~20% for export
+  // Scale histogram fonts by 20% smaller for export
   let restoreFonts = null;
   if (!isDonut) {
     restoreFonts = scaleChartFonts(chart, 0.8);
@@ -788,22 +796,34 @@ async function shareChart(id, g) {
     await new Promise(requestAnimationFrame);
   }
 
-  // ---- Export Card ----
+  // === Export Card ===
   const card = document.createElement('div');
   card.style.position = 'relative';
   card.style.width = s.exportWidth + 'px';
   card.style.borderRadius = '16px';
   card.style.overflow = 'hidden';
   card.style.margin = '0 auto';
-  card.style.backgroundImage = "url('bc25_logo.jpg')";
-  card.style.backgroundSize = 'cover';
-  card.style.backgroundPosition = 'center';
   card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
 
+  // ✅ Replace backgroundImage with a CORS-safe <img>
+  const bg = new Image();
+  bg.src = 'bc25_logo.jpg';
+  bg.crossOrigin = 'anonymous';
+  bg.style.position = 'absolute';
+  bg.style.inset = '0';
+  bg.style.width = '100%';
+  bg.style.height = '100%';
+  bg.style.objectFit = 'cover';
+  bg.style.zIndex = '0';
+  bg.style.opacity = '0.45';
+  card.appendChild(bg);
+
+  // Semi-transparent overlay
   const overlay = document.createElement('div');
   overlay.style.position = 'absolute';
   overlay.style.inset = '0';
   overlay.style.background = 'rgba(0,0,0,0.65)';
+  overlay.style.zIndex = '1';
   card.appendChild(overlay);
 
   const inner = document.createElement('div');
@@ -812,35 +832,28 @@ async function shareChart(id, g) {
   inner.style.color = '#fff';
   inner.style.fontFamily = "'Inter', sans-serif";
   inner.style.zIndex = '2';
-  inner.style.padding = isDonut
-    ? '36px 28px 36px 28px'
-    : '40px 28px 36px 28px';
+  inner.style.padding = isDonut ? '36px 28px 36px 28px' : '40px 28px 36px 28px';
   card.appendChild(inner);
 
   const header = document.createElement('h2');
   header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
-  header.style.fontSize =
-    (isMobile ? s.headerFont * 1.5 : s.headerFont * 1.25) + 'px';
+  header.style.fontSize = (isMobile ? s.headerFont * 1.5 : s.headerFont * 1.25) + 'px';
   header.style.fontWeight = '700';
   header.style.margin = '0 0 4px 0';
 
   const sub = document.createElement('p');
   if (isDonut) {
-    // Donut exports unchanged
     sub.textContent = (w ? `${w}kg ` : '') + (g === 'F' ? 'Women' : 'Men');
   } else {
-    // Histogram exports: two-line contextual subtitle
     sub.innerHTML =
       (w ? `${w}kg ` : '') +
       (g === 'F' ? 'Women' : 'Men') +
       '<br>Distribution of Predicted Winning Totals';
   }
-  sub.style.fontSize =
-    (isMobile ? s.subFont * 1.5 : s.subFont * 1.25) + 'px';
+  sub.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.25) + 'px';
   sub.style.fontWeight = '700';
   sub.style.color = '#ddd';
-  sub.style.margin =
-    '0 0 ' + (isDonut ? '14px' : '18px') + ' 0';
+  sub.style.margin = '0 0 ' + (isDonut ? '14px' : '18px') + ' 0';
 
   const dataURL = src.toDataURL('image/png');
   const img = new Image();
@@ -849,14 +862,11 @@ async function shareChart(id, g) {
   img.style.display = 'block';
   img.style.margin = '0 auto 18px auto';
   img.style.borderRadius = '8px';
-  img.style.width = isMobile
-    ? (isDonut ? '80%' : '96%')
-    : (isDonut ? '70%' : '93%');
+  img.style.width = (isMobile ? (isDonut ? '80%' : '96%') : (isDonut ? '70%' : '93%'));
   img.style.height = 'auto';
 
   const credit = document.createElement('p');
-  credit.style.fontSize =
-    (isMobile ? s.creditFont * 1.25 : s.creditFont * 1.15) + 'px';
+  credit.style.fontSize = (isMobile ? s.creditFont * 1.25 : s.creditFont * 1.15) + 'px';
   credit.style.color = '#ccc';
   credit.style.lineHeight = '1.5';
   credit.style.marginTop = '8px';
@@ -869,9 +879,9 @@ async function shareChart(id, g) {
   const qr = new Image();
   qr.crossOrigin = 'anonymous';
   const qrsz = isMobile ? s.qrSize * 1.1 : s.qrSize * 1.25;
-  qr.src =
-    `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=` +
-    encodeURIComponent('https://solacestrength.github.io/britishclassicfl/metrics.html');
+  qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent(
+    'https://solacestrength.github.io/britishclassicfl/metrics.html'
+  )}`;
   qr.style.position = 'absolute';
   qr.style.bottom = '18px';
   qr.style.left = '18px';
@@ -889,16 +899,8 @@ async function shareChart(id, g) {
   const naturalH = card.scrollHeight;
   const baseH = isDonut ? 860 : 820;
   const scaleFactor = isMobile ? 0.92 : 1.0;
-  const fixedH = Math.min(
-    naturalH * scaleFactor,
-    s.exportWidth * scaleFactor
-  );
-  const buffer = Math.round(
-    fixedH *
-      (isMobile
-        ? (isDonut ? 0.15 : 0.22)
-        : 0.02)
-  );
+  const fixedH = Math.min(naturalH * scaleFactor, s.exportWidth * scaleFactor);
+  const buffer = Math.round(fixedH * (isMobile ? (isDonut ? 0.15 : 0.22) : 0.02));
 
   card.style.height = fixedH + buffer + 'px';
   card.style.maxHeight = fixedH + buffer + 'px';
