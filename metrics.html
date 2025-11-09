@@ -759,9 +759,19 @@ if (/Hist$/i.test(id)) {
   const generatingBtn = makeBtn("Generating…");
   swapShareButtonFor(shareBar, generatingBtn);
 
+await new Promise(requestAnimationFrame);
+
+// ⏳ Small safety wait (helps with histograms)
+for (let i = 0; i < 3; i++) {
   await new Promise(requestAnimationFrame);
-  const chart = Chart.getChart(src);
-  if (!chart) return;
+}
+
+const chart = Chart.getChart(src);
+if (!chart) {
+  console.warn(`Chart.js could not find a chart for #${id}.`);
+  resetShareIcon(); // ✅ revert button so it never gets stuck
+  return;
+}
 
   const sel = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
   const w = sel ? sel.value : '';
