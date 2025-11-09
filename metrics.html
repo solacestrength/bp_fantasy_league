@@ -15,157 +15,208 @@
   <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
 
   <style>
-  /* === GLOBAL THEME === */
-  body {
-    background: #0b0b0b;
-    color: #f1f1f1;
-    font-family: 'Inter', sans-serif;
-    overflow-x: hidden; /* safety: no horizontal scroll/blank strip */
-  }
+/* === GLOBAL THEME === */
+body {
+  background: #0b0b0b;
+  color: #f1f1f1;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
 
-  /* === SELECT ELEMENTS === */
-  select {
-    background: #2f2f2f;
-    border: 1px solid #555;
-    color: #f1f1f1;
-    padding: 0.35rem 0.5rem;
-    border-radius: 0.375rem;
-    width: auto;
-    min-width: 0;
-    display: inline-block;
-  }
+/* === SELECT ELEMENTS === */
+select {
+  background: #2f2f2f;
+  border: 1px solid #555;
+  color: #f1f1f1;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.375rem;
+  width: auto;
+  min-width: 0;
+  display: inline-block;
+}
 
-  #womenSelect,
-  #menSelect {
-    background-color: rgba(31, 41, 55, 0.6) !important;
-    border: 1px solid #374151;
-    color: #f1f1f1;
-  }
+#womenSelect,
+#menSelect {
+  background-color: rgba(31, 41, 55, 0.6) !important;
+  border: 1px solid #374151;
+  color: #f1f1f1;
+  transition: all 0.2s ease;
+}
 
-  /* === METRICS LAYOUT === */
-  .chart-container {
-    max-width: 600px;
-    margin: 0 auto;
-    position: relative;
-    display: block;
-    width: 100%;
-  }
+#womenSelect:hover,
+#menSelect:hover {
+  border-color: #dc2626;
+  background-color: rgba(55, 65, 81, 0.7);
+}
 
-  canvas {
-    max-width: 100%;
-    height: auto !important;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-  }
+/* === CHART CONTAINERS === */
+.chart-container {
+  max-width: 600px;
+  margin: 0 auto;
+  position: relative;
+  display: block;
+  width: 100%;
+}
 
-  @media (min-width: 1024px) {
-    #womenDonut, #menDonut,
-    #womenHist, #menHist {
-      aspect-ratio: 1 / 1 !important;
-      width: 100% !important;
-      max-height: none !important;
-      object-fit: contain;
-    }
+canvas {
+  max-width: 100%;
+  height: auto !important;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
 
-    #womenDonut, #menDonut { height: 375px !important; }
-    #womenHist, #menHist {
-      height: 375px !important;
-      transform: none !important;
-      transform-origin: top center;
-    }
-  }
-
-  @media (max-width: 1023px) {
-    #womenDonut, #menDonut,
-    #womenHist, #menHist {
-      aspect-ratio: 1 / 1 !important;
-      width: 100% !important;
-      max-height: none !important;
-      object-fit: contain;
-    }
-
-    #womenDonut, #menDonut { height: 336px !important; }
-    #womenHist, #menHist {
-      height: 336px !important;
-      transform: none !important;
-      transform-origin: top center;
-    }
-  }
-
-  #womenDonut,
-  #menDonut {
-    width: 100% !important;
+/* Desktop & mobile height tuning for donuts and histograms */
+@media (min-width: 1024px) {
+  #womenDonut, #menDonut,
+  #womenHist, #menHist {
     aspect-ratio: 1 / 1 !important;
+    width: 100% !important;
     max-height: none !important;
     object-fit: contain;
   }
 
-  /* === COLLAPSIBLE SECTIONS === */
-  .collapsible-content {
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    transition: max-height .5s ease, opacity .4s ease;
+  #womenDonut, #menDonut { height: 375px !important; }
+  #womenHist, #menHist {
+    height: 375px !important;
+    transform: none !important;
+    transform-origin: top center;
+  }
+}
+
+@media (max-width: 1023px) {
+  #womenDonut, #menDonut,
+  #womenHist, #menHist {
+    aspect-ratio: 1 / 1 !important;
+    width: 100% !important;
+    max-height: none !important;
+    object-fit: contain;
   }
 
+  #womenDonut, #menDonut { height: 336px !important; }
+  #womenHist, #menHist {
+    height: 336px !important;
+    transform: none !important;
+    transform-origin: top center;
+  }
+}
+
+/* === COLLAPSIBLE SECTIONS === */
+.collapsible-content {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height .5s ease, opacity .4s ease;
+}
+
+.collapsible-content.open {
+  opacity: 1;
+  max-height: 1000px;
+  padding-bottom: 1rem;
+}
+
+/* Contained width for mobile cards */
+@media (max-width: 1023px) {
+  .collapsible-content,
   .collapsible-content.open {
-    opacity: 1;
-    max-height: 1000px;  /* big enough for charts */
-    padding-bottom: 1rem;
+    width: 100%;
+    margin-left: 0;
+    padding-left: 0;
+    padding-right: 0;
   }
+}
 
-  /* Keep everything constrained inside the card on mobile too:
-     no width:100vw tricks here so dropdown + share never overflow */
-  @media (max-width: 1023px) {
-    .collapsible-content,
-    .collapsible-content.open {
-      width: 100%;
-      margin-left: 0;
-      padding-left: 0;
-      padding-right: 0;
-    }
-  }
+.arrow {
+  transition: transform .4s ease;
+}
 
-  .arrow {
-    transition: transform .4s ease;
-  }
+.arrow.rotate {
+  transform: rotate(180deg);
+}
 
-  .arrow.rotate {
-    transform: rotate(180deg);
-  }
+/* === CARD STYLE === */
+.bg-gray-800\/60 {
+  background-color: rgba(31, 41, 55, 0.6) !important;
+}
 
-  /* === SHARE BUTTONS === */
-  .share-btn {
-    background-color: #dc2626;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: .5rem;
-    height: 36px;
-    width: 36px;
-    transition: background-color .2s ease, transform .2s ease;
-  }
+.border-gray-700 {
+  border-color: #374151 !important;
+}
 
-  .share-btn:hover {
-    background-color: #ef4444;
-    transform: translateY(-1px);
-  }
+/* === SHARE BUTTONS === */
+.share-btn {
+  background-color: #dc2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: .5rem;
+  height: 36px;
+  width: 36px;
+  transition: background-color .2s ease, transform .2s ease;
+}
 
-  .share-icon {
-    filter: invert(1);
-    height: 18px;
-    width: 18px;
-  }
+.share-btn:hover {
+  background-color: #ef4444;
+  transform: translateY(-1px);
+}
 
-  /* === ANIMATIONS === */
-  @keyframes fadeInUp {
-    0% { opacity: 0; transform: translateY(10px); }
-    100% { opacity: 1; transform: translateY(0); }
-  }
+.share-icon {
+  filter: invert(1);
+  height: 18px;
+  width: 18px;
+}
 
-  .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
-  .animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
+/* === HEADER LINKS === */
+.site-header a {
+  color: #fff;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.site-header a:hover {
+  color: #ef4444;
+}
+
+/* === ANIMATIONS === */
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
+.animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
+
+/* === BUTTONS === */
+button, a.button {
+  transition: all 0.2s ease-in-out;
+}
+
+button:hover, a.button:hover {
+  filter: brightness(1.15);
+}
+
+/* === LEADERBOARD & BACK TO TOP STYLES === */
+#bottomBackToTop {
+  background-color: rgba(31, 41, 55, 0.6);
+  border: 1px solid #374151;
+  color: #ef4444;
+}
+
+#bottomBackToTop:hover {
+  background-color: rgba(55, 65, 81, 0.7);
+  color: #f87171;
+}
+
+footer {
+  text-shadow: 0 0 8px rgba(0,0,0,0.4);
+}
+
+/* === SAFETY GUARDS === */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 </style>
 </head>
 
@@ -178,16 +229,13 @@
     <header class="site-header w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 relative z-50">
       <div class="w-full flex items-center justify-center px-4 py-3">
         <div class="flex-1 text-center">
-          <a href="index.html"
-             class="font-bold text-white hover:text-red-500 transition text-sm sm:text-lg md:text-xl lg:text-2xl">
+          <a href="index.html" class="font-bold text-white hover:text-red-500 transition text-sm sm:text-lg md:text-xl lg:text-2xl">
             British Classic Fantasy League 2025 🇬🇧
           </a>
         </div>
         <div class="absolute right-4 top-1/2 -translate-y-1/2">
-          <button id="menu-btn" aria-expanded="false"
-                  class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none"
-                 viewBox="0 0 24 24" stroke="currentColor">
+          <button id="menu-btn" aria-expanded="false" class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M4 6h16M4 12h16M4 18h16"/>
             </svg>
@@ -216,29 +264,28 @@
         <h2 class="text-xl font-semibold mb-1">Metrics Dashboard</h2>
         <p class="text-gray-400 text-sm">
           Explore how the predicted winners and totals are distributed for a given weight class. Sample size = number of entrants.
-          Any labels from tapping bars or chart sections will be visible in shared images 📊
+          Any labels tapped on the charts will appear in shared images 📊
         </p>
       </section>
 
       <!-- WOMEN -->
       <div class="bg-gray-800/60 border border-gray-700 backdrop-blur-sm shadow-lg rounded-2xl p-4">
-        <button onclick="toggleSection('women')"
-                class="flex items-center justify-between w-full text-left text-lg font-bold">
+        <button onclick="toggleSection('women')" class="flex items-center justify-between w-full text-left text-lg font-bold">
           <span>Women</span>
-          <svg id="arrow-women" xmlns="http://www.w3.org/2000/svg"
-               class="h-5 w-5 arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg id="arrow-women" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 arrow" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M19 9l-7 7-7-7"/>
           </svg>
         </button>
+
         <div id="women" class="collapsible-content mt-4">
           <select id="womenSelect" class="p-2 rounded mb-4 text-sm"></select>
 
           <div class="chart-container">
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('womenDonut','F')">
-                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
-                     class="share-icon" alt="Share"/>
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon"/>
               </button>
             </div>
             <canvas id="womenDonut"></canvas>
@@ -247,8 +294,7 @@
           <div class="chart-container mt-6">
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('womenHist','F')">
-                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
-                     class="share-icon" alt="Share"/>
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon"/>
               </button>
             </div>
             <canvas id="womenHist"></canvas>
@@ -258,23 +304,22 @@
 
       <!-- MEN -->
       <div class="bg-gray-800/60 border border-gray-700 backdrop-blur-sm shadow-lg rounded-2xl p-4">
-        <button onclick="toggleSection('men')"
-                class="flex items-center justify-between w-full text-left text-lg font-bold">
+        <button onclick="toggleSection('men')" class="flex items-center justify-between w-full text-left text-lg font-bold">
           <span>Men</span>
-          <svg id="arrow-men" xmlns="http://www.w3.org/2000/svg"
-               class="h-5 w-5 arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg id="arrow-men" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 arrow" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M19 9l-7 7-7-7"/>
           </svg>
         </button>
+
         <div id="men" class="collapsible-content mt-4">
           <select id="menSelect" class="p-2 rounded mb-4 text-sm"></select>
 
           <div class="chart-container">
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('menDonut','M')">
-                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
-                     class="share-icon" alt="Share"/>
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon"/>
               </button>
             </div>
             <canvas id="menDonut"></canvas>
@@ -283,8 +328,7 @@
           <div class="chart-container mt-6">
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('menHist','M')">
-                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
-                     class="share-icon" alt="Share"/>
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon"/>
               </button>
             </div>
             <canvas id="menHist"></canvas>
@@ -293,20 +337,16 @@
       </div>
     </main>
 
-    <!-- VIEW LEADERBOARD BUTTON -->
     <div class="flex justify-center mt-8">
-      <a href="leaderboard.html"
-         class="inline-flex items-center justify-center bg-gray-800/60 border border-gray-700
+      <a href="leaderboard.html" class="inline-flex items-center justify-center bg-gray-800/60 border border-gray-700
                 text-gray-200 font-semibold px-6 py-3 rounded-full backdrop-blur-sm shadow-lg
                 hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
         View Leaderboard
       </a>
     </div>
 
-    <!-- BACK TO TOP BUTTON -->
     <div class="flex justify-center mt-8">
-      <button id="bottomBackToTop"
-              class="bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full
+      <button id="bottomBackToTop" class="bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full
                      flex items-center justify-center backdrop-blur-sm shadow-lg
                      hover:bg-gray-700/70 hover:text-red-400 transition">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
@@ -326,7 +366,6 @@
 Chart.register(ChartDataLabels);
 
 /* ========= DATA / LAYOUT HELPERS ========= */
-
 const SHEET_URL =
   'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIS-QXBSLzVGyQYYIHf57zRmuSCSC9OmGSBMIOxhW2sB15SLTiVH_wPKcdThIoiqSulcypO1cf02HF/pub?gid=482892449&single=true&output=csv';
 
@@ -354,7 +393,6 @@ function sizing() {
 }
 
 /* ========= MENU ========= */
-
 const menuBtn = document.getElementById('menu-btn');
 const mobileMenu = document.getElementById('mobile-menu');
 let menuVisible = false;
@@ -385,7 +423,6 @@ document.addEventListener('click', (e) => {
 });
 
 /* ========= LOAD CSV ========= */
-
 Papa.parse(SHEET_URL, {
   download: true,
   header: true,
@@ -413,7 +450,6 @@ function setupDropdowns() {
 }
 
 /* ========= CHART RENDERING ========= */
-
 function renderCharts(g, w) {
   const s = sizing();
   const donutId = g === 'F' ? 'womenDonut' : 'menDonut';
@@ -510,7 +546,6 @@ function renderCharts(g, w) {
   vals.forEach(v => {
     let i = Math.floor((v - min) / bw);
     if (i >= bins) i = bins - 1;
-    if (i < 0) i = 0;
     countsH[i]++;
   });
 
@@ -526,105 +561,84 @@ function renderCharts(g, w) {
   const yMax = Math.ceil(maxC / step) * step;
 
   if (charts[histId]) charts[histId].destroy();
-const isDesktop = window.matchMedia('(min-width:1024px)').matches;
-
-charts[histId] = new Chart(document.getElementById(histId), {
-  type: 'bar',
-  data: {
-    labels: labelsH,
-    datasets: [{
-      data: countsH,
-      backgroundColor: '#3b82f6',
-      borderRadius: 5,
-      barPercentage: 0.9,
-      categoryPercentage: 1.0
-    }]
-  },
-  options: {
-    maintainAspectRatio: true,
-    aspectRatio: 1,
-    layout: {
-      padding: {
-        // brute-force manual offset — tune these values visually
-        top: 24,
-        bottom: 24,
-        left: isDesktop ? 40 : 28,   // more space for axis titles on desktop
-        right: isDesktop ? 0 : 0     // keep balanced
-      }
+  charts[histId] = new Chart(document.getElementById(histId), {
+    type: 'bar',
+    data: {
+      labels: labelsH,
+      datasets: [{
+        data: countsH,
+        backgroundColor: '#3b82f6',
+        borderRadius: 5,
+        barPercentage: 0.9,
+        categoryPercentage: 1.0
+      }]
     },
-    plugins: {
-      title: {
-        display: true,
-        text: 'Distribution of Predicted Winning Totals',
-        color: '#ccc',
-        font: { size: s.histTitle, weight: 'bold' },
-        padding: { bottom: 8 },
-        align: 'center'  // force title center
-      },
-      subtitle: {
-        display: true,
-        text: `Total Votes – ${N}`,
-        color: '#aaa',
-        font: { size: s.histSubtitle, weight: 'normal' },
-        padding: { top: 2, bottom: 12 },
-        align: 'center'
-      },
-      legend: { display: false },
-      datalabels: {
-        color: '#fff',
-        font: { size: s.histBarLabel, weight: 'normal' },
-        formatter: (v) => v > 0 ? v : '',
-        anchor: 'center',
-        align: (ctx) => {
-          const v = ctx.dataset.data[ctx.dataIndex] || 0;
-          const scale = ctx.chart.scales.y;
-          if (!scale) return 'center';
-          const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
-          const f = ctx.chart.options.plugins.datalabels.font.size || s.histBarLabel;
-          return (barH < f * 1.05) ? 'end' : 'center';
-        },
-        clamp: true
-      }
-    },
-    scales: {
-      x: {
-        offset: true,
-        ticks: { color: '#ccc', font: { size: s.axisTick } },
+    options: {
+      maintainAspectRatio: true,
+      aspectRatio: 1,
+      plugins: {
         title: {
           display: true,
-          text: 'Predicted Total (kg)',
+          text: 'Distribution of Predicted Winning Totals',
           color: '#ccc',
-          font: { size: s.axisTitle, weight: 'bold' }
+          font: { size: s.histTitle, weight: 'bold' },
+          padding: { bottom: 8 }
         },
-        grid: { display: false }
-      },
-      y: {
-        min: yMin,
-        max: yMax,
-        beginAtZero: false,
-        ticks: { color: '#ccc', font: { size: s.axisTick } },
-        title: {
+        subtitle: {
           display: true,
-          text: 'Vote Count',
-          color: '#ccc',
-          font: { size: s.axisTitle, weight: 'bold' }
+          text: `Total Votes – ${N}`,
+          color: '#aaa',
+          font: { size: s.histSubtitle, weight: 'normal' },
+          padding: { top: 2, bottom: 12 }
         },
-        grid: { display: false }
+        legend: { display: false },
+        datalabels: {
+          color: '#fff',
+          font: { size: s.histBarLabel, weight: 'normal' },
+          formatter: (v) => v > 0 ? v : '',
+          anchor: 'center',
+          align: (ctx) => {
+            const v = ctx.dataset.data[ctx.dataIndex] || 0;
+            const scale = ctx.chart.scales.y;
+            if (!scale) return 'center';
+            const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
+            const f = ctx.chart.options.plugins.datalabels.font.size || s.histBarLabel;
+            return (barH < f * 1.05) ? 'end' : 'center';
+          },
+          clamp: true
+        }
+      },
+      scales: {
+        x: {
+          offset: true,
+          ticks: { color: '#ccc', font: { size: s.axisTick } },
+          title: {
+            display: true,
+            text: 'Predicted Total (kg)',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
+        },
+        y: {
+          min: yMin,
+          max: yMax,
+          beginAtZero: false,
+          ticks: { color: '#ccc', font: { size: s.axisTick } },
+          title: {
+            display: true,
+            text: 'Vote Count',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
+        }
       }
     }
-  }
-});
-
-  // Clear "centered" flag so the plugin can re-run cleanly after any redraw
-  const histChart = charts[histId];
-  if (histChart) {
-    histChart.$histCentered = false;
-    histChart.update('none');
-  }
-} // end renderCharts
+  });
+}
 
 /* ========= COLLAPSIBLE SECTIONS ========= */
-
 function toggleSection(id) {
   const c = document.getElementById(id);
   const a = document.getElementById(`arrow-${id}`);
@@ -666,28 +680,12 @@ function repositionBottomButtons() {
   });
 }
 
-/* On resize / orientation change:
-   - keep buttons tidy
-   - allow hist centering plugin to re-run with new dimensions */
+/* --- Re-run positioning on resize/orientation change --- */
 window.addEventListener('resize', () => {
   repositionBottomButtons();
-  Object.values(charts).forEach(chart => {
-    if (
-      chart &&
-      chart.config.type === 'bar' &&
-      chart.canvas &&
-      /Hist$/i.test(chart.canvas.id)
-    ) {
-      chart.$histCentered = false;
-      chart.update('none');
-    }
-  });
 });
 
-/* ========= SHARE / EXPORT + BACK TO TOP (unchanged from your working version) ========= */
-/* Keeping your existing shareChart + helpers exactly as-is to avoid regression.
-   Only difference above is the histogram centering plugin. */
-
+ /* ========= SHARE / EXPORT SYSTEM ========= */
 function detectBrowserShareSupport() {
   const ua = navigator.userAgent.toLowerCase();
   return {
@@ -725,25 +723,12 @@ function scaleChartFonts(chart, factor) {
 async function shareChart(id, g) {
   const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
   const s = sizing();
-
   const src = document.getElementById(id);
   if (!src) return;
 
   const shareBar = src.previousElementSibling;
   if (!shareBar) return;
 
-  // --- helper to restore the red icon button ---
-  function resetShareIcon() {
-    shareBar.innerHTML = '';
-    const iconBtn = document.createElement('button');
-    iconBtn.className = 'share-btn';
-    iconBtn.onclick = () => shareChart(id, g);
-    iconBtn.innerHTML =
-      '<img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>';
-    shareBar.appendChild(iconBtn);
-  }
-
-  // --- helper for the temporary text button ---
   function makeBtn(text) {
     const b = document.createElement('button');
     b.className = "bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1";
@@ -753,236 +738,191 @@ async function shareChart(id, g) {
     return b;
   }
 
-  // show "Generating…" immediately
   const generatingBtn = makeBtn("Generating…");
   swapShareButtonFor(shareBar, generatingBtn);
 
-  try {
-    // small delay so Chart.js finishes any hover / animation frames
-    await new Promise(r => setTimeout(r, 250));
+  await new Promise(requestAnimationFrame);
+  const chart = Chart.getChart(src);
+  if (!chart) return;
 
-    const chart = Chart.getChart(src);
-    if (!chart) {
-      console.warn(`No Chart instance found for #${id}`);
-      resetShareIcon();
-      return;
-    }
+  const sel = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
+  const w = sel ? sel.value : '';
+  const isDonut = id.includes('Donut');
+  const isMobile = window.innerWidth < 768;
+  const fn = `metrics_${g}_${w || 'class'}_${isDonut ? 'donut' : 'hist'}.png`;
 
-    const sel = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
-    const w = sel ? sel.value : '';
-    const isDonut = id.includes('Donut');
-    const isMobile = window.innerWidth < 768;
-    const filename = `metrics_${g}_${w || 'class'}_${isDonut ? 'donut' : 'hist'}.png`;
+  // Prepare export card
+  const card = document.createElement('div');
+  card.style.position = 'relative';
+  card.style.width = s.exportWidth + 'px';
+  card.style.borderRadius = '16px';
+  card.style.overflow = 'hidden';
+  card.style.margin = '0 auto';
+  card.style.backgroundImage = "url('bc25_logo.jpg')";
+  card.style.backgroundSize = 'cover';
+  card.style.backgroundPosition = 'center';
+  card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
 
-    // make sure the section is open if it was collapsed
-    const parent = src.closest('.collapsible-content');
-    if (parent && !parent.classList.contains('open')) {
-      parent.classList.add('open');
-      parent.style.maxHeight = parent.scrollHeight + 'px';
-      parent.style.opacity = '1';
-      await new Promise(r => setTimeout(r, 200));
-    }
+  const overlay = document.createElement('div');
+  overlay.style.position = 'absolute';
+  overlay.style.inset = '0';
+  overlay.style.background = 'rgba(0,0,0,0.65)';
+  card.appendChild(overlay);
 
-    // snapshot tweaks: hide grids, shrink fonts for hist
-    let prevScales = null;
-    let restoreFonts = null;
+  const inner = document.createElement('div');
+  inner.style.position = 'relative';
+  inner.style.textAlign = 'center';
+  inner.style.color = '#fff';
+  inner.style.fontFamily = "'Inter', sans-serif";
+  inner.style.zIndex = '2';
+  inner.style.padding = isDonut ? '36px 28px 36px 28px' : '40px 28px 36px 28px';
+  card.appendChild(inner);
 
-    if (chart.options.scales) {
-      prevScales = JSON.parse(JSON.stringify(chart.options.scales));
-      if (chart.options.scales.x) chart.options.scales.x.grid.display = false;
-      if (chart.options.scales.y) chart.options.scales.y.grid.display = false;
-    }
-    if (!isDonut) {
-      restoreFonts = scaleChartFonts(chart, 0.85);
-    }
-    if (prevScales || restoreFonts) {
-      chart.update();
-      await new Promise(r => requestAnimationFrame(r));
-    }
+  const header = document.createElement('h2');
+  header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
+  header.style.fontSize = (isMobile ? s.headerFont * 1.5 : s.headerFont * 1.25) + 'px';
+  header.style.fontWeight = '700';
+  header.style.margin = '0 0 4px 0';
 
-    // --- build export card wrapper ---
-    const card = document.createElement('div');
-    card.style.position = 'relative';
-    card.style.width = s.exportWidth + 'px';
-    card.style.borderRadius = '16px';
-    card.style.overflow = 'hidden';
-    card.style.margin = '0 auto';
-    card.style.backgroundImage = "url('bc25_logo.jpg')";
-    card.style.backgroundSize = 'cover';
-    card.style.backgroundPosition = 'center';
-    card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.35)';
+  const sub = document.createElement('p');
+  sub.textContent = (w ? `${w}kg ` : '') + (g === 'F' ? 'Women' : 'Men');
+  sub.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.25) + 'px';
+  sub.style.fontWeight = '700';
+  sub.style.color = '#ddd';
+  sub.style.margin = '0 0 14px 0';
 
-    const overlay = document.createElement('div');
-    overlay.style.position = 'absolute';
-    overlay.style.inset = '0';
-    overlay.style.background = 'rgba(0,0,0,0.65)';
-    card.appendChild(overlay);
+  const dataURL = src.toDataURL('image/png');
+  const img = new Image();
+  img.src = dataURL;
+  await img.decode();
+  img.style.display = 'block';
+  img.style.margin = '0 auto 18px auto';
+  img.style.borderRadius = '8px';
+  img.style.width = (isMobile ? (isDonut ? '80%' : '96%') : (isDonut ? '70%' : '93%'));
+  img.style.height = 'auto';
 
-    const inner = document.createElement('div');
-    inner.style.position = 'relative';
-    inner.style.textAlign = 'center';
-    inner.style.color = '#fff';
-    inner.style.fontFamily = "'Inter', sans-serif";
-    inner.style.zIndex = '2';
-    inner.style.padding = isDonut ? '36px 28px 36px 28px' : '40px 28px 36px 28px';
-    card.appendChild(inner);
+  const credit = document.createElement('p');
+  credit.style.fontSize = (isMobile ? s.creditFont * 1.25 : s.creditFont * 1.15) + 'px';
+  credit.style.color = '#ccc';
+  credit.style.lineHeight = '1.5';
+  credit.style.marginTop = '8px';
+  credit.innerHTML =
+    'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-    const header = document.createElement('h2');
-    header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
-    header.style.fontSize = (isMobile ? s.headerFont * 1.5 : s.headerFont * 1.25) + 'px';
-    header.style.fontWeight = '700';
-    header.style.margin = '0 0 4px 0';
+  const spacer = document.createElement('div');
+  spacer.style.height = isDonut ? '14px' : '28px';
 
-    const sub = document.createElement('p');
-    sub.textContent = (w ? `${w}kg ` : '') + (g === 'F' ? 'Women' : 'Men');
-    sub.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.25) + 'px';
-    sub.style.fontWeight = '700';
-    sub.style.color = '#ddd';
-    sub.style.margin = '0 0 14px 0';
+  const qr = new Image();
+  qr.crossOrigin = 'anonymous';
+  const qrsz = isMobile ? s.qrSize * 1.1 : s.qrSize * 1.25;
+  qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent(
+    'https://solacestrength.github.io/britishclassicfl/metrics.html'
+  )}`;
+  qr.style.position = 'absolute';
+  qr.style.bottom = '18px';
+  qr.style.left = '18px';
+  qr.style.width = qrsz + 'px';
+  qr.style.height = qrsz + 'px';
+  qr.style.borderRadius = '6px';
+  qr.style.opacity = '0.95';
 
-    // capture the chart as an image
-    const dataURL = src.toDataURL('image/png');
-    const img = new Image();
-    img.src = dataURL;
-    try { await img.decode(); } catch (e) {}
-    img.style.display = 'block';
-    img.style.margin = '0 auto 18px auto';
-    img.style.borderRadius = '8px';
-    img.style.width = (isMobile ? (isDonut ? '80%' : '96%') : (isDonut ? '70%' : '93%'));
-    img.style.height = 'auto';
+  inner.append(header, sub, img, credit, spacer);
+  card.appendChild(qr);
+  document.body.appendChild(card);
 
-    const credit = document.createElement('p');
-    credit.style.fontSize = (isMobile ? s.creditFont * 1.25 : s.creditFont * 1.15) + 'px';
-    credit.style.color = '#ccc';
-    credit.style.lineHeight = '1.5';
-    credit.style.marginTop = '8px';
-    credit.innerHTML =
-      'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
+  await new Promise(requestAnimationFrame);
 
-    const spacer = document.createElement('div');
-    spacer.style.height = isDonut ? '14px' : '28px';
+  const naturalH = card.scrollHeight;
+  const baseH = isDonut ? 860 : 820;
+  const scaleFactor = isMobile ? 0.92 : 1.0;
+  const fixedH = Math.min(naturalH * scaleFactor, s.exportWidth * scaleFactor);
+  const buffer = Math.round(
+    fixedH * (isMobile ? (isDonut ? 0.15 : 0.22) : 0.02)
+  );
 
-    const qr = new Image();
-    qr.crossOrigin = 'anonymous';
-    const qrsz = isMobile ? s.qrSize * 1.1 : s.qrSize * 1.25;
-    qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent(
-      'https://solacestrength.github.io/britishclassicfl/metrics.html'
-    )}`;
-    qr.style.position = 'absolute';
-    qr.style.bottom = '18px';
-    qr.style.left = '18px';
-    qr.style.width = qrsz + 'px';
-    qr.style.height = qrsz + 'px';
-    qr.style.borderRadius = '6px';
-    qr.style.opacity = '0.95';
+  card.style.height = fixedH + buffer + 'px';
+  card.style.maxHeight = fixedH + buffer + 'px';
+  card.style.minHeight = (baseH * scaleFactor) + 'px';
 
-    inner.append(header, sub, img, credit, spacer);
-    card.appendChild(qr);
-    document.body.appendChild(card);
+  await new Promise(requestAnimationFrame);
 
-    await new Promise(r => requestAnimationFrame(r));
+  const canvas = await html2canvas(card, {
+    backgroundColor: null,
+    scale: 2,
+    useCORS: true,
+    scrollY: 0
+  });
+  card.remove();
 
-    // size the card sensibly, then capture
-    const naturalH = card.scrollHeight;
-    const baseH = isDonut ? 860 : 820;
-    const scaleFactor = isMobile ? 0.92 : 1.0;
-    const fixedH = Math.min(naturalH * scaleFactor, s.exportWidth * scaleFactor);
-    const buffer = Math.round(
-      fixedH * (isMobile ? (isDonut ? 0.15 : 0.22) : 0.02)
-    );
+  const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
+  const file = new File([blob], fn, { type: 'image/png' });
 
-    card.style.height = fixedH + buffer + 'px';
-    card.style.maxHeight = fixedH + buffer + 'px';
-    card.style.minHeight = (baseH * scaleFactor) + 'px';
-
-    await new Promise(r => requestAnimationFrame(r));
-
-    let canvas;
-    try {
-      canvas = await html2canvas(card, {
-        backgroundColor: null,
-        scale: 2,
-        useCORS: true,
-        scrollY: 0
-      });
-    } finally {
-      card.remove();
-    }
-
-    if (restoreFonts) restoreFonts();
-    if (prevScales) chart.options.scales = prevScales;
-    if (prevScales || restoreFonts) chart.update();
-
-    const blob = await new Promise((resolve, reject) => {
-      canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png');
-    });
-
-    // prefer native file share when fully supported
-    const supportsFileShare =
-      typeof File !== 'undefined' &&
-      navigator.canShare &&
-      (() => {
-        try {
-          const testFile = new File([blob], filename, { type: 'image/png' });
-          return navigator.canShare({ files: [testFile] });
-        } catch {
-          return false;
-        }
-      })();
-
-    if (supportsFileShare && !isChromeIOS) {
-      const file = new File([blob], filename, { type: 'image/png' });
+  if (isAndroidChrome) {
+    const shareBtn = makeBtn("Share Generated Image");
+    shareBtn.onclick = async () => {
       try {
-        await navigator.share({
-          title: 'British Classic Fantasy League 2025',
-          text: 'Check out these stats!',
-          files: [file]
-        });
-      } catch (err) {
-        console.error('Native share cancelled/failed:', err);
-      }
-    } else if (isAndroidChrome) {
-      // two-step UI on Android Chrome
-      const shareBtn = makeBtn("Share Generated Image");
-      shareBtn.onclick = () => {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(url);
-        resetShareIcon();
-      };
-      swapShareButtonFor(shareBar, shareBtn);
-      return; // don't reset yet; happens after user taps
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: 'British Classic Fantasy League 2025',
+            text: 'Check out these stats!',
+            files: [file]
+          });
+        } else {
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = fn;
+          link.click();
+          URL.revokeObjectURL(link.href);
+        }
+      } catch (e) {}
+      resetShareIcon();
+    };
+    swapShareButtonFor(shareBar, shareBtn);
+    return;
+  }
+
+  try {
+    if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        title: 'British Classic Fantasy League 2025',
+        text: 'Check out these stats!',
+        files: [file]
+      });
     } else {
-      // fallback: just download
-      const url = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(file);
       const link = document.createElement('a');
       link.href = url;
-      link.download = filename;
+      link.download = fn;
       document.body.appendChild(link);
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
     }
-
-    resetShareIcon();
   } catch (err) {
-    console.error('shareChart error:', err);
-    resetShareIcon();
+    console.error('Share failed:', err);
+  }
+
+  resetShareIcon();
+
+  function resetShareIcon() {
+    shareBar.innerHTML = '';
+    const iconBtn = document.createElement('button');
+    iconBtn.className = 'share-btn';
+    iconBtn.onclick = () => shareChart(id, g);
+    iconBtn.innerHTML =
+      '<img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" class="share-icon" alt="Share"/>';
+    shareBar.appendChild(iconBtn);
   }
 }
 
-/* BACK TO TOP */
+/* ========= BACK TO TOP ========= */
 const bottomBackToTop = document.getElementById('bottomBackToTop');
 if (bottomBackToTop) {
   bottomBackToTop.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 }
+
 </script>
 </body>
 </html>
