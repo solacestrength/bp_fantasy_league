@@ -388,88 +388,51 @@ const centerHistAreaPlugin = {
  */
 const centerHistTitlesPlugin = {
   id: 'centerHistTitles',
-
-  beforeDraw(chart, args, opts) {
-    if (!opts?.enabled) return;
-    if (chart.config.type !== 'bar') return;
-    if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return;
-
-    const plugins = chart.options.plugins || {};
-    const title = plugins.title;
-    const subtitle = plugins.subtitle;
-
-    // Store originals once so we can use them in afterDraw
-    if (!chart.$origHistTitles) {
-      chart.$origHistTitles = {
-        title: title ? { ...title } : null,
-        subtitle: subtitle ? { ...subtitle } : null
-      };
-    }
-
-    // Turn off native drawing for this chart only
-    if (title) title.display = false;
-    if (subtitle) subtitle.display = false;
-  },
-
   afterDraw(chart, args, opts) {
-    if (!opts?.enabled) return;
-    if (chart.config.type !== 'bar') return;
-    if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return;
+    try {
+      if (!opts?.enabled) return;
+      if (!chart?.canvas?.id?.endsWith('Hist')) return;
+      const { ctx, chartArea, width } = chart;
+      if (!ctx || !chartArea) return;
 
-    const original = chart.$origHistTitles;
-    if (!original) return;
+      const title = chart.options.plugins?.title;
+      const subtitle = chart.options.plugins?.subtitle;
+      if (!title?.display && !subtitle?.display) return;
 
-    const { ctx, width, chartArea } = chart;
-    if (!ctx || !chartArea) return;
+      const cx = width / 2;
+      let y = chartArea.top - 36;
 
-    const title = original.title;
-    const subtitle = original.subtitle;
-    if (!title && !subtitle) return;
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
 
-    const centerX = width / 2;
-    let y = chartArea.top - 36; // space above plot
+      if (title?.display && title.text) {
+        const font = title.font || {};
+        ctx.font = `${font.weight || 'bold'} ${font.size || 18}px ${font.family || 'Inter, sans-serif'}`;
+        ctx.fillStyle = title.color || '#ccc';
+        ctx.fillText(title.text, cx, y);
+        y += (font.size || 18) + (title.padding?.bottom || 4);
+      }
 
-    ctx.save();
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+      if (subtitle?.display && subtitle.text) {
+        const font = subtitle.font || {};
+        ctx.font = `${font.weight || 'normal'} ${font.size || 14}px ${font.family || 'Inter, sans-serif'}`;
+        ctx.fillStyle = subtitle.color || '#aaa';
+        ctx.fillText(subtitle.text, cx, y);
+      }
 
-    if (title && title.display !== false && title.text) {
-      const font = title.font || {};
-      const size = font.size || 18;
-      const weight = font.weight || 'bold';
-      const family = font.family || 'Inter, sans-serif';
-
-      ctx.font = `${weight} ${size}px ${family}`;
-      ctx.fillStyle = title.color || '#ccc';
-      ctx.fillText(
-        Array.isArray(title.text) ? title.text.join(' ') : title.text,
-        centerX,
-        y
-      );
-      y += size + ((title.padding && title.padding.bottom) || 4);
+      ctx.restore();
+    } catch (err) {
+      console.error("centerHistTitlesPlugin error:", err);
     }
-
-    if (subtitle && subtitle.display !== false && subtitle.text) {
-      const font = subtitle.font || {};
-      const size = font.size || 14;
-      const weight = font.weight || 'normal';
-      const family = font.family || 'Inter, sans-serif';
-
-      ctx.font = `${weight} ${size}px ${family}`;
-      ctx.fillStyle = subtitle.color || '#aaa';
-      ctx.fillText(
-        Array.isArray(subtitle.text) ? subtitle.text.join(' ') : subtitle.text,
-        centerX,
-        y
-      );
-    }
-
-    ctx.restore();
   }
 };
 
-// Register everything
-Chart.register(ChartDataLabels, centerHistAreaPlugin, centerHistTitlesPlugin);
+try {
+  Chart.register(ChartDataLabels, centerHistAreaPlugin, centerHistTitlesPlugin);
+} catch (err) {
+  console.error("⚠️ Chart plugin registration failed:", err);
+}
 
 // 🌀 Reset title draw guards when resizing (to stay stable across orientation changes)
 window.addEventListener('resize', () => {
