@@ -378,40 +378,37 @@ const centerHistAreaPlugin = {
 };
 
 /**
- * centerHistTitlesPlugin – Stable Rotation-Safe Version
- * -----------------------------------------------------
- * Draws *one* centered title + subtitle and blocks built-in ones,
- * even after multiple renders or orientation changes.
+ * centerHistTitlesPlugin
+ * ----------------------
+ * For histogram charts (canvas id ends with "Hist"):
+ * - Reads the configured title/subtitle from chart.options.plugins.
+ * - Disables their native rendering for that chart only.
+ * - Draws a single centered title + subtitle above the chartArea.
+ * - Does NOT touch global Chart.js plugins.
  */
 const centerHistTitlesPlugin = {
   id: 'centerHistTitles',
 
-  beforeInit(chart, args, opts) {
+  beforeDraw(chart, args, opts) {
     if (!opts?.enabled) return;
     if (chart.config.type !== 'bar') return;
     if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return;
 
-    // Mute built-in title/subtitle only once globally
-    if (!centerHistTitlesPlugin._muted) {
-      const titlePlugin = Chart.registry.getPlugin('title');
-      const subtitlePlugin = Chart.registry.getPlugin('subtitle');
-      if (titlePlugin && !titlePlugin._muted) {
-        titlePlugin.beforeDraw = () => {};
-        titlePlugin.afterDraw = () => {};
-        titlePlugin._muted = true;
-      }
-      if (subtitlePlugin && !subtitlePlugin._muted) {
-        subtitlePlugin.beforeDraw = () => {};
-        subtitlePlugin.afterDraw = () => {};
-        subtitlePlugin._muted = true;
-      }
-      centerHistTitlesPlugin._muted = true;
-    }
-  },
+    const plugins = chart.options.plugins || {};
+    const title = plugins.title;
+    const subtitle = plugins.subtitle;
 
-  beforeDraw(chart) {
-    // reset guard per draw so we can safely redraw titles once
-    chart.$drawnTitles = false;
+    // Store originals once so we can use them in afterDraw
+    if (!chart.$origHistTitles) {
+      chart.$origHistTitles = {
+        title: title ? { ...title } : null,
+        subtitle: subtitle ? { ...subtitle } : null
+      };
+    }
+
+    // Turn off native drawing for this chart only
+    if (title) title.display = false;
+    if (subtitle) subtitle.display = false;
   },
 
   afterDraw(chart, args, opts) {
@@ -419,40 +416,52 @@ const centerHistTitlesPlugin = {
     if (chart.config.type !== 'bar') return;
     if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return;
 
-    // guard: draw only once per frame
-    if (chart.$drawnTitles) return;
-    chart.$drawnTitles = true;
+    const original = chart.$origHistTitles;
+    if (!original) return;
 
     const { ctx, width, chartArea } = chart;
     if (!ctx || !chartArea) return;
 
-    const title = chart.options.plugins.title;
-    const subtitle = chart.options.plugins.subtitle;
+    const title = original.title;
+    const subtitle = original.subtitle;
+    if (!title && !subtitle) return;
 
     const centerX = width / 2;
-    let y = chartArea.top - 36;
+    let y = chartArea.top - 36; // space above plot
 
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    if (title?.display && title.text) {
-      const size = title.font?.size || 18;
-      const weight = title.font?.weight || 'bold';
-      const family = title.font?.family || 'Inter, sans-serif';
+    if (title && title.display !== false && title.text) {
+      const font = title.font || {};
+      const size = font.size || 18;
+      const weight = font.weight || 'bold';
+      const family = font.family || 'Inter, sans-serif';
+
       ctx.font = `${weight} ${size}px ${family}`;
       ctx.fillStyle = title.color || '#ccc';
-      ctx.fillText(title.text, centerX, y);
-      y += size + (title.padding?.bottom || 4);
+      ctx.fillText(
+        Array.isArray(title.text) ? title.text.join(' ') : title.text,
+        centerX,
+        y
+      );
+      y += size + ((title.padding && title.padding.bottom) || 4);
     }
 
-    if (subtitle?.display && subtitle.text) {
-      const size = subtitle.font?.size || 14;
-      const weight = subtitle.font?.weight || 'normal';
-      const family = subtitle.font?.family || 'Inter, sans-serif';
+    if (subtitle && subtitle.display !== false && subtitle.text) {
+      const font = subtitle.font || {};
+      const size = font.size || 14;
+      const weight = font.weight || 'normal';
+      const family = font.family || 'Inter, sans-serif';
+
       ctx.font = `${weight} ${size}px ${family}`;
       ctx.fillStyle = subtitle.color || '#aaa';
-      ctx.fillText(subtitle.text, centerX, y);
+      ctx.fillText(
+        Array.isArray(subtitle.text) ? subtitle.text.join(' ') : subtitle.text,
+        centerX,
+        y
+      );
     }
 
     ctx.restore();
