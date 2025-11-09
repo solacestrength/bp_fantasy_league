@@ -545,10 +545,11 @@ const drillState = {
 };
 
 /* ========= BLUE GRADIENT FOR HISTOGRAM ========= */
+/* Start from a mid blue for a smoother transition into dark blue */
 function getBlueGradientColors(n) {
   const colors = [];
-  const start = { r: 191, g: 219, b: 254 }; // light blue
-  const end   = { r: 30,  g: 64,  b: 175 }; // dark blue
+  const start = { r: 96, g: 165, b: 250 }; // mid blue
+  const end   = { r: 30, g: 64,  b: 175 }; // dark blue
   if (n <= 1) {
     colors.push(`rgb(${start.r},${start.g},${start.b})`);
     return colors;
@@ -660,7 +661,7 @@ function renderCharts(g, w) {
           display: true,
           text: `Total Votes – ${total}`,
           color: '#aaa',
-          font: { size: s.donutSubtitle * 1.5 }, /* 50% larger */
+          font: { size: s.donutSubtitle },
           padding: { top: 2, bottom: 18 }
         },
         legend: {
@@ -1332,7 +1333,7 @@ async function shareDrilldown(g) {
   const blob = await new Promise(res => canvas.toBlob(res,'image/png'));
   if (!blob) return;
   const fn = `metrics_drill_${g}_${sanitizeFilename(state.currentClass)}_${sanitizeFilename(athlete)}.png`;
-  const file = new File([blob], fn, { type: 'image/png' });
+  const file = new File([blob], { type: 'image/png' });
 
   try {
     if (!isChromeIOS && navigator.canShare && navigator.canShare({files:[file]})) {
@@ -1342,7 +1343,7 @@ async function shareDrilldown(g) {
         files: [file]
       });
     } else {
-      const url = URL.createObjectURL(file);
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = fn;
@@ -1353,7 +1354,7 @@ async function shareDrilldown(g) {
     }
   } catch (err) {
     console.error('Share failed; falling back to download.', err);
-    const url = URL.createObjectURL(file);
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = fn;
