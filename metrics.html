@@ -389,42 +389,48 @@ const centerHistAreaPlugin = {
 const centerHistTitlesPlugin = {
   id: 'centerHistTitles',
   afterDraw(chart, args, opts) {
-    try {
-      if (!opts?.enabled) return;
-      if (!chart?.canvas?.id?.endsWith('Hist')) return;
-      const { ctx, chartArea, width } = chart;
-      if (!ctx || !chartArea) return;
+    if (!opts?.enabled) return;
+    if (!chart?.canvas?.id || !chart.canvas.id.endsWith('Hist')) return;
 
-      const title = chart.options.plugins?.title;
-      const subtitle = chart.options.plugins?.subtitle;
-      if (!title?.display && !subtitle?.display) return;
+    const { ctx, chartArea, width } = chart;
+    if (!ctx || !chartArea) return;
 
-      const cx = width / 2;
-      let y = chartArea.top - 36;
+    const plug = chart.options.plugins || {};
+    const t = plug.title || {};
+    const s = plug.subtitle || {};
 
-      ctx.save();
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+    // Use text if present, ignore the native "display" flag
+    const hasTitle = !!t.text;
+    const hasSubtitle = !!s.text;
+    if (!hasTitle && !hasSubtitle) return;
 
-      if (title?.display && title.text) {
-        const font = title.font || {};
-        ctx.font = `${font.weight || 'bold'} ${font.size || 18}px ${font.family || 'Inter, sans-serif'}`;
-        ctx.fillStyle = title.color || '#ccc';
-        ctx.fillText(title.text, cx, y);
-        y += (font.size || 18) + (title.padding?.bottom || 4);
-      }
+    const cx = width / 2;
+    let y = chartArea.top - (hasTitle && hasSubtitle ? 40 : 28);
 
-      if (subtitle?.display && subtitle.text) {
-        const font = subtitle.font || {};
-        ctx.font = `${font.weight || 'normal'} ${font.size || 14}px ${font.family || 'Inter, sans-serif'}`;
-        ctx.fillStyle = subtitle.color || '#aaa';
-        ctx.fillText(subtitle.text, cx, y);
-      }
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
 
-      ctx.restore();
-    } catch (err) {
-      console.error("centerHistTitlesPlugin error:", err);
+    if (hasTitle) {
+      const size = (t.font && t.font.size) || 18;
+      const weight = (t.font && t.font.weight) || 'bold';
+      const family = (t.font && t.font.family) || 'Inter, sans-serif';
+      ctx.font = `${weight} ${size}px ${family}`;
+      ctx.fillStyle = t.color || '#ccc';
+      ctx.fillText(t.text, cx, y);
+      y += size + (t.padding && t.padding.bottom || 4);
     }
+
+    if (hasSubtitle) {
+      const size = (s.font && s.font.size) || 14;
+      const weight = (s.font && s.font.weight) || 'normal';
+      const family = (s.font && s.font.family) || 'Inter, sans-serif';
+      ctx.font = `${weight} ${size}px ${family}`;
+      ctx.fillStyle = s.color || '#aaa';
+      ctx.fillText(s.text, cx, y);
+    }
+
+    ctx.restore();
   }
 };
 
@@ -610,7 +616,8 @@ function renderCharts(g, w) {
     }
   });
 
-  /* --- HISTOGRAM (visually aligned + centered North Star version) --- */
+
+  /* --- HISTOGRAM (North Star v2: perfect centering + single title) --- */
   const vals = rows
     .map(r => parseFloat(r.PredictedTotal))
     .filter(v => !isNaN(v) && v > 0);
@@ -645,94 +652,94 @@ function renderCharts(g, w) {
   const step = Math.max(1, Math.round(span / 4));
   const yMax = Math.ceil(maxC / step) * step;
 
-  // after creating histogram chart
-if (charts[histId]) charts[histId].destroy();
-charts[histId] = new Chart(document.getElementById(histId), {
-  type: 'bar',
-  data: {
-    labels: labelsH,
-    datasets: [{
-      data: countsH,
-      backgroundColor: '#3b82f6',
-      borderRadius: 5,
-      barPercentage: 0.9,
-      categoryPercentage: 1.0
-    }]
-  },
-  options: {
-    maintainAspectRatio: true,
-    aspectRatio: 1,
-    plugins: {
-      centerHistArea: { enabled: true },
-      centerHistTitles: { enabled: true },
-      // 👇 disable built-in rendering so plugin draws once
-      title: {
-        display: true,
-        text: 'Distribution of Predicted Winning Totals',
-        color: '#ccc',
-        font: { size: s.histTitle, weight: 'bold' },
-        padding: { bottom: 8 },
-        fullSize: false
-      },
-      subtitle: {
-        display: true,
-        text: `Total Votes – ${N}`,
-        color: '#aaa',
-        font: { size: s.histSubtitle, weight: 'normal' },
-        padding: { top: 2, bottom: 12 },
-        fullSize: false
-      },
-      legend: { display: false },
-      datalabels: {
-        color: '#fff',
-        font: { size: s.histBarLabel, weight: 'normal' },
-        formatter: (v) => v > 0 ? v : '',
-        anchor: 'center',
-        align: (ctx) => {
-          const v = ctx.dataset.data[ctx.dataIndex] || 0;
-          const scale = ctx.chart.scales.y;
-          if (!scale) return 'center';
-          const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
-          const f = ctx.chart.options.plugins.datalabels.font.size || s.histBarLabel;
-          return (barH < f * 1.05) ? 'end' : 'center';
-        },
-        clamp: true
-      }
+  if (charts[histId]) charts[histId].destroy();
+  charts[histId] = new Chart(document.getElementById(histId), {
+    type: 'bar',
+    data: {
+      labels: labelsH,
+      datasets: [{
+        data: countsH,
+        backgroundColor: '#3b82f6',
+        borderRadius: 5,
+        barPercentage: 0.9,
+        categoryPercentage: 1.0
+      }]
     },
-    scales: {
-      x: {
-        offset: true,
-        ticks: { color: '#ccc', font: { size: s.axisTick } },
+    options: {
+      maintainAspectRatio: true,
+      aspectRatio: 1,
+      plugins: {
+        centerHistArea:   { enabled: true },
+        centerHistTitles: { enabled: true },
+
+        // ✅ Text is still defined, but native rendering off
         title: {
-          display: true,
-          text: 'Predicted Total (kg)',
+          display: false,
+          text: 'Distribution of Predicted Winning Totals',
           color: '#ccc',
-          font: { size: s.axisTitle, weight: 'bold' }
+          font: { size: s.histTitle, weight: 'bold' },
+          padding: { bottom: 8 }
         },
-        grid: { display: false }
+        subtitle: {
+          display: false,
+          text: `Total Votes – ${N}`,
+          color: '#aaa',
+          font: { size: s.histSubtitle, weight: 'normal' },
+          padding: { top: 2, bottom: 12 }
+        },
+
+        legend: { display: false },
+        datalabels: {
+          color: '#fff',
+          font: { size: s.histBarLabel, weight: 'normal' },
+          formatter: (v) => v > 0 ? v : '',
+          anchor: 'center',
+          align: (ctx) => {
+            const v = ctx.dataset.data[ctx.dataIndex] || 0;
+            const scale = ctx.chart.scales.y;
+            if (!scale) return 'center';
+            const barH = scale.getPixelForValue(yMin + v) - scale.getPixelForValue(yMin);
+            const f = ctx.chart.options.plugins.datalabels.font.size || s.histBarLabel;
+            return (barH < f * 1.05) ? 'end' : 'center';
+          },
+          clamp: true
+        }
       },
-      y: {
-        min: yMin,
-        max: yMax,
-        beginAtZero: false,
-        ticks: { color: '#ccc', font: { size: s.axisTick } },
-        title: {
-          display: true,
-          text: 'Vote Count',
-          color: '#ccc',
-          font: { size: s.axisTitle, weight: 'bold' }
+      scales: {
+        x: {
+          offset: true,
+          ticks: { color: '#ccc', font: { size: s.axisTick } },
+          title: {
+            display: true,
+            text: 'Predicted Total (kg)',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
         },
-        grid: { display: false }
+        y: {
+          min: yMin,
+          max: yMax,
+          beginAtZero: false,
+          ticks: { color: '#ccc', font: { size: s.axisTick } },
+          title: {
+            display: true,
+            text: 'Vote Count',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
+        }
       }
     }
-  }
-});
+  });
 
-// 🔒 disable native draw *per instance*
-const c = charts[histId];
-if (c?.options?.plugins?.title) c.options.plugins.title.display = true;
-if (c?.options?.plugins?.subtitle) c.options.plugins.subtitle.display = true;
-c.$drawnTitles = false;
+  // Allow plugins to recalculate positioning freshly each render
+  const histChart = charts[histId];
+  if (histChart) {
+    histChart.$histCentered = false;
+    histChart.update('none');
+  }
 }
   
 function toggleSection(id) {
