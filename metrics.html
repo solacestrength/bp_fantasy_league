@@ -323,14 +323,11 @@
 
 <script>
 /* ========= PLUGINS ========= */
+
 /**
  * centerHistAreaPlugin
- * --------------------
- * For histogram charts only:
- * - Measures chartArea center vs canvas center.
- * - Adjusts RIGHT padding so the plot area (bars + axes) is visually centered
- *   within the canvas/card.
- * - Leaves titles/subtitles/labels alone (Chart.js handles them).
+ * - Shifts ONLY the chartArea horizontally via right padding
+ *   so the histogram bars/axes are visually centered in the canvas.
  */
 const centerHistAreaPlugin = {
   id: 'centerHistArea',
@@ -338,24 +335,20 @@ const centerHistAreaPlugin = {
     if (!opts || !opts.enabled) return;
     if (chart.config.type !== 'bar') return;
     if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return; // only our histograms
-
-    // Avoid loops: only run once per layout cycle
-    if (chart.$histCentered) return;
+    if (chart.$histCentered) return; // run once per instance
 
     const area = chart.chartArea;
     if (!area) return;
 
     const canvasMid = chart.width / 2;
     const areaMid = (area.left + area.right) / 2;
-    const diff = areaMid - canvasMid; // >0 = plot too far right
+    const diff = areaMid - canvasMid; // >0 = too far right
 
-    // If it's basically centered already, mark & bail
     if (Math.abs(diff) < 1) {
       chart.$histCentered = true;
       return;
     }
 
-    // Get existing padding (numeric)
     const layout = chart.options.layout || {};
     const padding = layout.padding || {};
     const baseTop = +padding.top || 0;
@@ -363,29 +356,101 @@ const centerHistAreaPlugin = {
     const baseBottom = +padding.bottom || 0;
     const baseRight = +padding.right || 0;
 
-    // Shift using RIGHT padding only so left axis / labels stay intact.
-    // Derivation: to move plot center left by `diff`, we change right padding by 2*diff.
+    // Shift by adjusting RIGHT padding only.
+    // Derivation: need t so newMid = oldMid - t/2 == canvasMid => t = 2*diff
     let extraRight = 2 * diff;
     let newRight = baseRight + extraRight;
-    if (newRight < 0) newRight = 0; // clamp, no negative padding
+    if (newRight < 0) newRight = 0; // don’t go negative
 
     chart.options.layout = {
       ...layout,
       padding: {
         top: baseTop,
-        right: newRight,
+        left: baseLeft,
         bottom: baseBottom,
-        left: baseLeft
+        right: newRight
       }
     };
 
     chart.$histCentered = true;
-    chart.update('none'); // apply without triggering another full animation
+    chart.update('none');
   }
 };
 
-Chart.register(ChartDataLabels, centerHistAreaPlugin);
+/**
+ * centerHistTitlesPlugin – Final Kill Switch Version
+ * ---------------------------------------------------
+ * Disables built-in title/subtitle rendering at the plugin level
+ * while preserving layout spacing, then draws one centered copy.
+ */
+const centerHistTitlesPlugin = {
+  id: 'centerHistTitles',
 
+  beforeInit(chart, args, opts) {
+    if (!opts?.enabled) return;
+    if (chart.config.type !== 'bar') return;
+    if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return;
+
+    // Hijack built-in title/subtitle plugin methods
+    const titlePlugin = Chart.registry.getPlugin('title');
+    const subtitlePlugin = Chart.registry.getPlugin('subtitle');
+
+    if (titlePlugin && !titlePlugin._muted) {
+      titlePlugin.beforeDraw = () => {}; // no-op
+      titlePlugin.afterDraw = () => {};
+      titlePlugin._muted = true;
+    }
+    if (subtitlePlugin && !subtitlePlugin._muted) {
+      subtitlePlugin.beforeDraw = () => {};
+      subtitlePlugin.afterDraw = () => {};
+      subtitlePlugin._muted = true;
+    }
+  },
+
+  afterDraw(chart, args, opts) {
+    if (!opts?.enabled) return;
+    if (chart.config.type !== 'bar') return;
+    if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return;
+
+    const { ctx, width, chartArea } = chart;
+    if (!ctx || !chartArea) return;
+
+    const title = chart.options.plugins.title;
+    const subtitle = chart.options.plugins.subtitle;
+
+    const centerX = width / 2;
+    let y = chartArea.top - 36;
+
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    if (title?.display && title.text) {
+      const size = title.font?.size || 18;
+      const weight = title.font?.weight || 'bold';
+      const family = title.font?.family || 'Inter, sans-serif';
+      ctx.font = `${weight} ${size}px ${family}`;
+      ctx.fillStyle = title.color || '#ccc';
+      ctx.fillText(title.text, centerX, y);
+      y += size + (title.padding?.bottom || 4);
+    }
+
+    if (subtitle?.display && subtitle.text) {
+      const size = subtitle.font?.size || 14;
+      const weight = subtitle.font?.weight || 'normal';
+      const family = subtitle.font?.family || 'Inter, sans-serif';
+      ctx.font = `${weight} ${size}px ${family}`;
+      ctx.fillStyle = subtitle.color || '#aaa';
+      ctx.fillText(subtitle.text, centerX, y);
+    }
+
+    ctx.restore();
+  }
+};
+
+// Register everything
+Chart.register(ChartDataLabels, centerHistAreaPlugin, centerHistTitlesPlugin);
+  
 /* ========= DATA / LAYOUT HELPERS ========= */
 
 const SHEET_URL =
@@ -551,7 +616,7 @@ function renderCharts(g, w) {
     }
   });
 
-  /* --- HISTOGRAM --- */
+  /* --- HISTOGRAM (visually aligned + centered North Star version) --- */
   const vals = rows
     .map(r => parseFloat(r.PredictedTotal))
     .filter(v => !isNaN(v) && v > 0);
@@ -604,6 +669,7 @@ function renderCharts(g, w) {
       aspectRatio: 1,
       plugins: {
         centerHistArea: { enabled: true },
+        centerHistTitles: { enabled: true },
         title: {
           display: true,
           text: 'Distribution of Predicted Winning Totals',
@@ -663,16 +729,7 @@ function renderCharts(g, w) {
       }
     }
   });
-
-  // Clear "centered" flag so the plugin can re-run cleanly after any redraw
-  const histChart = charts[histId];
-  if (histChart) {
-    histChart.$histCentered = false;
-    histChart.update('none');
-  }
-} // end renderCharts
-
-/* ========= COLLAPSIBLE SECTIONS ========= */
+} // ✅ closes renderCharts
 
 function toggleSection(id) {
   const c = document.getElementById(id);
@@ -683,11 +740,13 @@ function toggleSection(id) {
   const open = c.classList.toggle('open');
   a.classList.toggle('rotate', open);
 
+  // Smooth auto-scroll when opening
   if (open) {
     const wrapper = c.closest('.bg-gray-800\\/60') || c;
     wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  // Add/remove expanded layout to the main container
   const anyOpen = document.querySelector('.collapsible-content.open');
   if (anyOpen) {
     main.classList.add('expanded');
@@ -695,6 +754,7 @@ function toggleSection(id) {
     main.classList.remove('expanded');
   }
 
+  // Reposition buttons with smooth animation after expansion
   setTimeout(repositionBottomButtons, 600);
 }
 
@@ -715,23 +775,7 @@ function repositionBottomButtons() {
   });
 }
 
-/* On resize / orientation change:
-   - keep buttons tidy
-   - allow hist centering plugin to re-run with new dimensions */
-window.addEventListener('resize', () => {
-  repositionBottomButtons();
-  Object.values(charts).forEach(chart => {
-    if (
-      chart &&
-      chart.config.type === 'bar' &&
-      chart.canvas &&
-      /Hist$/i.test(chart.canvas.id)
-    ) {
-      chart.$histCentered = false;
-      chart.update('none');
-    }
-  });
-});
+window.addEventListener('resize', repositionBottomButtons);
 
 /* ========= SHARE / EXPORT + BACK TO TOP (unchanged from your working version) ========= */
 /* Keeping your existing shareChart + helpers exactly as-is to avoid regression.
