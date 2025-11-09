@@ -378,10 +378,10 @@ const centerHistAreaPlugin = {
 };
 
 /**
- * centerHistTitlesPlugin – Final Kill Switch Version
- * ---------------------------------------------------
- * Disables built-in title/subtitle rendering at the plugin level
- * while preserving layout spacing, then draws one centered copy.
+ * centerHistTitlesPlugin – Stable Rotation-Safe Version
+ * -----------------------------------------------------
+ * Draws *one* centered title + subtitle and blocks built-in ones,
+ * even after multiple renders or orientation changes.
  */
 const centerHistTitlesPlugin = {
   id: 'centerHistTitles',
@@ -391,26 +391,37 @@ const centerHistTitlesPlugin = {
     if (chart.config.type !== 'bar') return;
     if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return;
 
-    // Hijack built-in title/subtitle plugin methods
-    const titlePlugin = Chart.registry.getPlugin('title');
-    const subtitlePlugin = Chart.registry.getPlugin('subtitle');
+    // Mute built-in title/subtitle only once globally
+    if (!centerHistTitlesPlugin._muted) {
+      const titlePlugin = Chart.registry.getPlugin('title');
+      const subtitlePlugin = Chart.registry.getPlugin('subtitle');
+      if (titlePlugin && !titlePlugin._muted) {
+        titlePlugin.beforeDraw = () => {};
+        titlePlugin.afterDraw = () => {};
+        titlePlugin._muted = true;
+      }
+      if (subtitlePlugin && !subtitlePlugin._muted) {
+        subtitlePlugin.beforeDraw = () => {};
+        subtitlePlugin.afterDraw = () => {};
+        subtitlePlugin._muted = true;
+      }
+      centerHistTitlesPlugin._muted = true;
+    }
+  },
 
-    if (titlePlugin && !titlePlugin._muted) {
-      titlePlugin.beforeDraw = () => {}; // no-op
-      titlePlugin.afterDraw = () => {};
-      titlePlugin._muted = true;
-    }
-    if (subtitlePlugin && !subtitlePlugin._muted) {
-      subtitlePlugin.beforeDraw = () => {};
-      subtitlePlugin.afterDraw = () => {};
-      subtitlePlugin._muted = true;
-    }
+  beforeDraw(chart) {
+    // reset guard per draw so we can safely redraw titles once
+    chart.$drawnTitles = false;
   },
 
   afterDraw(chart, args, opts) {
     if (!opts?.enabled) return;
     if (chart.config.type !== 'bar') return;
     if (!chart.canvas || !/Hist$/i.test(chart.canvas.id)) return;
+
+    // guard: draw only once per frame
+    if (chart.$drawnTitles) return;
+    chart.$drawnTitles = true;
 
     const { ctx, width, chartArea } = chart;
     if (!ctx || !chartArea) return;
@@ -450,6 +461,17 @@ const centerHistTitlesPlugin = {
 
 // Register everything
 Chart.register(ChartDataLabels, centerHistAreaPlugin, centerHistTitlesPlugin);
+
+// 🌀 Reset title draw guards when resizing (to stay stable across orientation changes)
+window.addEventListener('resize', () => {
+  Object.values(charts).forEach(chart => {
+    if (chart.config.type === 'bar') {
+      delete chart.$drawnTitles;
+      delete chart.$histCentered;
+      chart.update('none');
+    }
+  });
+});
   
 /* ========= DATA / LAYOUT HELPERS ========= */
 
