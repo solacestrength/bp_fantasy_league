@@ -674,16 +674,33 @@ function renderCharts(g, w) {
           }
         },
         datalabels: {
-          color: '#fff',
-          font: { weight: 'bold', size: s.donutPercent },
-          formatter: (v) => {
-            const p = (v / total) * 100;
-            return p >= 3 ? `${p.toFixed(1)}%` : '';
-          },
-          anchor: 'center',
-          align: 'center',
-          clamp: true
-        }
+  color: '#fff',
+  font: (context) => {
+    const dataset = context.chart.data.datasets[0];
+    const value = dataset.data[context.dataIndex];
+    const total = dataset.data.reduce((a, b) => a + b, 0);
+    const percentage = (value / total) * 100;
+
+    // dynamically scale text: smaller slices use smaller font
+    const base = s.donutPercent;
+    const minSize = 8;
+    const maxSize = base;
+    const scaled = Math.max(minSize, Math.min(maxSize, (base * (percentage / 10)) + 6));
+    return { weight: 'bold', size: scaled };
+  },
+  formatter: (v, ctx) => {
+    const dataset = ctx.chart.data.datasets[0];
+    const total = dataset.data.reduce((a, b) => a + b, 0);
+    const p = (v / total) * 100;
+    // hide text completely if slice < 2%
+    return p >= 2 ? `${p.toFixed(1)}%` : '';
+  },
+  anchor: 'center',
+  align: 'center',
+  clamp: true,
+  clip: true, // prevent text from overflowing the slice
+  offset: 0
+}
       },
       onClick: (evt, elements) =>
         handleDonutClick(g, w, donutId, evt, elements, rows)
