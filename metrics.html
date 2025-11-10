@@ -707,7 +707,7 @@ function renderCharts(g, w) {
             const value = dataset.data[ctx.dataIndex];
             const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
             const percentage = (value / totalLocal) * 100;
-            return percentage >= 2; // hide very tiny slices
+            return percentage >= 3.5; // hide very tiny slices
           },
           anchor: 'center',
           align: 'center',
