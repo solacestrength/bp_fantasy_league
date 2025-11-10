@@ -665,14 +665,20 @@ function renderCharts(g, w) {
           padding: { top: 2, bottom: 18 }
         },
         legend: {
-          position: 'bottom',
-          labels: {
-            color: '#ccc',
-            boxWidth: 10,
-            boxHeight: 10,
-            font: { size: s.donutLegend }
-          }
-        },
+  position: 'bottom',
+  labels: {
+    color: '#ccc',
+    boxWidth: 10,
+    boxHeight: 10,
+    font: { size: s.donutLegend }
+  },
+  // Disable click toggling so no strike-through / hiding occurs
+  onClick: () => {},
+  onHover: (e) => {
+    // prevent pointer cursor implying interactivity
+    if (e?.native?.target) e.native.target.style.cursor = 'default';
+  }
+},
         datalabels: {
   color: '#fff',
   font: (context) => {
