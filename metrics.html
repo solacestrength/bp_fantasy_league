@@ -679,35 +679,46 @@ function renderCharts(g, w) {
     if (e?.native?.target) e.native.target.style.cursor = 'default';
   }
 },
-        datalabels: {
+  datalabels: {
   color: '#fff',
-  font: (context) => {
-    const dataset = context.chart.data.datasets[0];
-    const value = dataset.data[context.dataIndex];
+  font: (ctx) => {
+    const dataset = ctx.chart.data.datasets[0];
+    const value = dataset.data[ctx.dataIndex];
     const total = dataset.data.reduce((a, b) => a + b, 0);
     const percentage = (value / total) * 100;
 
-    // dynamically scale text: smaller slices use smaller font
+    // Calculate slice angle in degrees
+    const angle = (percentage / 100) * 360;
     const base = s.donutPercent;
-    const minSize = 8;
-    const maxSize = base;
-    const scaled = Math.max(minSize, Math.min(maxSize, (base * (percentage / 10)) + 6));
-    return { weight: 'bold', size: scaled };
+    let size;
+
+    // shrink text for narrow slices
+    if (angle < 10) size = base * 0.45;
+    else if (angle < 20) size = base * 0.6;
+    else if (angle < 40) size = base * 0.8;
+    else size = base;
+
+    return { weight: 'bold', size: Math.max(8, size) };
   },
   formatter: (v, ctx) => {
     const dataset = ctx.chart.data.datasets[0];
     const total = dataset.data.reduce((a, b) => a + b, 0);
     const p = (v / total) * 100;
-    // hide text completely if slice < 2%
     return p >= 2 ? `${p.toFixed(1)}%` : '';
   },
   anchor: 'center',
   align: 'center',
   clamp: true,
-  clip: true, // prevent text from overflowing the slice
-  offset: 0
-}
-      },
+  clip: true,     // prevents labels from escaping slices
+  offset: 0,
+  display: (ctx) => {
+    const dataset = ctx.chart.data.datasets[0];
+    const value = dataset.data[ctx.dataIndex];
+    const total = dataset.data.reduce((a, b) => a + b, 0);
+    const percentage = (value / total) * 100;
+    return percentage >= 2; // hide tiny slices entirely
+  }
+},
       onClick: (evt, elements) =>
         handleDonutClick(g, w, donutId, evt, elements, rows)
     }
