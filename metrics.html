@@ -676,6 +676,17 @@ function renderCharts(g, w) {
             font: { size: s.donutLegend }
           }
         },
+        tooltip: {
+  callbacks: {
+    label: (ctx) => {
+      const dataset = ctx.chart.data.datasets[0];
+      const total = dataset.data.reduce((a, b) => a + b, 0);
+      const value = ctx.parsed;
+      const percentage = ((value / total) * 100).toFixed(1);
+      return `${value} Votes – ${percentage}%`;
+    }
+  }
+},
         datalabels: {
           color: '#fff',
           font: (ctx) => {
