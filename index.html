@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Home | British Classic Fantasy League 2025 &#x1f1ec;&#x1f1e7</title>
+  <title>Home | British Classic Fantasy League 2025 🇬🇧</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
   @keyframes fadeInUp {
@@ -26,23 +26,31 @@
   }
 
   /* Collapsible shared styles */
-  .rules-collapsible, .prizes-collapsible {
+  .rules-collapsible,
+  .prizes-collapsible,
+  .contact-collapsible {
     max-height: 0;
     overflow: hidden;
     opacity: 0;
     transition: max-height 0.4s ease, opacity 0.3s ease;
   }
 
-  .rules-collapsible.open, .prizes-collapsible.open {
+  .rules-collapsible.open,
+  .prizes-collapsible.open,
+  .contact-collapsible.open {
     opacity: 1;
     max-height: 1000px;
   }
 
-  .rules-arrow, .prizes-arrow {
+  .rules-arrow,
+  .prizes-arrow,
+  .contact-arrow {
     transition: transform 0.3s ease;
   }
 
-  .rules-arrow.rotate, .prizes-arrow.rotate {
+  .rules-arrow.rotate,
+  .prizes-arrow.rotate,
+  .contact-arrow.rotate {
     transform: rotate(180deg);
   }
   </style>
@@ -131,8 +139,44 @@
             </div>
           </div>
 
+          <!-- Collapsible Contact Us (NEW) -->
           <div>
-            <!-- Collapsible Rules and Scoring -->
+            <h3 id="contactToggle"
+                class="flex items-center justify-between text-xl font-semibold text-red-400 mb-2 cursor-pointer select-none">
+              <span>Contact Us</span>
+              <svg id="contactArrow" xmlns="http://www.w3.org/2000/svg"
+                   class="w-5 h-5 text-red-500 contact-arrow rotate"
+                   fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 9l-7 7-7-7" />
+              </svg>
+            </h3>
+
+            <div id="contactContent" class="contact-collapsible open mt-1">
+              <ul class="list-disc list-inside text-gray-300 space-y-2">
+                <li>
+                  For enquiries regarding prizes or anything else fantasy league related,
+                  DM us
+                  <a href="https://www.instagram.com/britishclassicfl?igsh=aXRucmw2dXk2aHI="
+                     target="_blank" rel="noopener noreferrer"
+                     class="font-semibold text-red-400 hover:text-red-300">
+                    @britishclassicfl
+                  </a>
+                  on IG, where you can also follow us for more updates.
+                </li>
+                <li>
+                  Alternatively, email
+                  <a href="mailto:britishclassicfl@gmail.com"
+                     class="font-semibold text-red-400 hover:text-red-300">
+                    britishclassicfl@gmail.com
+                  </a>.
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Collapsible Rules and Scoring -->
+          <div>
             <h3 id="rulesToggle"
                 class="flex items-center justify-between text-xl font-semibold text-red-400 mb-2 cursor-pointer select-none">
               <span>Rules and Scoring</span>
@@ -173,7 +217,7 @@
         </a>
       </div>
 
-      <!-- Back to Top Button (static link) -->
+      <!-- Back to Top Button -->
       <div class="flex justify-center mt-8">
         <button id="bottomBackToTop"
                 class="bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full
@@ -236,9 +280,14 @@
   const rulesToggle = document.getElementById('rulesToggle');
   const rulesContent = document.getElementById('rulesContent');
   const rulesArrow = document.getElementById('rulesArrow');
+
   const prizesToggle = document.getElementById('prizesToggle');
   const prizesContent = document.getElementById('prizesContent');
   const prizesArrow = document.getElementById('prizesArrow');
+
+  const contactToggle = document.getElementById('contactToggle');
+  const contactContent = document.getElementById('contactContent');
+  const contactArrow = document.getElementById('contactArrow');
 
   if (rulesToggle && rulesContent && rulesArrow) {
     rulesToggle.addEventListener('click', () => {
@@ -251,6 +300,13 @@
     prizesToggle.addEventListener('click', () => {
       const isOpen = prizesContent.classList.toggle('open');
       prizesArrow.classList.toggle('rotate', isOpen);
+    });
+  }
+
+  if (contactToggle && contactContent && contactArrow) {
+    contactToggle.addEventListener('click', () => {
+      const isOpen = contactContent.classList.toggle('open');
+      contactArrow.classList.toggle('rotate', isOpen);
     });
   }
 
