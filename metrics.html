@@ -618,7 +618,7 @@ function renderCharts(g, w) {
   const rows = allData.filter(r => r.Gender === g && r.Class === w);
   if (!rows.length) return;
 
-  /* --- DONUT --- */
+    /* --- DONUT --- */
   const counts = {};
   rows.forEach(r => { counts[r.Athlete] = (counts[r.Athlete] || 0) + 1; });
 
@@ -634,6 +634,7 @@ function renderCharts(g, w) {
 
   if (charts[donutId]) charts[donutId].destroy();
   const donutCtx = document.getElementById(donutId).getContext('2d');
+
   charts[donutId] = new Chart(donutCtx, {
     type: 'doughnut',
     data: {
@@ -665,60 +666,57 @@ function renderCharts(g, w) {
           padding: { top: 2, bottom: 18 }
         },
         legend: {
-  position: 'bottom',
-  labels: {
-    color: '#ccc',
-    boxWidth: 10,
-    boxHeight: 10,
-    font: { size: s.donutLegend }
-  },
-  // Disable click toggling so no strike-through / hiding occurs
-  onClick: () => {},
-  onHover: (e) => {
-    // prevent pointer cursor implying interactivity
-    if (e?.native?.target) e.native.target.style.cursor = 'default';
-  }
-},
-  datalabels: {
-  color: '#fff',
-  font: (ctx) => {
-    const dataset = ctx.chart.data.datasets[0];
-    const value = dataset.data[ctx.dataIndex];
-    const total = dataset.data.reduce((a, b) => a + b, 0);
-    const percentage = (value / total) * 100;
+          position: 'bottom',
+          onClick: null,   // 🔒 disable legend toggling / strike-through
+          onHover: null,
+          labels: {
+            color: '#ccc',
+            boxWidth: 10,
+            boxHeight: 10,
+            font: { size: s.donutLegend }
+          }
+        },
+        datalabels: {
+          color: '#fff',
+          font: (ctx) => {
+            const dataset = ctx.chart.data.datasets[0];
+            const value = dataset.data[ctx.dataIndex];
+            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
+            const percentage = (value / totalLocal) * 100;
 
-    // Calculate slice angle in degrees
-    const angle = (percentage / 100) * 360;
-    const base = s.donutPercent;
-    let size;
+            // slice angle in degrees
+            const angle = (percentage / 100) * 360;
+            const base = s.donutPercent;
+            let size;
 
-    // shrink text for narrow slices
-    if (angle < 10) size = base * 0.45;
-    else if (angle < 20) size = base * 0.6;
-    else if (angle < 40) size = base * 0.8;
-    else size = base;
+            if (angle < 10)       size = base * 0.45;
+            else if (angle < 20)  size = base * 0.6;
+            else if (angle < 40)  size = base * 0.8;
+            else                  size = base;
 
-    return { weight: 'bold', size: Math.max(8, size) };
-  },
-  formatter: (v, ctx) => {
-    const dataset = ctx.chart.data.datasets[0];
-    const total = dataset.data.reduce((a, b) => a + b, 0);
-    const p = (v / total) * 100;
-    return p >= 2 ? `${p.toFixed(1)}%` : '';
-  },
-  anchor: 'center',
-  align: 'center',
-  clamp: true,
-  clip: true,     // prevents labels from escaping slices
-  offset: 0,
-  display: (ctx) => {
-    const dataset = ctx.chart.data.datasets[0];
-    const value = dataset.data[ctx.dataIndex];
-    const total = dataset.data.reduce((a, b) => a + b, 0);
-    const percentage = (value / total) * 100;
-    return percentage >= 2; // hide tiny slices entirely
-  }
-},
+            return { weight: 'bold', size: Math.max(8, size) };
+          },
+          formatter: (v, ctx) => {
+            const dataset = ctx.chart.data.datasets[0];
+            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
+            const p = (v / totalLocal) * 100;
+            return p >= 2 ? `${p.toFixed(1)}%` : '';
+          },
+          display: (ctx) => {
+            const dataset = ctx.chart.data.datasets[0];
+            const value = dataset.data[ctx.dataIndex];
+            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
+            const percentage = (value / totalLocal) * 100;
+            return percentage >= 2; // hide very tiny slices
+          },
+          anchor: 'center',
+          align: 'center',
+          clamp: true,
+          clip: true,
+          offset: 0
+        }
+      },
+      // keep your existing donut double-tap / drilldown handler, if used:
       onClick: (evt, elements) =>
         handleDonutClick(g, w, donutId, evt, elements, rows)
     }
