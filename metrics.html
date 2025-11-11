@@ -691,24 +691,30 @@ function renderCharts(g, w) {
         datalabels: {
   color: '#fff',
   font: (ctx) => {
-    const s = sizing(); // cheap + keeps desktop/mobile scaling consistent
+    const s = sizing();
     const dataset = ctx.chart.data.datasets[0];
     const value = dataset.data[ctx.dataIndex];
     const total = dataset.data.reduce((a, b) => a + b, 0) || 1;
     const p = (value / total) * 100;
+    const angleDeg = (p / 100) * 360;
+    const angleRad = (angleDeg * Math.PI) / 180;
 
-    const base = s.donutPercent; // your existing responsive base size
+    // Base dynamic scaling like before
+    const base = s.donutPercent;
     let size;
+    if (p < 5) size = base * 0.6;
+    else if (p < 10) size = base * 0.8;
+    else if (p < 18) size = base * 1.0;
+    else if (p < 30) size = base * 1.15;
+    else size = base * 1.3;
 
-    // Scale based on slice size (percentage of donut)
-    if (p < 5)        size = base * 0.6;   // small slice → smaller text
-    else if (p < 10)  size = base * 0.8;
-    else if (p < 18)  size = base * 1.0;
-    else if (p < 30)  size = base * 1.15;
-    else              size = base * 1.3;   // big slice → bigger text
+    // 🔧 Adjust for narrow slices: smaller text when slice angle is small
+    // Use sin(angle/2) as a proxy for available arc width
+    const widthFactor = Math.sin(angleRad / 2);
+    const correction = 0.75 + 0.25 * Math.min(1, Math.max(widthFactor * 3, 0)); 
+    // prevents total collapse while reducing text in tight arcs
 
-    // Keep within a sensible range across devices
-    const finalSize = Math.max(9, Math.min(size, 26));
+    const finalSize = Math.max(9, Math.min(size * correction, 26));
     return { weight: 'bold', size: finalSize };
   },
   formatter: (v, ctx) => {
@@ -722,7 +728,7 @@ function renderCharts(g, w) {
     const value = dataset.data[ctx.dataIndex];
     const total = dataset.data.reduce((a, b) => a + b, 0) || 1;
     const p = (value / total) * 100;
-    return p >= 3.5; // hide tiny slices completely
+    return p >= 3.5;
   },
   anchor: 'center',
   align: 'center',
