@@ -696,25 +696,26 @@ function renderCharts(g, w) {
     const value = dataset.data[ctx.dataIndex];
     const total = dataset.data.reduce((a, b) => a + b, 0) || 1;
     const p = (value / total) * 100;
-    const angleDeg = (p / 100) * 360;
-    const angleRad = (angleDeg * Math.PI) / 180;
 
-    // Base dynamic scaling like before
+    // Slice angular size in radians
+    const angleRad = (p / 100) * 2 * Math.PI;
+
+    // Base scaling — percentage-based
     const base = s.donutPercent;
-    let size;
-    if (p < 5) size = base * 0.6;
-    else if (p < 10) size = base * 0.8;
-    else if (p < 18) size = base * 1.0;
-    else if (p < 30) size = base * 1.15;
-    else size = base * 1.3;
+    let size = base * (0.6 + Math.min(p / 40, 1.0)); 
+    // grows gradually up to 1.6× for big slices
 
-    // 🔧 Adjust for narrow slices: smaller text when slice angle is small
-    // Use sin(angle/2) as a proxy for available arc width
-    const widthFactor = Math.sin(angleRad / 2);
-    const correction = 0.75 + 0.25 * Math.min(1, Math.max(widthFactor * 3, 0)); 
-    // prevents total collapse while reducing text in tight arcs
+    // Angle-based correction (narrow slices => smaller font)
+    const widthFactor = Math.sin(angleRad / 2); // proxy for horizontal width
+    const narrownessAdjust = Math.max(0.55, Math.min(1.0, widthFactor * 3)); 
+    size *= narrownessAdjust;
 
-    const finalSize = Math.max(9, Math.min(size * correction, 26));
+    // Visual correction for large bottom slices (≥90%)
+    // These appear smaller due to orientation curvature
+    if (p >= 90) size *= 1.25; 
+
+    // Apply uniform global cap
+    const finalSize = Math.min(Math.max(size, 9), 26);
     return { weight: 'bold', size: finalSize };
   },
   formatter: (v, ctx) => {
