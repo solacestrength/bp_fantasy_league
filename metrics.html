@@ -649,13 +649,26 @@ const colors = [
   '#d946ef','#fb7185'
 ];
 
-if (charts[donutId]) charts[donutId].destroy();
-const donutCtx = document.getElementById(donutId).getContext('2d');
-
-// ✅ Global safeguard: enforce default color/font once
+// 🔧 Global defaults for consistency
 Chart.defaults.color = '#f1f1f1';
 Chart.defaults.font.family = "'Inter', sans-serif";
 Chart.defaults.font.weight = '500';
+
+// 🔧 Register plugin to reapply correct color after draw
+Chart.register({
+  id: 'forceLegendColor',
+  afterDraw(chart) {
+    const legend = chart.legend;
+    if (!legend || !legend.legendItems) return;
+    legend.legendItems.forEach(item => {
+      item.textColor = '#f1f1f1';
+      item.fillStyle = item.fillStyle || '#f1f1f1';
+    });
+  }
+});
+
+if (charts[donutId]) charts[donutId].destroy();
+const donutCtx = document.getElementById(donutId).getContext('2d');
 
 charts[donutId] = new Chart(donutCtx, {
   type: 'doughnut',
@@ -673,12 +686,10 @@ charts[donutId] = new Chart(donutCtx, {
     aspectRatio: 1,
     cutout: '57%',
     radius: '85%',
-    rotation: 0, // ✅ Correct orientation (top-start)
+    rotation: 0, // ✅ Correct orientation
     circumference: 360,
     layout: { padding: 0 },
-    elements: {
-      arc: { borderAlign: 'center', offset: 0 }
-    },
+    elements: { arc: { borderAlign: 'center', offset: 0 } },
     plugins: {
       title: {
         display: true,
@@ -704,6 +715,11 @@ charts[donutId] = new Chart(donutCtx, {
           boxHeight: 10,
           padding: 12,
           color: '#f1f1f1',
+          font: {
+            size: s.donutLegend,
+            weight: '500',
+            family: "'Inter', sans-serif"
+          },
           generateLabels: (chart) => {
             const data = chart.data;
             const meta = chart.getDatasetMeta(0);
@@ -730,7 +746,7 @@ charts[donutId] = new Chart(donutCtx, {
             const ctx = chart.ctx;
             const chartWidth = chart.width;
             const isDesktop = window.matchMedia('(min-width:1024px)').matches;
-            let fontSize = isDesktop ? 16 : 13; // Start slightly larger
+            let fontSize = isDesktop ? 16 : 13;
             const minFont = isDesktop ? 10 : 9;
             const maxFont = isDesktop ? 18 : 15;
 
@@ -758,15 +774,10 @@ charts[donutId] = new Chart(donutCtx, {
               fontSize = Math.min(maxFont, Math.floor(fontSize * scale));
             }
 
-            // ✅ Explicitly reapply color + font
             chart.legend.options.labels.color = '#f1f1f1';
             chart.legend.options.labels.font = { size: fontSize, weight: '500' };
 
             return items;
-          },
-          font: (ctx) => {
-            const f = ctx.chart.legend?.options?.labels?.font;
-            return f || { size: 12, weight: '500' };
           }
         }
       },
@@ -869,24 +880,18 @@ charts[donutId] = new Chart(donutCtx, {
   }
 });
 
-// ✅ Reinforce legend color and font after render
 const donutChart = charts[donutId];
 if (donutChart) {
+  donutChart.options.rotation = 0;
   donutChart.options.radius = '85%';
   donutChart.options.cutout = '57%';
-  donutChart.options.rotation = 0;
   donutChart.options.circumference = 360;
-
-  if (donutChart.legend && donutChart.legend.options?.labels) {
-    donutChart.legend.options.labels.color = '#f1f1f1';
-    donutChart.legend.options.labels.font = {
-      size: s.donutLegend,
-      weight: '500'
-    };
-  }
 
   donutChart.resize();
   donutChart.update('none');
+
+  // Reapply color fix after first paint
+  setTimeout(() => donutChart.update(), 100);
 }
 
 /* --- HISTOGRAM --- */
