@@ -696,26 +696,33 @@ function renderCharts(g, w) {
     const value = dataset.data[ctx.dataIndex];
     const total = dataset.data.reduce((a, b) => a + b, 0) || 1;
     const p = (value / total) * 100;
+    const angle = (p / 100) * 2 * Math.PI;
 
-    // Slice angular size in radians
-    const angleRad = (p / 100) * 2 * Math.PI;
+    // Find slice mid-angle in radians
+    const data = dataset.data;
+    const startAngle = data
+      .slice(0, ctx.dataIndex)
+      .reduce((sum, v) => sum + (v / total) * 2 * Math.PI, 0);
+    const midAngle = startAngle + angle / 2;
 
-    // Base scaling — percentage-based
+    // Base size (percentage scaling)
     const base = s.donutPercent;
-    let size = base * (0.6 + Math.min(p / 40, 1.0)); 
-    // grows gradually up to 1.6× for big slices
+    let size = base * (0.6 + Math.min(p / 40, 1.0));
 
-    // Angle-based correction (narrow slices => smaller font)
-    const widthFactor = Math.sin(angleRad / 2); // proxy for horizontal width
-    const narrownessAdjust = Math.max(0.55, Math.min(1.0, widthFactor * 3)); 
+    // Narrow-slice correction
+    const widthFactor = Math.sin(angle / 2);
+    const narrownessAdjust = Math.max(0.6, Math.min(1.0, widthFactor * 3));
     size *= narrownessAdjust;
 
-    // Visual correction for large bottom slices (≥90%)
-    // These appear smaller due to orientation curvature
-    if (p >= 90) size *= 1.25; 
+    // Bottom orientation compensation
+    const correction = midAngle > Math.PI / 2 && midAngle < (3 * Math.PI) / 2 ? 1.25 : 1.0;
+    size *= correction;
 
-    // Apply uniform global cap
-    const finalSize = Math.min(Math.max(size, 9), 26);
+    // Single-slice (dominant) correction
+    if (p > 90) size *= 1.25;
+
+    // Clamp final value
+    const finalSize = Math.min(Math.max(size, 9), 28);
     return { weight: 'bold', size: finalSize };
   },
   formatter: (v, ctx) => {
@@ -731,11 +738,31 @@ function renderCharts(g, w) {
     const p = (value / total) * 100;
     return p >= 3.5;
   },
+
+  // ✨ Smart inward positioning
   anchor: 'center',
   align: 'center',
+  offset: (ctx) => {
+    const dataset = ctx.chart.data.datasets[0];
+    const value = dataset.data[ctx.dataIndex];
+    const total = dataset.data.reduce((a, b) => a + b, 0) || 1;
+    const p = (value / total) * 100;
+
+    // small inward offset for small slices or bottom-heavy positions
+    const angle = (p / 100) * 2 * Math.PI;
+    const data = dataset.data;
+    const startAngle = data
+      .slice(0, ctx.dataIndex)
+      .reduce((sum, v) => sum + (v / total) * 2 * Math.PI, 0);
+    const midAngle = startAngle + angle / 2;
+
+    const isBottomHalf = midAngle > Math.PI / 2 && midAngle < (3 * Math.PI) / 2;
+    const inward = isBottomHalf ? 6 : 3; // push inward more at bottom
+    return p < 15 ? inward + 4 : inward; // push small slices extra
+  },
+
   clamp: true,
-  clip: true,
-  offset: 0
+  clip: true
 }
       },
       // keep your existing donut double-tap / drilldown handler, if used:
