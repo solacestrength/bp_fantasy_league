@@ -652,6 +652,11 @@ const colors = [
 if (charts[donutId]) charts[donutId].destroy();
 const donutCtx = document.getElementById(donutId).getContext('2d');
 
+// ✅ Global safeguard: enforce default color/font once
+Chart.defaults.color = '#f1f1f1';
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.font.weight = '500';
+
 charts[donutId] = new Chart(donutCtx, {
   type: 'doughnut',
   data: {
@@ -668,7 +673,7 @@ charts[donutId] = new Chart(donutCtx, {
     aspectRatio: 1,
     cutout: '57%',
     radius: '85%',
-    rotation: 0, // ✅ Correct orientation (no 90° shift)
+    rotation: 0, // ✅ Correct orientation (top-start)
     circumference: 360,
     layout: { padding: 0 },
     elements: {
@@ -678,7 +683,7 @@ charts[donutId] = new Chart(donutCtx, {
       title: {
         display: true,
         text: 'Share of Votes',
-        color: '#ccc',
+        color: '#f1f1f1',
         font: { weight: 'bold', size: s.donutTitle },
         padding: { bottom: 8 }
       },
@@ -698,7 +703,7 @@ charts[donutId] = new Chart(donutCtx, {
           boxWidth: 10,
           boxHeight: 10,
           padding: 12,
-          color: '#ccc',
+          color: '#f1f1f1',
           generateLabels: (chart) => {
             const data = chart.data;
             const meta = chart.getDatasetMeta(0);
@@ -725,8 +730,9 @@ charts[donutId] = new Chart(donutCtx, {
             const ctx = chart.ctx;
             const chartWidth = chart.width;
             const isDesktop = window.matchMedia('(min-width:1024px)').matches;
-            let fontSize = isDesktop ? 14 : 11;
-            const minFont = isDesktop ? 9 : 8;
+            let fontSize = isDesktop ? 16 : 13; // Start slightly larger
+            const minFont = isDesktop ? 10 : 9;
+            const maxFont = isDesktop ? 18 : 15;
 
             const labelCount = items.length;
             let targetRows = 1;
@@ -736,18 +742,26 @@ charts[donutId] = new Chart(donutCtx, {
 
             ctx.save();
             ctx.font = `500 ${fontSize}px Inter, system-ui, sans-serif`;
-            const totalWidth = items.reduce((sum, item) => sum + ctx.measureText(item.text).width + 42, 0);
+            const totalWidth = items.reduce((sum, item) =>
+              sum + ctx.measureText(item.text).width + 42, 0);
             ctx.restore();
 
             const maxWidth = chartWidth * 0.9;
             const rowsNeeded = Math.max(1, Math.ceil(totalWidth / maxWidth));
 
+            // 🔧 Adjust size dynamically (down or up)
             if (rowsNeeded > targetRows) {
               const scale = (maxWidth * targetRows) / totalWidth;
               fontSize = Math.max(minFont, Math.floor(fontSize * scale));
+            } else if (rowsNeeded < targetRows && totalWidth < maxWidth * 0.6) {
+              const scale = (maxWidth / totalWidth) * 0.8;
+              fontSize = Math.min(maxFont, Math.floor(fontSize * scale));
             }
 
+            // ✅ Explicitly reapply color + font
+            chart.legend.options.labels.color = '#f1f1f1';
             chart.legend.options.labels.font = { size: fontSize, weight: '500' };
+
             return items;
           },
           font: (ctx) => {
@@ -855,7 +869,7 @@ charts[donutId] = new Chart(donutCtx, {
   }
 });
 
-// ✅ Legend color and font reset safeguard
+// ✅ Reinforce legend color and font after render
 const donutChart = charts[donutId];
 if (donutChart) {
   donutChart.options.radius = '85%';
@@ -864,7 +878,7 @@ if (donutChart) {
   donutChart.options.circumference = 360;
 
   if (donutChart.legend && donutChart.legend.options?.labels) {
-    donutChart.legend.options.labels.color = '#ccc';
+    donutChart.legend.options.labels.color = '#f1f1f1';
     donutChart.legend.options.labels.font = {
       size: s.donutLegend,
       weight: '500'
