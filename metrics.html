@@ -15,216 +15,199 @@
   <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
 
   <style>
-/* === GLOBAL THEME === */
-body {
-  background: #0b0b0b;
-  color: #f1f1f1;
-  font-family: 'Inter', sans-serif;
-  overflow-x: hidden;
-}
-
-/* === SELECT ELEMENTS === */
-select {
-  background: #2f2f2f;
-  border: 1px solid #555;
-  color: #f1f1f1;
-  padding: 0.35rem 0.5rem;
-  border-radius: 0.375rem;
-  width: auto;
-  min-width: 0;
-  display: inline-block;
-}
-
-#womenSelect,
-#menSelect,
-.drill-select {
-  background-color: rgba(31, 41, 55, 0.6) !important;
-  border: 1px solid #374151;
-  color: #f1f1f1;
-}
-
-.drill-select {
-  display: inline-block;
-  font-size: 0.75rem;
-  padding-top: 0.4rem;
-  padding-bottom: 0.4rem;
-  max-width: 70%;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-
-/* === METRICS LAYOUT === */
-.chart-container {
-  position: relative;
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-  transition: opacity 0.25s ease;
-}
-
-/* Canvas stays centered and consistent */
-.chart-container canvas {
-  display: block;
-  margin: 0 auto;
-  width: 100% !important;
-  height: auto !important;
-}
-
-/* Desktop – stable aspect ratio and sizing */
-@media (min-width: 1024px) {
-  #womenDonut, #menDonut,
-  #womenHist, #menHist,
-  #womenDrill, #menDrill {
-    aspect-ratio: 1 / 1 !important;
-    width: 100% !important;
-    max-height: none !important;
-    object-fit: contain;
+  /* === GLOBAL THEME === */
+  body {
+    background: #0b0b0b;
+    color: #f1f1f1;
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
   }
 
-  #womenDonut, #menDonut,
-  #womenDrill, #menDrill { height: 375px !important; }
-
-  #womenHist, #menHist {
-    height: 375px !important;
-    transform: none !important;
-    transform-origin: top center;
-  }
-}
-
-/* Mobile – same aspect ratio consistency */
-@media (max-width: 1023px) {
-  #womenDonut, #menDonut,
-  #womenHist, #menHist,
-  #womenDrill, #menDrill {
-    aspect-ratio: 1 / 1 !important;
-    width: 100% !important;
-    max-height: none !important;
-    object-fit: contain;
+  /* === SELECT ELEMENTS === */
+  select {
+    background: #2f2f2f;
+    border: 1px solid #555;
+    color: #f1f1f1;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.375rem;
+    width: auto;
+    min-width: 0;
+    display: inline-block;
   }
 
-  #womenDonut, #menDonut,
-  #womenDrill, #menDrill { height: 336px !important; }
-
-  #womenHist, #menHist {
-    height: 336px !important;
-    transform: none !important;
-    transform-origin: top center;
+  #womenSelect,
+  #menSelect,
+  .drill-select {
+    background-color: rgba(31, 41, 55, 0.6) !important;
+    border: 1px solid #374151;
+    color: #f1f1f1;
   }
-}
 
-/* === DONUT LEGENDS (Responsive, Centered, Max 2 Rows) === */
-#womenDonutContainer,
-#menDonutContainer {
-  display: block; /* allows top flex bar to work normally */
-  text-align: center;
-}
+  .drill-select {
+    display: inline-block;
+    font-size: 0.75rem;
+    padding-top: 0.4rem;
+    padding-bottom: 0.4rem;
+    max-width: 70%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
 
-#womenDonutContainer .chartjs-legend,
-#menDonutContainer .chartjs-legend {
-  max-width: 90%;
-  text-align: center;
-  margin: 0.5rem auto 0 auto !important;
-}
-
-/* Histogram legends (if ever visible) stay centered */
-#womenHist .chartjs-legend,
-#menHist .chartjs-legend {
-  text-align: center;
-}
-
-/* Maintain consistent spacing between stacked chart containers */
-.chart-container + .chart-container {
-  margin-top: 1.75rem;
-}
-
-/* === COLLAPSIBLE SECTIONS === */
-.collapsible-content {
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition: max-height .5s ease, opacity .4s ease;
-}
-
-.collapsible-content.open {
-  opacity: 1;
-  max-height: 1000px;
-  padding-bottom: 1rem;
-}
-
-@media (max-width: 1023px) {
-  .collapsible-content,
-  .collapsible-content.open {
+  /* === METRICS LAYOUT === */
+  .chart-container {
+    max-width: 600px;
+    margin: 0 auto;
+    position: relative;
+    display: block;
     width: 100%;
-    margin-left: 0;
-    padding-left: 0;
-    padding-right: 0;
+    transition: opacity 0.25s ease;
   }
-}
 
-.arrow {
-  transition: transform .4s ease;
-}
-.arrow.rotate {
-  transform: rotate(180deg);
-}
+  canvas {
+    max-width: 100%;
+    height: auto !important;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
 
-/* === SHARE BUTTONS === */
-.share-btn {
-  background-color: #dc2626;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: .5rem;
-  height: 36px;
-  width: 36px;
-  transition: background-color .2s ease, transform .2s ease;
-}
+  @media (min-width: 1024px) {
+    #womenDonut, #menDonut,
+    #womenHist, #menHist,
+    #womenDrill, #menDrill {
+      aspect-ratio: 1 / 1 !important;
+      width: 100% !important;
+      max-height: none !important;
+      object-fit: contain;
+    }
 
-.share-btn:hover {
-  background-color: #ef4444;
-  transform: translateY(-1px);
-}
+    #womenDonut, #menDonut,
+    #womenDrill, #menDrill { height: 375px !important; }
 
-.share-icon {
-  filter: invert(1);
-  height: 18px;
-  width: 18px;
-}
+    #womenHist, #menHist {
+      height: 375px !important;
+      transform: none !important;
+      transform-origin: top center;
+    }
+  }
 
-/* === BACK PILL (Drilldown) === */
-.back-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  padding: 0.5rem 1.1rem;
-  border-radius: 999px;
-  background-color: #111827;
-  border: 1px solid #374151;
-  color: #e5e7eb;
-  font-size: 0.7rem;
-  font-weight: 500;
-  backdrop-filter: blur(6px);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.35);
-  transition: all .2s ease;
-}
+  @media (max-width: 1023px) {
+    #womenDonut, #menDonut,
+    #womenHist, #menHist,
+    #womenDrill, #menDrill {
+      aspect-ratio: 1 / 1 !important;
+      width: 100% !important;
+      max-height: none !important;
+      object-fit: contain;
+    }
 
-.back-pill:hover {
-  background-color: #374151;
-  color: #f97316;
-  transform: translateY(-1px);
-}
+    #womenDonut, #menDonut,
+    #womenDrill, #menDrill { height: 336px !important; }
 
-/* === ANIMATIONS === */
-@keyframes fadeInUp {
-  0% { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
+    #womenHist, #menHist {
+      height: 336px !important;
+      transform: none !important;
+      transform-origin: top center;
+    }
+  }
 
-.animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
-.animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
-</style>
+  #womenDonut,
+  #menDonut {
+    width: 100% !important;
+    aspect-ratio: 1 / 1 !important;
+    max-height: none !important;
+    object-fit: contain;
+  }
+
+  /* === COLLAPSIBLE SECTIONS === */
+  .collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height .5s ease, opacity .4s ease;
+  }
+
+  .collapsible-content.open {
+    opacity: 1;
+    max-height: 1000px;
+    padding-bottom: 1rem;
+  }
+
+  @media (max-width: 1023px) {
+    .collapsible-content,
+    .collapsible-content.open {
+      width: 100%;
+      margin-left: 0;
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
+
+  .arrow {
+    transition: transform .4s ease;
+  }
+
+  .arrow.rotate {
+    transform: rotate(180deg);
+  }
+
+  /* === SHARE BUTTONS === */
+  .share-btn {
+    background-color: #dc2626;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: .5rem;
+    height: 36px;
+    width: 36px;
+    transition: background-color .2s ease, transform .2s ease;
+  }
+
+  .share-btn:hover {
+    background-color: #ef4444;
+    transform: translateY(-1px);
+  }
+
+  .share-icon {
+    filter: invert(1);
+    height: 18px;
+    width: 18px;
+  }
+
+  /* === BACK PILL (Drilldown) === */
+  .back-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.5rem 1.1rem;
+    border-radius: 999px;
+    background-color: #111827;
+    border: 1px solid #374151;
+    color: #e5e7eb;
+    font-size: 0.7rem;
+    font-weight: 500;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+    transition: all .2s ease;
+  }
+
+  .back-pill:hover {
+    background-color: #374151;
+    color: #f97316;
+    transform: translateY(-1px);
+  }
+
+  /* === ANIMATIONS === */
+  @keyframes fadeInUp {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
+  .animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
+  </style>
 </head>
 
 <body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
@@ -627,16 +610,7 @@ function fadeOut(el) {
   setTimeout(() => { el.style.display = 'none'; }, 250);
 }
 
-/* ========= POINTER NORMALIZATION (Desktop) ========= */
-function normalizePointerPosition(evt, chart) {
-  const rect = chart.canvas.getBoundingClientRect();
-  const pixelRatio = window.devicePixelRatio || 1;
-  const x = (evt.clientX - rect.left) * pixelRatio;
-  const y = (evt.clientY - rect.top) * pixelRatio;
-  return { x, y };
-}
-
-/* ========= CHART RENDERING (with Pointer Fix) ========= */
+/* ========= CHART RENDERING ========= */
 function renderCharts(g, w) {
   const s = sizing();
   const donutId = g === 'F' ? 'womenDonut' : 'menDonut';
@@ -644,11 +618,19 @@ function renderCharts(g, w) {
   const rows = allData.filter(r => r.Gender === g && r.Class === w);
   if (!rows.length) return;
 
-  // --- DONUT ---
+    /* --- DONUT --- */
   const counts = {};
   rows.forEach(r => { counts[r.Athlete] = (counts[r.Athlete] || 0) + 1; });
+
   const dLabels = Object.keys(counts);
   const dData   = Object.values(counts);
+  const total   = dData.reduce((a, b) => a + b, 0);
+
+  const colors = [
+    '#ef4444','#f97316','#facc15','#22c55e','#14b8a6',
+    '#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16',
+    '#d946ef','#fb7185'
+  ];
 
   if (charts[donutId]) charts[donutId].destroy();
   const donutCtx = document.getElementById(donutId).getContext('2d');
@@ -659,11 +641,7 @@ function renderCharts(g, w) {
       labels: dLabels,
       datasets: [{
         data: dData,
-        backgroundColor: [
-          '#ef4444','#f97316','#facc15','#22c55e','#14b8a6',
-          '#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16',
-          '#d946ef','#fb7185'
-        ],
+        backgroundColor: colors,
         borderColor: '#111',
         borderWidth: 1
       }]
@@ -672,63 +650,123 @@ function renderCharts(g, w) {
       maintainAspectRatio: true,
       aspectRatio: 1,
       cutout: '57%',
-      radius: '85%',
-      rotation: 0,
-      circumference: 360,
       plugins: {
-        legend: { labels: { color: '#ccc' } },
-        tooltip: {
-          usePointStyle: true,
-          pointStyle: 'circle',
-          boxWidth: 8,
-          boxHeight: 8,
-          callbacks: {
-            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
-            label: ctx => {
-              const total = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
-              const value = ctx.parsed;
-              const pct = ((value / total) * 100).toFixed(1);
-              const word = value === 1 ? 'Vote' : 'Votes';
-              return `${value} ${word} – ${pct}%`;
-            }
+        title: {
+          display: true,
+          text: 'Share of Votes',
+          color: '#ccc',
+          font: { weight: 'bold', size: s.donutTitle },
+          padding: { bottom: 8 }
+        },
+        subtitle: {
+          display: true,
+          text: `Total Votes – ${total}`,
+          color: '#aaa',
+          font: { size: s.donutSubtitle },
+          padding: { top: 2, bottom: 18 }
+        },
+        legend: {
+          position: 'bottom',
+          onClick: null,   // 🔒 disable legend toggling / strike-through
+          onHover: null,
+          labels: {
+            color: '#ccc',
+            boxWidth: 10,
+            boxHeight: 10,
+            font: { size: s.donutLegend }
           }
         },
+        tooltip: {
+  callbacks: {
+    label: (ctx) => {
+      const dataset = ctx.chart.data.datasets[0];
+      const total = dataset.data.reduce((a, b) => a + b, 0);
+      const value = ctx.parsed;
+      const percentage = ((value / total) * 100).toFixed(1);
+      const voteWord = value === 1 ? 'Vote' : 'Votes';
+      return `${value} ${voteWord} – ${percentage}%`;
+    }
+  }
+},
         datalabels: {
           color: '#fff',
-          display: ctx => {
-            const ds = ctx.chart.data.datasets[0];
-            const total = ds.data.reduce((a,b)=>a+b,0);
-            return (ds.data[ctx.dataIndex] / total) * 100 >= 3.5;
+          font: (ctx) => {
+            const dataset = ctx.chart.data.datasets[0];
+            const value = dataset.data[ctx.dataIndex];
+            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
+            const percentage = (value / totalLocal) * 100;
+
+            // slice angle in degrees
+            const angle = (percentage / 100) * 360;
+            const base = s.donutPercent;
+            let size;
+
+            if (angle < 10)       size = base * 0.45;
+            else if (angle < 20)  size = base * 0.6;
+            else if (angle < 40)  size = base * 0.8;
+            else                  size = base;
+
+            return { weight: 'bold', size: Math.max(8, size) };
           },
-          font: { weight: 'bold', size: s.donutPercent }
+          formatter: (v, ctx) => {
+            const dataset = ctx.chart.data.datasets[0];
+            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
+            const p = (v / totalLocal) * 100;
+            return p >= 2 ? `${p.toFixed(1)}%` : '';
+          },
+          display: (ctx) => {
+            const dataset = ctx.chart.data.datasets[0];
+            const value = dataset.data[ctx.dataIndex];
+            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
+            const percentage = (value / totalLocal) * 100;
+            return percentage >= 3.5; // hide very tiny slices
+          },
+          anchor: 'center',
+          align: 'center',
+          clamp: true,
+          clip: true,
+          offset: 0
         }
       },
-      onClick: (evt, elements) => {
-        const chart = charts[donutId];
-        if (chart && evt.native) {
-          const pos = normalizePointerPosition(evt.native, chart);
-          evt.native.x = pos.x;
-          evt.native.y = pos.y;
-        }
-        handleDonutClick(g, w, donutId, evt, elements, rows);
-      }
+      // keep your existing donut double-tap / drilldown handler, if used:
+      onClick: (evt, elements) =>
+        handleDonutClick(g, w, donutId, evt, elements, rows)
     }
   });
 
-  // --- HISTOGRAM ---
-  const vals = rows.map(r => parseFloat(r.PredictedTotal)).filter(v => !isNaN(v) && v > 0);
-  if (!vals.length) return;
+  /* --- HISTOGRAM --- */
+  const vals = rows
+    .map(r => parseFloat(r.PredictedTotal))
+    .filter(v => !isNaN(v) && v > 0);
+  if (!vals.length) {
+    if (charts[histId]) charts[histId].destroy();
+    return;
+  }
 
+  const N = vals.length;
   const min = Math.min(...vals);
   const max = Math.max(...vals);
-  const bins = Math.max(3, Math.round(Math.sqrt(vals.length)));
-  const bw = (max - min) / bins;
+  const bins = Math.max(3, Math.round(Math.sqrt(N)));
+  const bw = (max - min) / bins || 1;
+
   const countsH = Array(bins).fill(0);
-  vals.forEach(v => countsH[Math.min(Math.floor((v - min) / bw), bins - 1)]++);
+  vals.forEach(v => {
+    let i = Math.floor((v - min) / bw);
+    if (i >= bins) i = bins - 1;
+    if (i < 0) i = 0;
+    countsH[i]++;
+  });
 
   const labelsH = Array.from({ length: bins }, (_, i) =>
     `${(min + i * bw).toFixed(0)}–${(min + (i + 1) * bw).toFixed(0)}`
   );
+
+  const minC = Math.min(...countsH);
+  const maxC = Math.max(...countsH);
+  const yMin = Math.floor(minC / 2);
+  const span = maxC - yMin;
+  const step = Math.max(1, Math.round(span / 4));
+  const yMax = Math.ceil(maxC / step) * step;
 
   if (charts[histId]) charts[histId].destroy();
   const histCtx = document.getElementById(histId).getContext('2d');
@@ -739,147 +777,72 @@ function renderCharts(g, w) {
       datasets: [{
         data: countsH,
         backgroundColor: getBlueGradientColors(bins),
-        borderRadius: 5
+        borderRadius: 5,
+        barPercentage: 0.9,
+        categoryPercentage: 1.0
       }]
     },
     options: {
       maintainAspectRatio: true,
       aspectRatio: 1,
       plugins: {
+        centerHistArea: { enabled: true },
         legend: { display: false },
+        datalabels: {
+          color: '#fff',
+          font: { size: s.histBarLabel, weight: 'normal' },
+          formatter: (v) => v > 0 ? v : '',  // no labels for zero-count bars
+          anchor: 'center',
+          align: 'center',
+          clamp: true
+        },
         tooltip: {
-          usePointStyle: true,
-          pointStyle: 'circle',
-          boxWidth: 8,
-          boxHeight: 8,
           callbacks: {
-            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
-            title: items => items[0]?.label || '',
-            label: ctx => `Vote Count - ${ctx.parsed.y}`
+            title: (items) => (items[0]?.label) || '',
+            label: (ctx) => `Vote Count - ${ctx.parsed.y}`
           }
         }
       },
       scales: {
-        x: { ticks: { color: '#ccc' }, grid: { display: false } },
-        y: { ticks: { color: '#ccc' }, grid: { display: false } }
+        x: {
+          offset: true,
+          ticks: {
+            color: '#ccc',
+            font: { size: s.axisTick },
+            autoSkip: false,
+            maxRotation: 60,  // diagonal for histograms
+            minRotation: 45,
+            callback: (value, index) => labelsH[index] || ''
+          },
+          title: {
+            display: true,
+            text: 'Predicted Total (kg)',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
+        },
+        y: {
+          min: yMin,
+          max: yMax,
+          beginAtZero: false,
+          ticks: {
+            color: '#ccc',
+            font: { size: s.axisTick }
+          },
+          title: {
+            display: true,
+            text: `Vote Count (Total = ${N})`,
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
+        }
       }
     }
   });
 
-  /* === Desktop-only persistent tooltip & coordinate fix === */
-  if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    const toggleTooltipLock = (chart, event) => {
-      const norm = normalizePointerPosition(event, chart);
-      const elements = chart.getElementsAtEventForMode(
-        { x: norm.x, y: norm.y },
-        'nearest',
-        { intersect: true },
-        false
-      );
-      if (elements.length) {
-        const el = elements[0];
-        if (chart._lockedTooltip &&
-            chart._lockedTooltip.datasetIndex === el.datasetIndex &&
-            chart._lockedTooltip.index === el.index) {
-          chart._lockedTooltip = null;
-          chart.tooltip.setActiveElements([], { x: 0, y: 0 });
-        } else {
-          chart._lockedTooltip = el;
-          chart.tooltip.setActiveElements([el], { x: norm.x, y: norm.y });
-        }
-        chart.update();
-      } else if (chart._lockedTooltip) {
-        chart._lockedTooltip = null;
-        chart.tooltip.setActiveElements([], { x: 0, y: 0 });
-        chart.update();
-      }
-    };
-
-    Object.values(charts).forEach(chart => {
-      if (!chart || !chart.canvas || chart._tooltipClickBound) return;
-      chart._tooltipClickBound = true;
-      chart.canvas.addEventListener('click', evt => toggleTooltipLock(chart, evt));
-    });
-  }
-}
-
-/* ========= DRILLDOWN POINTER FIX ========= */
-function renderDrillChart(g, athlete) {
-  const state = drillState[g];
-  if (!state || !state.athleteMap[athlete]) return;
-
-  const s = sizing();
-  const votes = state.athleteMap[athlete].votes || [];
-  const counts = Array(16).fill(0);
-  votes.forEach(v => { if (v >= 1 && v <= 16) counts[v - 1]++; });
-
-  if (state.chart) state.chart.destroy();
-  const ctx = state.canvas.getContext('2d');
-
-  state.chart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: Array.from({ length: 16 }, (_, i) => i + 1),
-      datasets: [{
-        data: counts,
-        backgroundColor: getRedGradientColors(),
-        borderRadius: 5
-      }]
-    },
-    options: {
-      maintainAspectRatio: true,
-      aspectRatio: 1,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          usePointStyle: true,
-          pointStyle: 'circle',
-          boxWidth: 8,
-          boxHeight: 8,
-          callbacks: {
-            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
-            title: items => items[0]?.label || '',
-            label: ctx => `Vote Count - ${ctx.parsed.y}`
-          }
-        }
-      },
-      scales: {
-        x: { ticks: { color: '#ccc' }, grid: { display: false } },
-        y: { ticks: { color: '#ccc' }, grid: { display: false } }
-      }
-    }
-  });
-
-  // desktop click-to-lock with coordinate correction
-  if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    const chart = state.chart;
-    chart.canvas.addEventListener('click', evt => {
-      const norm = normalizePointerPosition(evt, chart);
-      const elements = chart.getElementsAtEventForMode(
-        { x: norm.x, y: norm.y },
-        'nearest',
-        { intersect: true },
-        false
-      );
-      if (elements.length) {
-        const el = elements[0];
-        if (chart._lockedTooltip &&
-            chart._lockedTooltip.index === el.index &&
-            chart._lockedTooltip.datasetIndex === el.datasetIndex) {
-          chart._lockedTooltip = null;
-          chart.tooltip.setActiveElements([], { x: 0, y: 0 });
-        } else {
-          chart._lockedTooltip = el;
-          chart.tooltip.setActiveElements([el], { x: norm.x, y: norm.y });
-        }
-        chart.update();
-      } else if (chart._lockedTooltip) {
-        chart._lockedTooltip = null;
-        chart.tooltip.setActiveElements([], { x: 0, y: 0 });
-        chart.update();
-      }
-    });
-  }
+  charts[histId].$histCentered = false;
 }
 
 /* ========= DRILLDOWN HELPERS ========= */
@@ -908,34 +871,15 @@ function handleDonutClick(g, w, donutId, evt, elements, rows) {
   }
 }
 
-/* ========= FADE HELPERS ========= */
-function fadeIn(el) {
-  if (!el) return;
-  el.style.display = 'block';
-  el.style.opacity = 0;
-  el.style.transition = 'opacity 0.25s ease';
-  requestAnimationFrame(() => {
-    el.style.opacity = 1;
-  });
-}
-
-function fadeOut(el, cb) {
-  if (!el) return;
-  el.style.transition = 'opacity 0.25s ease';
-  el.style.opacity = 0;
-  setTimeout(() => {
-    el.style.display = 'none';
-    if (typeof cb === 'function') cb();
-  }, 250);
-}
-
 function buildDrillAthleteMap(rows) {
   const map = {};
   rows.forEach(r => {
     const name = r.Athlete;
     if (!name) return;
     const pts = parseInt(r.Points, 10);
-    if (!map[name]) map[name] = { votes: [] };
+    if (!map[name]) {
+      map[name] = { votes: [] };
+    }
     if (!isNaN(pts) && pts >= 1 && pts <= 16) {
       map[name].votes.push(pts);
     }
@@ -947,8 +891,7 @@ function openDrilldown(g, w, athlete, rows, opts = {}) {
   const state = drillState[g];
   if (!state) return;
 
-  const donutContainerId =
-    g === 'F' ? 'womenDonutContainer' : 'menDonutContainer';
+  const donutContainerId = g === 'F' ? 'womenDonutContainer' : 'menDonutContainer';
   const donutContainer = document.getElementById(donutContainerId);
 
   state.athleteMap = buildDrillAthleteMap(rows);
@@ -959,9 +902,10 @@ function openDrilldown(g, w, athlete, rows, opts = {}) {
   const names = Object.keys(state.athleteMap);
   state.select.innerHTML = '';
   names.forEach(name => {
+    const label = name; // use athlete string only (includes nominated total if present)
     const opt = document.createElement('option');
     opt.value = name;
-    opt.textContent = name;
+    opt.textContent = label;
     if (name === athlete) opt.selected = true;
     state.select.appendChild(opt);
   });
@@ -972,7 +916,8 @@ function openDrilldown(g, w, athlete, rows, opts = {}) {
   }
 
   if (!opts.skipFade) {
-    fadeOut(donutContainer, () => fadeIn(state.wrapper));
+    fadeOut(donutContainer);
+    fadeIn(state.wrapper);
   } else {
     donutContainer.style.display = 'none';
     state.wrapper.style.display = 'block';
@@ -993,11 +938,11 @@ function closeDrilldown(g) {
   const state = drillState[g];
   if (!state) return;
 
-  const donutContainerId =
-    g === 'F' ? 'womenDonutContainer' : 'menDonutContainer';
+  const donutContainerId = g === 'F' ? 'womenDonutContainer' : 'menDonutContainer';
   const donutContainer = document.getElementById(donutContainerId);
 
-  fadeOut(state.wrapper, () => fadeIn(donutContainer));
+  fadeOut(state.wrapper);
+  fadeIn(donutContainer);
 
   if (state.chart) {
     state.chart.destroy();
@@ -1010,7 +955,6 @@ function closeDrilldown(g) {
   state.totalVotesInClass = 0;
 }
 
-/* ========= RED GRADIENT COLORS ========= */
 function getRedGradientColors() {
   const colors = [];
   const start = { r: 252, g: 165, b: 165 }; // light red
@@ -1025,7 +969,6 @@ function getRedGradientColors() {
   return colors;
 }
 
-/* ========= DRILLDOWN BAR CHART ========= */
 function renderDrillChart(g, athlete) {
   const state = drillState[g];
   if (!state || !state.athleteMap[athlete]) return;
@@ -1063,20 +1006,15 @@ function renderDrillChart(g, athlete) {
         datalabels: {
           color: '#fff',
           font: { size: s.histBarLabel, weight: 'normal' },
-          formatter: (v) => v > 0 ? v : '',
+          formatter: (v) => v > 0 ? v : '', // no labels for zero-count
           anchor: 'center',
           align: 'center',
           clamp: true
         },
         tooltip: {
-          usePointStyle: true,
-          boxWidth: 8,
-          boxHeight: 8,
-          pointStyle: 'circle',
           callbacks: {
-            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
             title: (items) => (items[0]?.label) || '',
-            label: (ctx) => `Vote Count - ${ctx.parsed.y}`
+            label: (ctx2) => `Vote Count - ${ctx2.parsed.y}`
           }
         },
         title: { display: false }
@@ -1117,7 +1055,6 @@ function renderDrillChart(g, athlete) {
   });
 
   state.chart.$histCentered = false;
-  attachPersistentTooltip(state.chart);
 }
 
 /* ========= COLLAPSIBLE SECTIONS ========= */
@@ -1145,12 +1082,8 @@ function toggleSection(id) {
 
 function repositionBottomButtons() {
   const main = document.querySelector('main');
-  const leaderboard = document
-    .querySelector('a[href="leaderboard.html"]')
-    ?.closest('div');
-  const backToTop = document
-    .getElementById('bottomBackToTop')
-    ?.closest('div');
+  const leaderboard = document.querySelector('a[href="leaderboard.html"]')?.closest('div');
+  const backToTop = document.getElementById('bottomBackToTop')?.closest('div');
   if (!main || !leaderboard || !backToTop) return;
 
   const contentHeight = main.scrollHeight;
@@ -1166,12 +1099,10 @@ function repositionBottomButtons() {
 window.addEventListener('resize', () => {
   repositionBottomButtons();
   Object.values(charts).forEach(chart => {
-    if (
-      chart &&
-      chart.config.type === 'bar' &&
-      chart.canvas &&
-      /(Hist|Drill)$/i.test(chart.canvas.id)
-    ) {
+    if (chart &&
+        chart.config.type === 'bar' &&
+        chart.canvas &&
+        /(Hist|Drill)$/i.test(chart.canvas.id)) {
       chart.$histCentered = false;
       chart.update('none');
     }
