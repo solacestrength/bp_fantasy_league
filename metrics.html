@@ -636,246 +636,246 @@ function renderCharts(g, w) {
   if (!rows.length) return;
 
   /* --- DONUT --- */
-  const counts = {};
-  rows.forEach(r => { counts[r.Athlete] = (counts[r.Athlete] || 0) + 1; });
+const counts = {};
+rows.forEach(r => { counts[r.Athlete] = (counts[r.Athlete] || 0) + 1; });
 
-  const dLabels = Object.keys(counts);
-  const dData   = Object.values(counts);
-  const total   = dData.reduce((a, b) => a + b, 0);
+const dLabels = Object.keys(counts);
+const dData   = Object.values(counts);
+const total   = dData.reduce((a, b) => a + b, 0);
 
-  const colors = [
-    '#ef4444','#f97316','#facc15','#22c55e','#14b8a6',
-    '#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16',
-    '#d946ef','#fb7185'
-  ];
+const colors = [
+  '#ef4444','#f97316','#facc15','#22c55e','#14b8a6',
+  '#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16',
+  '#d946ef','#fb7185'
+];
 
-  if (charts[donutId]) charts[donutId].destroy();
-  const donutCtx = document.getElementById(donutId).getContext('2d');
+if (charts[donutId]) charts[donutId].destroy();
+const donutCtx = document.getElementById(donutId).getContext('2d');
 
-  charts[donutId] = new Chart(donutCtx, {
-    type: 'doughnut',
-    data: {
-      labels: dLabels,
-      datasets: [{
-        data: dData,
-        backgroundColor: colors,
-        borderColor: '#111',
-        borderWidth: 1
-      }]
+charts[donutId] = new Chart(donutCtx, {
+  type: 'doughnut',
+  data: {
+    labels: dLabels,
+    datasets: [{
+      data: dData,
+      backgroundColor: colors,
+      borderColor: '#111',
+      borderWidth: 1
+    }]
+  },
+  options: {
+    maintainAspectRatio: true,
+    aspectRatio: 1,
+    cutout: '57%',
+    radius: '85%',
+    rotation: 0, // ✅ Correct orientation (no 90° shift)
+    circumference: 360,
+    layout: { padding: 0 },
+    elements: {
+      arc: { borderAlign: 'center', offset: 0 }
     },
-    options: {
-      maintainAspectRatio: true,
-      aspectRatio: 1,
-      // 🔒 Uniform geometry for ALL donuts
-      cutout: '57%',
-      radius: '85%',
-      rotation: -90,
-      circumference: 360,
-      layout: { padding: 0 },
-      elements: {
-        arc: {
-          borderAlign: 'center',
-          offset: 0
-        }
+    plugins: {
+      title: {
+        display: true,
+        text: 'Share of Votes',
+        color: '#ccc',
+        font: { weight: 'bold', size: s.donutTitle },
+        padding: { bottom: 8 }
       },
-      plugins: {
-        title: {
-          display: true,
-          text: 'Share of Votes',
+      subtitle: {
+        display: true,
+        text: `Total Votes – ${total}`,
+        color: '#aaa',
+        font: { size: s.donutSubtitle },
+        padding: { top: 2, bottom: 18 }
+      },
+      legend: {
+        position: 'bottom',
+        onClick: null,
+        onHover: null,
+        labels: {
+          usePointStyle: true,
+          boxWidth: 10,
+          boxHeight: 10,
+          padding: 12,
           color: '#ccc',
-          font: { weight: 'bold', size: s.donutTitle },
-          padding: { bottom: 8 }
-        },
-        subtitle: {
-          display: true,
-          text: `Total Votes – ${total}`,
-          color: '#aaa',
-          font: { size: s.donutSubtitle },
-          padding: { top: 2, bottom: 18 }
-        },
-        legend: {
-          position: 'bottom',
-          onClick: null,
-          onHover: null,
-          labels: {
-            usePointStyle: true,
-            boxWidth: 10,
-            boxHeight: 10,
-            padding: 12,
-            color: '#ccc',
-            // Responsive, max 2-row legend
-            generateLabels: (chart) => {
-  const data = chart.data;
-  const meta = chart.getDatasetMeta(0);
-  if (!data || !data.labels || !data.labels.length || !meta) return [];
+          generateLabels: (chart) => {
+            const data = chart.data;
+            const meta = chart.getDatasetMeta(0);
+            if (!data || !data.labels || !data.labels.length || !meta) return [];
 
-  const ds = data.datasets[0] || {};
-  const bg = ds.backgroundColor || [];
-  const bc = ds.borderColor || '#111';
-  const bw = ds.borderWidth || 1;
+            const ds = data.datasets[0] || {};
+            const bg = ds.backgroundColor || [];
+            const bc = ds.borderColor || '#111';
+            const bw = ds.borderWidth || 1;
 
-  const items = data.labels.map((text, i) => {
-    const arc = meta.data[i];
-    const fillStyle = Array.isArray(bg) ? bg[i] : bg;
-    return {
-      text: String(text || ''),
-      fillStyle: fillStyle || '#999',
-      strokeStyle: bc,
-      lineWidth: bw,
-      hidden: !arc || isNaN(ds.data?.[i]),
-      index: i
-    };
-  });
+            const items = data.labels.map((text, i) => {
+              const arc = meta.data[i];
+              const fillStyle = Array.isArray(bg) ? bg[i] : bg;
+              return {
+                text: String(text || ''),
+                fillStyle: fillStyle || '#999',
+                strokeStyle: bc,
+                lineWidth: bw,
+                hidden: !arc || isNaN(ds.data?.[i]),
+                index: i
+              };
+            });
 
-  const ctx = chart.ctx;
-  const chartWidth = chart.width;
-  const isDesktop = window.matchMedia('(min-width:1024px)').matches;
-  let fontSize = isDesktop ? 14 : 11;
-  const minFont = isDesktop ? 9 : 8;
+            const ctx = chart.ctx;
+            const chartWidth = chart.width;
+            const isDesktop = window.matchMedia('(min-width:1024px)').matches;
+            let fontSize = isDesktop ? 14 : 11;
+            const minFont = isDesktop ? 9 : 8;
 
-  // ✳️ Determine target rows based on label count
-  const labelCount = items.length;
-  let targetRows = 1;
-  if (labelCount >= 3 && labelCount <= 4) targetRows = 2;
-  else if (labelCount >= 5 && labelCount <= 6) targetRows = 3;
-  else if (labelCount > 6) targetRows = 4;
+            const labelCount = items.length;
+            let targetRows = 1;
+            if (labelCount >= 3 && labelCount <= 4) targetRows = 2;
+            else if (labelCount >= 5 && labelCount <= 6) targetRows = 3;
+            else if (labelCount > 6) targetRows = 4;
 
-  // ✳️ Measure total width of labels
-  ctx.save();
-  ctx.font = `500 ${fontSize}px Inter, system-ui, sans-serif`;
-  const totalWidth = items.reduce((sum, item) => sum + ctx.measureText(item.text).width + 42, 0);
-  ctx.restore();
+            ctx.save();
+            ctx.font = `500 ${fontSize}px Inter, system-ui, sans-serif`;
+            const totalWidth = items.reduce((sum, item) => sum + ctx.measureText(item.text).width + 42, 0);
+            ctx.restore();
 
-  const maxWidth = chartWidth * 0.9;
-  const rowsNeeded = Math.max(1, Math.ceil(totalWidth / maxWidth));
+            const maxWidth = chartWidth * 0.9;
+            const rowsNeeded = Math.max(1, Math.ceil(totalWidth / maxWidth));
 
-  // ✳️ Adjust font scaling if labels overflow target rows
-  if (rowsNeeded > targetRows) {
-    const scale = (maxWidth * targetRows) / totalWidth;
-    fontSize = Math.max(minFont, Math.floor(fontSize * scale));
-  }
-
-  // ✳️ Apply font
-  chart.legend.options.labels.font = { size: fontSize, weight: '500' };
-
-  return items;
-},
-            font: (ctx) => {
-              const f = ctx.chart.legend?.options?.labels?.font;
-              return f || { size: 12, weight: '500' };
+            if (rowsNeeded > targetRows) {
+              const scale = (maxWidth * targetRows) / totalWidth;
+              fontSize = Math.max(minFont, Math.floor(fontSize * scale));
             }
-          }
-        },
-        tooltip: {
-  usePointStyle: true,
-  boxWidth: 8,
-  boxHeight: 8,
-  pointStyle: 'circle', // 👈 makes the shape round
-  callbacks: {
-    labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
-    label: (ctx) => {
-      const dataset = ctx.chart.data.datasets[0];
-      const total = dataset.data.reduce((a, b) => a + b, 0);
-      const value = ctx.parsed;
-      const percentage = ((value / total) * 100).toFixed(1);
-      const voteWord = value === 1 ? 'Vote' : 'Votes';
-      return `${value} ${voteWord} – ${percentage}%`;
-    }
-  }
-},
-        datalabels: {
-          color: '#fff',
-          anchor: 'center',
-          align: 'center',
-          clamp: true,
-          clip: true,
-          offset: 0,
-          display: (ctx) => {
-            const chart = ctx.chart;
-            const ds = chart.data.datasets[ctx.datasetIndex];
-            if (!ds) return false;
-            const total = ds.data.reduce((a, b) => a + b, 0) || 1;
-            const value = ds.data[ctx.dataIndex];
-            const p = (value / total) * 100;
-            return p >= 3.5;
-          },
-          formatter: (value, ctx) => {
-            const chart = ctx.chart;
-            const ds = chart.data.datasets[ctx.datasetIndex];
-            const total = ds.data.reduce((a, b) => a + b, 0) || 1;
-            const p = (value / total) * 100;
-            return `${p.toFixed(1)}%`;
+
+            chart.legend.options.labels.font = { size: fontSize, weight: '500' };
+            return items;
           },
           font: (ctx) => {
-            const chart = ctx.chart;
-            const canvas = chart.canvas;
-            const ds = chart.data.datasets[ctx.datasetIndex];
-            if (!ds) return { weight: 'bold', size: 10 };
-
-            const total = ds.data.reduce((a, b) => a + b, 0) || 1;
-            const value = ds.data[ctx.dataIndex];
-            const p = (value / total) * 100;
-            if (p < 3.5) return { weight: 'bold', size: 0 };
-
-            const base = s.donutPercent;
-            const meta = chart.getDatasetMeta(ctx.datasetIndex);
-            const arc = meta && meta.data && meta.data[ctx.dataIndex];
-            if (!arc) return { weight: 'bold', size: base };
-
-            const midRadius   = (arc.innerRadius + arc.outerRadius) / 2;
-            const arcLength   = Math.abs(arc.circumference) * midRadius;
-            const radialLimit = (arc.outerRadius - arc.innerRadius) * 0.82;
-
-            const label = `${p.toFixed(1)}%`;
-            const ctx2d = chart.ctx;
-            const fontFamily = getComputedStyle(canvas).fontFamily || "'Inter', system-ui, sans-serif";
-            ctx2d.save();
-            ctx2d.font = `bold ${base}px ${fontFamily}`;
-            const textWidth = ctx2d.measureText(label).width;
-            ctx2d.restore();
-
-            let scale = 1;
-            if (textWidth > 0 && arcLength > 0) {
-              const alongArc = arcLength / (textWidth * 1.18);
-              const radial   = radialLimit / (base * 1.1);
-              scale = Math.min(alongArc, radial, 1);
-            }
-            if (!isFinite(scale) || scale <= 0) scale = 1;
-
-            let size = base * scale;
-            if (p < 10) size *= 0.7 + 0.3 * (p / 10);
-            else if (p > 75) size *= 1.05;
-
-            const pixelRatio = window.devicePixelRatio || 1;
-            const androidAdjust = /Android/i.test(navigator.userAgent) ? 0.78 : 1;
-            size *= androidAdjust;
-
-            const maxPx = 24;
-            const minPx = 9;
-            if (size > maxPx) size = maxPx;
-            if (size < minPx) size = minPx;
-            if (size / pixelRatio < 10) size *= 0.9;
-
-            return { weight: 'bold', size };
+            const f = ctx.chart.legend?.options?.labels?.font;
+            return f || { size: 12, weight: '500' };
           }
         }
       },
-      onClick: (evt, elements) =>
-        handleDonutClick(g, w, donutId, evt, elements, rows)
-    }
-  });
+      tooltip: {
+        usePointStyle: true,
+        boxWidth: 8,
+        boxHeight: 8,
+        pointStyle: 'circle',
+        callbacks: {
+          labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
+          label: (ctx) => {
+            const dataset = ctx.chart.data.datasets[0];
+            const total = dataset.data.reduce((a, b) => a + b, 0);
+            const value = ctx.parsed;
+            const percentage = ((value / total) * 100).toFixed(1);
+            const voteWord = value === 1 ? 'Vote' : 'Votes';
+            return `${value} ${voteWord} – ${percentage}%`;
+          }
+        }
+      },
+      datalabels: {
+        color: '#fff',
+        anchor: 'center',
+        align: 'center',
+        clamp: true,
+        clip: true,
+        offset: 0,
+        display: (ctx) => {
+          const chart = ctx.chart;
+          const ds = chart.data.datasets[ctx.datasetIndex];
+          if (!ds) return false;
+          const total = ds.data.reduce((a, b) => a + b, 0) || 1;
+          const value = ds.data[ctx.dataIndex];
+          const p = (value / total) * 100;
+          return p >= 3.5;
+        },
+        formatter: (value, ctx) => {
+          const chart = ctx.chart;
+          const ds = chart.data.datasets[ctx.datasetIndex];
+          const total = ds.data.reduce((a, b) => a + b, 0) || 1;
+          const p = (value / total) * 100;
+          return `${p.toFixed(1)}%`;
+        },
+        font: (ctx) => {
+          const chart = ctx.chart;
+          const canvas = chart.canvas;
+          const ds = chart.data.datasets[ctx.datasetIndex];
+          if (!ds) return { weight: 'bold', size: 10 };
 
-  const donutChart = charts[donutId];
-  if (donutChart) {
-    donutChart.options.radius = '85%';
-    donutChart.options.cutout = '57%';
-    donutChart.options.rotation = -90;
-    donutChart.options.circumference = 360;
-    donutChart.resize();
-    donutChart.update('none');
+          const total = ds.data.reduce((a, b) => a + b, 0) || 1;
+          const value = ds.data[ctx.dataIndex];
+          const p = (value / total) * 100;
+          if (p < 3.5) return { weight: 'bold', size: 0 };
+
+          const base = s.donutPercent;
+          const meta = chart.getDatasetMeta(ctx.datasetIndex);
+          const arc = meta && meta.data && meta.data[ctx.dataIndex];
+          if (!arc) return { weight: 'bold', size: base };
+
+          const midRadius   = (arc.innerRadius + arc.outerRadius) / 2;
+          const arcLength   = Math.abs(arc.circumference) * midRadius;
+          const radialLimit = (arc.outerRadius - arc.innerRadius) * 0.82;
+
+          const label = `${p.toFixed(1)}%`;
+          const ctx2d = chart.ctx;
+          const fontFamily = getComputedStyle(canvas).fontFamily || "'Inter', system-ui, sans-serif";
+          ctx2d.save();
+          ctx2d.font = `bold ${base}px ${fontFamily}`;
+          const textWidth = ctx2d.measureText(label).width;
+          ctx2d.restore();
+
+          let scale = 1;
+          if (textWidth > 0 && arcLength > 0) {
+            const alongArc = arcLength / (textWidth * 1.18);
+            const radial   = radialLimit / (base * 1.1);
+            scale = Math.min(alongArc, radial, 1);
+          }
+          if (!isFinite(scale) || scale <= 0) scale = 1;
+
+          let size = base * scale;
+          if (p < 10) size *= 0.7 + 0.3 * (p / 10);
+          else if (p > 75) size *= 1.05;
+
+          const pixelRatio = window.devicePixelRatio || 1;
+          const androidAdjust = /Android/i.test(navigator.userAgent) ? 0.78 : 1;
+          size *= androidAdjust;
+
+          const maxPx = 24;
+          const minPx = 9;
+          if (size > maxPx) size = maxPx;
+          if (size < minPx) size = minPx;
+          if (size / pixelRatio < 10) size *= 0.9;
+
+          return { weight: 'bold', size };
+        }
+      }
+    },
+    onClick: (evt, elements) =>
+      handleDonutClick(g, w, donutId, evt, elements, rows)
+  }
+});
+
+// ✅ Legend color and font reset safeguard
+const donutChart = charts[donutId];
+if (donutChart) {
+  donutChart.options.radius = '85%';
+  donutChart.options.cutout = '57%';
+  donutChart.options.rotation = 0;
+  donutChart.options.circumference = 360;
+
+  if (donutChart.legend && donutChart.legend.options?.labels) {
+    donutChart.legend.options.labels.color = '#ccc';
+    donutChart.legend.options.labels.font = {
+      size: s.donutLegend,
+      weight: '500'
+    };
   }
 
-  /* --- HISTOGRAM --- */
+  donutChart.resize();
+  donutChart.update('none');
+}
+
+/* --- HISTOGRAM --- */
   const vals = rows
     .map(r => parseFloat(r.PredictedTotal))
     .filter(v => !isNaN(v) && v > 0);
