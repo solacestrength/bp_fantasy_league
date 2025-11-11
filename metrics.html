@@ -61,15 +61,19 @@
     position: relative;
     display: block;
     width: 100%;
+  }
+
+  .chart-container.fade {
     transition: opacity 0.25s ease;
   }
 
-  canvas {
-    max-width: 100%;
-    height: auto !important;
+  .chart-container canvas {
     display: block;
-    margin-left: auto;
-    margin-right: auto;
+    margin: 0 auto;
+    width: 100% !important;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    max-width: 600px;
   }
 
   @media (min-width: 1024px) {
@@ -110,14 +114,6 @@
       transform: none !important;
       transform-origin: top center;
     }
-  }
-
-  #womenDonut,
-  #menDonut {
-    width: 100% !important;
-    aspect-ratio: 1 / 1 !important;
-    max-height: none !important;
-    object-fit: contain;
   }
 
   /* === COLLAPSIBLE SECTIONS === */
@@ -207,7 +203,7 @@
 
   .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
   .animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
-  </style>
+</style>
 </head>
 
 <body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
@@ -618,7 +614,7 @@ function renderCharts(g, w) {
   const rows = allData.filter(r => r.Gender === g && r.Class === w);
   if (!rows.length) return;
 
-    /* --- DONUT --- */
+  /* --- DONUT --- */
   const counts = {};
   rows.forEach(r => { counts[r.Athlete] = (counts[r.Athlete] || 0) + 1; });
 
@@ -651,140 +647,131 @@ function renderCharts(g, w) {
       aspectRatio: 1,
       cutout: '57%',
       plugins: {
-  title: {
-    display: true,
-    text: 'Share of Votes',
-    color: '#ccc',
-    font: { weight: 'bold', size: s.donutTitle },
-    padding: { bottom: 8 }
-  },
-  subtitle: {
-    display: true,
-    text: `Total Votes – ${total}`,
-    color: '#aaa',
-    font: { size: s.donutSubtitle },
-    padding: { top: 2, bottom: 18 }
-  },
-  legend: {
-    position: 'bottom',
-    onClick: null,   // disable legend toggling / strike-through
-    onHover: null,
-    labels: {
-      color: '#ccc',
-      boxWidth: 10,
-      boxHeight: 10,
-      font: { size: s.donutLegend }
-    }
-  },
-  tooltip: {
-    callbacks: {
-      label: (ctx) => {
-        const dataset = ctx.chart.data.datasets[0];
-        const total = dataset.data.reduce((a, b) => a + b, 0);
-        const value = ctx.parsed;
-        const percentage = ((value / total) * 100).toFixed(1);
-        const voteWord = value === 1 ? 'Vote' : 'Votes';
-        return `${value} ${voteWord} – ${percentage}%`;
-      }
-    }
-  },
-  datalabels: {
-    color: '#fff',
-    anchor: 'center',
-    align: 'center',
-    clamp: true,
-    clip: true,
-    offset: 0,
+        title: {
+          display: true,
+          text: 'Share of Votes',
+          color: '#ccc',
+          font: { weight: 'bold', size: s.donutTitle },
+          padding: { bottom: 8 }
+        },
+        subtitle: {
+          display: true,
+          text: `Total Votes – ${total}`,
+          color: '#aaa',
+          font: { size: s.donutSubtitle },
+          padding: { top: 2, bottom: 18 }
+        },
+        legend: {
+          position: 'bottom',
+          onClick: null,   // 🔒 disable legend toggling / strike-through
+          onHover: null,
+          labels: {
+            color: '#ccc',
+            boxWidth: 10,
+            boxHeight: 10,
+            font: { size: s.donutLegend }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const dataset = ctx.chart.data.datasets[0];
+              const total = dataset.data.reduce((a, b) => a + b, 0);
+              const value = ctx.parsed;
+              const percentage = ((value / total) * 100).toFixed(1);
+              const voteWord = value === 1 ? 'Vote' : 'Votes';
+              return `${value} ${voteWord} – ${percentage}%`;
+            }
+          }
+        },
+        datalabels: {
+          color: '#fff',
+          anchor: 'center',
+          align: 'center',
+          clamp: true,
+          clip: true,
+          offset: 0,
+          display: (ctx) => {
+            const chart = ctx.chart;
+            const ds = chart.data.datasets[ctx.datasetIndex];
+            if (!ds) return false;
+            const total = ds.data.reduce((a, b) => a + b, 0) || 1;
+            const value = ds.data[ctx.dataIndex];
+            const p = (value / total) * 100;
+            return p >= 3.5;
+          },
+          formatter: (value, ctx) => {
+            const chart = ctx.chart;
+            const ds = chart.data.datasets[ctx.datasetIndex];
+            const total = ds.data.reduce((a, b) => a + b, 0) || 1;
+            const p = (value / total) * 100;
+            return `${p.toFixed(1)}%`;
+          },
+          font: (ctx) => {
+            const chart = ctx.chart;
+            const canvas = chart.canvas;
+            const ds = chart.data.datasets[ctx.datasetIndex];
+            if (!ds) return { weight: 'bold', size: 10 };
 
-    display: (ctx) => {
-      const chart = ctx.chart;
-      const ds = chart.data.datasets[ctx.datasetIndex];
-      if (!ds) return false;
-      const total = ds.data.reduce((a, b) => a + b, 0) || 1;
-      const value = ds.data[ctx.dataIndex];
-      const p = (value / total) * 100;
-      return p >= 3.5;
-    },
+            const total = ds.data.reduce((a, b) => a + b, 0) || 1;
+            const value = ds.data[ctx.dataIndex];
+            const p = (value / total) * 100;
+            if (p < 3.5) return { weight: 'bold', size: 0 };
 
-    formatter: (value, ctx) => {
-      const chart = ctx.chart;
-      const ds = chart.data.datasets[ctx.datasetIndex];
-      const total = ds.data.reduce((a, b) => a + b, 0) || 1;
-      const p = (value / total) * 100;
-      return `${p.toFixed(1)}%`;
-    },
+            const s = sizing();
+            const base = s.donutPercent;
 
-    font: (ctx) => {
-      const chart = ctx.chart;
-      const canvas = chart.canvas;
-      const ds = chart.data.datasets[ctx.datasetIndex];
-      if (!ds) return { weight: 'bold', size: 10 };
+            // === Geometry-aware scaling ===
+            const meta = chart.getDatasetMeta(ctx.datasetIndex);
+            const arc = meta && meta.data && meta.data[ctx.dataIndex];
+            if (!arc) return { weight: 'bold', size: base };
 
-      const total = ds.data.reduce((a, b) => a + b, 0) || 1;
-      const value = ds.data[ctx.dataIndex];
-      const p = (value / total) * 100;
-      if (p < 3.5) return { weight: 'bold', size: 0 };
+            const midRadius   = (arc.innerRadius + arc.outerRadius) / 2;
+            const arcLength   = Math.abs(arc.circumference) * midRadius;
+            const radialLimit = (arc.outerRadius - arc.innerRadius) * 0.82;
 
-      const s = sizing();
-      const base = s.donutPercent;
+            const label = `${p.toFixed(1)}%`;
+            const ctx2d = chart.ctx;
+            const fontFamily = getComputedStyle(canvas).fontFamily || "'Inter', sans-serif";
+            ctx2d.save();
+            ctx2d.font = `bold ${base}px ${fontFamily}`;
+            const textWidth = ctx2d.measureText(label).width;
+            ctx2d.restore();
 
-      // Geometry-aware sizing
-      const meta = chart.getDatasetMeta(ctx.datasetIndex);
-      const arc = meta && meta.data && meta.data[ctx.dataIndex];
-      if (!arc) return { weight: 'bold', size: base };
+            let scale = 1;
+            if (textWidth > 0 && arcLength > 0) {
+              const alongArc = arcLength / (textWidth * 1.18);
+              const radial   = radialLimit / (base * 1.1);
+              scale = Math.min(alongArc, radial, 1);
+            }
+            if (!isFinite(scale) || scale <= 0) scale = 1;
 
-      const midRadius   = (arc.innerRadius + arc.outerRadius) / 2;
-      const arcLength   = Math.abs(arc.circumference) * midRadius;
-      const radialLimit = (arc.outerRadius - arc.innerRadius) * 0.82;
+            let size = base * scale;
+            if (p < 10) size *= 0.8 - (0.25 * (10 - p) / 10);
+            else if (p > 75) size *= 1 + 0.25 * ((p - 75) / 25);
 
-      const label = `${p.toFixed(1)}%`;
-      const ctx2d = chart.ctx;
-      const fontFamily =
-        getComputedStyle(canvas).fontFamily || "'Inter', system-ui, sans-serif";
+            const pixelRatio = window.devicePixelRatio || 1;
+            const androidAdjust = /Android/i.test(navigator.userAgent) ? 0.78 : 1;
+            size *= androidAdjust;
 
-      ctx2d.save();
-      ctx2d.font = `bold ${base}px ${fontFamily}`;
-      const textWidth = ctx2d.measureText(label).width;
-      ctx2d.restore();
+            const maxPx = 26;
+            const minPx = 9;
+            if (size > maxPx) size = maxPx;
+            if (size < minPx) size = minPx;
+            if (size / pixelRatio < 10) size *= 0.9;
 
-      let scale = 1;
-      if (textWidth > 0 && arcLength > 0) {
-        const alongArc = arcLength / (textWidth * 1.18);
-        const radial   = radialLimit / (base * 1.1);
-        scale = Math.min(alongArc, radial, 1);
-      }
-      if (!isFinite(scale) || scale <= 0) scale = 1;
-
-      let size = base * scale;
-
-      // Adjust scaling curve by vote share
-      if (p < 10) {
-        size *= 0.8 - (0.25 * (10 - p) / 10); // shrink tiny slices
-      } else if (p > 75) {
-        size *= 1 + 0.25 * ((p - 75) / 25);   // boost dominant slices
-      }
-
-      // Android correction
-      const pixelRatio = window.devicePixelRatio || 1;
-      const androidAdjust = /Android/i.test(navigator.userAgent) ? 0.78 : 1;
-      size *= androidAdjust;
-
-      // Clamp
-      const maxPx = 26;
-      const minPx = 9;
-      if (size > maxPx) size = maxPx;
-      if (size < minPx) size = minPx;
-      if (size / pixelRatio < 10) size *= 0.9;
-
-      return { weight: 'bold', size };
-    }
-  }
-},
-// keep your existing donut double-tap / drilldown handler:
-onClick: (evt, elements) =>
-  handleDonutClick(g, w, donutId, evt, elements, rows)
+            return { weight: 'bold', size };
+          }
+        }
+      },
+      onClick: (evt, elements) =>
+        handleDonutClick(g, w, donutId, evt, elements, rows)
     }
   });
+
+  // 🔧 Ensure perfect pointer alignment
+  charts[donutId].resize();
+}
 
   /* --- HISTOGRAM --- */
   const vals = rows
