@@ -690,81 +690,91 @@ function renderCharts(g, w) {
 },
         datalabels: {
   color: '#fff',
-  font: (ctx) => {
-    const s = sizing();
-    const dataset = ctx.chart.data.datasets[0];
-    const value = dataset.data[ctx.dataIndex];
-    const total = dataset.data.reduce((a, b) => a + b, 0) || 1;
-    const p = (value / total) * 100;
-    const angle = (p / 100) * 2 * Math.PI;
+  anchor: 'center',
+  align: 'center',
+  clamp: true,
+  clip: true,
+  offset: 0,
 
-    // Find slice mid-angle in radians
-    const data = dataset.data;
-    const startAngle = data
-      .slice(0, ctx.dataIndex)
-      .reduce((sum, v) => sum + (v / total) * 2 * Math.PI, 0);
-    const midAngle = startAngle + angle / 2;
-
-    // Base size (percentage scaling)
-    const base = s.donutPercent;
-    let size = base * (0.6 + Math.min(p / 40, 1.0));
-
-    // Narrow-slice correction
-    const widthFactor = Math.sin(angle / 2);
-    const narrownessAdjust = Math.max(0.6, Math.min(1.0, widthFactor * 3));
-    size *= narrownessAdjust;
-
-    // Bottom orientation compensation
-    const correction = midAngle > Math.PI / 2 && midAngle < (3 * Math.PI) / 2 ? 1.25 : 1.0;
-    size *= correction;
-
-    // Single-slice (dominant) correction
-    if (p > 90) size *= 1.25;
-
-    // Clamp final value
-    const finalSize = Math.min(Math.max(size, 9), 28);
-    return { weight: 'bold', size: finalSize };
-  },
-  formatter: (v, ctx) => {
-    const dataset = ctx.chart.data.datasets[0];
-    const total = dataset.data.reduce((a, b) => a + b, 0) || 1;
-    const p = (v / total) * 100;
-    return p >= 3.5 ? `${p.toFixed(1)}%` : '';
-  },
   display: (ctx) => {
-    const dataset = ctx.chart.data.datasets[0];
-    const value = dataset.data[ctx.dataIndex];
-    const total = dataset.data.reduce((a, b) => a + b, 0) || 1;
+    const chart = ctx.chart;
+    const ds = chart.data.datasets[ctx.datasetIndex];
+    if (!ds) return false;
+    const total = ds.data.reduce((a, b) => a + b, 0) || 1;
+    const value = ds.data[ctx.dataIndex];
     const p = (value / total) * 100;
     return p >= 3.5;
   },
 
-  // ✨ Smart inward positioning
-  anchor: 'center',
-  align: 'center',
-  offset: (ctx) => {
-    const dataset = ctx.chart.data.datasets[0];
-    const value = dataset.data[ctx.dataIndex];
-    const total = dataset.data.reduce((a, b) => a + b, 0) || 1;
+  formatter: (value, ctx) => {
+    const chart = ctx.chart;
+    const ds = chart.data.datasets[ctx.datasetIndex];
+    const total = ds.data.reduce((a, b) => a + b, 0) || 1;
     const p = (value / total) * 100;
-
-    // small inward offset for small slices or bottom-heavy positions
-    const angle = (p / 100) * 2 * Math.PI;
-    const data = dataset.data;
-    const startAngle = data
-      .slice(0, ctx.dataIndex)
-      .reduce((sum, v) => sum + (v / total) * 2 * Math.PI, 0);
-    const midAngle = startAngle + angle / 2;
-
-    const isBottomHalf = midAngle > Math.PI / 2 && midAngle < (3 * Math.PI) / 2;
-    const inward = isBottomHalf ? 6 : 3; // push inward more at bottom
-    return p < 15 ? inward + 4 : inward; // push small slices extra
+    return `${p.toFixed(1)}%`;
   },
 
-  clamp: true,
-  clip: true
-}
-      },
+  font: (ctx) => {
+    const chart = ctx.chart;
+    const canvas = chart.canvas;
+    const ds = chart.data.datasets[ctx.datasetIndex];
+    if (!ds) return { weight: 'bold', size: 10 };
+
+    const total = ds.data.reduce((a, b) => a + b, 0) || 1;
+    const value = ds.data[ctx.dataIndex];
+    const p = (value / total) * 100;
+    if (p < 3.5) return { weight: 'bold', size: 0 };
+
+    const s = sizing();
+    const base = s.donutPercent;
+    const maxPx = 24;
+    const minPx = 9;
+
+    // === Geometry-aware calculation ===
+    const meta = chart.getDatasetMeta(ctx.datasetIndex);
+    const arc = meta && meta.data && meta.data[ctx.dataIndex];
+    if (!arc) return { weight: 'bold', size: base };
+
+    const midRadius   = (arc.innerRadius + arc.outerRadius) / 2;
+    const arcLength   = Math.abs(arc.circumference) * midRadius;
+    const radialLimit = (arc.outerRadius - arc.innerRadius) * 0.82;
+
+    // Measure text width at base size
+    const label = `${p.toFixed(1)}%`;
+    const ctx2d = chart.ctx;
+    const fontFamily =
+      getComputedStyle(canvas).fontFamily || "'Inter', system-ui, sans-serif";
+
+    ctx2d.save();
+    ctx2d.font = `bold ${base}px ${fontFamily}`;
+    const textWidth = ctx2d.measureText(label).width;
+    ctx2d.restore();
+
+    let scale = 1;
+    if (textWidth > 0 && arcLength > 0) {
+      const alongArc = arcLength / (textWidth * 1.18);
+      const radial   = radialLimit / (base * 1.1);
+      scale = Math.min(alongArc, radial, 1);
+    }
+    if (!isFinite(scale) || scale <= 0) scale = 1;
+
+    let size = base * scale;
+
+    // === Android device correction ===
+    const pixelRatio = window.devicePixelRatio || 1;
+    const androidAdjust = /Android/i.test(navigator.userAgent) ? 0.78 : 1;
+    size *= androidAdjust;
+
+    // Clamp and normalize
+    if (size > maxPx) size = maxPx;
+    if (size < minPx) size = minPx;
+    if (size / pixelRatio < 10) size *= 0.9;
+
+    return { weight: 'bold', size };
+  }
+}      
+      
+    },
       // keep your existing donut double-tap / drilldown handler, if used:
       onClick: (evt, elements) =>
         handleDonutClick(g, w, donutId, evt, elements, rows)
