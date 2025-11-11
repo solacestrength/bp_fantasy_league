@@ -666,8 +666,18 @@ function renderCharts(g, w) {
     options: {
       maintainAspectRatio: true,
       aspectRatio: 1,
+      // 🔒 Uniform geometry for ALL donuts
       cutout: '57%',
       radius: '85%',
+      rotation: -90,
+      circumference: 360,
+      layout: { padding: 0 },
+      elements: {
+        arc: {
+          borderAlign: 'center',
+          offset: 0
+        }
+      },
       plugins: {
         title: {
           display: true,
@@ -684,54 +694,74 @@ function renderCharts(g, w) {
           padding: { top: 2, bottom: 18 }
         },
         legend: {
-  position: 'bottom',
-  onClick: null,      // keep legend non-interactive
-  onHover: null,
-  labels: {
-    usePointStyle: true,
-    padding: 14,
-    boxWidth: 10,
-    boxHeight: 10,
-    color: '#ccc',
+          position: 'bottom',
+          onClick: null,
+          onHover: null,
+          labels: {
+            usePointStyle: true,
+            boxWidth: 10,
+            boxHeight: 10,
+            padding: 12,
+            color: '#ccc',
+            // Responsive, max 2-row legend
+            generateLabels: (chart) => {
+              const data = chart.data;
+              const meta = chart.getDatasetMeta(0);
+              if (!data || !data.labels || !data.labels.length || !meta) return [];
 
-    // Dynamic font sizing to keep legend to max 2 rows
-    font: (ctx) => {
-      const chart = ctx.chart;
-      const labels = chart.data?.labels || [];
-      if (!labels.length) {
-        return { size: 12, weight: '500' };
-      }
+              const ds = data.datasets[0] || {};
+              const bg = ds.backgroundColor || [];
+              const bc = ds.borderColor || '#111';
+              const bw = ds.borderWidth || 1;
 
-      const isDesktop = window.matchMedia('(min-width:1024px)').matches;
-      let baseSize = isDesktop ? 14 : 11;
-      const minSize = isDesktop ? 11 : 9;
+              const items = data.labels.map((text, i) => {
+                const arc = meta.data[i];
+                const fillStyle = Array.isArray(bg) ? bg[i] : bg;
+                return {
+                  text: String(text || ''),
+                  fillStyle: fillStyle || '#999',
+                  strokeStyle: bc,
+                  lineWidth: bw,
+                  hidden: !arc || isNaN(ds.data?.[i]),
+                  index: i
+                };
+              });
 
-      const chartWidth = chart.width || chart.canvas?.clientWidth || 600;
-      const maxWidth = chartWidth * 0.9;
+              const ctx = chart.ctx;
+              const chartWidth = chart.width;
+              const isDesktop = window.matchMedia('(min-width:1024px)').matches;
+              let fontSize = isDesktop ? 14 : 11;
+              const minFont = isDesktop ? 10 : 9;
 
-      const measureCtx = chart.ctx;
-      measureCtx.save();
-      measureCtx.font = `500 ${baseSize}px Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif`;
+              ctx.save();
+              ctx.font = `500 ${fontSize}px Inter, system-ui, sans-serif`;
+              const totalWidth = items.reduce((sum, item) => {
+                return sum + ctx.measureText(item.text).width + 42;
+              }, 0);
+              ctx.restore();
 
-      const totalWidth = labels.reduce((sum, text) => {
-        const w = measureCtx.measureText(text).width + 42; // marker + padding
-        return sum + w;
-      }, 0);
+              const maxWidth = chartWidth * 0.9;
+              const rowsNeeded = Math.max(1, Math.ceil(totalWidth / maxWidth));
+              const rows = Math.min(2, rowsNeeded);
 
-      measureCtx.restore();
+              if (rowsNeeded > rows) {
+                const scale = (maxWidth * rows) / totalWidth;
+                fontSize = Math.max(minFont, Math.floor(fontSize * scale));
+              }
 
-      // target max 2 rows
-      const rows = Math.min(2, Math.ceil(totalWidth / maxWidth));
+              chart.legend.options.labels.font = {
+                size: fontSize,
+                weight: '500'
+              };
 
-      if (rows > 0 && totalWidth > maxWidth * rows) {
-        const scale = (maxWidth * rows) / totalWidth;
-        baseSize = Math.max(minSize, Math.floor(baseSize * scale));
-      }
-
-      return { size: baseSize, weight: '500' };
-    }
-  }
-},
+              return items;
+            },
+            font: (ctx) => {
+              const f = ctx.chart.legend?.options?.labels?.font;
+              return f || { size: 12, weight: '500' };
+            }
+          }
+        },
         tooltip: {
           callbacks: {
             label: (ctx) => {
@@ -778,10 +808,7 @@ function renderCharts(g, w) {
             const p = (value / total) * 100;
             if (p < 3.5) return { weight: 'bold', size: 0 };
 
-            const s = sizing();
             const base = s.donutPercent;
-
-            // === Geometry-aware scaling ===
             const meta = chart.getDatasetMeta(ctx.datasetIndex);
             const arc = meta && meta.data && meta.data[ctx.dataIndex];
             if (!arc) return { weight: 'bold', size: base };
@@ -792,7 +819,7 @@ function renderCharts(g, w) {
 
             const label = `${p.toFixed(1)}%`;
             const ctx2d = chart.ctx;
-            const fontFamily = getComputedStyle(canvas).fontFamily || "'Inter', sans-serif";
+            const fontFamily = getComputedStyle(canvas).fontFamily || "'Inter', system-ui, sans-serif";
             ctx2d.save();
             ctx2d.font = `bold ${base}px ${fontFamily}`;
             const textWidth = ctx2d.measureText(label).width;
@@ -807,14 +834,14 @@ function renderCharts(g, w) {
             if (!isFinite(scale) || scale <= 0) scale = 1;
 
             let size = base * scale;
-            if (p < 10) size *= 0.8 - (0.25 * (10 - p) / 10);
-            else if (p > 75) size *= 1 + 0.25 * ((p - 75) / 25);
+            if (p < 10) size *= 0.7 + 0.3 * (p / 10);
+            else if (p > 75) size *= 1.05;
 
             const pixelRatio = window.devicePixelRatio || 1;
             const androidAdjust = /Android/i.test(navigator.userAgent) ? 0.78 : 1;
             size *= androidAdjust;
 
-            const maxPx = 26;
+            const maxPx = 24;
             const minPx = 9;
             if (size > maxPx) size = maxPx;
             if (size < minPx) size = minPx;
@@ -829,8 +856,23 @@ function renderCharts(g, w) {
     }
   });
 
-  // 🔧 Ensure perfect pointer alignment
-  charts[donutId].resize();
+  // 🔒 Optional: enforce global uniform geometry immediately after creation
+  Chart.overrides.doughnut = {
+    radius: '85%',
+    cutout: '57%',
+    rotation: -90,
+    circumference: 360
+  };
+
+  const donutChart = charts[donutId];
+  if (donutChart) {
+    donutChart.options.radius = '85%';
+    donutChart.options.cutout = '57%';
+    donutChart.options.rotation = -90;
+    donutChart.options.circumference = 360;
+    donutChart.resize();
+    donutChart.update('none');
+  }
 
   /* --- HISTOGRAM --- */
   const vals = rows
@@ -889,7 +931,7 @@ function renderCharts(g, w) {
         datalabels: {
           color: '#fff',
           font: { size: s.histBarLabel, weight: 'normal' },
-          formatter: (v) => v > 0 ? v : '',  // no labels for zero-count bars
+          formatter: (v) => v > 0 ? v : '',
           anchor: 'center',
           align: 'center',
           clamp: true
@@ -908,7 +950,7 @@ function renderCharts(g, w) {
             color: '#ccc',
             font: { size: s.axisTick },
             autoSkip: false,
-            maxRotation: 60,  // diagonal for histograms
+            maxRotation: 60,
             minRotation: 45,
             callback: (value, index) => labelsH[index] || ''
           },
