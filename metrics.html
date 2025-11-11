@@ -689,44 +689,66 @@ function renderCharts(g, w) {
   }
 },
         datalabels: {
-          color: '#fff',
-          font: (ctx) => {
-            const dataset = ctx.chart.data.datasets[0];
-            const value = dataset.data[ctx.dataIndex];
-            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
-            const percentage = (value / totalLocal) * 100;
+  color: '#fff',
+  font: (ctx) => {
+    const chart = ctx.chart;
+    const dataset = chart.data.datasets[0];
+    const index = ctx.dataIndex;
 
-            // slice angle in degrees
-            const angle = (percentage / 100) * 360;
-            const base = s.donutPercent;
-            let size;
+    const value = dataset.data[index];
+    const total = dataset.data.reduce((a, b) => a + b, 0) || 1;
+    const pct = value / total;
+    const label = `${(pct * 100).toFixed(1)}%`;
 
-            if (angle < 10)       size = base * 0.45;
-            else if (angle < 20)  size = base * 0.6;
-            else if (angle < 40)  size = base * 0.8;
-            else                  size = base;
+    // Get arc geometry from Chart.js meta
+    const meta = chart.getDatasetMeta(0);
+    const arc = meta.data[index];
+    if (!arc) {
+      return { weight: 'bold', size: 10 };
+    }
 
-            return { weight: 'bold', size: Math.max(8, size) };
-          },
-          formatter: (v, ctx) => {
-            const dataset = ctx.chart.data.datasets[0];
-            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
-            const p = (v / totalLocal) * 100;
-            return p >= 2 ? `${p.toFixed(1)}%` : '';
-          },
-          display: (ctx) => {
-            const dataset = ctx.chart.data.datasets[0];
-            const value = dataset.data[ctx.dataIndex];
-            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
-            const percentage = (value / totalLocal) * 100;
-            return percentage >= 3.5; // hide very tiny slices
-          },
-          anchor: 'center',
-          align: 'center',
-          clamp: true,
-          clip: true,
-          offset: 0
-        }
+    const innerR = arc.innerRadius || 0;
+    const outerR = arc.outerRadius || 0;
+    const midR   = (innerR + outerR) / 2;
+    const thickness = outerR - innerR;
+
+    // Available radial space for text height
+    let size = thickness * 0.45; // start at ~45% of ring thickness
+
+    // Also respect arc length so text doesn't spill horizontally
+    const arcLength = arc.circumference * midR; // px along the arc
+    const estWidthPerChar = 0.6; // rough factor for width/height ratio
+    const maxSizeByWidth = arcLength / (label.length * estWidthPerChar);
+
+    size = Math.min(size, maxSizeByWidth);
+
+    // Global clamps to avoid silly sizes
+    size = Math.max(8, Math.min(size, 18));
+
+    return {
+      weight: 'bold',
+      size
+    };
+  },
+  formatter: (value, ctx) => {
+    const dataset = ctx.chart.data.datasets[0];
+    const total = dataset.data.reduce((a, b) => a + b, 0) || 1;
+    const pct = (value / total) * 100;
+    return pct >= 3.5 ? `${pct.toFixed(1)}%` : '';
+  },
+  display: (ctx) => {
+    const dataset = ctx.chart.data.datasets[0];
+    const value = dataset.data[ctx.dataIndex];
+    const total = dataset.data.reduce((a, b) => a + b, 0) || 1;
+    const pct = (value / total) * 100;
+    return pct >= 3.5; // hide tiny slices entirely
+  },
+  anchor: 'center',
+  align: 'center',
+  clamp: true,
+  clip: true,
+  offset: 0
+}
       },
       // keep your existing donut double-tap / drilldown handler, if used:
       onClick: (evt, elements) =>
