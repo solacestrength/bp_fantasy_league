@@ -901,6 +901,16 @@ if (donutChart) {
   donutChart.options.circumference = 360;
   donutChart.resize();
   donutChart.update('none');
+
+// ✅ Desktop-only fix for pointer alignment
+if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+  setTimeout(() => {
+    const rect = donutChart.canvas.getBoundingClientRect();
+    donutChart.canvas.width  = rect.width  * window.devicePixelRatio;
+    donutChart.canvas.height = rect.height * window.devicePixelRatio;
+    donutChart.resize();
+  }, 120);
+}
 }
 
 /* --- HISTOGRAM --- */
