@@ -705,57 +705,61 @@ function renderCharts(g, w) {
             color: '#ccc',
             // Responsive, max 2-row legend
             generateLabels: (chart) => {
-              const data = chart.data;
-              const meta = chart.getDatasetMeta(0);
-              if (!data || !data.labels || !data.labels.length || !meta) return [];
+  const data = chart.data;
+  const meta = chart.getDatasetMeta(0);
+  if (!data || !data.labels || !data.labels.length || !meta) return [];
 
-              const ds = data.datasets[0] || {};
-              const bg = ds.backgroundColor || [];
-              const bc = ds.borderColor || '#111';
-              const bw = ds.borderWidth || 1;
+  const ds = data.datasets[0] || {};
+  const bg = ds.backgroundColor || [];
+  const bc = ds.borderColor || '#111';
+  const bw = ds.borderWidth || 1;
 
-              const items = data.labels.map((text, i) => {
-                const arc = meta.data[i];
-                const fillStyle = Array.isArray(bg) ? bg[i] : bg;
-                return {
-                  text: String(text || ''),
-                  fillStyle: fillStyle || '#999',
-                  strokeStyle: bc,
-                  lineWidth: bw,
-                  hidden: !arc || isNaN(ds.data?.[i]),
-                  index: i
-                };
-              });
+  const items = data.labels.map((text, i) => {
+    const arc = meta.data[i];
+    const fillStyle = Array.isArray(bg) ? bg[i] : bg;
+    return {
+      text: String(text || ''),
+      fillStyle: fillStyle || '#999',
+      strokeStyle: bc,
+      lineWidth: bw,
+      hidden: !arc || isNaN(ds.data?.[i]),
+      index: i
+    };
+  });
 
-              const ctx = chart.ctx;
-              const chartWidth = chart.width;
-              const isDesktop = window.matchMedia('(min-width:1024px)').matches;
-              let fontSize = isDesktop ? 14 : 11;
-              const minFont = isDesktop ? 10 : 9;
+  const ctx = chart.ctx;
+  const chartWidth = chart.width;
+  const isDesktop = window.matchMedia('(min-width:1024px)').matches;
+  let fontSize = isDesktop ? 14 : 11;
+  const minFont = isDesktop ? 9 : 8;
 
-              ctx.save();
-              ctx.font = `500 ${fontSize}px Inter, system-ui, sans-serif`;
-              const totalWidth = items.reduce((sum, item) => {
-                return sum + ctx.measureText(item.text).width + 42;
-              }, 0);
-              ctx.restore();
+  // ✳️ Determine target rows based on label count
+  const labelCount = items.length;
+  let targetRows = 1;
+  if (labelCount >= 3 && labelCount <= 4) targetRows = 2;
+  else if (labelCount >= 5 && labelCount <= 6) targetRows = 3;
+  else if (labelCount > 6) targetRows = 4;
 
-              const maxWidth = chartWidth * 0.9;
-              const rowsNeeded = Math.max(1, Math.ceil(totalWidth / maxWidth));
-              const rows = Math.min(2, rowsNeeded);
+  // ✳️ Measure total width of labels
+  ctx.save();
+  ctx.font = `500 ${fontSize}px Inter, system-ui, sans-serif`;
+  const totalWidth = items.reduce((sum, item) => sum + ctx.measureText(item.text).width + 42, 0);
+  ctx.restore();
 
-              if (rowsNeeded > rows) {
-                const scale = (maxWidth * rows) / totalWidth;
-                fontSize = Math.max(minFont, Math.floor(fontSize * scale));
-              }
+  const maxWidth = chartWidth * 0.9;
+  const rowsNeeded = Math.max(1, Math.ceil(totalWidth / maxWidth));
 
-              chart.legend.options.labels.font = {
-                size: fontSize,
-                weight: '500'
-              };
+  // ✳️ Adjust font scaling if labels overflow target rows
+  if (rowsNeeded > targetRows) {
+    const scale = (maxWidth * targetRows) / totalWidth;
+    fontSize = Math.max(minFont, Math.floor(fontSize * scale));
+  }
 
-              return items;
-            },
+  // ✳️ Apply font
+  chart.legend.options.labels.font = { size: fontSize, weight: '500' };
+
+  return items;
+},
             font: (ctx) => {
               const f = ctx.chart.legend?.options?.labels?.font;
               return f || { size: 12, weight: '500' };
@@ -860,14 +864,6 @@ function renderCharts(g, w) {
         handleDonutClick(g, w, donutId, evt, elements, rows)
     }
   });
-
-  // 🔒 Optional: enforce global uniform geometry immediately after creation
-  Chart.overrides.doughnut = {
-    radius: '85%',
-    cutout: '57%',
-    rotation: -90,
-    circumference: 360
-  };
 
   const donutChart = charts[donutId];
   if (donutChart) {
