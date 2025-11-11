@@ -669,126 +669,157 @@ function renderCharts(g, w) {
       cutout: '57%',
       // NOTE: no forced rotation override here; use Chart.js defaults
       plugins: {
-        title: {
-          display: true,
-          text: 'Share of Votes',
-          color: '#e5e7eb',
-          font: { weight: 'bold', size: s.donutTitle },
-          padding: { bottom: 8 }
-        },
-        subtitle: {
-          display: true,
-          text: `Total Votes – ${total}`,
-          color: '#9ca3af',
-          font: { size: s.donutSubtitle },
-          padding: { top: 2, bottom: 18 }
-        },
-        legend: {
-          position: 'bottom',
-          onClick: null,
-          onHover: null,
-          labels: {
-            usePointStyle: true,
-            boxWidth: 10,
-            boxHeight: 10,
-            padding: 12,
-            color: '#e5e7eb',
-            // MAX 2 ROWS – dynamic font sizing based on label count/length
-            generateLabels: (chart) => {
-              const data = chart.data;
-              const meta = chart.getDatasetMeta(0);
-              if (!data || !data.labels || !meta) return [];
+  title: {
+    display: true,
+    text: 'Share of Votes',
+    color: '#ccc',
+    font: { weight: 'bold', size: s.donutTitle },
+    padding: { bottom: 8 }
+  },
+  subtitle: {
+    display: true,
+    text: `Total Votes – ${total}`,
+    color: '#aaa',
+    font: { size: s.donutSubtitle },
+    padding: { top: 2, bottom: 18 }
+  },
+  legend: {
+    position: 'bottom',
+    onClick: null,
+    onHover: null,
+    labels: {
+      usePointStyle: true,
+      boxWidth: 10,
+      boxHeight: 10,
+      padding: 12,
+      color: '#ccc',
+      generateLabels(chart) {
+        const data = chart.data;
+        const meta = chart.getDatasetMeta(0);
+        if (!data || !data.labels || !meta) return [];
 
-              const ds = data.datasets[0] || {};
-              const bg = ds.backgroundColor || [];
-              const bc = ds.borderColor || '#111';
-              const bw = ds.borderWidth || 1;
+        const ds = data.datasets[0] || {};
+        const bg = ds.backgroundColor || [];
+        const bc = ds.borderColor || '#111';
+        const bw = ds.borderWidth || 1;
 
-              const labels = data.labels;
-              const ctx = chart.ctx;
-              const chartWidth = chart.width || chart.canvas.clientWidth || 600;
-              const isDesktop = window.matchMedia('(min-width:1024px)').matches;
+        // Build base items
+        const items = data.labels.map((text, i) => {
+          const arc = meta.data[i];
+          const fillStyle = Array.isArray(bg) ? bg[i] : bg;
+          return {
+            text: String(text || ''),
+            fillStyle: fillStyle || '#999',
+            strokeStyle: bc,
+            lineWidth: bw,
+            hidden: !arc || isNaN(ds.data?.[i]),
+            index: i
+          };
+        });
 
-              const baseFont = isDesktop ? 14 : 11;
-              const minFont  = isDesktop ? 9  : 8;
-              const family   = 'Inter, system-ui, sans-serif';
+        const count = items.length;
+        if (!count) return items;
 
-              // Build items once using base font
-              ctx.save();
-              ctx.font = `500 ${baseFont}px ${family}`;
-              const rawItems = labels.map((text, i) => {
-                const labelText = String(text || '');
-                const textWidth = ctx.measureText(labelText).width;
-                const boxAndPadding = 40; // marker + gap
-                const arc = meta.data[i];
-                return {
-                  text: labelText,
-                  textWidth,
-                  totalWidth: textWidth + boxAndPadding,
-                  fillStyle: Array.isArray(bg) ? bg[i] : bg || '#999',
-                  strokeStyle: bc,
-                  lineWidth: bw,
-                  hidden: !arc || isNaN(ds.data?.[i]),
-                  index: i
-                };
-              });
-              ctx.restore();
+        const ctx = chart.ctx;
+        const chartWidth = chart.width || chart.chartArea?.width || 400;
+        const isDesktop = window.matchMedia('(min-width:1024px)').matches;
 
-              const totalWidth = rawItems.reduce((sum, it) => sum + it.totalWidth, 0);
-              const maxWidth = chartWidth * 0.9;
+        // Base + bounds
+        let fontSize = isDesktop ? 14 : 11;
+        const maxFont = isDesktop ? 16 : 13;
+        const minFont = isDesktop ? 10 : 9;
+        const maxRowWidth = chartWidth * 0.9;
 
-              // We want: totalWidth (after scaling) <= 2 * maxWidth
-              let fontSize = baseFont;
-              while (
-                fontSize > minFont &&
-                totalWidth * (fontSize / baseFont) > maxWidth * 2
-              ) {
-                fontSize -= 1;
+        // Helper to measure label at a given size
+        const measure = (label, size) => {
+          ctx.save();
+          ctx.font = `500 ${size}px Inter, system-ui, sans-serif`;
+          const w = ctx.measureText(label.text).width;
+          ctx.restore();
+          // box + padding + text
+          return w + 32;
+        };
+
+        // Special case: 1–2 labels ⇒ single strong row
+        if (count <= 2) {
+          // Try to scale up but keep within width
+          let testSize = maxFont;
+          while (testSize > minFont) {
+            const totalW = items.reduce((sum, it) => sum + measure(it, testSize), 0);
+            if (totalW <= maxRowWidth) break;
+            testSize -= 1;
+          }
+          fontSize = Math.max(minFont, Math.min(maxFont, testSize));
+        } else {
+          // 3+ labels ⇒ enforce 1+ pairs or all pairs structure
+
+          // Build conceptual rows of indices
+          const rows = [];
+          if (count % 2 === 1) {
+            // Odd: first row is single, rest are pairs
+            rows.push([0]);
+            for (let i = 1; i < count; i += 2) {
+              if (i + 1 < count) rows.push([i, i + 1]);
+              else rows.push([i]);
+            }
+          } else {
+            // Even: all pairs
+            for (let i = 0; i < count; i += 2) {
+              rows.push([i, i + 1]);
+            }
+          }
+
+          // Find a font size that makes EVERY row fit
+          let testSize = fontSize;
+          while (testSize >= minFont) {
+            let fits = true;
+            for (const row of rows) {
+              const rowWidth = row.reduce(
+                (sum, idx) => sum + measure(items[idx], testSize),
+                0
+              );
+              if (rowWidth > maxRowWidth) {
+                fits = false;
+                break;
               }
-
-              // Apply resolved font + color back onto legend config
-              chart.legend.options.labels.font = {
-                size: fontSize,
-                weight: 500,
-                family
-              };
-              chart.legend.options.labels.color = '#e5e7eb';
-
-              // Return items formatted for Chart.js (force light text)
-              return rawItems.map(it => ({
-                text: it.text,
-                fillStyle: it.fillStyle,
-                strokeStyle: it.strokeStyle,
-                lineWidth: it.lineWidth,
-                hidden: it.hidden,
-                index: it.index,
-                fontColor: '#e5e7eb'
-              }));
-            },
-            font: ctx => {
-              const f = ctx.chart.legend?.options?.labels?.font;
-              return f || { size: 12, weight: 500, family: 'Inter, system-ui, sans-serif' };
             }
+            if (fits) break;
+            testSize -= 1;
           }
-        },
-        tooltip: {
-          usePointStyle: true,
-          boxWidth: 8,
-          boxHeight: 8,
-          pointStyle: 'circle',
-          callbacks: {
-            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
-            label: (ctx) => {
-              const dataset = ctx.chart.data.datasets[0];
-              const total = dataset.data.reduce((a, b) => a + b, 0);
-              const value = ctx.parsed;
-              const percentage = ((value / total) * 100).toFixed(1);
-              const voteWord = value === 1 ? 'Vote' : 'Votes';
-              return `${value} ${voteWord} – ${percentage}%`;
-            }
-          }
-        },
-        datalabels: {
+
+          fontSize = Math.max(minFont, Math.min(maxFont, testSize));
+        }
+
+        // Apply globally so Chart.js uses this font for legend drawing
+        chart.legend.options.labels.font = {
+          size: fontSize,
+          weight: '500'
+        };
+
+        return items;
+      },
+      font: ctx =>
+        ctx.chart.legend?.options?.labels?.font || { size: 12, weight: '500' }
+    }
+  },
+  tooltip: {
+    usePointStyle: true,
+    boxWidth: 8,
+    boxHeight: 8,
+    pointStyle: 'circle',
+    callbacks: {
+      labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
+      label: (ctx) => {
+        const dataset = ctx.chart.data.datasets[0];
+        const total = dataset.data.reduce((a, b) => a + b, 0);
+        const value = ctx.parsed;
+        const percentage = ((value / total) * 100).toFixed(1);
+        const voteWord = value === 1 ? 'Vote' : 'Votes';
+        return `${value} ${voteWord} – ${percentage}%`;
+      }
+    }
+  },
+  datalabels: {
           color: '#ffffff',
           anchor: 'center',
           align: 'center',
