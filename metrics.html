@@ -763,17 +763,22 @@ function renderCharts(g, w) {
           }
         },
         tooltip: {
-          callbacks: {
-            label: (ctx) => {
-              const dataset = ctx.chart.data.datasets[0];
-              const total = dataset.data.reduce((a, b) => a + b, 0);
-              const value = ctx.parsed;
-              const percentage = ((value / total) * 100).toFixed(1);
-              const voteWord = value === 1 ? 'Vote' : 'Votes';
-              return `${value} ${voteWord} – ${percentage}%`;
-            }
-          }
-        },
+  usePointStyle: true,
+  boxWidth: 8,
+  boxHeight: 8,
+  pointStyle: 'circle', // 👈 makes the shape round
+  callbacks: {
+    labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
+    label: (ctx) => {
+      const dataset = ctx.chart.data.datasets[0];
+      const total = dataset.data.reduce((a, b) => a + b, 0);
+      const value = ctx.parsed;
+      const percentage = ((value / total) * 100).toFixed(1);
+      const voteWord = value === 1 ? 'Vote' : 'Votes';
+      return `${value} ${voteWord} – ${percentage}%`;
+    }
+  }
+},
         datalabels: {
           color: '#fff',
           anchor: 'center',
@@ -937,12 +942,16 @@ function renderCharts(g, w) {
           clamp: true
         },
         tooltip: {
-          callbacks: {
-            title: (items) => (items[0]?.label) || '',
-            label: (ctx) => `Vote Count - ${ctx.parsed.y}`
-          }
-        }
-      },
+  usePointStyle: true,
+  boxWidth: 8,
+  boxHeight: 8,
+  pointStyle: 'circle',
+  callbacks: {
+    labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
+    title: (items) => (items[0]?.label) || '',
+    label: (ctx) => `Vote Count - ${ctx.parsed.y}`
+  }
+},
       scales: {
         x: {
           offset: true,
@@ -1152,11 +1161,16 @@ function renderDrillChart(g, athlete) {
           clamp: true
         },
         tooltip: {
-          callbacks: {
-            title: (items) => (items[0]?.label) || '',
-            label: (ctx2) => `Vote Count - ${ctx2.parsed.y}`
-          }
-        },
+  usePointStyle: true,
+  boxWidth: 8,
+  boxHeight: 8,
+  pointStyle: 'circle',
+  callbacks: {
+    labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
+    title: (items) => (items[0]?.label) || '',
+    label: (ctx) => `Vote Count - ${ctx.parsed.y}`
+  }
+},
         title: { display: false }
       },
       scales: {
