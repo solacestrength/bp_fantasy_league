@@ -760,17 +760,26 @@ function renderCharts(g, w) {
 
     let size = base * scale;
 
-    // === Android device correction ===
-    const pixelRatio = window.devicePixelRatio || 1;
-    const androidAdjust = /Android/i.test(navigator.userAgent) ? 0.78 : 1;
-    size *= androidAdjust;
+// === Adjust scaling curve by vote share ===
+if (p < 10) {
+  size *= 0.8 - (0.25 * (10 - p) / 10); // smaller fast for tiny slices
+} else if (p > 75) {
+  size *= 1 + 0.25 * ((p - 75) / 25);   // boost large slices progressively
+}
 
-    // Clamp and normalize
-    if (size > maxPx) size = maxPx;
-    if (size < minPx) size = minPx;
-    if (size / pixelRatio < 10) size *= 0.9;
+// === Android device correction ===
+const pixelRatio = window.devicePixelRatio || 1;
+const androidAdjust = /Android/i.test(navigator.userAgent) ? 0.78 : 1;
+size *= androidAdjust;
 
-    return { weight: 'bold', size };
+// Clamp and normalize
+const maxPx = 26; // slight bump from 24
+const minPx = 9;
+if (size > maxPx) size = maxPx;
+if (size < minPx) size = minPx;
+if (size / pixelRatio < 10) size *= 0.9;
+
+return { weight: 'bold', size };
   }
 }      
       
