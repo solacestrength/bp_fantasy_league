@@ -684,48 +684,51 @@ function renderCharts(g, w) {
         },
         legend: {
   position: 'bottom',
-  onClick: null,
+  onClick: null,      // keep legend non-interactive
   onHover: null,
   labels: {
     usePointStyle: true,
     padding: 14,
     boxWidth: 10,
     boxHeight: 10,
-    generateLabels: (chart) => {
-      // ✅ Always base on Chart.js defaults first
-      const baseLabels = Chart.defaults.plugins.legend.labels.generateLabels(chart);
-      if (!baseLabels?.length) return [];
+    color: '#ccc',
 
-      const ctx = chart.ctx;
-      const chartWidth = chart.width;
-      const isDesktop = window.matchMedia('(min-width:1024px)').matches;
-      let fontSize = isDesktop ? 14 : 11;
-      const minFont = isDesktop ? 11 : 9;
-
-      // Calculate total width of all labels
-      ctx.save();
-      ctx.font = `500 ${fontSize}px Inter, sans-serif`;
-      const totalWidth = baseLabels.reduce((sum, lbl) => {
-        const labelText = lbl.text || ''; // ✅ prevent undefined
-        return sum + ctx.measureText(labelText).width + 42;
-      }, 0);
-      ctx.restore();
-
-      // Auto-scale to max 2 rows
-      const maxWidth = chartWidth * 0.9;
-      const rows = Math.min(2, Math.ceil(totalWidth / maxWidth));
-      if (totalWidth > maxWidth * rows) {
-        const scale = (maxWidth * rows) / totalWidth;
-        fontSize = Math.max(minFont, Math.floor(fontSize * scale));
+    // Dynamic font sizing to keep legend to max 2 rows
+    font: (ctx) => {
+      const chart = ctx.chart;
+      const labels = chart.data?.labels || [];
+      if (!labels.length) {
+        return { size: 12, weight: '500' };
       }
 
-      chart.legend.options.labels.font = { size: fontSize, weight: '500' };
-      return baseLabels;
-    },
-    color: '#ccc',
-    font: (ctx) =>
-      ctx.chart.legend?.options?.labels?.font || { size: 12, weight: '500' },
-    boxPadding: 4
+      const isDesktop = window.matchMedia('(min-width:1024px)').matches;
+      let baseSize = isDesktop ? 14 : 11;
+      const minSize = isDesktop ? 11 : 9;
+
+      const chartWidth = chart.width || chart.canvas?.clientWidth || 600;
+      const maxWidth = chartWidth * 0.9;
+
+      const measureCtx = chart.ctx;
+      measureCtx.save();
+      measureCtx.font = `500 ${baseSize}px Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif`;
+
+      const totalWidth = labels.reduce((sum, text) => {
+        const w = measureCtx.measureText(text).width + 42; // marker + padding
+        return sum + w;
+      }, 0);
+
+      measureCtx.restore();
+
+      // target max 2 rows
+      const rows = Math.min(2, Math.ceil(totalWidth / maxWidth));
+
+      if (rows > 0 && totalWidth > maxWidth * rows) {
+        const scale = (maxWidth * rows) / totalWidth;
+        baseSize = Math.max(minSize, Math.floor(baseSize * scale));
+      }
+
+      return { size: baseSize, weight: '500' };
+    }
   }
 },
         tooltip: {
