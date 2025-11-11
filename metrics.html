@@ -61,19 +61,15 @@
     position: relative;
     display: block;
     width: 100%;
-  }
-
-  .chart-container.fade {
     transition: opacity 0.25s ease;
   }
 
-  .chart-container canvas {
+  canvas {
+    max-width: 100%;
+    height: auto !important;
     display: block;
-    margin: 0 auto;
-    width: 100% !important;
-    height: auto;
-    aspect-ratio: 1 / 1;
-    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   @media (min-width: 1024px) {
@@ -114,6 +110,37 @@
       transform: none !important;
       transform-origin: top center;
     }
+  }
+
+  #womenDonut,
+  #menDonut {
+    width: 100% !important;
+    aspect-ratio: 1 / 1 !important;
+    max-height: none !important;
+    object-fit: contain;
+  }
+
+  /* === LEGEND RESPONSIVENESS FIX === */
+  .chart-container canvas {
+    display: block;
+    margin: 0 auto;
+  }
+
+  .chart-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .chart-container .chartjs-legend {
+    max-width: 90%;
+    text-align: center;
+    margin-top: 0.5rem !important;
+  }
+
+  /* Consistent spacing between donut + legend and next section */
+  .chart-container + .chart-container {
+    margin-top: 1.75rem;
   }
 
   /* === COLLAPSIBLE SECTIONS === */
@@ -662,16 +689,53 @@ function renderCharts(g, w) {
           padding: { top: 2, bottom: 18 }
         },
         legend: {
-          position: 'bottom',
-          onClick: null,   // 🔒 disable legend toggling / strike-through
-          onHover: null,
-          labels: {
-            color: '#ccc',
-            boxWidth: 10,
-            boxHeight: 10,
-            font: { size: s.donutLegend }
-          }
-        },
+  position: 'bottom',
+  onClick: null,
+  onHover: null,
+  labels: {
+    usePointStyle: true,
+    padding: 14,
+    boxWidth: 10,
+    boxHeight: 10,
+    generateLabels: (chart) => {
+      const original = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+      const ctx = chart.ctx;
+      const chartWidth = chart.width;
+      const s = sizing();
+
+      // Start with target font sizes
+      const isDesktop = window.matchMedia('(min-width:1024px)').matches;
+      let fontSize = isDesktop ? 14 : 11;
+      const minFont = isDesktop ? 11 : 9;
+
+      // Measure total width of all labels at base size
+      ctx.save();
+      ctx.font = `500 ${fontSize}px Inter, sans-serif`;
+      const totalWidth = original.reduce((sum, lbl) => {
+        const w = ctx.measureText(lbl.text).width + 42; // box + padding
+        return sum + w;
+      }, 0);
+      ctx.restore();
+
+      // Determine how many rows we'll need
+      const maxWidth = chartWidth * 0.9;
+      const rows = Math.min(2, Math.ceil(totalWidth / maxWidth));
+
+      // If total width exceeds limit, shrink proportionally
+      if (totalWidth > maxWidth * rows) {
+        const scale = (maxWidth * rows) / totalWidth;
+        fontSize = Math.max(minFont, Math.floor(fontSize * scale));
+      }
+
+      // Apply adjusted font globally
+      chart.legend.options.labels.font = { size: fontSize, weight: '500' };
+      return original;
+    },
+    color: '#ccc',
+    font: ctx => ctx.chart.legend?.options?.labels?.font || { size: 12, weight: '500' },
+    boxPadding: 4
+  }
+},
         tooltip: {
           callbacks: {
             label: (ctx) => {
