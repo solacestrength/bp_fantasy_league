@@ -1036,15 +1036,34 @@ function handleDonutClick(g, w, donutId, evt, elements, rows) {
   }
 }
 
+/* ========= FADE HELPERS ========= */
+function fadeIn(el) {
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.opacity = 0;
+  el.style.transition = 'opacity 0.25s ease';
+  requestAnimationFrame(() => {
+    el.style.opacity = 1;
+  });
+}
+
+function fadeOut(el, cb) {
+  if (!el) return;
+  el.style.transition = 'opacity 0.25s ease';
+  el.style.opacity = 0;
+  setTimeout(() => {
+    el.style.display = 'none';
+    if (typeof cb === 'function') cb();
+  }, 250);
+}
+
 function buildDrillAthleteMap(rows) {
   const map = {};
   rows.forEach(r => {
     const name = r.Athlete;
     if (!name) return;
     const pts = parseInt(r.Points, 10);
-    if (!map[name]) {
-      map[name] = { votes: [] };
-    }
+    if (!map[name]) map[name] = { votes: [] };
     if (!isNaN(pts) && pts >= 1 && pts <= 16) {
       map[name].votes.push(pts);
     }
@@ -1081,8 +1100,7 @@ function openDrilldown(g, w, athlete, rows, opts = {}) {
   }
 
   if (!opts.skipFade) {
-    fadeOut(donutContainer);
-    fadeIn(state.wrapper);
+    fadeOut(donutContainer, () => fadeIn(state.wrapper));
   } else {
     donutContainer.style.display = 'none';
     state.wrapper.style.display = 'block';
@@ -1106,8 +1124,7 @@ function closeDrilldown(g) {
   const donutContainerId = g === 'F' ? 'womenDonutContainer' : 'menDonutContainer';
   const donutContainer = document.getElementById(donutContainerId);
 
-  fadeOut(state.wrapper);
-  fadeIn(donutContainer);
+  fadeOut(state.wrapper, () => fadeIn(donutContainer));
 
   if (state.chart) {
     state.chart.destroy();
@@ -1120,6 +1137,7 @@ function closeDrilldown(g) {
   state.totalVotesInClass = 0;
 }
 
+/* ========= RED GRADIENT COLORS ========= */
 function getRedGradientColors() {
   const colors = [];
   const start = { r: 252, g: 165, b: 165 }; // light red
@@ -1134,6 +1152,7 @@ function getRedGradientColors() {
   return colors;
 }
 
+/* ========= DRILLDOWN BAR CHART ========= */
 function renderDrillChart(g, athlete) {
   const state = drillState[g];
   if (!state || !state.athleteMap[athlete]) return;
@@ -1171,22 +1190,22 @@ function renderDrillChart(g, athlete) {
         datalabels: {
           color: '#fff',
           font: { size: s.histBarLabel, weight: 'normal' },
-          formatter: (v) => v > 0 ? v : '', // no labels for zero-count
+          formatter: (v) => v > 0 ? v : '',
           anchor: 'center',
           align: 'center',
           clamp: true
         },
         tooltip: {
-  usePointStyle: true,
-  boxWidth: 8,
-  boxHeight: 8,
-  pointStyle: 'circle',
-  callbacks: {
-    labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
-    title: (items) => (items[0]?.label) || '',
-    label: (ctx) => `Vote Count - ${ctx.parsed.y}`
-  }
-},
+          usePointStyle: true,
+          boxWidth: 8,
+          boxHeight: 8,
+          pointStyle: 'circle',
+          callbacks: {
+            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
+            title: (items) => (items[0]?.label) || '',
+            label: (ctx) => `Vote Count - ${ctx.parsed.y}`
+          }
+        },
         title: { display: false }
       },
       scales: {
