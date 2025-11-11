@@ -628,6 +628,55 @@ function fadeOut(el) {
 }
 
 /* ========= CHART RENDERING ========= */
+
+/* Desktop-only persistent tooltip helper (donut, hist, drilldown) */
+function attachPersistentTooltip(chart) {
+  if (!chart?.canvas) return;
+  // Skip on mobile/tablet – keep native hover feel
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
+  if (chart._hasPersistentTooltipHandler) return; // avoid duplicates
+
+  chart._hasPersistentTooltipHandler = true;
+
+  chart.canvas.addEventListener('click', (event) => {
+    const elements = chart.getElementsAtEventForMode(
+      event,
+      'nearest',
+      { intersect: true },
+      false
+    );
+
+    if (elements.length) {
+      const el = elements[0];
+
+      // If already locked on this element → unlock
+      if (
+        chart._lockedTooltip &&
+        chart._lockedTooltip.index === el.index &&
+        chart._lockedTooltip.datasetIndex === el.datasetIndex
+      ) {
+        chart._lockedTooltip = null;
+        chart.tooltip.setActiveElements([], { x: 0, y: 0 });
+        chart.update();
+        return;
+      }
+
+      // Lock on new element
+      chart._lockedTooltip = el;
+      chart.tooltip.setActiveElements([el], {
+        x: event.offsetX,
+        y: event.offsetY
+      });
+      chart.update();
+    } else if (chart._lockedTooltip) {
+      // Click off-chart → clear lock
+      chart._lockedTooltip = null;
+      chart.tooltip.setActiveElements([], { x: 0, y: 0 });
+      chart.update();
+    }
+  });
+}
+
 function renderCharts(g, w) {
   const s = sizing();
   const donutId = g === 'F' ? 'womenDonut' : 'menDonut';
@@ -635,285 +684,296 @@ function renderCharts(g, w) {
   const rows = allData.filter(r => r.Gender === g && r.Class === w);
   if (!rows.length) return;
 
-    /* --- DONUT --- */
-const counts = {};
-rows.forEach(r => { counts[r.Athlete] = (counts[r.Athlete] || 0) + 1; });
+  /* --- DONUT --- */
+  const counts = {};
+  rows.forEach(r => {
+    counts[r.Athlete] = (counts[r.Athlete] || 0) + 1;
+  });
 
-const dLabels = Object.keys(counts);
-const dData   = Object.values(counts);
-const total   = dData.reduce((a, b) => a + b, 0);
+  const dLabels = Object.keys(counts);
+  const dData   = Object.values(counts);
+  const total   = dData.reduce((a, b) => a + b, 0);
 
-const colors = [
-  '#ef4444','#f97316','#facc15','#22c55e','#14b8a6',
-  '#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16',
-  '#d946ef','#fb7185'
-];
+  const colors = [
+    '#ef4444','#f97316','#facc15','#22c55e','#14b8a6',
+    '#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16',
+    '#d946ef','#fb7185'
+  ];
 
-if (charts[donutId]) charts[donutId].destroy();
-const donutCtx = document.getElementById(donutId).getContext('2d');
+  if (charts[donutId]) charts[donutId].destroy();
+  const donutCtx = document.getElementById(donutId).getContext('2d');
 
-charts[donutId] = new Chart(donutCtx, {
-  type: 'doughnut',
-  data: {
-    labels: dLabels,
-    datasets: [{
-      data: dData,
-      backgroundColor: colors,
-      borderColor: '#111',
-      borderWidth: 1
-    }]
-  },
-  options: {
-    maintainAspectRatio: true,
-    aspectRatio: 1,
-    cutout: '57%',
-    radius: '85%',
-    rotation: 0,
-    circumference: 360,
-    layout: { padding: 0 },
-    elements: { arc: { borderAlign: 'center', offset: 0 } },
-    plugins: {
-      title: {
-        display: true,
-        text: 'Share of Votes',
-        color: '#ccc',
-        font: { weight: 'bold', size: s.donutTitle },
-        padding: { bottom: 8 }
+  charts[donutId] = new Chart(donutCtx, {
+    type: 'doughnut',
+    data: {
+      labels: dLabels,
+      datasets: [{
+        data: dData,
+        backgroundColor: colors,
+        borderColor: '#111',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      maintainAspectRatio: true,
+      aspectRatio: 1,
+      cutout: '57%',
+      radius: '85%',
+      rotation: 0,
+      circumference: 360,
+      layout: { padding: 0 },
+      elements: {
+        arc: {
+          borderAlign: 'center',
+          offset: 0
+        }
       },
-      subtitle: {
-        display: true,
-        text: `Total Votes – ${total}`,
-        color: '#aaa',
-        font: { size: s.donutSubtitle },
-        padding: { top: 2, bottom: 18 }
-      },
-      legend: {
-        position: 'bottom',
-        onClick: null,
-        onHover: null,
-        labels: {
-          usePointStyle: true,
-          boxWidth: 10,
-          boxHeight: 10,
-          padding: 12,
-          color: '#ccc', // ✅ fixed legend color
-          generateLabels(chart) {
-            const data = chart.data;
-            const meta = chart.getDatasetMeta(0);
-            if (!data || !data.labels || !meta) return [];
+      plugins: {
+        title: {
+          display: true,
+          text: 'Share of Votes',
+          color: '#ccc',
+          font: { weight: 'bold', size: s.donutTitle },
+          padding: { bottom: 8 }
+        },
+        subtitle: {
+          display: true,
+          text: `Total Votes – ${total}`,
+          color: '#aaa',
+          font: { size: s.donutSubtitle },
+          padding: { top: 2, bottom: 18 }
+        },
+        legend: {
+          position: 'bottom',
+          onClick: null,
+          onHover: null,
+          labels: {
+            usePointStyle: true,
+            boxWidth: 10,
+            boxHeight: 10,
+            padding: 12,
+            color: '#ccc',
+            generateLabels(chart) {
+              const data = chart.data;
+              const meta = chart.getDatasetMeta(0);
+              if (!data || !data.labels || !meta) return [];
 
-            const ds = data.datasets[0] || {};
-            const bg = ds.backgroundColor || [];
-            const bc = ds.borderColor || '#111';
-            const bw = ds.borderWidth || 1;
+              const ds = data.datasets[0] || {};
+              const bg = ds.backgroundColor || [];
+              const bc = ds.borderColor || '#111';
+              const bw = ds.borderWidth || 1;
 
-            const items = data.labels.map((text, i) => {
-              const arc = meta.data[i];
-              const fillStyle = Array.isArray(bg) ? bg[i] : bg;
-              return {
-                text: String(text || ''),
-                fillStyle: fillStyle || '#999',
-                strokeStyle: bc,
-                lineWidth: bw,
-                hidden: !arc || isNaN(ds.data?.[i]),
-                index: i,
-                fontColor: '#ccc' // ✅ per-item text color lock
+              const items = data.labels.map((text, i) => {
+                const arc = meta.data[i];
+                const fillStyle = Array.isArray(bg) ? bg[i] : bg;
+                return {
+                  text: String(text || ''),
+                  fillStyle: fillStyle || '#999',
+                  strokeStyle: bc,
+                  lineWidth: bw,
+                  hidden: !arc || isNaN(ds.data?.[i]),
+                  index: i
+                };
+              });
+
+              const count = items.length;
+              if (!count) return items;
+
+              const ctx = chart.ctx;
+              const chartWidth = chart.width || chart.chartArea?.width || 400;
+              const isDesktop = window.matchMedia('(min-width:1024px)').matches;
+
+              let fontSize = isDesktop ? 14 : 11;
+              const maxFont = isDesktop ? 16 : 13;
+              const minFont = isDesktop ? 10 : 9;
+              const maxRowWidth = chartWidth * 0.9;
+
+              const measure = (label, size) => {
+                ctx.save();
+                ctx.font = `500 ${size}px Inter, system-ui, sans-serif`;
+                const w = ctx.measureText(label.text).width;
+                ctx.restore();
+                return w + 32; // marker + padding
               };
-            });
 
-            const count = items.length;
-            if (!count) return items;
-
-            const ctx = chart.ctx;
-            const chartWidth = chart.width || chart.chartArea?.width || 400;
-            const isDesktop = window.matchMedia('(min-width:1024px)').matches;
-
-            let fontSize = isDesktop ? 14 : 11;
-            const maxFont = isDesktop ? 16 : 13;
-            const minFont = isDesktop ? 10 : 9;
-            const maxRowWidth = chartWidth * 0.9;
-
-            const measure = (label, size) => {
-              ctx.save();
-              ctx.font = `500 ${size}px Inter, system-ui, sans-serif`;
-              const w = ctx.measureText(label.text).width;
-              ctx.restore();
-              return w + 32;
-            };
-
-            // 1–2 labels: single row, allow upscale
-            if (count <= 2) {
-              let testSize = maxFont;
-              while (testSize > minFont) {
-                const totalW = items.reduce((sum, it) => sum + measure(it, testSize), 0);
-                if (totalW <= maxRowWidth) break;
-                testSize -= 1;
-              }
-              fontSize = Math.max(minFont, Math.min(maxFont, testSize));
-            } else {
-              // 3+ labels: enforce even/odd pairing logic
+              // Build rows according to pairing rules:
+              // even: all pairs; odd: first solo, rest pairs
               const rows = [];
               if (count % 2 === 1) {
-                rows.push([0]);
+                rows.push([0]); // first solo
                 for (let i = 1; i < count; i += 2) {
                   if (i + 1 < count) rows.push([i, i + 1]);
                   else rows.push([i]);
                 }
               } else {
-                for (let i = 0; i < count; i += 2) rows.push([i, i + 1]);
+                for (let i = 0; i < count; i += 2) {
+                  rows.push([i, i + 1]);
+                }
               }
 
-              let testSize = fontSize;
-              while (testSize >= minFont) {
+              // Find max font that fits all rows within 2 visual rows’ width
+              // (we already enforce the row structure above)
+              let test = maxFont;
+              while (test >= minFont) {
                 let fits = true;
                 for (const row of rows) {
-                  const rowWidth = row.reduce((sum, idx) => sum + measure(items[idx], testSize), 0);
+                  const rowWidth = row.reduce(
+                    (sum, idx) => sum + measure(items[idx], test),
+                    0
+                  );
                   if (rowWidth > maxRowWidth) {
                     fits = false;
                     break;
                   }
                 }
                 if (fits) break;
-                testSize -= 1;
+                test -= 1;
               }
+              fontSize = Math.max(minFont, Math.min(maxFont, test));
 
-              fontSize = Math.max(minFont, Math.min(maxFont, testSize));
+              // apply globally so every legend line uses the same style
+              chart.legend.options.labels.font = {
+                size: fontSize,
+                weight: '500'
+              };
+              chart.legend.options.labels.color = '#ccc';
+
+              return items;
+            },
+            font: (ctx) =>
+              ctx.chart.legend?.options?.labels?.font || {
+                size: 12,
+                weight: '500'
+              }
+          }
+        },
+        tooltip: {
+          usePointStyle: true,
+          boxWidth: 8,
+          boxHeight: 8,
+          pointStyle: 'circle',
+          callbacks: {
+            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
+            label: (ctx) => {
+              const dataset = ctx.chart.data.datasets[0];
+              const total = dataset.data.reduce((a, b) => a + b, 0);
+              const value = ctx.parsed;
+              const percentage = ((value / total) * 100).toFixed(1);
+              const voteWord = value === 1 ? 'Vote' : 'Votes';
+              return `${value} ${voteWord} – ${percentage}%`;
             }
-
-            // 🔒 lock color + font globally
-            chart.legend.options.labels.font = {
-              size: fontSize,
-              weight: '500'
-            };
-            chart.legend.options.labels.color = '#ccc';
-
-            return items;
+          }
+        },
+        datalabels: {
+          color: '#fff',
+          anchor: 'center',
+          align: 'center',
+          clamp: true,
+          clip: true,
+          offset: 0,
+          display: (ctx) => {
+            const chart = ctx.chart;
+            const ds = chart.data.datasets[ctx.datasetIndex];
+            if (!ds) return false;
+            const total = ds.data.reduce((a, b) => a + b, 0) || 1;
+            const value = ds.data[ctx.dataIndex];
+            const p = (value / total) * 100;
+            return p >= 3.5;
           },
-          font: ctx =>
-            ctx.chart.legend?.options?.labels?.font || { size: 12, weight: '500' }
-        }
-      },
-      tooltip: {
-        usePointStyle: true,
-        boxWidth: 8,
-        boxHeight: 8,
-        pointStyle: 'circle',
-        callbacks: {
-          labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
-          label: (ctx) => {
-            const dataset = ctx.chart.data.datasets[0];
-            const total = dataset.data.reduce((a, b) => a + b, 0);
-            const value = ctx.parsed;
-            const percentage = ((value / total) * 100).toFixed(1);
-            const voteWord = value === 1 ? 'Vote' : 'Votes';
-            return `${value} ${voteWord} – ${percentage}%`;
+          formatter: (value, ctx) => {
+            const chart = ctx.chart;
+            const ds = chart.data.datasets[ctx.datasetIndex];
+            const total = ds.data.reduce((a, b) => a + b, 0) || 1;
+            const p = (value / total) * 100;
+            return `${p.toFixed(1)}%`;
+          },
+          font: (ctx) => {
+            const chart = ctx.chart;
+            const canvas = chart.canvas;
+            const ds = chart.data.datasets[ctx.datasetIndex];
+            if (!ds) return { weight: 'bold', size: 10 };
+
+            const total = ds.data.reduce((a, b) => a + b, 0) || 1;
+            const value = ds.data[ctx.dataIndex];
+            const p = (value / total) * 100;
+            if (p < 3.5) return { weight: 'bold', size: 0 };
+
+            const base = s.donutPercent;
+            const meta = chart.getDatasetMeta(ctx.datasetIndex);
+            const arc = meta && meta.data && meta.data[ctx.dataIndex];
+            if (!arc) return { weight: 'bold', size: base };
+
+            const midRadius   = (arc.innerRadius + arc.outerRadius) / 2;
+            const arcLength   = Math.abs(arc.circumference) * midRadius;
+            const radialLimit = (arc.outerRadius - arc.innerRadius) * 0.82;
+
+            const label = `${p.toFixed(1)}%`;
+            const ctx2d = chart.ctx;
+            const fontFamily =
+              getComputedStyle(canvas).fontFamily ||
+              "'Inter', system-ui, sans-serif";
+            ctx2d.save();
+            ctx2d.font = `bold ${base}px ${fontFamily}`;
+            const textWidth = ctx2d.measureText(label).width;
+            ctx2d.restore();
+
+            let scale = 1;
+            if (textWidth > 0 && arcLength > 0) {
+              const alongArc = arcLength / (textWidth * 1.18);
+              const radial   = radialLimit / (base * 1.1);
+              scale = Math.min(alongArc, radial, 1);
+            }
+            if (!isFinite(scale) || scale <= 0) scale = 1;
+
+            let size = base * scale;
+            if (p < 10) size *= 0.7 + 0.3 * (p / 10);
+            else if (p > 75) size *= 1.05;
+
+            const pixelRatio = window.devicePixelRatio || 1;
+            const androidAdjust = /Android/i.test(navigator.userAgent)
+              ? 0.78
+              : 1;
+            size *= androidAdjust;
+
+            const maxPx = 24;
+            const minPx = 9;
+            if (size > maxPx) size = maxPx;
+            if (size < minPx) size = minPx;
+            if (size / pixelRatio < 10) size *= 0.9;
+
+            return { weight: 'bold', size };
           }
         }
       },
-      datalabels: {
-        color: '#fff',
-        anchor: 'center',
-        align: 'center',
-        clamp: true,
-        clip: true,
-        offset: 0,
-        display: (ctx) => {
-          const chart = ctx.chart;
-          const ds = chart.data.datasets[ctx.datasetIndex];
-          if (!ds) return false;
-          const total = ds.data.reduce((a, b) => a + b, 0) || 1;
-          const value = ds.data[ctx.dataIndex];
-          const p = (value / total) * 100;
-          return p >= 3.5;
-        },
-        formatter: (value, ctx) => {
-          const chart = ctx.chart;
-          const ds = chart.data.datasets[ctx.datasetIndex];
-          const total = ds.data.reduce((a, b) => a + b, 0) || 1;
-          const p = (value / total) * 100;
-          return `${p.toFixed(1)}%`;
-        },
-        font: (ctx) => {
-          const chart = ctx.chart;
-          const canvas = chart.canvas;
-          const ds = chart.data.datasets[ctx.datasetIndex];
-          if (!ds) return { weight: 'bold', size: 10 };
+      onClick: (evt, elements) =>
+        handleDonutClick(g, w, donutId, evt, elements, rows)
+    }
+  });
 
-          const total = ds.data.reduce((a, b) => a + b, 0) || 1;
-          const value = ds.data[ctx.dataIndex];
-          const p = (value / total) * 100;
-          if (p < 3.5) return { weight: 'bold', size: 0 };
-
-          const base = s.donutPercent;
-          const meta = chart.getDatasetMeta(ctx.datasetIndex);
-          const arc = meta && meta.data && meta.data[ctx.dataIndex];
-          if (!arc) return { weight: 'bold', size: base };
-
-          const midRadius   = (arc.innerRadius + arc.outerRadius) / 2;
-          const arcLength   = Math.abs(arc.circumference) * midRadius;
-          const radialLimit = (arc.outerRadius - arc.innerRadius) * 0.82;
-
-          const label = `${p.toFixed(1)}%`;
-          const ctx2d = chart.ctx;
-          const fontFamily = getComputedStyle(canvas).fontFamily || "'Inter', system-ui, sans-serif";
-          ctx2d.save();
-          ctx2d.font = `bold ${base}px ${fontFamily}`;
-          const textWidth = ctx2d.measureText(label).width;
-          ctx2d.restore();
-
-          let scale = 1;
-          if (textWidth > 0 && arcLength > 0) {
-            const alongArc = arcLength / (textWidth * 1.18);
-            const radial   = radialLimit / (base * 1.1);
-            scale = Math.min(alongArc, radial, 1);
-          }
-          if (!isFinite(scale) || scale <= 0) scale = 1;
-
-          let size = base * scale;
-          if (p < 10) size *= 0.7 + 0.3 * (p / 10);
-          else if (p > 75) size *= 1.05;
-
-          const pixelRatio = window.devicePixelRatio || 1;
-          const androidAdjust = /Android/i.test(navigator.userAgent) ? 0.78 : 1;
-          size *= androidAdjust;
-
-          const maxPx = 24;
-          const minPx = 9;
-          if (size > maxPx) size = maxPx;
-          if (size < minPx) size = minPx;
-          if (size / pixelRatio < 10) size *= 0.9;
-
-          return { weight: 'bold', size };
-        }
-      }
-    },
-    onClick: (evt, elements) =>
-      handleDonutClick(g, w, donutId, evt, elements, rows)
-  }
-});
-
-  // 🔒 optional uniform geometry lock
-const donutChart = charts[donutId];
-if (donutChart) {
-  donutChart.options.radius = '85%';
-  donutChart.options.cutout = '57%';
-  donutChart.options.rotation = 0;
-  donutChart.options.circumference = 360;
-  donutChart.resize();
-  donutChart.update('none');
-
-// ✅ Desktop-only fix for pointer alignment
-if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-  setTimeout(() => {
-    const rect = donutChart.canvas.getBoundingClientRect();
-    donutChart.canvas.width  = rect.width  * window.devicePixelRatio;
-    donutChart.canvas.height = rect.height * window.devicePixelRatio;
+  // Uniform geometry + pointer alignment fix (desktop only)
+  const donutChart = charts[donutId];
+  if (donutChart) {
+    donutChart.options.radius = '85%';
+    donutChart.options.cutout = '57%';
+    donutChart.options.rotation = 0;
+    donutChart.options.circumference = 360;
     donutChart.resize();
-  }, 120);
-}
-}
+    donutChart.update('none');
 
-/* --- HISTOGRAM --- */
+    // desktop pointer alignment tweak
+    if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      setTimeout(() => {
+        const rect = donutChart.canvas.getBoundingClientRect();
+        donutChart.canvas.width  = rect.width  * window.devicePixelRatio;
+        donutChart.canvas.height = rect.height * window.devicePixelRatio;
+        donutChart.resize();
+      }, 120);
+    }
+
+    attachPersistentTooltip(donutChart);
+  }
+
+  /* --- HISTOGRAM --- */
   const vals = rows
     .map(r => parseFloat(r.PredictedTotal))
     .filter(v => !isNaN(v) && v > 0);
@@ -976,16 +1036,16 @@ if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
           clamp: true
         },
         tooltip: {
-  usePointStyle: true,
-  boxWidth: 8,
-  boxHeight: 8,
-  pointStyle: 'circle',
-  callbacks: {
-    labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
-    title: (items) => (items[0]?.label) || '',
-    label: (ctx) => `Vote Count - ${ctx.parsed.y}`
-  }
-}
+          usePointStyle: true,
+          boxWidth: 8,
+          boxHeight: 8,
+          pointStyle: 'circle',
+          callbacks: {
+            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
+            title: (items) => (items[0]?.label) || '',
+            label: (ctx) => `Vote Count - ${ctx.parsed.y}`
+          }
+        }
       },
       scales: {
         x: {
@@ -1027,6 +1087,7 @@ if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
   });
 
   charts[histId].$histCentered = false;
+  attachPersistentTooltip(charts[histId]);
 }
 
 /* ========= DRILLDOWN HELPERS ========= */
@@ -1094,7 +1155,8 @@ function openDrilldown(g, w, athlete, rows, opts = {}) {
   const state = drillState[g];
   if (!state) return;
 
-  const donutContainerId = g === 'F' ? 'womenDonutContainer' : 'menDonutContainer';
+  const donutContainerId =
+    g === 'F' ? 'womenDonutContainer' : 'menDonutContainer';
   const donutContainer = document.getElementById(donutContainerId);
 
   state.athleteMap = buildDrillAthleteMap(rows);
@@ -1105,10 +1167,9 @@ function openDrilldown(g, w, athlete, rows, opts = {}) {
   const names = Object.keys(state.athleteMap);
   state.select.innerHTML = '';
   names.forEach(name => {
-    const label = name; // use athlete string only (includes nominated total if present)
     const opt = document.createElement('option');
     opt.value = name;
-    opt.textContent = label;
+    opt.textContent = name;
     if (name === athlete) opt.selected = true;
     state.select.appendChild(opt);
   });
@@ -1140,7 +1201,8 @@ function closeDrilldown(g) {
   const state = drillState[g];
   if (!state) return;
 
-  const donutContainerId = g === 'F' ? 'womenDonutContainer' : 'menDonutContainer';
+  const donutContainerId =
+    g === 'F' ? 'womenDonutContainer' : 'menDonutContainer';
   const donutContainer = document.getElementById(donutContainerId);
 
   fadeOut(state.wrapper, () => fadeIn(donutContainer));
@@ -1263,6 +1325,7 @@ function renderDrillChart(g, athlete) {
   });
 
   state.chart.$histCentered = false;
+  attachPersistentTooltip(state.chart);
 }
 
 /* ========= COLLAPSIBLE SECTIONS ========= */
@@ -1290,8 +1353,12 @@ function toggleSection(id) {
 
 function repositionBottomButtons() {
   const main = document.querySelector('main');
-  const leaderboard = document.querySelector('a[href="leaderboard.html"]')?.closest('div');
-  const backToTop = document.getElementById('bottomBackToTop')?.closest('div');
+  const leaderboard = document
+    .querySelector('a[href="leaderboard.html"]')
+    ?.closest('div');
+  const backToTop = document
+    .getElementById('bottomBackToTop')
+    ?.closest('div');
   if (!main || !leaderboard || !backToTop) return;
 
   const contentHeight = main.scrollHeight;
@@ -1307,10 +1374,12 @@ function repositionBottomButtons() {
 window.addEventListener('resize', () => {
   repositionBottomButtons();
   Object.values(charts).forEach(chart => {
-    if (chart &&
-        chart.config.type === 'bar' &&
-        chart.canvas &&
-        /(Hist|Drill)$/i.test(chart.canvas.id)) {
+    if (
+      chart &&
+      chart.config.type === 'bar' &&
+      chart.canvas &&
+      /(Hist|Drill)$/i.test(chart.canvas.id)
+    ) {
       chart.$histCentered = false;
       chart.update('none');
     }
