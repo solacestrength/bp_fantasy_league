@@ -892,12 +892,16 @@ charts[donutId] = new Chart(donutCtx, {
   }
 });
 
-  // Ensure layout is correct once rendered
-  const donutChart = charts[donutId];
-  if (donutChart) {
-    donutChart.resize();
-    donutChart.update('none');
-  }
+  // 🔒 optional uniform geometry lock
+const donutChart = charts[donutId];
+if (donutChart) {
+  donutChart.options.radius = '85%';
+  donutChart.options.cutout = '57%';
+  donutChart.options.rotation = 0;
+  donutChart.options.circumference = 360;
+  donutChart.resize();
+  donutChart.update('none');
+}
 
 /* --- HISTOGRAM --- */
   const vals = rows
