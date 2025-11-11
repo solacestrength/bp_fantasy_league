@@ -15,235 +15,215 @@
   <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
 
   <style>
-  /* === GLOBAL THEME === */
-  body {
-    background: #0b0b0b;
-    color: #f1f1f1;
-    font-family: 'Inter', sans-serif;
-    overflow-x: hidden;
-  }
+/* === GLOBAL THEME === */
+body {
+  background: #0b0b0b;
+  color: #f1f1f1;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
 
-  /* === SELECT ELEMENTS === */
-  select {
-    background: #2f2f2f;
-    border: 1px solid #555;
-    color: #f1f1f1;
-    padding: 0.35rem 0.5rem;
-    border-radius: 0.375rem;
-    width: auto;
-    min-width: 0;
-    display: inline-block;
-  }
+/* === SELECT ELEMENTS === */
+select {
+  background: #2f2f2f;
+  border: 1px solid #555;
+  color: #f1f1f1;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.375rem;
+  width: auto;
+  min-width: 0;
+  display: inline-block;
+}
 
-  #womenSelect,
-  #menSelect,
-  .drill-select {
-    background-color: rgba(31, 41, 55, 0.6) !important;
-    border: 1px solid #374151;
-    color: #f1f1f1;
-  }
+#womenSelect,
+#menSelect,
+.drill-select {
+  background-color: rgba(31, 41, 55, 0.6) !important;
+  border: 1px solid #374151;
+  color: #f1f1f1;
+}
 
-  .drill-select {
-    display: inline-block;
-    font-size: 0.75rem;
-    padding-top: 0.4rem;
-    padding-bottom: 0.4rem;
-    max-width: 70%;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-  }
+.drill-select {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+  max-width: 70%;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
 
-  /* === METRICS LAYOUT === */
-  .chart-container {
-    max-width: 600px;
-    margin: 0 auto;
-    position: relative;
-    display: block;
-    width: 100%;
-    transition: opacity 0.25s ease;
-  }
+/* === METRICS LAYOUT === */
+.chart-container {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  transition: opacity 0.25s ease;
+}
 
-  canvas {
-    max-width: 100%;
-    height: auto !important;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-  }
+/* Canvas stays centered and consistent */
+.chart-container canvas {
+  display: block;
+  margin: 0 auto;
+  width: 100% !important;
+  height: auto !important;
+}
 
-  @media (min-width: 1024px) {
-    #womenDonut, #menDonut,
-    #womenHist, #menHist,
-    #womenDrill, #menDrill {
-      aspect-ratio: 1 / 1 !important;
-      width: 100% !important;
-      max-height: none !important;
-      object-fit: contain;
-    }
-
-    #womenDonut, #menDonut,
-    #womenDrill, #menDrill { height: 375px !important; }
-
-    #womenHist, #menHist {
-      height: 375px !important;
-      transform: none !important;
-      transform-origin: top center;
-    }
-  }
-
-  @media (max-width: 1023px) {
-    #womenDonut, #menDonut,
-    #womenHist, #menHist,
-    #womenDrill, #menDrill {
-      aspect-ratio: 1 / 1 !important;
-      width: 100% !important;
-      max-height: none !important;
-      object-fit: contain;
-    }
-
-    #womenDonut, #menDonut,
-    #womenDrill, #menDrill { height: 336px !important; }
-
-    #womenHist, #menHist {
-      height: 336px !important;
-      transform: none !important;
-      transform-origin: top center;
-    }
-  }
-
-  #womenDonut,
-  #menDonut {
-    width: 100% !important;
+/* Desktop – stable aspect ratio and sizing */
+@media (min-width: 1024px) {
+  #womenDonut, #menDonut,
+  #womenHist, #menHist,
+  #womenDrill, #menDrill {
     aspect-ratio: 1 / 1 !important;
+    width: 100% !important;
     max-height: none !important;
     object-fit: contain;
   }
 
-  /* === LEGEND RESPONSIVENESS + ALIGNMENT FIX === */
+  #womenDonut, #menDonut,
+  #womenDrill, #menDrill { height: 375px !important; }
 
-/* Default chart containers – normal block flow (restores share button right alignment) */
-.chart-container {
-  position: relative;
-  display: block;
-  width: 100%;
-  text-align: center;
-  transition: opacity 0.25s ease;
+  #womenHist, #menHist {
+    height: 375px !important;
+    transform: none !important;
+    transform-origin: top center;
+  }
 }
 
-/* Donut containers only – responsive legend handling */
+/* Mobile – same aspect ratio consistency */
+@media (max-width: 1023px) {
+  #womenDonut, #menDonut,
+  #womenHist, #menHist,
+  #womenDrill, #menDrill {
+    aspect-ratio: 1 / 1 !important;
+    width: 100% !important;
+    max-height: none !important;
+    object-fit: contain;
+  }
+
+  #womenDonut, #menDonut,
+  #womenDrill, #menDrill { height: 336px !important; }
+
+  #womenHist, #menHist {
+    height: 336px !important;
+    transform: none !important;
+    transform-origin: top center;
+  }
+}
+
+/* === DONUT LEGENDS (Responsive, Centered, Max 2 Rows) === */
 #womenDonutContainer,
 #menDonutContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: block; /* allows top flex bar to work normally */
+  text-align: center;
 }
 
-/* Canvas stays centered always */
-.chart-container canvas {
-  display: block;
-  margin: 0 auto;
-}
-
-/* Legend area below donuts */
-.chart-container .chartjs-legend {
+#womenDonutContainer .chartjs-legend,
+#menDonutContainer .chartjs-legend {
   max-width: 90%;
   text-align: center;
-  margin-top: 0.5rem !important;
+  margin: 0.5rem auto 0 auto !important;
 }
 
-/* Maintain consistent spacing between charts */
+/* Histogram legends (if ever visible) stay centered */
+#womenHist .chartjs-legend,
+#menHist .chartjs-legend {
+  text-align: center;
+}
+
+/* Maintain consistent spacing between stacked chart containers */
 .chart-container + .chart-container {
   margin-top: 1.75rem;
 }
 
-  /* === COLLAPSIBLE SECTIONS === */
-  .collapsible-content {
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    transition: max-height .5s ease, opacity .4s ease;
-  }
+/* === COLLAPSIBLE SECTIONS === */
+.collapsible-content {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height .5s ease, opacity .4s ease;
+}
 
+.collapsible-content.open {
+  opacity: 1;
+  max-height: 1000px;
+  padding-bottom: 1rem;
+}
+
+@media (max-width: 1023px) {
+  .collapsible-content,
   .collapsible-content.open {
-    opacity: 1;
-    max-height: 1000px;
-    padding-bottom: 1rem;
+    width: 100%;
+    margin-left: 0;
+    padding-left: 0;
+    padding-right: 0;
   }
+}
 
-  @media (max-width: 1023px) {
-    .collapsible-content,
-    .collapsible-content.open {
-      width: 100%;
-      margin-left: 0;
-      padding-left: 0;
-      padding-right: 0;
-    }
-  }
+.arrow {
+  transition: transform .4s ease;
+}
+.arrow.rotate {
+  transform: rotate(180deg);
+}
 
-  .arrow {
-    transition: transform .4s ease;
-  }
+/* === SHARE BUTTONS === */
+.share-btn {
+  background-color: #dc2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: .5rem;
+  height: 36px;
+  width: 36px;
+  transition: background-color .2s ease, transform .2s ease;
+}
 
-  .arrow.rotate {
-    transform: rotate(180deg);
-  }
+.share-btn:hover {
+  background-color: #ef4444;
+  transform: translateY(-1px);
+}
 
-  /* === SHARE BUTTONS === */
-  .share-btn {
-    background-color: #dc2626;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: .5rem;
-    height: 36px;
-    width: 36px;
-    transition: background-color .2s ease, transform .2s ease;
-  }
+.share-icon {
+  filter: invert(1);
+  height: 18px;
+  width: 18px;
+}
 
-  .share-btn:hover {
-    background-color: #ef4444;
-    transform: translateY(-1px);
-  }
+/* === BACK PILL (Drilldown) === */
+.back-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  background-color: #111827;
+  border: 1px solid #374151;
+  color: #e5e7eb;
+  font-size: 0.7rem;
+  font-weight: 500;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+  transition: all .2s ease;
+}
 
-  .share-icon {
-    filter: invert(1);
-    height: 18px;
-    width: 18px;
-  }
+.back-pill:hover {
+  background-color: #374151;
+  color: #f97316;
+  transform: translateY(-1px);
+}
 
-  /* === BACK PILL (Drilldown) === */
-  .back-pill {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.35rem;
-    padding: 0.5rem 1.1rem;
-    border-radius: 999px;
-    background-color: #111827;
-    border: 1px solid #374151;
-    color: #e5e7eb;
-    font-size: 0.7rem;
-    font-weight: 500;
-    backdrop-filter: blur(6px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.35);
-    transition: all .2s ease;
-  }
+/* === ANIMATIONS === */
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
 
-  .back-pill:hover {
-    background-color: #374151;
-    color: #f97316;
-    transform: translateY(-1px);
-  }
-
-  /* === ANIMATIONS === */
-  @keyframes fadeInUp {
-    0% { opacity: 0; transform: translateY(10px); }
-    100% { opacity: 1; transform: translateY(0); }
-  }
-
-  .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
-  .animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
+.animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
+.animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
 </style>
 </head>
 
@@ -712,6 +692,7 @@ function renderCharts(g, w) {
     boxWidth: 10,
     boxHeight: 10,
     generateLabels: (chart) => {
+      // ✅ Always base on Chart.js defaults first
       const baseLabels = Chart.defaults.plugins.legend.labels.generateLabels(chart);
       if (!baseLabels?.length) return [];
 
@@ -721,16 +702,18 @@ function renderCharts(g, w) {
       let fontSize = isDesktop ? 14 : 11;
       const minFont = isDesktop ? 11 : 9;
 
-      // Measure total width of all legend entries
+      // Calculate total width of all labels
       ctx.save();
       ctx.font = `500 ${fontSize}px Inter, sans-serif`;
-      const totalWidth = baseLabels.reduce((sum, lbl) => sum + ctx.measureText(lbl.text).width + 42, 0);
+      const totalWidth = baseLabels.reduce((sum, lbl) => {
+        const labelText = lbl.text || ''; // ✅ prevent undefined
+        return sum + ctx.measureText(labelText).width + 42;
+      }, 0);
       ctx.restore();
 
-      // Fit into at most two rows
+      // Auto-scale to max 2 rows
       const maxWidth = chartWidth * 0.9;
       const rows = Math.min(2, Math.ceil(totalWidth / maxWidth));
-
       if (totalWidth > maxWidth * rows) {
         const scale = (maxWidth * rows) / totalWidth;
         fontSize = Math.max(minFont, Math.floor(fontSize * scale));
@@ -740,7 +723,8 @@ function renderCharts(g, w) {
       return baseLabels;
     },
     color: '#ccc',
-    font: ctx => ctx.chart.legend?.options?.labels?.font || { size: 12, weight: '500' },
+    font: (ctx) =>
+      ctx.chart.legend?.options?.labels?.font || { size: 12, weight: '500' },
     boxPadding: 4
   }
 },
