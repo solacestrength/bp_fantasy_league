@@ -611,7 +611,6 @@ function fadeOut(el) {
 }
 
 /* ========= CHART RENDERING ========= */
-
 function renderCharts(g, w) {
   const s = sizing();
   const donutId = g === 'F' ? 'womenDonut' : 'menDonut';
@@ -737,7 +736,7 @@ function renderCharts(g, w) {
     }
   });
 
-  // ✅ Desktop pointer alignment correction
+  // ✅ Desktop pointer alignment fix (force pixel ratio and strip transforms)
   if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
     const c = charts[donutId].canvas;
     const rect = c.getBoundingClientRect();
@@ -861,7 +860,7 @@ function renderCharts(g, w) {
     }
   });
 
-  // ✅ Desktop pointer alignment correction for histogram
+  // ✅ Desktop pointer alignment fix for histogram
   if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
     const c = charts[histId].canvas;
     const rect = c.getBoundingClientRect();
@@ -872,6 +871,9 @@ function renderCharts(g, w) {
   }
 
   charts[histId].$histCentered = false;
+
+  // ✅ Apply transform cleanup after both donut + hist render
+  requestAnimationFrame(stripTransformsForCharts);
 }
 
 /* ========= DRILLDOWN HELPERS ========= */
@@ -966,7 +968,7 @@ function renderDrillChart(g, athlete) {
     }
   });
 
-  // ✅ Desktop pointer alignment correction for drilldown
+  // ✅ Desktop pointer alignment fix for drilldown
   if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
     const c = state.chart.canvas;
     const rect = c.getBoundingClientRect();
@@ -977,6 +979,9 @@ function renderDrillChart(g, athlete) {
   }
 
   state.chart.$histCentered = false;
+
+  // ✅ Final transform cleanup (drilldown)
+  requestAnimationFrame(stripTransformsForCharts);
 }
 
 /* ========= COLLAPSIBLE SECTIONS ========= */
