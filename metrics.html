@@ -766,16 +766,18 @@ function renderCharts(g, w) {
           padding: { top: 2, bottom: 18 }
         },
         legend: {
-          position: 'bottom',
-          onClick: null,
-          onHover: null,
-          labels: {
-            color: '#ccc',
-            boxWidth: 10,
-            boxHeight: 10,
-            font: { size: s.donutLegend }
-          }
-        },
+  position: 'bottom',
+  onClick: null,
+  onHover: null,
+  labels: {
+    color: '#ccc',
+    boxWidth: 10,
+    boxHeight: 10,
+    font: { size: s.donutLegend },
+    usePointStyle: true,
+    pointStyle: 'circle'
+  }
+},
         tooltip: {
           usePointStyle: true,
           boxWidth: 8,
