@@ -815,7 +815,7 @@ function renderCharts(g, w) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      layout: { padding: 0 },
+      layout: { padding: { bottom: 30 } },
       events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
       interaction: { mode: 'nearest', intersect: true },
       plugins: {
@@ -918,7 +918,7 @@ function renderDrillChart(g, athlete) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      layout: { padding: 0 },
+      layout: { padding: { bottom: 30 } },
       events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
       interaction: { mode: 'nearest', intersect: true },
       plugins: {
@@ -1016,12 +1016,8 @@ function buildDrillAthleteMap(rows) {
     const name = r.Athlete;
     if (!name) return;
     const pts = parseInt(r.Points, 10);
-    if (!map[name]) {
-      map[name] = { votes: [] };
-    }
-    if (!isNaN(pts) && pts >= 1 && pts <= 16) {
-      map[name].votes.push(pts);
-    }
+    if (!map[name]) map[name] = { votes: [] };
+    if (!isNaN(pts) && pts >= 1 && pts <= 16) map[name].votes.push(pts);
   });
   return map;
 }
@@ -1033,11 +1029,13 @@ function openDrilldown(g, w, athlete, rows, opts = {}) {
   const donutContainerId = g === 'F' ? 'womenDonutContainer' : 'menDonutContainer';
   const donutContainer = document.getElementById(donutContainerId);
 
+  // build athlete vote map for this class
   state.athleteMap = buildDrillAthleteMap(rows);
   state.currentAthlete = athlete;
   state.currentClass = w;
   state.totalVotesInClass = rows.length;
 
+  // rebuild dropdown for available athletes
   const names = Object.keys(state.athleteMap);
   state.select.innerHTML = '';
   names.forEach(name => {
@@ -1048,22 +1046,36 @@ function openDrilldown(g, w, athlete, rows, opts = {}) {
     state.select.appendChild(opt);
   });
 
+  // ensure fallback if invalid athlete passed
   if (!state.athleteMap[athlete]) {
     const fallback = names[0];
     if (fallback) state.currentAthlete = fallback;
   }
 
+  // toggle visibility with fade animations
   if (!opts.skipFade) {
     fadeOut(donutContainer);
     fadeIn(state.wrapper);
+
+    // ensure correct pointer math on desktop after fade-in
+    if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      setTimeout(() => requestAnimationFrame(stripTransformsForCharts), 400);
+    }
   } else {
     donutContainer.style.display = 'none';
     state.wrapper.style.display = 'block';
     state.wrapper.style.opacity = 1;
+
+    // ensure correct pointer math even when skipping fade
+    if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      requestAnimationFrame(stripTransformsForCharts);
+    }
   }
 
+  // render the selected athlete's drilldown chart
   renderDrillChart(g, state.currentAthlete);
 
+  // change event for athlete selector
   state.select.onchange = () => {
     const selAthlete = state.select.value;
     if (!selAthlete) return;
@@ -1091,112 +1103,6 @@ function closeDrilldown(g) {
   state.currentClass = null;
   state.athleteMap = {};
   state.totalVotesInClass = 0;
-}
-  
-function renderDrillChart(g, athlete) {
-  const state = drillState[g];
-  if (!state || !state.athleteMap[athlete]) return;
-
-  const s = sizing();
-  const votes = state.athleteMap[athlete].votes || [];
-  const colors = getRedGradientColors();
-
-  const counts = Array(16).fill(0);
-  votes.forEach(v => {
-    if (v >= 1 && v <= 16) counts[v - 1]++;
-  });
-
-  if (state.chart) state.chart.destroy();
-
-  const ctx = state.canvas.getContext('2d');
-  state.chart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: Array.from({ length: 16 }, (_, i) => i + 1),
-      datasets: [{
-        data: counts,
-        backgroundColor: colors,
-        borderRadius: 5,
-        barPercentage: 0.9,
-        categoryPercentage: 1.0
-      }]
-    },
-    options: {
-      maintainAspectRatio: true,
-      aspectRatio: 1,
-      plugins: {
-        centerHistArea: { enabled: true },
-        legend: { display: false },
-        datalabels: {
-          color: '#fff',
-          font: { size: s.histBarLabel, weight: 'normal' },
-          formatter: (v) => v > 0 ? v : '',
-          anchor: 'center',
-          align: 'center',
-          clamp: true
-        },
-        tooltip: {
-          usePointStyle: true,
-          boxWidth: 8,
-          boxHeight: 8,
-          pointStyle: 'circle',
-          callbacks: {
-            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
-            title: (items) => (items[0]?.label) || '',
-            label: (ctx2) => `Vote Count - ${ctx2.parsed.y}`
-          }
-        },
-        title: { display: false }
-      },
-      scales: {
-        x: {
-          ticks: {
-            color: '#ccc',
-            font: { size: s.axisTick },
-            maxRotation: 0,
-            minRotation: 0
-          },
-          title: {
-            display: true,
-            text: 'Points / Confidence Level',
-            color: '#ccc',
-            font: { size: s.axisTitle, weight: 'bold' }
-          },
-          grid: { display: false }
-        },
-        y: {
-          beginAtZero: true,
-          ticks: {
-            color: '#ccc',
-            font: { size: s.axisTick },
-            precision: 0
-          },
-          title: {
-            display: true,
-            text: 'Vote Count',
-            color: '#ccc',
-            font: { size: s.axisTitle, weight: 'bold' }
-          },
-          grid: { display: false }
-        }
-      }
-    }
-  });
-
-  // ✅ Desktop pointer alignment fix for drilldown
-  if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    const c = state.chart.canvas;
-    const rect = c.getBoundingClientRect();
-    const ratio = window.devicePixelRatio || 1;
-    c.width  = rect.width * ratio;
-    c.height = rect.height * ratio;
-    state.chart.resize();
-  }
-
-  state.chart.$histCentered = false;
-
-  // ✅ Final transform cleanup (drilldown)
-  requestAnimationFrame(stripTransformsForCharts);
 }
 
 /* ========= COLLAPSIBLE SECTIONS ========= */
