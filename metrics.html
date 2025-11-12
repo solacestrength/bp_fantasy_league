@@ -665,6 +665,43 @@ document.addEventListener('animationend', (e) => {
   }
 });
 
+  /* ========= DESKTOP: STRIP TRANSFORMS AROUND CHARTS ========= */
+function stripTransformsForCharts() {
+  // Skip mobile/touch devices
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
+
+  const ids = ['womenDonut','menDonut','womenHist','menHist','womenDrill','menDrill'];
+  ids.forEach(id => {
+    const canvas = document.getElementById(id);
+    if (!canvas) return;
+
+    // Walk up a few ancestors and nuke transforms that skew pointer math
+    let el = canvas.parentElement;
+    let hops = 0;
+    while (el && el !== document.body && hops < 6) {
+      const tf = getComputedStyle(el).transform;
+      if (tf && tf !== 'none') {
+        el.classList.add('no-transform');
+        el.style.transform = 'none';
+      }
+      el = el.parentElement;
+      hops++;
+    }
+  });
+}
+
+// When any fade-in animation finishes, clear transforms again
+document.addEventListener('animationend', (e) => {
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
+  const t = e.target;
+  if (!t) return;
+  if (t.classList.contains('animate-fade-in') || t.classList.contains('animate-fade-in-up')) {
+    t.classList.add('no-transform');
+    t.style.transform = 'none';
+    requestAnimationFrame(stripTransformsForCharts);
+  }
+});
+
 /* ========= CHART RENDERING ========= */
 function renderCharts(g, w) {
   const s = sizing();
