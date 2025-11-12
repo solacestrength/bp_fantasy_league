@@ -610,6 +610,45 @@ function fadeOut(el) {
   setTimeout(() => { el.style.display = 'none'; }, 250);
 }
 
+/* ========= DESKTOP: STRIP TRANSFORMS AROUND CHARTS ========= */
+function stripTransformsForCharts() {
+  // mobile unaffected
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
+
+  const ids = ['womenDonut','menDonut','womenHist','menHist','womenDrill','menDrill'];
+  ids.forEach(id => {
+    const canvas = document.getElementById(id);
+    if (!canvas) return;
+
+    // Walk up a few ancestors and nuke transforms that can skew pointer math
+    let el = canvas.parentElement;
+    let hops = 0;
+    while (el && el !== document.body && hops < 6) {
+      const tf = getComputedStyle(el).transform;
+      if (tf && tf !== 'none') {
+        el.classList.add('no-transform');
+        el.style.transform = 'none';
+      }
+      el = el.parentElement;
+      hops++;
+    }
+  });
+}
+
+// When any fade-in element finishes its animation, ensure transform is gone on desktop
+document.addEventListener('animationend', (e) => {
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
+  const t = e.target;
+  if (!t) return;
+  if (t.classList.contains('animate-fade-in') || t.classList.contains('animate-fade-in-up')) {
+    t.classList.add('no-transform');
+    t.style.transform = 'none';
+    // Also sweep the chart ancestors now that layout is “settled”
+    // (next frame so DOM has applied final styles)
+    requestAnimationFrame(stripTransformsForCharts);
+  }
+});
+
 /* ========= CHART RENDERING ========= */
 function renderCharts(g, w) {
   const s = sizing();
