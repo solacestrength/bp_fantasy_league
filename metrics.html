@@ -136,6 +136,17 @@ select {
   width: 18px;
 }
 
+/* --- Adjust histogram share button alignment --- */
+.chart-container + .chart-container .share-btn {
+  margin-top: 6px; /* small offset so it sits just below donut legend */
+}
+
+@media (min-width: 1024px) {
+  .chart-container + .chart-container .share-btn {
+    margin-top: 8px; /* slightly more breathing room on desktop */
+  }
+}
+
 /* === BACK PILL (Drilldown) === */
 .back-pill {
   display: inline-flex;
