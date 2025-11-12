@@ -595,10 +595,20 @@ function fadeOut(el) {
   setTimeout(() => { el.style.display = 'none'; }, 250);
 }
 
-/* ========= DESKTOP TOOLTIP LINGER (Stable) ========= */
+/* ========= DESKTOP TOOLTIP LINGER (Patched) ========= */
 function enableDesktopTooltipLinger(chart, ms = 5000) {
+  // Desktop only
   if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
   if (!chart || !chart.canvas) return;
+
+  // 1) Stop Chart.js from auto-clearing tooltips on mouseout
+  const evts = chart.options.events || [];
+  chart.options.events = evts.filter(e => e !== 'mouseout' && e !== 'mouseleave');
+
+  // Make sure tooltips are enabled
+  if (!chart.options.plugins) chart.options.plugins = {};
+  if (!chart.options.plugins.tooltip) chart.options.plugins.tooltip = {};
+  chart.options.plugins.tooltip.enabled = true;
 
   const canvas = chart.canvas;
   let lastActive = [];
@@ -608,62 +618,57 @@ function enableDesktopTooltipLinger(chart, ms = 5000) {
   function clearLinger() {
     if (lingerTimer) { clearTimeout(lingerTimer); lingerTimer = null; }
     if (!chart || chart._destroyed) return;
-    chart.tooltip.setActiveElements([], { x: 0, y: 0 });
-    chart.update();
+    chart.tooltip.setActiveElements([], {x: 0, y: 0});
+    chart.update('none');
   }
 
+  // Track last element under cursor
   canvas.addEventListener('mousemove', (e) => {
     hovering = true;
-    const points = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
-    if (points && points.length) {
-      lastActive = points.map(p => ({ datasetIndex: p.datasetIndex, index: p.index }));
+    const pts = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
+    if (pts && pts.length) {
+      lastActive = pts.map(p => ({ datasetIndex: p.datasetIndex, index: p.index }));
     }
-    if (lingerTimer) {
-      clearTimeout(lingerTimer);
-      lingerTimer = null;
-    }
+    if (lingerTimer) { clearTimeout(lingerTimer); lingerTimer = null; }
   });
 
+  // Freeze when pointer leaves the canvas
   canvas.addEventListener('mouseleave', () => {
     hovering = false;
     if (!lastActive.length) return;
 
-    // Freeze tooltip for last hovered element
-    chart.tooltip.setActiveElements(lastActive, { x: chart.width / 2, y: chart.height / 2 });
-    chart.update();
+    // Run on next frame so any remaining internal handlers finish first
+    requestAnimationFrame(() => {
+      if (!chart || chart._destroyed) return;
+      chart.tooltip.setActiveElements(lastActive, { x: chart.width / 2, y: chart.height / 2 });
+      chart.update('none');
 
-    // Schedule its removal after ms
-    lingerTimer = setTimeout(() => {
-      if (!hovering) clearLinger();
-    }, ms);
+      lingerTimer = setTimeout(() => {
+        if (!hovering) clearLinger();
+      }, ms);
+    });
   });
 
-  // Scrolling off viewport also counts as “leave”
+  // Clear if the chart scrolls off-screen
   window.addEventListener('scroll', () => {
-    const rect = canvas.getBoundingClientRect();
-    const visible = rect.bottom > 0 && rect.top < window.innerHeight;
+    const r = canvas.getBoundingClientRect();
+    const visible = r.bottom > 0 && r.top < window.innerHeight;
     if (!visible) clearLinger();
   });
 
-  // Clicking outside the chart also clears linger
+  // Clear on outside click
   document.addEventListener('click', (e) => {
     if (lingerTimer && !canvas.contains(e.target)) clearLinger();
   });
-}
 
-// When any fade-in element finishes its animation, ensure transform is gone on desktop
-document.addEventListener('animationend', (e) => {
-  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
-  const t = e.target;
-  if (!t) return;
-  if (t.classList.contains('animate-fade-in') || t.classList.contains('animate-fade-in-up')) {
-    t.classList.add('no-transform');
-    t.style.transform = 'none';
-    // Also sweep the chart ancestors now that layout is “settled”
-    // (next frame so DOM has applied final styles)
-    requestAnimationFrame(stripTransformsForCharts);
-  }
-});
+  // Cancel any lingering state when re-entering the chart
+  canvas.addEventListener('mouseenter', () => {
+    hovering = true;
+    if (lingerTimer) { clearTimeout(lingerTimer); lingerTimer = null; }
+    chart.tooltip.setActiveElements([], {x:0, y:0});
+    chart.update('none');
+  });
+}
 
   /* ========= DESKTOP: STRIP TRANSFORMS AROUND CHARTS ========= */
 function stripTransformsForCharts() {
