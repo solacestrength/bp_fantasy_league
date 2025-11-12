@@ -1396,7 +1396,8 @@ async function shareChart(id, g) {
   img.style.display = 'block';
   img.style.margin = '0 auto 16px auto';
   img.style.borderRadius = '14px';
-  img.style.width = isDonut ? '72%' : '92%';
+  // Unified export width so background scale matches donut
+  img.style.width = '82%';
   img.style.height = 'auto';
 
   const credit = document.createElement('p');
