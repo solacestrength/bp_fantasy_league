@@ -595,6 +595,58 @@ function fadeOut(el) {
   setTimeout(() => { el.style.display = 'none'; }, 250);
 }
 
+/* ========= DESKTOP TOOLTIP LINGER (5s) ========= */
+function enableDesktopTooltipLinger(chart, ms = 5000) {
+  // Only on desktop
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
+  if (!chart || !chart.canvas) return;
+
+  const canvas = chart.canvas;
+  let lastActive = [];
+  let timer = null;
+
+  function clearLinger() {
+    if (timer) { clearTimeout(timer); timer = null; }
+    if (!chart || chart._destroyed) return;
+    chart.tooltip.setActiveElements([], {x: 0, y: 0});
+    chart.update('none');
+  }
+
+  canvas.addEventListener('mousemove', (e) => {
+    // Track the most recent hovered element
+    const pts = chart.getElementsAtEventForMode(
+      e, 'nearest', { intersect: true }, true
+    );
+    if (pts && pts.length) {
+      lastActive = pts.map(p => ({ datasetIndex: p.datasetIndex, index: p.index }));
+    }
+    // If we were lingering and the user returned, clear immediately
+    if (timer) clearLinger();
+  });
+
+  canvas.addEventListener('mouseleave', (e) => {
+    // If we have a last hovered element, freeze its tooltip for ms
+    if (!lastActive.length) return;
+    const rect = canvas.getBoundingClientRect();
+    const vx = (e.clientX - rect.left) || rect.width / 2;
+    const vy = (e.clientY - rect.top)  || rect.height / 2;
+
+    chart.tooltip.setActiveElements(lastActive, { x: vx, y: vy });
+    chart.update('none');
+
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(clearLinger, ms);
+  });
+
+  // Clicking anywhere outside the chart cancels the linger
+  document.addEventListener('click', (e) => {
+    if (timer && !canvas.contains(e.target)) clearLinger();
+  });
+
+  // If the chart gets destroyed, clean up
+  chart.$destroyLinger = () => { clearLinger(); };
+}
+
 /* ========= DESKTOP: STRIP TRANSFORMS AROUND CHARTS ========= */
 function stripTransformsForCharts() {
   // mobile unaffected
@@ -763,6 +815,8 @@ function renderCharts(g, w) {
     }
   });
 
+  enableDesktopTooltipLinger(charts[donutId], 5000);
+
   /* --- HISTOGRAM --- */
   const vals = rows
     .map(r => parseFloat(r.PredictedTotal))
@@ -881,6 +935,7 @@ function renderCharts(g, w) {
   });
 
   charts[histId].$histCentered = false;
+  enableDesktopTooltipLinger(charts[histId], 5000);
 
   // ✅ Final transform cleanup after both donut + hist render
   requestAnimationFrame(stripTransformsForCharts);
@@ -981,6 +1036,7 @@ function renderDrillChart(g, athlete) {
   });
 
   state.chart.$histCentered = false;
+  enableDesktopTooltipLinger(state.chart, 5000);
   requestAnimationFrame(stripTransformsForCharts);
 }
 
