@@ -634,64 +634,6 @@ document.addEventListener('animationend', (e) => {
   }
 });
 
-/* ========= DESKTOP TOOLTIP LOCK / UNLOCK ========= */
-function enableDesktopTooltipLock(chart) {
-  if (!chart || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
-
-  let locked = false;
-  let lockedElement = null;
-
-  chart.canvas.addEventListener('click', (evt) => {
-    const points = chart.getElementsAtEventForMode(
-      evt,
-      'nearest',
-      { intersect: true },
-      false
-    );
-
-    // If nothing clicked and a tooltip was locked, clear it
-    if (!points.length) {
-      if (locked) {
-        locked = false;
-        lockedElement = null;
-        chart.tooltip.setActiveElements([], { x: 0, y: 0 });
-        chart.update();
-      }
-      return;
-    }
-
-    // If clicking the same element again → unlock
-    const sameElement =
-      locked &&
-      lockedElement &&
-      lockedElement.datasetIndex === points[0].datasetIndex &&
-      lockedElement.index === points[0].index;
-
-    if (sameElement) {
-      locked = false;
-      lockedElement = null;
-      chart.tooltip.setActiveElements([], { x: 0, y: 0 });
-    } else {
-      // Otherwise, lock tooltip to this element
-      locked = true;
-      lockedElement = points[0];
-      chart.tooltip.setActiveElements([points[0]], { x: evt.offsetX, y: evt.offsetY });
-    }
-
-    chart.update();
-  });
-
-  // Global click listener: click anywhere outside chart unlocks tooltip
-  document.addEventListener('click', (e) => {
-    if (!chart.canvas.contains(e.target) && locked) {
-      locked = false;
-      lockedElement = null;
-      chart.tooltip.setActiveElements([], { x: 0, y: 0 });
-      chart.update();
-    }
-  });
-}
-
 /* ========= CHART RENDERING ========= */
 function renderCharts(g, w) {
   const s = sizing();
@@ -730,7 +672,7 @@ function renderCharts(g, w) {
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false,
+      maintainAspectRatio: false, // container defines size
       cutout: '57%',
       layout: { padding: 0 },
       events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
@@ -785,13 +727,16 @@ function renderCharts(g, w) {
             const value = dataset.data[ctx.dataIndex];
             const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
             const percentage = (value / totalLocal) * 100;
+
             const angle = (percentage / 100) * 360;
             const base = s.donutPercent;
             let size;
-            if (angle < 10) size = base * 0.45;
-            else if (angle < 20) size = base * 0.6;
-            else if (angle < 40) size = base * 0.8;
-            else size = base;
+
+            if (angle < 10)       size = base * 0.45;
+            else if (angle < 20)  size = base * 0.6;
+            else if (angle < 40)  size = base * 0.8;
+            else                  size = base;
+
             return { weight: 'bold', size: Math.max(8, size) };
           },
           formatter: (v, ctx) => {
@@ -818,10 +763,10 @@ function renderCharts(g, w) {
     }
   });
 
-  enableDesktopTooltipLock(charts[donutId]);
-
   /* --- HISTOGRAM --- */
-  const vals = rows.map(r => parseFloat(r.PredictedTotal)).filter(v => !isNaN(v) && v > 0);
+  const vals = rows
+    .map(r => parseFloat(r.PredictedTotal))
+    .filter(v => !isNaN(v) && v > 0);
   if (!vals.length) {
     if (charts[histId]) charts[histId].destroy();
     return;
@@ -844,6 +789,13 @@ function renderCharts(g, w) {
   const labelsH = Array.from({ length: bins }, (_, i) =>
     `${(min + i * bw).toFixed(0)}–${(min + (i + 1) * bw).toFixed(0)}`
   );
+
+  const minC = Math.min(...countsH);
+  const maxC = Math.max(...countsH);
+  const yMin = Math.floor(minC / 2);
+  const span = maxC - yMin;
+  const step = Math.max(1, Math.round(span / 4));
+  const yMax = Math.ceil(maxC / step) * step;
 
   if (charts[histId]) charts[histId].destroy();
   const histCtx = document.getElementById(histId).getContext('2d');
@@ -909,8 +861,13 @@ function renderCharts(g, w) {
           grid: { display: false }
         },
         y: {
+          min: yMin,
+          max: yMax,
           beginAtZero: false,
-          ticks: { color: '#ccc', font: { size: s.axisTick } },
+          ticks: {
+            color: '#ccc',
+            font: { size: s.axisTick }
+          },
           title: {
             display: true,
             text: `Vote Count (Total = ${N})`,
@@ -923,9 +880,9 @@ function renderCharts(g, w) {
     }
   });
 
-  enableDesktopTooltipLock(charts[histId]);
-
   charts[histId].$histCentered = false;
+
+  // ✅ Final transform cleanup after both donut + hist render
   requestAnimationFrame(stripTransformsForCharts);
 }
 
@@ -937,12 +894,15 @@ function renderDrillChart(g, athlete) {
   const s = sizing();
   const votes = state.athleteMap[athlete].votes || [];
   const colors = getRedGradientColors();
+
   const counts = Array(16).fill(0);
-  votes.forEach(v => { if (v >= 1 && v <= 16) counts[v - 1]++; });
+  votes.forEach(v => {
+    if (v >= 1 && v <= 16) counts[v - 1]++;
+  });
 
   if (state.chart) state.chart.destroy();
-  const ctx = state.canvas.getContext('2d');
 
+  const ctx = state.canvas.getContext('2d');
   state.chart = new Chart(ctx, {
     type: 'bar',
     data: {
@@ -982,7 +942,8 @@ function renderDrillChart(g, athlete) {
             title: (items) => (items[0]?.label) || '',
             label: (ctx2) => `Vote Count - ${ctx2.parsed.y}`
           }
-        }
+        },
+        title: { display: false }
       },
       scales: {
         x: {
@@ -1019,11 +980,9 @@ function renderDrillChart(g, athlete) {
     }
   });
 
-  enableDesktopTooltipLock(state.chart);
-
-state.chart.$histCentered = false;
-requestAnimationFrame(stripTransformsForCharts);
-} 
+  state.chart.$histCentered = false;
+  requestAnimationFrame(stripTransformsForCharts);
+}
 
 /* ========= DRILLDOWN HELPERS ========= */
 
