@@ -15,199 +15,165 @@
   <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
 
   <style>
-  /* === GLOBAL THEME === */
-  body {
-    background: #0b0b0b;
-    color: #f1f1f1;
-    font-family: 'Inter', sans-serif;
-    overflow-x: hidden;
-  }
+/* === GLOBAL THEME === */
+body {
+  background: #0b0b0b;
+  color: #f1f1f1;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
 
-  /* === SELECT ELEMENTS === */
-  select {
-    background: #2f2f2f;
-    border: 1px solid #555;
-    color: #f1f1f1;
-    padding: 0.35rem 0.5rem;
-    border-radius: 0.375rem;
-    width: auto;
-    min-width: 0;
-    display: inline-block;
-  }
+/* === SELECT ELEMENTS === */
+select {
+  background: #2f2f2f;
+  border: 1px solid #555;
+  color: #f1f1f1;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.375rem;
+  width: auto;
+  min-width: 0;
+  display: inline-block;
+}
 
-  #womenSelect,
-  #menSelect,
-  .drill-select {
-    background-color: rgba(31, 41, 55, 0.6) !important;
-    border: 1px solid #374151;
-    color: #f1f1f1;
-  }
+#womenSelect,
+#menSelect,
+.drill-select {
+  background-color: rgba(31, 41, 55, 0.6) !important;
+  border: 1px solid #374151;
+  color: #f1f1f1;
+}
 
-  .drill-select {
-    display: inline-block;
-    font-size: 0.75rem;
-    padding-top: 0.4rem;
-    padding-bottom: 0.4rem;
-    max-width: 70%;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-  }
+.drill-select {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+  max-width: 70%;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
 
-  /* === METRICS LAYOUT === */
+/* === METRICS LAYOUT === */
+.chart-container {
+  position: relative;
+  width: 100%;
+  height: 336px; /* default mobile/tablet height */
+  max-width: 600px;
+  margin: 0 auto;
+  display: block;
+  transition: opacity 0.25s ease;
+}
+
+@media (min-width: 1024px) {
   .chart-container {
-    max-width: 600px;
-    margin: 0 auto;
-    position: relative;
-    display: block;
-    width: 100%;
-    transition: opacity 0.25s ease;
+    height: 375px; /* desktop height */
   }
+}
 
-  canvas {
-    max-width: 100%;
-    height: auto !important;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-  }
+/* Canvas fills container exactly (no CSS scaling) */
+.chart-container > canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  object-fit: contain;
+}
 
-  @media (min-width: 1024px) {
-    #womenDonut, #menDonut,
-    #womenHist, #menHist,
-    #womenDrill, #menDrill {
-      aspect-ratio: 1 / 1 !important;
-      width: 100% !important;
-      max-height: none !important;
-      object-fit: contain;
-    }
+/* === COLLAPSIBLE SECTIONS === */
+.collapsible-content {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height .5s ease, opacity .4s ease;
+}
 
-    #womenDonut, #menDonut,
-    #womenDrill, #menDrill { height: 375px !important; }
+.collapsible-content.open {
+  opacity: 1;
+  max-height: 1000px;
+  padding-bottom: 1rem;
+}
 
-    #womenHist, #menHist {
-      height: 375px !important;
-      transform: none !important;
-      transform-origin: top center;
-    }
-  }
-
-  @media (max-width: 1023px) {
-    #womenDonut, #menDonut,
-    #womenHist, #menHist,
-    #womenDrill, #menDrill {
-      aspect-ratio: 1 / 1 !important;
-      width: 100% !important;
-      max-height: none !important;
-      object-fit: contain;
-    }
-
-    #womenDonut, #menDonut,
-    #womenDrill, #menDrill { height: 336px !important; }
-
-    #womenHist, #menHist {
-      height: 336px !important;
-      transform: none !important;
-      transform-origin: top center;
-    }
-  }
-
-  #womenDonut,
-  #menDonut {
-    width: 100% !important;
-    aspect-ratio: 1 / 1 !important;
-    max-height: none !important;
-    object-fit: contain;
-  }
-
-  /* === COLLAPSIBLE SECTIONS === */
-  .collapsible-content {
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    transition: max-height .5s ease, opacity .4s ease;
-  }
-
+@media (max-width: 1023px) {
+  .collapsible-content,
   .collapsible-content.open {
-    opacity: 1;
-    max-height: 1000px;
-    padding-bottom: 1rem;
+    width: 100%;
+    margin-left: 0;
+    padding-left: 0;
+    padding-right: 0;
   }
+}
 
-  @media (max-width: 1023px) {
-    .collapsible-content,
-    .collapsible-content.open {
-      width: 100%;
-      margin-left: 0;
-      padding-left: 0;
-      padding-right: 0;
-    }
-  }
+.arrow {
+  transition: transform .4s ease;
+}
 
-  .arrow {
-    transition: transform .4s ease;
-  }
+.arrow.rotate {
+  transform: rotate(180deg);
+}
 
-  .arrow.rotate {
-    transform: rotate(180deg);
-  }
+/* === SHARE BUTTONS === */
+.share-btn {
+  background-color: #dc2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: .5rem;
+  height: 36px;
+  width: 36px;
+  transition: background-color .2s ease, transform .2s ease;
+}
 
-  /* === SHARE BUTTONS === */
-  .share-btn {
-    background-color: #dc2626;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: .5rem;
-    height: 36px;
-    width: 36px;
-    transition: background-color .2s ease, transform .2s ease;
-  }
+.share-btn:hover {
+  background-color: #ef4444;
+  transform: translateY(-1px);
+}
 
-  .share-btn:hover {
-    background-color: #ef4444;
-    transform: translateY(-1px);
-  }
+.share-icon {
+  filter: invert(1);
+  height: 18px;
+  width: 18px;
+}
 
-  .share-icon {
-    filter: invert(1);
-    height: 18px;
-    width: 18px;
-  }
+/* === BACK PILL (Drilldown) === */
+.back-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  background-color: #111827;
+  border: 1px solid #374151;
+  color: #e5e7eb;
+  font-size: 0.7rem;
+  font-weight: 500;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+  transition: all .2s ease;
+}
 
-  /* === BACK PILL (Drilldown) === */
-  .back-pill {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.35rem;
-    padding: 0.5rem 1.1rem;
-    border-radius: 999px;
-    background-color: #111827;
-    border: 1px solid #374151;
-    color: #e5e7eb;
-    font-size: 0.7rem;
-    font-weight: 500;
-    backdrop-filter: blur(6px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.35);
-    transition: all .2s ease;
-  }
+.back-pill:hover {
+  background-color: #374151;
+  color: #f97316;
+  transform: translateY(-1px);
+}
 
-  .back-pill:hover {
-    background-color: #374151;
-    color: #f97316;
-    transform: translateY(-1px);
-  }
+/* === ANIMATIONS === */
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
 
-  /* === ANIMATIONS === */
-  @keyframes fadeInUp {
-    0% { opacity: 0; transform: translateY(10px); }
-    100% { opacity: 1; transform: translateY(0); }
-  }
+.animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
+.animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
 
-  .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
-  .animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
-  </style>
+/* === UTILITY (transform stripper marker) === */
+.no-transform {
+  transform: none !important;
+}
+</style>
 </head>
 
 <body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
@@ -686,9 +652,12 @@ function renderCharts(g, w) {
       }]
     },
     options: {
-      maintainAspectRatio: true,
-      aspectRatio: 1,
+      responsive: true,
+      maintainAspectRatio: false, // container defines size
       cutout: '57%',
+      layout: { padding: 0 },
+      events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
+      interaction: { mode: 'nearest', intersect: true },
       plugins: {
         title: {
           display: true,
@@ -775,16 +744,6 @@ function renderCharts(g, w) {
     }
   });
 
-  // ✅ Desktop pointer alignment fix (force pixel ratio and strip transforms)
-  if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    const c = charts[donutId].canvas;
-    const rect = c.getBoundingClientRect();
-    const ratio = window.devicePixelRatio || 1;
-    c.width  = rect.width * ratio;
-    c.height = rect.height * ratio;
-    charts[donutId].resize();
-  }
-
   /* --- HISTOGRAM --- */
   const vals = rows
     .map(r => parseFloat(r.PredictedTotal))
@@ -835,8 +794,11 @@ function renderCharts(g, w) {
       }]
     },
     options: {
-      maintainAspectRatio: true,
-      aspectRatio: 1,
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: 0 },
+      events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
+      interaction: { mode: 'nearest', intersect: true },
       plugins: {
         centerHistArea: { enabled: true },
         legend: { display: false },
@@ -899,24 +861,219 @@ function renderCharts(g, w) {
     }
   });
 
-  // ✅ Desktop pointer alignment fix for histogram
-  if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    const c = charts[histId].canvas;
-    const rect = c.getBoundingClientRect();
-    const ratio = window.devicePixelRatio || 1;
-    c.width  = rect.width * ratio;
-    c.height = rect.height * ratio;
-    charts[histId].resize();
-  }
-
   charts[histId].$histCentered = false;
 
-  // ✅ Apply transform cleanup after both donut + hist render
+  // ✅ Final transform cleanup after both donut + hist render
+  requestAnimationFrame(stripTransformsForCharts);
+}
+
+/* ========= DRILLDOWN CHART ========= */
+function renderDrillChart(g, athlete) {
+  const state = drillState[g];
+  if (!state || !state.athleteMap[athlete]) return;
+
+  const s = sizing();
+  const votes = state.athleteMap[athlete].votes || [];
+  const colors = getRedGradientColors();
+
+  const counts = Array(16).fill(0);
+  votes.forEach(v => {
+    if (v >= 1 && v <= 16) counts[v - 1]++;
+  });
+
+  if (state.chart) state.chart.destroy();
+
+  const ctx = state.canvas.getContext('2d');
+  state.chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: Array.from({ length: 16 }, (_, i) => i + 1),
+      datasets: [{
+        data: counts,
+        backgroundColor: colors,
+        borderRadius: 5,
+        barPercentage: 0.9,
+        categoryPercentage: 1.0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: 0 },
+      events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
+      interaction: { mode: 'nearest', intersect: true },
+      plugins: {
+        centerHistArea: { enabled: true },
+        legend: { display: false },
+        datalabels: {
+          color: '#fff',
+          font: { size: s.histBarLabel, weight: 'normal' },
+          formatter: (v) => v > 0 ? v : '',
+          anchor: 'center',
+          align: 'center',
+          clamp: true
+        },
+        tooltip: {
+          usePointStyle: true,
+          boxWidth: 8,
+          boxHeight: 8,
+          pointStyle: 'circle',
+          callbacks: {
+            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
+            title: (items) => (items[0]?.label) || '',
+            label: (ctx2) => `Vote Count - ${ctx2.parsed.y}`
+          }
+        },
+        title: { display: false }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: '#ccc',
+            font: { size: s.axisTick },
+            maxRotation: 0,
+            minRotation: 0
+          },
+          title: {
+            display: true,
+            text: 'Points / Confidence Level',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            color: '#ccc',
+            font: { size: s.axisTick },
+            precision: 0
+          },
+          title: {
+            display: true,
+            text: 'Vote Count',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+
+  state.chart.$histCentered = false;
   requestAnimationFrame(stripTransformsForCharts);
 }
 
 /* ========= DRILLDOWN HELPERS ========= */
 
+// double-click donut -> drilldown
+function handleDonutClick(g, w, donutId, evt, elements, rows) {
+  if (!evt || !evt.native) return;
+  const target = evt.native.target;
+  const now = Date.now();
+
+  if (!target.__lastClick) {
+    target.__lastClick = now;
+    return;
+  }
+
+  const diff = now - target.__lastClick;
+  target.__lastClick = now;
+
+  if (diff < 320 && elements && elements.length > 0) {
+    const idx = elements[0].index;
+    const chart = charts[donutId];
+    if (!chart) return;
+    const athlete = chart.data.labels[idx];
+    if (!athlete) return;
+    openDrilldown(g, w, athlete, rows, { skipFade: false });
+  }
+}
+
+function buildDrillAthleteMap(rows) {
+  const map = {};
+  rows.forEach(r => {
+    const name = r.Athlete;
+    if (!name) return;
+    const pts = parseInt(r.Points, 10);
+    if (!map[name]) {
+      map[name] = { votes: [] };
+    }
+    if (!isNaN(pts) && pts >= 1 && pts <= 16) {
+      map[name].votes.push(pts);
+    }
+  });
+  return map;
+}
+
+function openDrilldown(g, w, athlete, rows, opts = {}) {
+  const state = drillState[g];
+  if (!state) return;
+
+  const donutContainerId = g === 'F' ? 'womenDonutContainer' : 'menDonutContainer';
+  const donutContainer = document.getElementById(donutContainerId);
+
+  state.athleteMap = buildDrillAthleteMap(rows);
+  state.currentAthlete = athlete;
+  state.currentClass = w;
+  state.totalVotesInClass = rows.length;
+
+  const names = Object.keys(state.athleteMap);
+  state.select.innerHTML = '';
+  names.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    if (name === athlete) opt.selected = true;
+    state.select.appendChild(opt);
+  });
+
+  if (!state.athleteMap[athlete]) {
+    const fallback = names[0];
+    if (fallback) state.currentAthlete = fallback;
+  }
+
+  if (!opts.skipFade) {
+    fadeOut(donutContainer);
+    fadeIn(state.wrapper);
+  } else {
+    donutContainer.style.display = 'none';
+    state.wrapper.style.display = 'block';
+    state.wrapper.style.opacity = 1;
+  }
+
+  renderDrillChart(g, state.currentAthlete);
+
+  state.select.onchange = () => {
+    const selAthlete = state.select.value;
+    if (!selAthlete) return;
+    state.currentAthlete = selAthlete;
+    renderDrillChart(g, selAthlete);
+  };
+}
+
+function closeDrilldown(g) {
+  const state = drillState[g];
+  if (!state) return;
+
+  const donutContainerId = g === 'F' ? 'womenDonutContainer' : 'menDonutContainer';
+  const donutContainer = document.getElementById(donutContainerId);
+
+  fadeOut(state.wrapper);
+  fadeIn(donutContainer);
+
+  if (state.chart) {
+    state.chart.destroy();
+    state.chart = null;
+  }
+
+  state.currentAthlete = null;
+  state.currentClass = null;
+  state.athleteMap = {};
+  state.totalVotesInClass = 0;
+}
+  
 function renderDrillChart(g, athlete) {
   const state = drillState[g];
   if (!state || !state.athleteMap[athlete]) return;
