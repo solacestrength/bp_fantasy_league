@@ -786,7 +786,43 @@ function renderCharts(g, w) {
     boxHeight: 10,
     font: { size: s.donutLegend },
     usePointStyle: true,
-    pointStyle: 'circle'
+    pointStyle: 'circle',
+
+    // ★ NEW — MULTI-ROW LEGEND LOGIC ★
+    generateLabels(chart) {
+  const original = Chart.overrides.doughnut.plugins.legend.labels.generateLabels(chart);
+  const total = original.length;
+
+  // Leave 1–2 names untouched (natural)
+  if (total <= 2) return original;
+
+  const arranged = [];
+
+  // ----- ODD NUMBER → need centered first row -----
+  if (total % 2 === 1) {
+    // Insert a spacer (invisible legend item)
+    arranged.push({
+      text: '',
+      fillStyle: 'rgba(0,0,0,0)',     // invisible
+      strokeStyle: 'rgba(0,0,0,0)',
+      hidden: true,
+      index: null,
+      pointStyle: 'circle'
+    });
+
+    // Push the first actual name (centered visually)
+    arranged.push(original[0]);
+  }
+
+  // ----- PAIRS for all remaining items -----
+  const start = (total % 2 === 1) ? 1 : 0;
+  for (let i = start; i < total; i += 2) {
+    arranged.push(original[i]);
+    if (original[i + 1]) arranged.push(original[i + 1]);
+  }
+
+  return arranged;
+}
   }
 },
         tooltip: {
