@@ -610,8 +610,19 @@ function fadeOut(el) {
   setTimeout(() => { el.style.display = 'none'; }, 250);
 }
 
+  /* ========= POINTER COORDINATE NORMALIZATION (Desktop Only) ========= */
+function normalizeDesktopPointer(evt, chart) {
+  const rect = chart.canvas.getBoundingClientRect();
+  const ratio = window.devicePixelRatio || 1;
+  return {
+    x: (evt.clientX - rect.left) * ratio,
+    y: (evt.clientY - rect.top) * ratio
+  };
+}
+
 /* ========= CHART RENDERING ========= */
-function renderCharts(g, w) {
+  
+  function renderCharts(g, w) {
   const s = sizing();
   const donutId = g === 'F' ? 'womenDonut' : 'menDonut';
   const histId  = g === 'F' ? 'womenHist'  : 'menHist';
@@ -728,10 +739,24 @@ function renderCharts(g, w) {
           offset: 0
         }
       },
-      // keep your existing donut double-tap / drilldown handler, if used:
-      onClick: (evt, elements) =>
-        handleDonutClick(g, w, donutId, evt, elements, rows)
-    }
+
+      // Correct pointer position for desktop mouse interactions
+onHover: (evt) => {
+  if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    const pos = normalizeDesktopPointer(evt.native, charts[donutId]);
+    evt.native.x = pos.x;
+    evt.native.y = pos.y;
+  }
+},
+      
+      onClick: (evt, elements) => {
+  if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    const pos = normalizeDesktopPointer(evt.native, charts[donutId]);
+    evt.native.x = pos.x;
+    evt.native.y = pos.y;
+  }
+  handleDonutClick(g, w, donutId, evt, elements, rows);
+}
   });
 
   /* --- HISTOGRAM --- */
@@ -802,6 +827,13 @@ function renderCharts(g, w) {
             label: (ctx) => `Vote Count - ${ctx.parsed.y}`
           }
         }
+      },
+      onHover: (evt) => {
+  if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    const pos = normalizeDesktopPointer(evt.native, charts[histId]);
+    evt.native.x = pos.x;
+    evt.native.y = pos.y;
+  }
       },
       scales: {
         x: {
@@ -1019,6 +1051,13 @@ function renderDrillChart(g, athlete) {
         },
         title: { display: false }
       },
+      onHover: (evt) => {
+  if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    const pos = normalizeDesktopPointer(evt.native, state.chart);
+    evt.native.x = pos.x;
+    evt.native.y = pos.y;
+  }
+},
       scales: {
         x: {
           ticks: {
