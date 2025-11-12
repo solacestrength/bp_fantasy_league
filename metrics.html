@@ -595,80 +595,59 @@ function fadeOut(el) {
   setTimeout(() => { el.style.display = 'none'; }, 250);
 }
 
-/* ========= DESKTOP TOOLTIP LINGER (5s) ========= */
+/* ========= DESKTOP TOOLTIP LINGER (Stable) ========= */
 function enableDesktopTooltipLinger(chart, ms = 5000) {
-  // Only on desktop
   if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
   if (!chart || !chart.canvas) return;
 
   const canvas = chart.canvas;
   let lastActive = [];
-  let timer = null;
+  let lingerTimer = null;
+  let hovering = false;
 
   function clearLinger() {
-    if (timer) { clearTimeout(timer); timer = null; }
+    if (lingerTimer) { clearTimeout(lingerTimer); lingerTimer = null; }
     if (!chart || chart._destroyed) return;
-    chart.tooltip.setActiveElements([], {x: 0, y: 0});
-    chart.update('none');
+    chart.tooltip.setActiveElements([], { x: 0, y: 0 });
+    chart.update();
   }
 
   canvas.addEventListener('mousemove', (e) => {
-    // Track the most recent hovered element
-    const pts = chart.getElementsAtEventForMode(
-      e, 'nearest', { intersect: true }, true
-    );
-    if (pts && pts.length) {
-      lastActive = pts.map(p => ({ datasetIndex: p.datasetIndex, index: p.index }));
+    hovering = true;
+    const points = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
+    if (points && points.length) {
+      lastActive = points.map(p => ({ datasetIndex: p.datasetIndex, index: p.index }));
     }
-    // If we were lingering and the user returned, clear immediately
-    if (timer) clearLinger();
+    if (lingerTimer) {
+      clearTimeout(lingerTimer);
+      lingerTimer = null;
+    }
   });
 
-  canvas.addEventListener('mouseleave', (e) => {
-    // If we have a last hovered element, freeze its tooltip for ms
+  canvas.addEventListener('mouseleave', () => {
+    hovering = false;
     if (!lastActive.length) return;
+
+    // Freeze tooltip for last hovered element
+    chart.tooltip.setActiveElements(lastActive, { x: chart.width / 2, y: chart.height / 2 });
+    chart.update();
+
+    // Schedule its removal after ms
+    lingerTimer = setTimeout(() => {
+      if (!hovering) clearLinger();
+    }, ms);
+  });
+
+  // Scrolling off viewport also counts as “leave”
+  window.addEventListener('scroll', () => {
     const rect = canvas.getBoundingClientRect();
-    const vx = (e.clientX - rect.left) || rect.width / 2;
-    const vy = (e.clientY - rect.top)  || rect.height / 2;
-
-    chart.tooltip.setActiveElements(lastActive, { x: vx, y: vy });
-    chart.update('none');
-
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(clearLinger, ms);
+    const visible = rect.bottom > 0 && rect.top < window.innerHeight;
+    if (!visible) clearLinger();
   });
 
-  // Clicking anywhere outside the chart cancels the linger
+  // Clicking outside the chart also clears linger
   document.addEventListener('click', (e) => {
-    if (timer && !canvas.contains(e.target)) clearLinger();
-  });
-
-  // If the chart gets destroyed, clean up
-  chart.$destroyLinger = () => { clearLinger(); };
-}
-
-/* ========= DESKTOP: STRIP TRANSFORMS AROUND CHARTS ========= */
-function stripTransformsForCharts() {
-  // mobile unaffected
-  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
-
-  const ids = ['womenDonut','menDonut','womenHist','menHist','womenDrill','menDrill'];
-  ids.forEach(id => {
-    const canvas = document.getElementById(id);
-    if (!canvas) return;
-
-    // Walk up a few ancestors and nuke transforms that can skew pointer math
-    let el = canvas.parentElement;
-    let hops = 0;
-    while (el && el !== document.body && hops < 6) {
-      const tf = getComputedStyle(el).transform;
-      if (tf && tf !== 'none') {
-        el.classList.add('no-transform');
-        el.style.transform = 'none';
-      }
-      el = el.parentElement;
-      hops++;
-    }
+    if (lingerTimer && !canvas.contains(e.target)) clearLinger();
   });
 }
 
