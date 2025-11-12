@@ -610,26 +610,16 @@ function fadeOut(el) {
   setTimeout(() => { el.style.display = 'none'; }, 250);
 }
 
-  /* ========= POINTER COORDINATE NORMALIZATION (Desktop Only) ========= */
-function normalizeDesktopPointer(evt, chart) {
-  const rect = chart.canvas.getBoundingClientRect();
-  const ratio = window.devicePixelRatio || 1;
-  return {
-    x: (evt.clientX - rect.left) * ratio,
-    y: (evt.clientY - rect.top) * ratio
-  };
-}
-
 /* ========= CHART RENDERING ========= */
-  
-  function renderCharts(g, w) {
+
+function renderCharts(g, w) {
   const s = sizing();
   const donutId = g === 'F' ? 'womenDonut' : 'menDonut';
   const histId  = g === 'F' ? 'womenHist'  : 'menHist';
   const rows = allData.filter(r => r.Gender === g && r.Class === w);
   if (!rows.length) return;
 
-    /* --- DONUT --- */
+  /* --- DONUT --- */
   const counts = {};
   rows.forEach(r => { counts[r.Athlete] = (counts[r.Athlete] || 0) + 1; });
 
@@ -678,7 +668,7 @@ function normalizeDesktopPointer(evt, chart) {
         },
         legend: {
           position: 'bottom',
-          onClick: null,   // 🔒 disable legend toggling / strike-through
+          onClick: null,
           onHover: null,
           labels: {
             color: '#ccc',
@@ -688,17 +678,22 @@ function normalizeDesktopPointer(evt, chart) {
           }
         },
         tooltip: {
-  callbacks: {
-    label: (ctx) => {
-      const dataset = ctx.chart.data.datasets[0];
-      const total = dataset.data.reduce((a, b) => a + b, 0);
-      const value = ctx.parsed;
-      const percentage = ((value / total) * 100).toFixed(1);
-      const voteWord = value === 1 ? 'Vote' : 'Votes';
-      return `${value} ${voteWord} – ${percentage}%`;
-    }
-  }
-},
+          usePointStyle: true,
+          boxWidth: 8,
+          boxHeight: 8,
+          pointStyle: 'circle',
+          callbacks: {
+            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
+            label: (ctx) => {
+              const dataset = ctx.chart.data.datasets[0];
+              const total = dataset.data.reduce((a, b) => a + b, 0);
+              const value = ctx.parsed;
+              const percentage = ((value / total) * 100).toFixed(1);
+              const voteWord = value === 1 ? 'Vote' : 'Votes';
+              return `${value} ${voteWord} – ${percentage}%`;
+            }
+          }
+        },
         datalabels: {
           color: '#fff',
           font: (ctx) => {
@@ -707,7 +702,6 @@ function normalizeDesktopPointer(evt, chart) {
             const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
             const percentage = (value / totalLocal) * 100;
 
-            // slice angle in degrees
             const angle = (percentage / 100) * 360;
             const base = s.donutPercent;
             let size;
@@ -730,7 +724,7 @@ function normalizeDesktopPointer(evt, chart) {
             const value = dataset.data[ctx.dataIndex];
             const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
             const percentage = (value / totalLocal) * 100;
-            return percentage >= 3.5; // hide very tiny slices
+            return percentage >= 3.5;
           },
           anchor: 'center',
           align: 'center',
@@ -739,39 +733,19 @@ function normalizeDesktopPointer(evt, chart) {
           offset: 0
         }
       },
-
-      // Correct pointer position for desktop mouse interactions
-onHover: (evt) => {
-  if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    const e = evt.native || evt; // 🧠 fallback for browsers without evt.native
-    const chart = charts?.[donutId] || charts?.[histId] || state?.chart;
-    if (!chart || !e) return;
-    const rect = chart.canvas.getBoundingClientRect();
-    const ratio = window.devicePixelRatio || 1;
-    const x = (e.clientX - rect.left) * ratio;
-    const y = (e.clientY - rect.top) * ratio;
-    e.x = x;
-    e.y = y;
-    if (evt.native) {
-      evt.native.x = x;
-      evt.native.y = y;
-    } else {
-      evt.x = x;
-      evt.y = y;
-    }
-  }
-},
-      
-      onClick: (evt, elements) => {
-  if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    const pos = normalizeDesktopPointer(evt.native, charts[donutId]);
-    evt.native.x = pos.x;
-    evt.native.y = pos.y;
-  }
-  handleDonutClick(g, w, donutId, evt, elements, rows);
-}
+      onClick: (evt, elements) => handleDonutClick(g, w, donutId, evt, elements, rows)
     }
   });
+
+  // ✅ Desktop pointer alignment correction
+  if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    const c = charts[donutId].canvas;
+    const rect = c.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    c.width  = rect.width * ratio;
+    c.height = rect.height * ratio;
+    charts[donutId].resize();
+  }
 
   /* --- HISTOGRAM --- */
   const vals = rows
@@ -809,6 +783,7 @@ onHover: (evt) => {
 
   if (charts[histId]) charts[histId].destroy();
   const histCtx = document.getElementById(histId).getContext('2d');
+
   charts[histId] = new Chart(histCtx, {
     type: 'bar',
     data: {
@@ -830,38 +805,23 @@ onHover: (evt) => {
         datalabels: {
           color: '#fff',
           font: { size: s.histBarLabel, weight: 'normal' },
-          formatter: (v) => v > 0 ? v : '',  // no labels for zero-count bars
+          formatter: (v) => v > 0 ? v : '',
           anchor: 'center',
           align: 'center',
           clamp: true
         },
         tooltip: {
+          usePointStyle: true,
+          boxWidth: 8,
+          boxHeight: 8,
+          pointStyle: 'circle',
           callbacks: {
+            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
             title: (items) => (items[0]?.label) || '',
             label: (ctx) => `Vote Count - ${ctx.parsed.y}`
           }
         }
       },
-      onHover: (evt) => {
-  if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    const e = evt.native || evt; // 🧠 fallback for browsers without evt.native
-    const chart = charts?.[donutId] || charts?.[histId] || state?.chart;
-    if (!chart || !e) return;
-    const rect = chart.canvas.getBoundingClientRect();
-    const ratio = window.devicePixelRatio || 1;
-    const x = (e.clientX - rect.left) * ratio;
-    const y = (e.clientY - rect.top) * ratio;
-    e.x = x;
-    e.y = y;
-    if (evt.native) {
-      evt.native.x = x;
-      evt.native.y = y;
-    } else {
-      evt.x = x;
-      evt.y = y;
-    }
-  }
-},
       scales: {
         x: {
           offset: true,
@@ -869,7 +829,7 @@ onHover: (evt) => {
             color: '#ccc',
             font: { size: s.axisTick },
             autoSkip: false,
-            maxRotation: 60,  // diagonal for histograms
+            maxRotation: 60,
             minRotation: 45,
             callback: (value, index) => labelsH[index] || ''
           },
@@ -901,132 +861,20 @@ onHover: (evt) => {
     }
   });
 
+  // ✅ Desktop pointer alignment correction for histogram
+  if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    const c = charts[histId].canvas;
+    const rect = c.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    c.width  = rect.width * ratio;
+    c.height = rect.height * ratio;
+    charts[histId].resize();
+  }
+
   charts[histId].$histCentered = false;
 }
 
 /* ========= DRILLDOWN HELPERS ========= */
-
-// double-click donut -> drilldown
-function handleDonutClick(g, w, donutId, evt, elements, rows) {
-  if (!evt || !evt.native) return;
-  const target = evt.native.target;
-  const now = Date.now();
-
-  if (!target.__lastClick) {
-    target.__lastClick = now;
-    return;
-  }
-
-  const diff = now - target.__lastClick;
-  target.__lastClick = now;
-
-  if (diff < 320 && elements && elements.length > 0) {
-    const idx = elements[0].index;
-    const chart = charts[donutId];
-    if (!chart) return;
-    const athlete = chart.data.labels[idx];
-    if (!athlete) return;
-    openDrilldown(g, w, athlete, rows, { skipFade: false });
-  }
-}
-
-function buildDrillAthleteMap(rows) {
-  const map = {};
-  rows.forEach(r => {
-    const name = r.Athlete;
-    if (!name) return;
-    const pts = parseInt(r.Points, 10);
-    if (!map[name]) {
-      map[name] = { votes: [] };
-    }
-    if (!isNaN(pts) && pts >= 1 && pts <= 16) {
-      map[name].votes.push(pts);
-    }
-  });
-  return map;
-}
-
-function openDrilldown(g, w, athlete, rows, opts = {}) {
-  const state = drillState[g];
-  if (!state) return;
-
-  const donutContainerId = g === 'F' ? 'womenDonutContainer' : 'menDonutContainer';
-  const donutContainer = document.getElementById(donutContainerId);
-
-  state.athleteMap = buildDrillAthleteMap(rows);
-  state.currentAthlete = athlete;
-  state.currentClass = w;
-  state.totalVotesInClass = rows.length;
-
-  const names = Object.keys(state.athleteMap);
-  state.select.innerHTML = '';
-  names.forEach(name => {
-    const label = name; // use athlete string only (includes nominated total if present)
-    const opt = document.createElement('option');
-    opt.value = name;
-    opt.textContent = label;
-    if (name === athlete) opt.selected = true;
-    state.select.appendChild(opt);
-  });
-
-  if (!state.athleteMap[athlete]) {
-    const fallback = names[0];
-    if (fallback) state.currentAthlete = fallback;
-  }
-
-  if (!opts.skipFade) {
-    fadeOut(donutContainer);
-    fadeIn(state.wrapper);
-  } else {
-    donutContainer.style.display = 'none';
-    state.wrapper.style.display = 'block';
-    state.wrapper.style.opacity = 1;
-  }
-
-  renderDrillChart(g, state.currentAthlete);
-
-  state.select.onchange = () => {
-    const selAthlete = state.select.value;
-    if (!selAthlete) return;
-    state.currentAthlete = selAthlete;
-    renderDrillChart(g, selAthlete);
-  };
-}
-
-function closeDrilldown(g) {
-  const state = drillState[g];
-  if (!state) return;
-
-  const donutContainerId = g === 'F' ? 'womenDonutContainer' : 'menDonutContainer';
-  const donutContainer = document.getElementById(donutContainerId);
-
-  fadeOut(state.wrapper);
-  fadeIn(donutContainer);
-
-  if (state.chart) {
-    state.chart.destroy();
-    state.chart = null;
-  }
-
-  state.currentAthlete = null;
-  state.currentClass = null;
-  state.athleteMap = {};
-  state.totalVotesInClass = 0;
-}
-
-function getRedGradientColors() {
-  const colors = [];
-  const start = { r: 252, g: 165, b: 165 }; // light red
-  const end   = { r: 185, g: 28,  b: 28  }; // dark red
-  for (let i = 0; i < 16; i++) {
-    const t = i / 15;
-    const r = Math.round(start.r + (end.r - start.r) * t);
-    const g = Math.round(start.g + (end.g - start.g) * t);
-    const b = Math.round(start.b + (end.b - start.b) * t);
-    colors.push(`rgb(${r},${g},${b})`);
-  }
-  return colors;
-}
 
 function renderDrillChart(g, athlete) {
   const state = drillState[g];
@@ -1065,39 +913,24 @@ function renderDrillChart(g, athlete) {
         datalabels: {
           color: '#fff',
           font: { size: s.histBarLabel, weight: 'normal' },
-          formatter: (v) => v > 0 ? v : '', // no labels for zero-count
+          formatter: (v) => v > 0 ? v : '',
           anchor: 'center',
           align: 'center',
           clamp: true
         },
         tooltip: {
+          usePointStyle: true,
+          boxWidth: 8,
+          boxHeight: 8,
+          pointStyle: 'circle',
           callbacks: {
+            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
             title: (items) => (items[0]?.label) || '',
             label: (ctx2) => `Vote Count - ${ctx2.parsed.y}`
           }
         },
         title: { display: false }
       },
-      onHover: (evt) => {
-  if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    const e = evt.native || evt; // 🧠 fallback for browsers without evt.native
-    const chart = charts?.[donutId] || charts?.[histId] || state?.chart;
-    if (!chart || !e) return;
-    const rect = chart.canvas.getBoundingClientRect();
-    const ratio = window.devicePixelRatio || 1;
-    const x = (e.clientX - rect.left) * ratio;
-    const y = (e.clientY - rect.top) * ratio;
-    e.x = x;
-    e.y = y;
-    if (evt.native) {
-      evt.native.x = x;
-      evt.native.y = y;
-    } else {
-      evt.x = x;
-      evt.y = y;
-    }
-  }
-},
       scales: {
         x: {
           ticks: {
@@ -1132,6 +965,16 @@ function renderDrillChart(g, athlete) {
       }
     }
   });
+
+  // ✅ Desktop pointer alignment correction for drilldown
+  if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    const c = state.chart.canvas;
+    const rect = c.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    c.width  = rect.width * ratio;
+    c.height = rect.height * ratio;
+    state.chart.resize();
+  }
 
   state.chart.$histCentered = false;
 }
