@@ -743,9 +743,22 @@ function normalizeDesktopPointer(evt, chart) {
       // Correct pointer position for desktop mouse interactions
 onHover: (evt) => {
   if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    const pos = normalizeDesktopPointer(evt.native, charts[donutId]);
-    evt.native.x = pos.x;
-    evt.native.y = pos.y;
+    const e = evt.native || evt; // 🧠 fallback for browsers without evt.native
+    const chart = charts?.[donutId] || charts?.[histId] || state?.chart;
+    if (!chart || !e) return;
+    const rect = chart.canvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    const x = (e.clientX - rect.left) * ratio;
+    const y = (e.clientY - rect.top) * ratio;
+    e.x = x;
+    e.y = y;
+    if (evt.native) {
+      evt.native.x = x;
+      evt.native.y = y;
+    } else {
+      evt.x = x;
+      evt.y = y;
+    }
   }
 },
       
@@ -831,11 +844,24 @@ onHover: (evt) => {
       },
       onHover: (evt) => {
   if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    const pos = normalizeDesktopPointer(evt.native, charts[histId]);
-    evt.native.x = pos.x;
-    evt.native.y = pos.y;
+    const e = evt.native || evt; // 🧠 fallback for browsers without evt.native
+    const chart = charts?.[donutId] || charts?.[histId] || state?.chart;
+    if (!chart || !e) return;
+    const rect = chart.canvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    const x = (e.clientX - rect.left) * ratio;
+    const y = (e.clientY - rect.top) * ratio;
+    e.x = x;
+    e.y = y;
+    if (evt.native) {
+      evt.native.x = x;
+      evt.native.y = y;
+    } else {
+      evt.x = x;
+      evt.y = y;
+    }
   }
-      },
+},
       scales: {
         x: {
           offset: true,
@@ -1054,9 +1080,22 @@ function renderDrillChart(g, athlete) {
       },
       onHover: (evt) => {
   if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    const pos = normalizeDesktopPointer(evt.native, state.chart);
-    evt.native.x = pos.x;
-    evt.native.y = pos.y;
+    const e = evt.native || evt; // 🧠 fallback for browsers without evt.native
+    const chart = charts?.[donutId] || charts?.[histId] || state?.chart;
+    if (!chart || !e) return;
+    const rect = chart.canvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    const x = (e.clientX - rect.left) * ratio;
+    const y = (e.clientY - rect.top) * ratio;
+    e.x = x;
+    e.y = y;
+    if (evt.native) {
+      evt.native.x = x;
+      evt.native.y = y;
+    } else {
+      evt.x = x;
+      evt.y = y;
+    }
   }
 },
       scales: {
