@@ -167,7 +167,9 @@
 
     let hasUnlocked = false;
 
-    spotifyLink.addEventListener('click', () => {
+    spotifyLink.addEventListener('click', (e) => {
+  e.preventDefault();
+  window.open(spotifyLink.href, '_blank', 'noopener,noreferrer');
       // Fade out the image first
       softGateImage.classList.add('fade-out');
 
