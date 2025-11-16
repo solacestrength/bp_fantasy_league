@@ -747,11 +747,22 @@ function renderCharts(g, w) {
   const dData   = Object.values(counts);
   const total   = dData.reduce((a, b) => a + b, 0);
 
-  const colors = [
-    '#ef4444','#f97316','#facc15','#22c55e','#14b8a6',
-    '#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16',
-    '#d946ef','#fb7185'
+  // Base palette
+  const baseColors = [
+    '#ef4444', '#f97316', '#facc15', '#22c55e', '#14b8a6',
+    '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16',
+    '#d946ef', '#fb7185'
   ];
+
+  // Fisher–Yates shuffle for randomised colours on each render
+  const shuffledColors = [...baseColors];
+  for (let i = shuffledColors.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffledColors[i], shuffledColors[j]] = [shuffledColors[j], shuffledColors[i]];
+  }
+
+  // Assign colours to slices (wrap if more athletes than colours)
+  const assignedColors = dLabels.map((_, i) => shuffledColors[i % shuffledColors.length]);
 
   if (charts[donutId]) charts[donutId].destroy();
   const donutCtx = document.getElementById(donutId).getContext('2d');
@@ -762,7 +773,7 @@ function renderCharts(g, w) {
       labels: dLabels,
       datasets: [{
         data: dData,
-        backgroundColor: colors,
+        backgroundColor: assignedColors,
         borderColor: '#111',
         borderWidth: 1
       }]
@@ -790,54 +801,50 @@ function renderCharts(g, w) {
           padding: { top: 2, bottom: 18 }
         },
         legend: {
-  position: 'bottom',
-  onClick: null,
-  onHover: null,
-  labels: {
-    color: '#ccc',
-    boxWidth: 10,
-    boxHeight: 10,
-    font: { size: s.donutLegend },
-    usePointStyle: true,
-    pointStyle: 'circle',
+          position: 'bottom',
+          onClick: null,
+          onHover: null,
+          labels: {
+            color: '#ccc',
+            boxWidth: 10,
+            boxHeight: 10,
+            font: { size: s.donutLegend },
+            usePointStyle: true,
+            pointStyle: 'circle',
 
-    // ★ NEW — MULTI-ROW LEGEND LOGIC ★
-    generateLabels(chart) {
-  const original = Chart.overrides.doughnut.plugins.legend.labels.generateLabels(chart);
-  const total = original.length;
+            // Multi-row legend logic
+            generateLabels(chart) {
+              const original = Chart.overrides.doughnut.plugins.legend.labels.generateLabels(chart);
+              const total = original.length;
 
-  // Leave 1–2 names untouched (natural)
-  if (total <= 2) return original;
+              // Leave 1–2 names untouched (natural)
+              if (total <= 2) return original;
 
-  const arranged = [];
+              const arranged = [];
 
-  // ----- ODD NUMBER → need centered first row -----
-  if (total % 2 === 1) {
-    // Insert a spacer (invisible legend item)
-    arranged.push({
-      text: '',
-      fillStyle: 'rgba(0,0,0,0)',     // invisible
-      strokeStyle: 'rgba(0,0,0,0)',
-      hidden: true,
-      index: null,
-      pointStyle: 'circle'
-    });
+              // Odd number → centered first row
+              if (total % 2 === 1) {
+                arranged.push({
+                  text: '',
+                  fillStyle: 'rgba(0,0,0,0)',
+                  strokeStyle: 'rgba(0,0,0,0)',
+                  hidden: true,
+                  index: null,
+                  pointStyle: 'circle'
+                });
+                arranged.push(original[0]);
+              }
 
-    // Push the first actual name (centered visually)
-    arranged.push(original[0]);
-  }
+              const start = (total % 2 === 1) ? 1 : 0;
+              for (let i = start; i < total; i += 2) {
+                arranged.push(original[i]);
+                if (original[i + 1]) arranged.push(original[i + 1]);
+              }
 
-  // ----- PAIRS for all remaining items -----
-  const start = (total % 2 === 1) ? 1 : 0;
-  for (let i = start; i < total; i += 2) {
-    arranged.push(original[i]);
-    if (original[i + 1]) arranged.push(original[i + 1]);
-  }
-
-  return arranged;
-}
-  }
-},
+              return arranged;
+            }
+          }
+        },
         tooltip: {
           usePointStyle: true,
           boxWidth: 8,
@@ -900,213 +907,109 @@ function renderCharts(g, w) {
 
   enableDesktopTooltipLinger(charts[donutId], 5000);
 
-/* --- HISTOGRAM (Freedman–Diaconis + optional outlier bins, max 12 total bars) --- */
-const vals = rows
-  .map(r => parseFloat(r.PredictedTotal))
-  .filter(v => !isNaN(v) && v > 0);
+  /* --- HISTOGRAM (Freedman–Diaconis + optional outlier bins, max 12 total bars) --- */
+  const vals = rows
+    .map(r => parseFloat(r.PredictedTotal))
+    .filter(v => !isNaN(v) && v > 0);
 
-if (!vals.length) {
-  if (charts[histId]) charts[histId].destroy();
-  return;
-}
-
-const N = vals.length;
-
-// Sort values
-const sorted = [...vals].sort((a, b) => a - b);
-
-// Quartiles + IQR
-const q1  = quantile(sorted, 0.25);
-const q3  = quantile(sorted, 0.75);
-const iqr = q3 - q1;
-
-// Outlier fences
-const lowerFence = q1 - 1.5 * iqr;
-const upperFence = q3 + 1.5 * iqr;
-
-// Separate into normal + outliers
-let normalVals = sorted.filter(v => v >= lowerFence && v <= upperFence);
-const lowOutCount  = sorted.filter(v => v <  lowerFence).length;
-const highOutCount = sorted.filter(v => v >  upperFence).length;
-
-// If everything flagged, treat all as normal
-if (!normalVals.length) normalVals = sorted.slice();
-
-const minNorm = normalVals[0];
-const maxNorm = normalVals[normalVals.length - 1];
-
-// --- Freedman–Diaconis calculation ---
-let suggestedBins = null;
-if (iqr > 0 && isFinite(iqr)) {
-  const h = 2 * iqr / Math.cbrt(N);
-  if (h > 0 && isFinite(h)) {
-    suggestedBins = Math.round((maxNorm - minNorm) / h);
+  if (!vals.length) {
+    if (charts[histId]) charts[histId].destroy();
+    return;
   }
-}
 
-let innerBins = suggestedBins || Math.round(Math.sqrt(N));
-innerBins = Math.max(3, Math.min(innerBins, 10)); // ensures <=12 total bins
+  const N = vals.length;
 
-const bw = (maxNorm - minNorm) / innerBins || 1;
+  // Sort values
+  const sorted = [...vals].sort((a, b) => a - b);
 
-// Count normal bin values
-const normalCounts = Array(innerBins).fill(0);
-normalVals.forEach(v => {
-  let i = Math.floor((v - minNorm) / bw);
-  if (i < 0) i = 0;
-  if (i >= innerBins) i = innerBins - 1;
-  normalCounts[i]++;
-});
+  // Quartiles + IQR
+  const q1  = quantile(sorted, 0.25);
+  const q3  = quantile(sorted, 0.75);
+  const iqr = q3 - q1;
 
-// Build final bins conditionally
-const countsH = [];
-const labelsH = [];
-const colorsH = [];
-const normalColors = getBlueGradientColors(innerBins);
-const outlierColor = "rgb(30, 58, 138)";
+  // Outlier fences
+  const lowerFence = q1 - 1.5 * iqr;
+  const upperFence = q3 + 1.5 * iqr;
 
-// Left outlier bin?
-if (lowOutCount > 0) {
-  countsH.push(lowOutCount);
-  labelsH.push(`< ${lowerFence.toFixed(0)}`);
-  colorsH.push(outlierColor);
-}
+  // Separate into normal + outliers
+  let normalVals = sorted.filter(v => v >= lowerFence && v <= upperFence);
+  const lowOutCount  = sorted.filter(v => v <  lowerFence).length;
+  const highOutCount = sorted.filter(v => v >  upperFence).length;
 
-// Normal bins
-for (let i = 0; i < innerBins; i++) {
-  const start = minNorm + i * bw;
-  const end   = minNorm + (i + 1) * bw;
-  countsH.push(normalCounts[i]);
-  labelsH.push(`${start.toFixed(0)}–${end.toFixed(0)}`);
-  colorsH.push(normalColors[i]);
-}
+  // If everything flagged, treat all as normal
+  if (!normalVals.length) normalVals = sorted.slice();
 
-// Right outlier bin?
-if (highOutCount > 0) {
-  countsH.push(highOutCount);
-  labelsH.push(`> ${upperFence.toFixed(0)}`);
-  colorsH.push(outlierColor);
-}
+  const minNorm = normalVals[0];
+  const maxNorm = normalVals[normalVals.length - 1];
 
-// Y-axis clean stepping
-const maxC = Math.max(...countsH);
-const yStep = 2;
-const yMax = Math.ceil(maxC / yStep) * yStep;
-
-if (charts[histId]) charts[histId].destroy();
-const histCtx = document.getElementById(histId).getContext("2d");
-
-charts[histId] = new Chart(histCtx, {
-  type: "bar",
-  data: {
-    labels: labelsH,
-    datasets: [{
-      data: countsH,
-      backgroundColor: colorsH,
-      borderRadius: 5,
-      barPercentage: 0.9,
-      categoryPercentage: 1.0
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    layout: { padding: { bottom: 60 } },
-    events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
-    interaction: { mode: "nearest", intersect: true },
-    plugins: {
-      centerHistArea: { enabled: true },
-      legend: { display: false },
-      datalabels: {
-        color: "#fff",
-        font: { size: s.histBarLabel, weight: "normal" },
-        formatter: (v) => v > 0 ? v : "",
-        anchor: "center",
-        align: "center",
-        clamp: true
-      },
-      tooltip: {
-        usePointStyle: true,
-        boxWidth: 8,
-        boxHeight: 8,
-        pointStyle: "circle",
-        callbacks: {
-          labelPointStyle: () => ({ pointStyle: "circle", rotation: 0 }),
-          title: (items) => items[0]?.label || "",
-          label: (ctx) => `Vote Count - ${ctx.parsed.y}`
-        }
-      }
-    },
-    scales: {
-      x: {
-        offset: true,
-        ticks: {
-          color: "#ccc",
-          font: { size: s.axisTick },
-          autoSkip: false,
-          maxRotation: 60,
-          minRotation: 45,
-          callback: (value, index) => labelsH[index] || ""
-        },
-        title: {
-          display: true,
-          text: "Predicted Total (kg)",
-          color: "#ccc",
-          font: { size: s.axisTitle, weight: "bold" }
-        },
-        grid: { display: false }
-      },
-      y: {
-        beginAtZero: true,
-        min: 0,
-        max: yMax,
-        ticks: {
-          color: "#ccc",
-          font: { size: s.axisTick },
-          stepSize: yStep
-        },
-        title: {
-          display: true,
-          text: `Vote Count (Total = ${N})`,
-          color: "#ccc",
-          font: { size: s.axisTitle, weight: "bold" }
-        },
-        grid: { display: false }
-      }
+  // Freedman–Diaconis calculation
+  let suggestedBins = null;
+  if (iqr > 0 && isFinite(iqr)) {
+    const h = 2 * iqr / Math.cbrt(N);
+    if (h > 0 && isFinite(h)) {
+      suggestedBins = Math.round((maxNorm - minNorm) / h);
     }
   }
-});
 
-charts[histId].$histCentered = false;
-enableDesktopTooltipLinger(charts[histId], 5000);
+  let innerBins = suggestedBins || Math.round(Math.sqrt(N));
+  innerBins = Math.max(3, Math.min(innerBins, 10)); // ensures <=12 total bins
 
-requestAnimationFrame(stripTransformsForCharts);
-}
+  const bw = (maxNorm - minNorm) / innerBins || 1;
 
-/* ========= DRILLDOWN CHART ========= */
-function renderDrillChart(g, athlete) {
-  const state = drillState[g];
-  if (!state || !state.athleteMap[athlete]) return;
-
-  const s = sizing();
-  const votes = state.athleteMap[athlete].votes || [];
-  const colors = getRedGradientColors();
-
-  const counts = Array(16).fill(0);
-  votes.forEach(v => {
-    if (v >= 1 && v <= 16) counts[v - 1]++;
+  // Count normal bin values
+  const normalCounts = Array(innerBins).fill(0);
+  normalVals.forEach(v => {
+    let i = Math.floor((v - minNorm) / bw);
+    if (i < 0) i = 0;
+    if (i >= innerBins) i = innerBins - 1;
+    normalCounts[i]++;
   });
 
-  if (state.chart) state.chart.destroy();
+  // Build final bins conditionally
+  const countsH = [];
+  const labelsH = [];
+  const colorsH = [];
+  const normalColors = getBlueGradientColors(innerBins);
+  const outlierColor = 'rgb(30, 58, 138)';
 
-  const ctx = state.canvas.getContext('2d');
-  state.chart = new Chart(ctx, {
+  // Left outlier bin?
+  if (lowOutCount > 0) {
+    countsH.push(lowOutCount);
+    labelsH.push(`< ${lowerFence.toFixed(0)}`);
+    colorsH.push(outlierColor);
+  }
+
+  // Normal bins
+  for (let i = 0; i < innerBins; i++) {
+    const start = minNorm + i * bw;
+    const end   = minNorm + (i + 1) * bw;
+    countsH.push(normalCounts[i]);
+    labelsH.push(`${start.toFixed(0)}–${end.toFixed(0)}`);
+    colorsH.push(normalColors[i]);
+  }
+
+  // Right outlier bin?
+  if (highOutCount > 0) {
+    countsH.push(highOutCount);
+    labelsH.push(`> ${upperFence.toFixed(0)}`);
+    colorsH.push(outlierColor);
+  }
+
+  // Y-axis clean stepping: all steps of 2
+  const maxC = Math.max(...countsH);
+  const yStep = 2;
+  const yMax = Math.ceil(maxC / yStep) * yStep;
+
+  if (charts[histId]) charts[histId].destroy();
+  const histCtx = document.getElementById(histId).getContext('2d');
+
+  charts[histId] = new Chart(histCtx, {
     type: 'bar',
     data: {
-      labels: Array.from({ length: 16 }, (_, i) => i + 1),
+      labels: labelsH,
       datasets: [{
-        data: counts,
-        backgroundColor: colors,
+        data: countsH,
+        backgroundColor: colorsH,
         borderRadius: 5,
         barPercentage: 0.9,
         categoryPercentage: 1.0
@@ -1115,7 +1018,7 @@ function renderDrillChart(g, athlete) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      layout: { padding: { bottom: 30 } },
+      layout: { padding: { bottom: 60 } },
       events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
       interaction: { mode: 'nearest', intersect: true },
       plugins: {
@@ -1137,22 +1040,24 @@ function renderDrillChart(g, athlete) {
           callbacks: {
             labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
             title: (items) => (items[0]?.label) || '',
-            label: (ctx2) => `Vote Count - ${ctx2.parsed.y}`
+            label: (ctx) => `Vote Count - ${ctx.parsed.y}`
           }
-        },
-        title: { display: false }
+        }
       },
       scales: {
         x: {
+          offset: true,
           ticks: {
             color: '#ccc',
             font: { size: s.axisTick },
-            maxRotation: 0,
-            minRotation: 0
+            autoSkip: false,
+            maxRotation: 60,
+            minRotation: 45,
+            callback: (value, index) => labelsH[index] || ''
           },
           title: {
             display: true,
-            text: 'Points / Confidence Level',
+            text: 'Predicted Total (kg)',
             color: '#ccc',
             font: { size: s.axisTitle, weight: 'bold' }
           },
@@ -1160,14 +1065,16 @@ function renderDrillChart(g, athlete) {
         },
         y: {
           beginAtZero: true,
+          min: 0,
+          max: yMax,
           ticks: {
             color: '#ccc',
             font: { size: s.axisTick },
-            precision: 0
+            stepSize: yStep
           },
           title: {
             display: true,
-            text: 'Vote Count',
+            text: `Vote Count (Total = ${N})`,
             color: '#ccc',
             font: { size: s.axisTitle, weight: 'bold' }
           },
@@ -1177,8 +1084,9 @@ function renderDrillChart(g, athlete) {
     }
   });
 
-  state.chart.$histCentered = false;
-  enableDesktopTooltipLinger(state.chart, 5000);
+  charts[histId].$histCentered = false;
+  enableDesktopTooltipLinger(charts[histId], 5000);
+
   requestAnimationFrame(stripTransformsForCharts);
 }
 
