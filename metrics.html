@@ -560,6 +560,19 @@ function getRedGradientColors(n = 16) {
   return colors;
 }
 
+// Return the q-quantile of a *sorted* numeric array (0–1)
+function quantile(sorted, q) {
+  if (!sorted.length) return NaN;
+  const pos = (sorted.length - 1) * q;
+  const base = Math.floor(pos);
+  const rest = pos - base;
+
+  if (sorted[base + 1] !== undefined) {
+    return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
+  }
+  return sorted[base];
+}
+
 /* ========= SETUP DROPDOWNS ========= */
 function setupDropdowns() {
   ['F', 'M'].forEach((g) => {
@@ -897,10 +910,36 @@ function renderCharts(g, w) {
   }
 
   const N = vals.length;
-  const min = Math.min(...vals);
-  const max = Math.max(...vals);
-  const bins = Math.max(3, Math.round(Math.sqrt(N)));
-  const bw = (max - min) / bins || 1;
+
+// Sort for quantiles
+const sortedVals = [...vals].sort((a, b) => a - b);
+const min = sortedVals[0];
+const max = sortedVals[sortedVals.length - 1];
+
+// Freedman–Diaconis estimate
+const q1 = quantile(sortedVals, 0.25);
+const q3 = quantile(sortedVals, 0.75);
+const iqr = q3 - q1;
+
+let bins;
+
+// FD Rule: h = 2 * IQR / N^(1/3)
+if (iqr > 0 && isFinite(iqr)) {
+  const h = 2 * iqr / Math.cbrt(N);
+  if (h > 0 && isFinite(h)) {
+    bins = Math.round((max - min) / h);
+  }
+}
+
+// Fallback if FD rule degenerates
+if (!bins || !isFinite(bins)) {
+  bins = Math.round(Math.sqrt(N));
+}
+
+// Clamp: between 3 and 12 bins always
+bins = Math.max(3, Math.min(bins, 12));
+
+const bw = (max - min) / bins || 1;
 
   const countsH = Array(bins).fill(0);
   vals.forEach(v => {
