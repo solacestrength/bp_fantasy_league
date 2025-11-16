@@ -521,6 +521,28 @@ const drillState = {
   }
 };
 
+// ========= DONUT COLOUR PALETTE (Option D – luxe jewel tones) =========
+const DONUT_BASE_PALETTE = [
+  '#f4d35e', // warm gold
+  '#f28b82', // soft coral
+  '#fb7185', // rose
+  '#34d399', // emerald
+  '#2dd4bf', // teal
+  '#38bdf8', // sky blue
+  '#6366f1', // indigo
+  '#a855f7', // amethyst
+  '#ec4899', // pink
+  '#f97316', // deep orange
+  '#22c55e', // green
+  '#0ea5e9'  // cyan
+];
+
+// Shuffle once per page load → same order used for Women + Men
+const DONUT_SHUFFLED_PALETTE = DONUT_BASE_PALETTE
+  .map(color => ({ color, sort: Math.random() }))
+  .sort((a, b) => a.sort - b.sort)
+  .map(obj => obj.color);
+
 /* ========= BLUE GRADIENT FOR HISTOGRAM ========= */
 /* Start from a mid blue for a smoother transition into dark blue */
 function getBlueGradientColors(n) {
@@ -747,22 +769,10 @@ function renderCharts(g, w) {
   const dData   = Object.values(counts);
   const total   = dData.reduce((a, b) => a + b, 0);
 
-  // Base palette
-  const baseColors = [
-    '#ef4444', '#f97316', '#facc15', '#22c55e', '#14b8a6',
-    '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16',
-    '#d946ef', '#fb7185'
-  ];
-
-  // Fisher–Yates shuffle for randomised colours on each render
-  const shuffledColors = [...baseColors];
-  for (let i = shuffledColors.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffledColors[i], shuffledColors[j]] = [shuffledColors[j], shuffledColors[i]];
-  }
-
-  // Assign colours to slices (wrap if more athletes than colours)
-  const assignedColors = dLabels.map((_, i) => shuffledColors[i % shuffledColors.length]);
+  // Use globally shuffled Option D palette, cycling if needed
+  const donutColors = dLabels.map((_, i) =>
+    DONUT_SHUFFLED_PALETTE[i % DONUT_SHUFFLED_PALETTE.length]
+  );
 
   if (charts[donutId]) charts[donutId].destroy();
   const donutCtx = document.getElementById(donutId).getContext('2d');
@@ -773,7 +783,7 @@ function renderCharts(g, w) {
       labels: dLabels,
       datasets: [{
         data: dData,
-        backgroundColor: assignedColors,
+        backgroundColor: donutColors,
         borderColor: '#111',
         borderWidth: 1
       }]
@@ -812,7 +822,7 @@ function renderCharts(g, w) {
             usePointStyle: true,
             pointStyle: 'circle',
 
-            // Multi-row legend logic
+            // ★ MULTI-ROW LEGEND LOGIC (keeps 1–2 natural) ★
             generateLabels(chart) {
               const original = Chart.overrides.doughnut.plugins.legend.labels.generateLabels(chart);
               const total = original.length;
@@ -822,7 +832,7 @@ function renderCharts(g, w) {
 
               const arranged = [];
 
-              // Odd number → centered first row
+              // Odd number → center first name with an invisible spacer
               if (total % 2 === 1) {
                 arranged.push({
                   text: '',
@@ -835,6 +845,7 @@ function renderCharts(g, w) {
                 arranged.push(original[0]);
               }
 
+              // Pairs for all remaining
               const start = (total % 2 === 1) ? 1 : 0;
               for (let i = start; i < total; i += 2) {
                 arranged.push(original[i]);
@@ -970,9 +981,9 @@ function renderCharts(g, w) {
   const labelsH = [];
   const colorsH = [];
   const normalColors = getBlueGradientColors(innerBins);
-  const outlierColor = 'rgb(30, 58, 138)';
+  const outlierColor = "rgb(30, 58, 138)";
 
-  // Left outlier bin?
+  // Left outlier bin (only if needed)
   if (lowOutCount > 0) {
     countsH.push(lowOutCount);
     labelsH.push(`< ${lowerFence.toFixed(0)}`);
@@ -988,23 +999,23 @@ function renderCharts(g, w) {
     colorsH.push(normalColors[i]);
   }
 
-  // Right outlier bin?
+  // Right outlier bin (only if needed)
   if (highOutCount > 0) {
     countsH.push(highOutCount);
     labelsH.push(`> ${upperFence.toFixed(0)}`);
     colorsH.push(outlierColor);
   }
 
-  // Y-axis clean stepping: all steps of 2
+  // Y-axis clean stepping (2s)
   const maxC = Math.max(...countsH);
   const yStep = 2;
-  const yMax = Math.ceil(maxC / yStep) * yStep;
+  const yMax = Math.max(yStep, Math.ceil(maxC / yStep) * yStep);
 
   if (charts[histId]) charts[histId].destroy();
-  const histCtx = document.getElementById(histId).getContext('2d');
+  const histCtx = document.getElementById(histId).getContext("2d");
 
   charts[histId] = new Chart(histCtx, {
-    type: 'bar',
+    type: "bar",
     data: {
       labels: labelsH,
       datasets: [{
@@ -1020,26 +1031,26 @@ function renderCharts(g, w) {
       maintainAspectRatio: false,
       layout: { padding: { bottom: 60 } },
       events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
-      interaction: { mode: 'nearest', intersect: true },
+      interaction: { mode: "nearest", intersect: true },
       plugins: {
         centerHistArea: { enabled: true },
         legend: { display: false },
         datalabels: {
-          color: '#fff',
-          font: { size: s.histBarLabel, weight: 'normal' },
-          formatter: (v) => v > 0 ? v : '',
-          anchor: 'center',
-          align: 'center',
+          color: "#fff",
+          font: { size: s.histBarLabel, weight: "normal" },
+          formatter: (v) => v > 0 ? v : "",
+          anchor: "center",
+          align: "center",
           clamp: true
         },
         tooltip: {
           usePointStyle: true,
           boxWidth: 8,
           boxHeight: 8,
-          pointStyle: 'circle',
+          pointStyle: "circle",
           callbacks: {
-            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
-            title: (items) => (items[0]?.label) || '',
+            labelPointStyle: () => ({ pointStyle: "circle", rotation: 0 }),
+            title: (items) => items[0]?.label || "",
             label: (ctx) => `Vote Count - ${ctx.parsed.y}`
           }
         }
@@ -1048,18 +1059,18 @@ function renderCharts(g, w) {
         x: {
           offset: true,
           ticks: {
-            color: '#ccc',
+            color: "#ccc",
             font: { size: s.axisTick },
             autoSkip: false,
             maxRotation: 60,
             minRotation: 45,
-            callback: (value, index) => labelsH[index] || ''
+            callback: (value, index) => labelsH[index] || ""
           },
           title: {
             display: true,
-            text: 'Predicted Total (kg)',
-            color: '#ccc',
-            font: { size: s.axisTitle, weight: 'bold' }
+            text: "Predicted Total (kg)",
+            color: "#ccc",
+            font: { size: s.axisTitle, weight: "bold" }
           },
           grid: { display: false }
         },
@@ -1068,15 +1079,15 @@ function renderCharts(g, w) {
           min: 0,
           max: yMax,
           ticks: {
-            color: '#ccc',
+            color: "#ccc",
             font: { size: s.axisTick },
             stepSize: yStep
           },
           title: {
             display: true,
             text: `Vote Count (Total = ${N})`,
-            color: '#ccc',
-            font: { size: s.axisTitle, weight: 'bold' }
+            color: "#ccc",
+            font: { size: s.axisTitle, weight: "bold" }
           },
           grid: { display: false }
         }
