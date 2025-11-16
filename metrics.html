@@ -521,23 +521,23 @@ const drillState = {
   }
 };
 
-// ========= DONUT COLOUR PALETTE (Option D – luxe jewel tones) =========
+// ========= DONUT COLOUR PALETTE (Option D – Luxe Jewel Tones) =========
 const DONUT_BASE_PALETTE = [
   '#f4d35e', // warm gold
-  '#f28b82', // soft coral
-  '#fb7185', // rose
-  '#34d399', // emerald
-  '#2dd4bf', // teal
-  '#38bdf8', // sky blue
-  '#6366f1', // indigo
-  '#a855f7', // amethyst
-  '#ec4899', // pink
-  '#f97316', // deep orange
-  '#22c55e', // green
-  '#0ea5e9'  // cyan
+  '#f26b83', // deep rose
+  '#e63946', // ruby red
+  '#2d936c', // emerald
+  '#23a699', // turquoise
+  '#29a3ff', // cyan blue
+  '#3a5ad9', // azure
+  '#4c3fed', // indigo
+  '#9d4edd', // amethyst
+  '#d63384', // magenta
+  '#ff8f3f', // amber orange
+  '#5ccf49'  // lime green
 ];
 
-// Shuffle once per page load → same order used for Women + Men
+// Shuffle once per page load → consistent across women/men per load
 const DONUT_SHUFFLED_PALETTE = DONUT_BASE_PALETTE
   .map(color => ({ color, sort: Math.random() }))
   .sort((a, b) => a.sort - b.sort)
