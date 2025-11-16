@@ -900,190 +900,187 @@ function renderCharts(g, w) {
 
   enableDesktopTooltipLinger(charts[donutId], 5000);
 
-  /* --- HISTOGRAM (Freedman–Diaconis + outlier bins, max 12 bars) --- */
-  const vals = rows
-    .map(r => parseFloat(r.PredictedTotal))
-    .filter(v => !isNaN(v) && v > 0);
+/* --- HISTOGRAM (Freedman–Diaconis + optional outlier bins, max 12 total bars) --- */
+const vals = rows
+  .map(r => parseFloat(r.PredictedTotal))
+  .filter(v => !isNaN(v) && v > 0);
 
-  if (!vals.length) {
-    if (charts[histId]) charts[histId].destroy();
-    return;
-  }
-
-  const N = vals.length;
-
-  // Sort for quantiles
-  const sorted = [...vals].sort((a, b) => a - b);
-
-  // Quartiles + IQR
-  const q1  = quantile(sorted, 0.25);
-  const q3  = quantile(sorted, 0.75);
-  const iqr = q3 - q1;
-
-  // Outlier fences (Tukey)
-  const lowerFence = q1 - 1.5 * iqr;
-  const upperFence = q3 + 1.5 * iqr;
-
-  // Split into "normal" and outliers
-  const lowOutliersCount  = sorted.filter(v => v <  lowerFence).length;
-  const highOutliersCount = sorted.filter(v => v >  upperFence).length;
-  let   normalVals        = sorted.filter(v => v >= lowerFence && v <= upperFence);
-
-  // If everything is flagged as outlier, just treat all as normal
-  if (!normalVals.length) normalVals = sorted.slice();
-
-  const minNorm = normalVals[0];
-  const maxNorm = normalVals[normalVals.length - 1];
-
-  // --- Freedman–Diaconis bin suggestion ---
-  let fdBins;
-  if (iqr > 0 && isFinite(iqr)) {
-    const h = 2 * iqr / Math.cbrt(N);        // bin width
-    if (h > 0 && isFinite(h)) {
-      fdBins = Math.round((maxNorm - minNorm) / h);
-    }
-  }
-
-  // Fallback: sqrt rule
-  let innerBins = fdBins && isFinite(fdBins) ? fdBins : Math.round(Math.sqrt(N));
-
-  // Clamp inner bins so total bars (2 outliers + inner) ≤ 12
-  innerBins = Math.max(3, Math.min(innerBins, 10)); // 10 inner + 2 outlier = 12 max
-
-  const bw = (maxNorm - minNorm) / innerBins || 1;
-
-  // Normal bin counts
-  const innerCounts = Array(innerBins).fill(0);
-  normalVals.forEach(v => {
-    let idx = Math.floor((v - minNorm) / bw);
-    if (idx < 0) idx = 0;
-    if (idx >= innerBins) idx = innerBins - 1;
-    innerCounts[idx]++;
-  });
-
-  // Final counts: [low outliers] + inner bins + [high outliers]
-  const countsH = [
-    lowOutliersCount,
-    ...innerCounts,
-    highOutliersCount
-  ];
-
-  // Labels: "< lowerFence", FD bins, "> upperFence"
-  const labelsH = [
-    `< ${lowerFence.toFixed(0)}`,
-    ...Array.from({ length: innerBins }, (_, i) => {
-      const start = minNorm + i * bw;
-      const end   = minNorm + (i + 1) * bw;
-      return `${start.toFixed(0)}–${end.toFixed(0)}`;
-    }),
-    `> ${upperFence.toFixed(0)}`
-  ];
-
-  // Colours: gradient for normal bins, deep blue for outlier bins
-  const normalColors = getBlueGradientColors(innerBins);
-  const outlierColor = 'rgb(30, 58, 138)'; // deep blue
-  const colorsH = [
-    outlierColor,
-    ...normalColors,
-    outlierColor
-  ];
-
-  // Y-axis bounds
-  const minC = Math.min(...countsH);
-  const maxC = Math.max(...countsH);
-  const yMin = Math.max(0, Math.floor(minC / 2));
-  const span = maxC - yMin || 1;
-  const step = Math.max(1, Math.round(span / 4));
-  const yMax = Math.ceil(maxC / step) * step;
-
+if (!vals.length) {
   if (charts[histId]) charts[histId].destroy();
-  const histCtx = document.getElementById(histId).getContext('2d');
+  return;
+}
 
-  charts[histId] = new Chart(histCtx, {
-    type: 'bar',
-    data: {
-      labels: labelsH,
-      datasets: [{
-        data: countsH,
-        backgroundColor: colorsH,
-        borderRadius: 5,
-        barPercentage: 0.9,
-        categoryPercentage: 1.0
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      layout: { padding: { bottom: 60 } },
-      events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
-      interaction: { mode: 'nearest', intersect: true },
-      plugins: {
-        centerHistArea: { enabled: true },
-        legend: { display: false },
-        datalabels: {
-          color: '#fff',
-          font: { size: s.histBarLabel, weight: 'normal' },
-          formatter: (v) => v > 0 ? v : '',
-          anchor: 'center',
-          align: 'center',
-          clamp: true
-        },
-        tooltip: {
-          usePointStyle: true,
-          boxWidth: 8,
-          boxHeight: 8,
-          pointStyle: 'circle',
-          callbacks: {
-            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
-            title: (items) => (items[0]?.label) || '',
-            label: (ctx) => `Vote Count - ${ctx.parsed.y}`
-          }
-        }
+const N = vals.length;
+
+// Sort values
+const sorted = [...vals].sort((a, b) => a - b);
+
+// Quartiles + IQR
+const q1  = quantile(sorted, 0.25);
+const q3  = quantile(sorted, 0.75);
+const iqr = q3 - q1;
+
+// Outlier fences
+const lowerFence = q1 - 1.5 * iqr;
+const upperFence = q3 + 1.5 * iqr;
+
+// Separate into normal + outliers
+let normalVals = sorted.filter(v => v >= lowerFence && v <= upperFence);
+const lowOutCount  = sorted.filter(v => v <  lowerFence).length;
+const highOutCount = sorted.filter(v => v >  upperFence).length;
+
+// If everything flagged, treat all as normal
+if (!normalVals.length) normalVals = sorted.slice();
+
+const minNorm = normalVals[0];
+const maxNorm = normalVals[normalVals.length - 1];
+
+// --- Freedman–Diaconis calculation ---
+let suggestedBins = null;
+if (iqr > 0 && isFinite(iqr)) {
+  const h = 2 * iqr / Math.cbrt(N);
+  if (h > 0 && isFinite(h)) {
+    suggestedBins = Math.round((maxNorm - minNorm) / h);
+  }
+}
+
+let innerBins = suggestedBins || Math.round(Math.sqrt(N));
+innerBins = Math.max(3, Math.min(innerBins, 10)); // ensures <=12 total bins
+
+const bw = (maxNorm - minNorm) / innerBins || 1;
+
+// Count normal bin values
+const normalCounts = Array(innerBins).fill(0);
+normalVals.forEach(v => {
+  let i = Math.floor((v - minNorm) / bw);
+  if (i < 0) i = 0;
+  if (i >= innerBins) i = innerBins - 1;
+  normalCounts[i]++;
+});
+
+// Build final bins conditionally
+const countsH = [];
+const labelsH = [];
+const colorsH = [];
+const normalColors = getBlueGradientColors(innerBins);
+const outlierColor = "rgb(30, 58, 138)";
+
+// Left outlier bin?
+if (lowOutCount > 0) {
+  countsH.push(lowOutCount);
+  labelsH.push(`< ${lowerFence.toFixed(0)}`);
+  colorsH.push(outlierColor);
+}
+
+// Normal bins
+for (let i = 0; i < innerBins; i++) {
+  const start = minNorm + i * bw;
+  const end   = minNorm + (i + 1) * bw;
+  countsH.push(normalCounts[i]);
+  labelsH.push(`${start.toFixed(0)}–${end.toFixed(0)}`);
+  colorsH.push(normalColors[i]);
+}
+
+// Right outlier bin?
+if (highOutCount > 0) {
+  countsH.push(highOutCount);
+  labelsH.push(`> ${upperFence.toFixed(0)}`);
+  colorsH.push(outlierColor);
+}
+
+// Y-axis clean stepping
+const maxC = Math.max(...countsH);
+const yStep = 2;
+const yMax = Math.ceil(maxC / yStep) * yStep;
+
+if (charts[histId]) charts[histId].destroy();
+const histCtx = document.getElementById(histId).getContext("2d");
+
+charts[histId] = new Chart(histCtx, {
+  type: "bar",
+  data: {
+    labels: labelsH,
+    datasets: [{
+      data: countsH,
+      backgroundColor: colorsH,
+      borderRadius: 5,
+      barPercentage: 0.9,
+      categoryPercentage: 1.0
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: { padding: { bottom: 60 } },
+    events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
+    interaction: { mode: "nearest", intersect: true },
+    plugins: {
+      centerHistArea: { enabled: true },
+      legend: { display: false },
+      datalabels: {
+        color: "#fff",
+        font: { size: s.histBarLabel, weight: "normal" },
+        formatter: (v) => v > 0 ? v : "",
+        anchor: "center",
+        align: "center",
+        clamp: true
       },
-      scales: {
-        x: {
-          offset: true,
-          ticks: {
-            color: '#ccc',
-            font: { size: s.axisTick },
-            autoSkip: false,
-            maxRotation: 60,
-            minRotation: 45,
-            callback: (value, index) => labelsH[index] || ''
-          },
-          title: {
-            display: true,
-            text: 'Predicted Total (kg)',
-            color: '#ccc',
-            font: { size: s.axisTitle, weight: 'bold' }
-          },
-          grid: { display: false }
-        },
-        y: {
-          min: yMin,
-          max: yMax,
-          beginAtZero: false,
-          ticks: {
-            color: '#ccc',
-            font: { size: s.axisTick }
-          },
-          title: {
-            display: true,
-            text: `Vote Count (Total = ${N})`,
-            color: '#ccc',
-            font: { size: s.axisTitle, weight: 'bold' }
-          },
-          grid: { display: false }
+      tooltip: {
+        usePointStyle: true,
+        boxWidth: 8,
+        boxHeight: 8,
+        pointStyle: "circle",
+        callbacks: {
+          labelPointStyle: () => ({ pointStyle: "circle", rotation: 0 }),
+          title: (items) => items[0]?.label || "",
+          label: (ctx) => `Vote Count - ${ctx.parsed.y}`
         }
       }
+    },
+    scales: {
+      x: {
+        offset: true,
+        ticks: {
+          color: "#ccc",
+          font: { size: s.axisTick },
+          autoSkip: false,
+          maxRotation: 60,
+          minRotation: 45,
+          callback: (value, index) => labelsH[index] || ""
+        },
+        title: {
+          display: true,
+          text: "Predicted Total (kg)",
+          color: "#ccc",
+          font: { size: s.axisTitle, weight: "bold" }
+        },
+        grid: { display: false }
+      },
+      y: {
+        beginAtZero: true,
+        min: 0,
+        max: yMax,
+        ticks: {
+          color: "#ccc",
+          font: { size: s.axisTick },
+          stepSize: yStep
+        },
+        title: {
+          display: true,
+          text: `Vote Count (Total = ${N})`,
+          color: "#ccc",
+          font: { size: s.axisTitle, weight: "bold" }
+        },
+        grid: { display: false }
+      }
     }
-  });
+  }
+});
 
-  charts[histId].$histCentered = false;
-  enableDesktopTooltipLinger(charts[histId], 5000);
+charts[histId].$histCentered = false;
+enableDesktopTooltipLinger(charts[histId], 5000);
 
-  // ✅ Final transform cleanup after both donut + hist render
-  requestAnimationFrame(stripTransformsForCharts);
+requestAnimationFrame(stripTransformsForCharts);
 }
 
 /* ========= DRILLDOWN CHART ========= */
