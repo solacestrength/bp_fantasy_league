@@ -780,14 +780,13 @@ function renderCharts(g, w) {
   /* ========= DONUT PALETTE (Option B) ========= */
   const CRIMSON    = '#DC143C';
   const DARK_ORANGE= '#FF8C00';
-  const PASTEL_RED = '#B4FF39';  // bright lime green
   const EMERALD    = '#00A878';
   const SKY_BLUE   = '#38BDF8';
   const INDIGO     = '#555555';  // replaced Indigo with Grey
   const ROYAL_BLUE = '#4169E1';
 
   const BASE_COLOURS = [
-    CRIMSON, DARK_ORANGE, PASTEL_RED,
+    CRIMSON, DARK_ORANGE,
     EMERALD, SKY_BLUE, INDIGO, ROYAL_BLUE
   ];
 
@@ -808,7 +807,7 @@ function renderCharts(g, w) {
     // --- Only 1 athlete ---
     if (n === 1) {
       // Must be one of the 3 primaries
-      return [shuffle([CRIMSON, DARK_ORANGE, PASTEL_RED])[0]];
+      return [shuffle([CRIMSON, DARK_ORANGE, SKY_BLUE])[0]];
     }
 
     // --- Exactly 2 athletes ---
@@ -820,27 +819,16 @@ function renderCharts(g, w) {
       const allowedSeconds = [DARK_ORANGE, EMERALD, SKY_BLUE, INDIGO, ROYAL_BLUE];
       const second = shuffle(allowedSeconds)[0];
 
-      return [first, second];
+      return [CRIMSON, second];
     }
 
-    // --- Exactly 3 athletes ---
-    if (n === 3) {
-      // Forbidden pairing: Crimson + Pastel Red
-      // So ensure NOT both present simultaneously
-      let pool = BASE_COLOURS.slice();
-      pool = pool.filter(c => !(c === PASTEL_RED)); // temporarily remove pastel red
-      let selection = shuffle(pool).slice(0, 3);
+// 3 Athletes Rules 
 
-      // 50% chance: include pastel red *only if crimson is excluded*
-      const includePastel = Math.random() < 0.5;
-
-      if (includePastel && !selection.includes(CRIMSON)) {
-        // Replace last colour with pastel red
-        selection[2] = PASTEL_RED;
-      }
-
-      return selection;
-    }
+if (n === 3) {
+  // Just pick any 3 while ensuring CRIMSON + GOLD + one more OR any 3 random
+  let pool = BASE_COLOURS.slice();
+  return shuffle(pool).slice(0, 3);
+}
 
     // --- 4+ athletes — free selection from full palette ---
     return shuffle(BASE_COLOURS).slice(0, n);
