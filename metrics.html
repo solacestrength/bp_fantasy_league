@@ -909,37 +909,88 @@ function renderCharts(g, w) {
     return;
   }
 
-  const N = vals.length;
+  /* === HISTOGRAM WITH FD RULE + OUTLIER BINS === */
+const N = vals.length;
 
-// Sort for quantiles
-const sortedVals = [...vals].sort((a, b) => a - b);
-const min = sortedVals[0];
-const max = sortedVals[sortedVals.length - 1];
+// Sort for quantile math
+const sorted = [...vals].sort((a,b) => a - b);
+const minAll = sorted[0];
+const maxAll = sorted[sorted.length - 1];
 
-// Freedman–Diaconis estimate
-const q1 = quantile(sortedVals, 0.25);
-const q3 = quantile(sortedVals, 0.75);
+// --- Quantiles ---
+const q1 = quantile(sorted, 0.25);
+const q3 = quantile(sorted, 0.75);
 const iqr = q3 - q1;
+
+// Outlier fences
+const lowerFence = q1 - 1.5 * iqr;
+const upperFence = q3 + 1.5 * iqr;
+
+// Split into normal + outliers
+const normalVals = sorted.filter(v => v >= lowerFence && v <= upperFence);
+const lowOutliers  = sorted.filter(v => v < lowerFence).length;
+const highOutliers = sorted.filter(v => v > upperFence).length;
+
+// Ensure normal values exist
+if (!normalVals.length) normalVals.push(...sorted);
+
+// --- Compute Freedman–Diaconis bins on the normal range ---
+const minNorm = normalVals[0];
+const maxNorm = normalVals[normalVals.length - 1];
 
 let bins;
 
-// FD Rule: h = 2 * IQR / N^(1/3)
+// FD rule: h = 2 * IQR / N^(1/3)
 if (iqr > 0 && isFinite(iqr)) {
   const h = 2 * iqr / Math.cbrt(N);
   if (h > 0 && isFinite(h)) {
-    bins = Math.round((max - min) / h);
+    bins = Math.round((maxNorm - minNorm) / h);
   }
 }
 
-// Fallback if FD rule degenerates
-if (!bins || !isFinite(bins)) {
-  bins = Math.round(Math.sqrt(N));
-}
+// fallback
+if (!bins || !isFinite(bins)) bins = Math.round(Math.sqrt(N));
 
-// Clamp: between 3 and 12 bins always
+// clamp
 bins = Math.max(3, Math.min(bins, 12));
 
-const bw = (max - min) / bins || 1;
+// compute bin width
+const bw = (maxNorm - minNorm) / bins || 1;
+
+// Create normal bin counts
+const normalCounts = Array(bins).fill(0);
+normalVals.forEach(v => {
+  let i = Math.floor((v - minNorm) / bw);
+  if (i >= bins) i = bins - 1;
+  if (i < 0) i = 0;
+  normalCounts[i]++;
+});
+
+// Final counts = [low outliers] + normal bins + [high outliers]
+const countsH = [
+  lowOutliers,
+  ...normalCounts,
+  highOutliers
+];
+
+// Build labels
+const labelsH = [
+  `< ${lowerFence.toFixed(0)}`, // Left outlier bin
+  ...Array.from({ length: bins }, (_, i) =>
+    `${(minNorm + i * bw).toFixed(0)}–${(minNorm + (i+1) * bw).toFixed(0)}`
+  ),
+  `> ${upperFence.toFixed(0)}`  // Right outlier bin
+];
+
+// Colors: first + last get “outlier blue”
+const normalColors = getBlueGradientColors(bins);
+const outlierColor = 'rgb(30, 58, 138)'; // deep blue
+
+const colorsH = [
+  outlierColor,
+  ...normalColors,
+  outlierColor
+];
 
   const countsH = Array(bins).fill(0);
   vals.forEach(v => {
