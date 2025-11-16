@@ -429,7 +429,7 @@ const centerHistAreaPlugin = {
 
 Chart.register(ChartDataLabels, centerHistAreaPlugin);
 
-/* ========= DATA / LAYOUT HELPERS ========= */
+/* ========= HELPERS ========= */
 
 const SHEET_URL =
   'https://docs.google.com/spreadsheets/d/e/2PACX-1vSuA8YB98ghNeM-cS6Fs1pJNkEBOI0x7WKI4R0vtvAG68mo7PJZYVj2HsdxH3DDqvieaTpe9zUzJcNW/pub?gid=1506853737&single=true&output=csv';
@@ -480,8 +480,11 @@ if (menuBtn) {
     toggleMenu(menuVisible);
   });
 }
+
 document.addEventListener('click', (e) => {
-  if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target) && menuVisible) {
+  if (!mobileMenu.contains(e.target) &&
+      !menuBtn.contains(e.target) &&
+      menuVisible) {
     menuVisible = false;
     toggleMenu(false);
   }
@@ -521,29 +524,11 @@ const drillState = {
   }
 };
 
-// ====== DONUT COLOUR PALETTE (Final) ======
-const BASE_PALETTE = [
-  '#DC143C', // 1) Crimson
-  '#FF8C00', // 2) Dark Orange
-  '#FFD700', // 3) Gold
-  '#10B981', // 4) Emerald Green
-  '#38BDF8', // 5) Sky Blue
-  '#4F46E5', // 6) Indigo
-  '#4169E1'  // 7) Royal Blue
-];
-
-// Elite colours (first slice must be one of these)
-const ELITE = [
-  '#DC143C', // Crimson (required for special case)
-  '#FF8C00', // Dark Orange
-  '#FFD700'  // Gold
-];
-
-/* ========= RED GRADIENT FOR DRILLDOWN ========= */
+/* ========= DRILLDOWN COLOUR GRADIENT ========= */
 function getRedGradientColors(n = 16) {
   const colors = [];
-  const start = { r: 248, g: 113, b: 113 }; // soft red (#f87171)
-  const end   = { r: 185, g:  28, b:  28 }; // deep red (#b91c1c)
+  const start = { r: 248, g: 113, b: 113 };
+  const end   = { r: 185, g: 28,  b: 28 };
   if (n <= 1) {
     colors.push(`rgb(${start.r},${start.g},${start.b})`);
     return colors;
@@ -558,20 +543,19 @@ function getRedGradientColors(n = 16) {
   return colors;
 }
 
-// Return the q-quantile of a *sorted* numeric array (0–1)
+/* ========= QUANTILE (used for FD bins) ========= */
 function quantile(sorted, q) {
   if (!sorted.length) return NaN;
   const pos = (sorted.length - 1) * q;
   const base = Math.floor(pos);
   const rest = pos - base;
-
   if (sorted[base + 1] !== undefined) {
     return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
   }
   return sorted[base];
 }
 
-/* ========= SETUP DROPDOWNS ========= */
+/* ========= DROPDOWNS ========= */
 function setupDropdowns() {
   ['F', 'M'].forEach((g) => {
     const d = allData.filter((r) => r.Gender === g);
@@ -579,17 +563,24 @@ function setupDropdowns() {
       .filter(Boolean)
       .sort((a, b) => parseFloat(a) - parseFloat(b));
 
-    const select = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
+    const select = document.getElementById(
+      g === 'F' ? 'womenSelect' : 'menSelect'
+    );
     if (!select) return;
 
-    select.innerHTML = classes.map((c) => `<option value="${c}">${c}kg</option>`).join('');
+    select.innerHTML = classes
+      .map((c) => `<option value="${c}">${c}kg</option>`)
+      .join('');
+
     select.onchange = () => {
       const newClass = select.value;
       renderCharts(g, newClass);
 
       const state = drillState[g];
       if (state && state.wrapper.style.display === 'block') {
-        const rows = allData.filter(r => r.Gender === g && r.Class === newClass);
+        const rows = allData.filter(
+          r => r.Gender === g && r.Class === newClass
+        );
         const firstAthlete = rows[0]?.Athlete;
         if (firstAthlete) {
           openDrilldown(g, newClass, firstAthlete, rows, { skipFade: true });
@@ -617,17 +608,18 @@ function fadeOut(el) {
   setTimeout(() => { el.style.display = 'none'; }, 250);
 }
 
-/* ========= DESKTOP TOOLTIP LINGER (Patched) ========= */
+/* ========= DESKTOP TOOLTIP LINGER (FINAL VERSION — KEEP) ========= */
 function enableDesktopTooltipLinger(chart, ms = 5000) {
   // Desktop only
   if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
   if (!chart || !chart.canvas) return;
 
-  // 1) Stop Chart.js from auto-clearing tooltips on mouseout
+  // Remove auto-mouseout clearing
   const evts = chart.options.events || [];
-  chart.options.events = evts.filter(e => e !== 'mouseout' && e !== 'mouseleave');
+  chart.options.events = evts.filter(
+    e => e !== 'mouseout' && e !== 'mouseleave'
+  );
 
-  // Make sure tooltips are enabled
   if (!chart.options.plugins) chart.options.plugins = {};
   if (!chart.options.plugins.tooltip) chart.options.plugins.tooltip = {};
   chart.options.plugins.tooltip.enabled = true;
@@ -644,25 +636,37 @@ function enableDesktopTooltipLinger(chart, ms = 5000) {
     chart.update('none');
   }
 
-  // Track last element under cursor
   canvas.addEventListener('mousemove', (e) => {
     hovering = true;
-    const pts = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
+    const pts = chart.getElementsAtEventForMode(
+      e,
+      'nearest',
+      { intersect: true },
+      true
+    );
     if (pts && pts.length) {
-      lastActive = pts.map(p => ({ datasetIndex: p.datasetIndex, index: p.index }));
+      lastActive = pts.map(p => ({
+        datasetIndex: p.datasetIndex,
+        index: p.index
+      }));
     }
-    if (lingerTimer) { clearTimeout(lingerTimer); lingerTimer = null; }
+    if (lingerTimer) {
+      clearTimeout(lingerTimer);
+      lingerTimer = null;
+    }
   });
 
-  // Freeze when pointer leaves the canvas
   canvas.addEventListener('mouseleave', () => {
     hovering = false;
     if (!lastActive.length) return;
 
-    // Run on next frame so any remaining internal handlers finish first
     requestAnimationFrame(() => {
       if (!chart || chart._destroyed) return;
-      chart.tooltip.setActiveElements(lastActive, { x: chart.width / 2, y: chart.height / 2 });
+
+      chart.tooltip.setActiveElements(
+        lastActive,
+        { x: chart.width / 2, y: chart.height / 2 }
+      );
       chart.update('none');
 
       lingerTimer = setTimeout(() => {
@@ -671,38 +675,40 @@ function enableDesktopTooltipLinger(chart, ms = 5000) {
     });
   });
 
-  // Clear if the chart scrolls off-screen
   window.addEventListener('scroll', () => {
     const r = canvas.getBoundingClientRect();
     const visible = r.bottom > 0 && r.top < window.innerHeight;
     if (!visible) clearLinger();
   });
 
-  // Clear on outside click
   document.addEventListener('click', (e) => {
     if (lingerTimer && !canvas.contains(e.target)) clearLinger();
   });
 
-  // Cancel any lingering state when re-entering the chart
   canvas.addEventListener('mouseenter', () => {
     hovering = true;
-    if (lingerTimer) { clearTimeout(lingerTimer); lingerTimer = null; }
-    chart.tooltip.setActiveElements([], {x:0, y:0});
+    if (lingerTimer) {
+      clearTimeout(lingerTimer);
+      lingerTimer = null;
+    }
+    chart.tooltip.setActiveElements([], {x: 0, y: 0});
     chart.update('none');
   });
 }
 
-  /* ========= DESKTOP: STRIP TRANSFORMS AROUND CHARTS ========= */
+/* ========= STRIP TRANSFORMS (FINAL VERSION — KEEP) ========= */
 function stripTransformsForCharts() {
-  // Skip mobile/touch devices
   if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
 
-  const ids = ['womenDonut','menDonut','womenHist','menHist','womenDrill','menDrill'];
+  const ids = [
+    'womenDonut','menDonut',
+    'womenHist','menHist',
+    'womenDrill','menDrill'
+  ];
+
   ids.forEach(id => {
     const canvas = document.getElementById(id);
     if (!canvas) return;
-
-    // Walk up a few ancestors and nuke transforms that skew pointer math
     let el = canvas.parentElement;
     let hops = 0;
     while (el && el !== document.body && hops < 6) {
@@ -717,12 +723,16 @@ function stripTransformsForCharts() {
   });
 }
 
-// When any fade-in animation finishes, clear transforms again
 document.addEventListener('animationend', (e) => {
   if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
+
   const t = e.target;
   if (!t) return;
-  if (t.classList.contains('animate-fade-in') || t.classList.contains('animate-fade-in-up')) {
+
+  if (
+    t.classList.contains('animate-fade-in') ||
+    t.classList.contains('animate-fade-in-up')
+  ) {
     t.classList.add('no-transform');
     t.style.transform = 'none';
     requestAnimationFrame(stripTransformsForCharts);
@@ -737,104 +747,103 @@ function renderCharts(g, w) {
   const rows = allData.filter(r => r.Gender === g && r.Class === w);
   if (!rows.length) return;
 
-  /* --- DONUT --- */
+  /* ========= DONUT: BUILD COUNTS ========= */
   const counts = {};
   rows.forEach(r => { counts[r.Athlete] = (counts[r.Athlete] || 0) + 1; });
 
   const dLabels = Object.keys(counts);
   const dData   = Object.values(counts);
-  const total   = dData.reduce((a, b) => a + b, 0);
+  const total   = dData.reduce((a,b)=>a+b,0);
 
-  // ====== DONUT COLOUR PALETTE (Final) ======
-  const BASE_PALETTE = [
-    '#DC143C', // 1) Crimson
-    '#FF8C00', // 2) Dark Orange
-    '#FFD700', // 3) Gold
-    '#10B981', // 4) Emerald Green
-    '#38BDF8', // 5) Sky Blue
-    '#4F46E5', // 6) Indigo
-    '#4169E1'  // 7) Royal Blue
+  /* ========= DONUT PALETTE (Option B) ========= */
+  const CRIMSON    = '#DC143C';
+  const DARK_ORANGE= '#FF8C00';
+  const PASTEL_RED = '#F28B82';
+  const EMERALD    = '#00A878';
+  const SKY_BLUE   = '#38BDF8';
+  const INDIGO     = '#6366F1';
+  const ROYAL_BLUE = '#4169E1';
+
+  const BASE_COLOURS = [
+    CRIMSON, DARK_ORANGE, PASTEL_RED,
+    EMERALD, SKY_BLUE, INDIGO, ROYAL_BLUE
   ];
 
-  // Elite colours (first slice must be one of these)
-  const ELITE = [
-    '#DC143C', // Crimson
-    '#FF8C00', // Dark Orange
-    '#FFD700'  // Gold
-  ];
-
-  // Pair labels + data and shuffle → breaks any CSV → colour link
-  let donutPairs = dLabels.map((label, i) => ({
-    label,
-    value: dData[i]
-  }));
-
-  donutPairs = donutPairs
-    .map(p => ({ ...p, sort: Math.random() }))
-    .sort((a, b) => a.sort - b.sort);
-
-  const shuffledLabels = donutPairs.map(p => p.label);
-  const shuffledData   = donutPairs.map(p => p.value);
-
-  // ====== APPLY CUSTOM COLOUR RULES ======
-  const sliceCount = shuffledLabels.length;
-
-  // Start from base palette and ensure we have enough colours
-  let palette = [...BASE_PALETTE];
-  while (palette.length < sliceCount) {
-    palette = palette.concat(BASE_PALETTE);
-  }
-
-  // Shuffle the palette
-  palette = palette
-    .map(c => ({ c, sort: Math.random() }))
-    .sort((a, b) => a.sort - b.sort)
-    .map(x => x.c);
-
-  // Strongly enforce elite first colour
-  let firstColour = ELITE[Math.floor(Math.random() * ELITE.length)];
-
-  // Put elite colour first
-  palette = [firstColour, ...palette.filter(c => c !== firstColour)];
-
-  // If ONLY two slices → Crimson must be present
-  if (sliceCount === 2) {
-    if (!palette.includes('#DC143C')) {
-      // Force Crimson into first position
-      palette[0] = '#DC143C';
-      // Remove any duplicate further down just for neatness
-      palette = [palette[0], ...palette.slice(1).filter(c => c !== '#DC143C')];
-      while (palette.length < sliceCount) {
-        palette.push(BASE_PALETTE.find(c => c !== '#DC143C') || '#FF8C00');
-      }
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
     }
+    return a;
   }
 
-  // If only ONE slice → pick any elite colour (already enforced for firstColour)
-  if (sliceCount === 1) {
-    palette = [ELITE[Math.floor(Math.random() * ELITE.length)]];
+  /* ========= DONUT COLOUR SELECTION (Rules enforced) ========= */
+  function pickColours(n) {
+    // Base shuffle every call
+    let colours = shuffle(BASE_COLOURS);
+
+    // --- Only 1 athlete ---
+    if (n === 1) {
+      // Must be one of the 3 primaries
+      return [shuffle([CRIMSON, DARK_ORANGE, PASTEL_RED])[0]];
+    }
+
+    // --- Exactly 2 athletes ---
+    if (n === 2) {
+      // Crimson must be included
+      const first = CRIMSON;
+
+      // Forbidden: Crimson + Pastel Red
+      const allowedSeconds = [DARK_ORANGE, EMERALD, SKY_BLUE, INDIGO, ROYAL_BLUE];
+      const second = shuffle(allowedSeconds)[0];
+
+      return [first, second];
+    }
+
+    // --- Exactly 3 athletes ---
+    if (n === 3) {
+      // Forbidden pairing: Crimson + Pastel Red
+      // So ensure NOT both present simultaneously
+      let pool = BASE_COLOURS.slice();
+      pool = pool.filter(c => !(c === PASTEL_RED)); // temporarily remove pastel red
+      let selection = shuffle(pool).slice(0, 3);
+
+      // 50% chance: include pastel red *only if crimson is excluded*
+      const includePastel = Math.random() < 0.5;
+
+      if (includePastel && !selection.includes(CRIMSON)) {
+        // Replace last colour with pastel red
+        selection[2] = PASTEL_RED;
+      }
+
+      return selection;
+    }
+
+    // --- 4+ athletes — free selection from full palette ---
+    return shuffle(BASE_COLOURS).slice(0, n);
   }
 
-  // Final colours trimmed to number of slices
-  const donutColors = palette.slice(0, sliceCount);
+  const donutColours = pickColours(dLabels.length);
 
+  /* ========= RENDER DONUT ========= */
   if (charts[donutId]) charts[donutId].destroy();
   const donutCtx = document.getElementById(donutId).getContext('2d');
 
   charts[donutId] = new Chart(donutCtx, {
     type: 'doughnut',
     data: {
-      labels: shuffledLabels,
+      labels: dLabels,
       datasets: [{
-        data: shuffledData,
-        backgroundColor: donutColors,
+        data: dData,
+        backgroundColor: donutColours,
         borderColor: '#111',
         borderWidth: 1
       }]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false, // container defines size
+      maintainAspectRatio: false,
       cutout: '57%',
       layout: { padding: 0 },
       events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
@@ -864,39 +873,7 @@ function renderCharts(g, w) {
             boxHeight: 10,
             font: { size: s.donutLegend },
             usePointStyle: true,
-            pointStyle: 'circle',
-
-            // ★ Multi-row legend logic (unchanged)
-            generateLabels(chart) {
-              const original = Chart.overrides.doughnut.plugins.legend.labels.generateLabels(chart);
-              const total = original.length;
-
-              // Leave 1–2 names untouched (natural)
-              if (total <= 2) return original;
-
-              const arranged = [];
-
-              // ODD number → centered first row
-              if (total % 2 === 1) {
-                arranged.push({
-                  text: '',
-                  fillStyle: 'rgba(0,0,0,0)',
-                  strokeStyle: 'rgba(0,0,0,0)',
-                  hidden: true,
-                  index: null,
-                  pointStyle: 'circle'
-                });
-                arranged.push(original[0]);
-              }
-
-              const start = (total % 2 === 1) ? 1 : 0;
-              for (let i = start; i < total; i += 2) {
-                arranged.push(original[i]);
-                if (original[i + 1]) arranged.push(original[i + 1]);
-              }
-
-              return arranged;
-            }
+            pointStyle: 'circle'
           }
         },
         tooltip: {
@@ -905,14 +882,13 @@ function renderCharts(g, w) {
           boxHeight: 8,
           pointStyle: 'circle',
           callbacks: {
-            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
+            labelPointStyle: () => ({ pointStyle:'circle', rotation:0 }),
             label: (ctx) => {
               const dataset = ctx.chart.data.datasets[0];
-              const total = dataset.data.reduce((a, b) => a + b, 0);
+              const total = dataset.data.reduce((a,b)=>a+b,0);
               const value = ctx.parsed;
               const percentage = ((value / total) * 100).toFixed(1);
-              const voteWord = value === 1 ? 'Vote' : 'Votes';
-              return `${value} ${voteWord} – ${percentage}%`;
+              return `${value} Vote${value!==1?'s':''} – ${percentage}%`;
             }
           }
         },
@@ -921,38 +897,33 @@ function renderCharts(g, w) {
           font: (ctx) => {
             const dataset = ctx.chart.data.datasets[0];
             const value = dataset.data[ctx.dataIndex];
-            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
-            const percentage = (value / totalLocal) * 100;
-
-            const angle = (percentage / 100) * 360;
+            const totalLocal = dataset.data.reduce((a,b)=>a+b,0);
+            const pct = (value/totalLocal)*100;
             const base = s.donutPercent;
-            let size;
-
-            if (angle < 10)       size = base * 0.45;
-            else if (angle < 20)  size = base * 0.6;
-            else if (angle < 40)  size = base * 0.8;
-            else                  size = base;
-
-            return { weight: 'bold', size: Math.max(8, size) };
+            let size =
+              pct < 3  ? base*0.45 :
+              pct < 8  ? base*0.6  :
+              pct < 15 ? base*0.8  :
+                          base;
+            return { weight:'bold', size:Math.max(8,size) };
           },
-          formatter: (v, ctx) => {
-            const dataset = ctx.chart.data.datasets[0];
-            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
-            const p = (v / totalLocal) * 100;
-            return p >= 2 ? `${p.toFixed(1)}%` : '';
+          formatter: (v,ctx)=>{
+            const d = ctx.chart.data.datasets[0].data;
+            const t = d.reduce((a,b)=>a+b,0);
+            const p = (v/t)*100;
+            return p>=2 ? `${p.toFixed(1)}%` : '';
           },
-          display: (ctx) => {
-            const dataset = ctx.chart.data.datasets[0];
-            const value = dataset.data[ctx.dataIndex];
-            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
-            const percentage = (value / totalLocal) * 100;
-            return percentage >= 3.5;
+          display: (ctx)=>{
+            const d = ctx.chart.data.datasets[0].data;
+            const t = d.reduce((a,b)=>a+b,0);
+            const p = (ctx.dataset.data[ctx.dataIndex]/t)*100;
+            return p>=3.5;
           },
-          anchor: 'center',
-          align: 'center',
-          clamp: true,
-          clip: true,
-          offset: 0
+          anchor:'center',
+          align:'center',
+          clamp:true,
+          clip:true,
+          offset:0
         }
       },
       onClick: (evt, elements) => handleDonutClick(g, w, donutId, evt, elements, rows)
@@ -960,7 +931,7 @@ function renderCharts(g, w) {
   });
 
   enableDesktopTooltipLinger(charts[donutId], 5000);
-
+  
   /* --- HISTOGRAM (Freedman–Diaconis + optional outlier bins, max 12 total bars) --- */
   const vals = rows
     .map(r => parseFloat(r.PredictedTotal))
