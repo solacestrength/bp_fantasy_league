@@ -521,47 +521,23 @@ const drillState = {
   }
 };
 
-// ========= DONUT COLOUR PALETTE (Option D – Luxe Jewel Tones) =========
-const DONUT_BASE_PALETTE = [
-  '#f4d35e', // warm gold
-  '#f26b83', // deep rose
-  '#e63946', // ruby red
-  '#2d936c', // emerald
-  '#23a699', // turquoise
-  '#29a3ff', // cyan blue
-  '#3a5ad9', // azure
-  '#4c3fed', // indigo
-  '#9d4edd', // amethyst
-  '#d63384', // magenta
-  '#ff8f3f', // amber orange
-  '#5ccf49'  // lime green
+// ====== DONUT COLOUR PALETTE (Final) ======
+const BASE_PALETTE = [
+  '#DC143C', // 1) Crimson
+  '#FF8C00', // 2) Dark Orange
+  '#FFD700', // 3) Gold
+  '#10B981', // 4) Emerald Green
+  '#38BDF8', // 5) Sky Blue
+  '#4F46E5', // 6) Indigo
+  '#4169E1'  // 7) Royal Blue
 ];
 
-// Shuffle once per page load → consistent across women/men per load
-const DONUT_SHUFFLED_PALETTE = DONUT_BASE_PALETTE
-  .map(color => ({ color, sort: Math.random() }))
-  .sort((a, b) => a.sort - b.sort)
-  .map(obj => obj.color);
-
-/* ========= BLUE GRADIENT FOR HISTOGRAM ========= */
-/* Start from a mid blue for a smoother transition into dark blue */
-function getBlueGradientColors(n) {
-  const colors = [];
-  const start = { r: 96, g: 165, b: 250 }; // mid blue
-  const end   = { r: 30, g: 64,  b: 175 }; // dark blue
-  if (n <= 1) {
-    colors.push(`rgb(${start.r},${start.g},${start.b})`);
-    return colors;
-  }
-  for (let i = 0; i < n; i++) {
-    const t = i / (n - 1);
-    const r = Math.round(start.r + (end.r - start.r) * t);
-    const g = Math.round(start.g + (end.g - start.g) * t);
-    const b = Math.round(start.b + (end.b - start.b) * t);
-    colors.push(`rgb(${r},${g},${b})`);
-  }
-  return colors;
-}
+// Elite colours (first slice must be one of these)
+const ELITE = [
+  '#DC143C', // Crimson (required for special case)
+  '#FF8C00', // Dark Orange
+  '#FFD700'  // Gold
+];
 
 /* ========= RED GRADIENT FOR DRILLDOWN ========= */
 function getRedGradientColors(n = 16) {
@@ -769,10 +745,78 @@ function renderCharts(g, w) {
   const dData   = Object.values(counts);
   const total   = dData.reduce((a, b) => a + b, 0);
 
-  // Use globally shuffled Option D palette, cycling if needed
-  const donutColors = dLabels.map((_, i) =>
-    DONUT_SHUFFLED_PALETTE[i % DONUT_SHUFFLED_PALETTE.length]
-  );
+  // ====== DONUT COLOUR PALETTE (Final) ======
+  const BASE_PALETTE = [
+    '#DC143C', // 1) Crimson
+    '#FF8C00', // 2) Dark Orange
+    '#FFD700', // 3) Gold
+    '#10B981', // 4) Emerald Green
+    '#38BDF8', // 5) Sky Blue
+    '#4F46E5', // 6) Indigo
+    '#4169E1'  // 7) Royal Blue
+  ];
+
+  // Elite colours (first slice must be one of these)
+  const ELITE = [
+    '#DC143C', // Crimson
+    '#FF8C00', // Dark Orange
+    '#FFD700'  // Gold
+  ];
+
+  // Pair labels + data and shuffle → breaks any CSV → colour link
+  let donutPairs = dLabels.map((label, i) => ({
+    label,
+    value: dData[i]
+  }));
+
+  donutPairs = donutPairs
+    .map(p => ({ ...p, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort);
+
+  const shuffledLabels = donutPairs.map(p => p.label);
+  const shuffledData   = donutPairs.map(p => p.value);
+
+  // ====== APPLY CUSTOM COLOUR RULES ======
+  const sliceCount = shuffledLabels.length;
+
+  // Start from base palette and ensure we have enough colours
+  let palette = [...BASE_PALETTE];
+  while (palette.length < sliceCount) {
+    palette = palette.concat(BASE_PALETTE);
+  }
+
+  // Shuffle the palette
+  palette = palette
+    .map(c => ({ c, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(x => x.c);
+
+  // Strongly enforce elite first colour
+  let firstColour = ELITE[Math.floor(Math.random() * ELITE.length)];
+
+  // Put elite colour first
+  palette = [firstColour, ...palette.filter(c => c !== firstColour)];
+
+  // If ONLY two slices → Crimson must be present
+  if (sliceCount === 2) {
+    if (!palette.includes('#DC143C')) {
+      // Force Crimson into first position
+      palette[0] = '#DC143C';
+      // Remove any duplicate further down just for neatness
+      palette = [palette[0], ...palette.slice(1).filter(c => c !== '#DC143C')];
+      while (palette.length < sliceCount) {
+        palette.push(BASE_PALETTE.find(c => c !== '#DC143C') || '#FF8C00');
+      }
+    }
+  }
+
+  // If only ONE slice → pick any elite colour (already enforced for firstColour)
+  if (sliceCount === 1) {
+    palette = [ELITE[Math.floor(Math.random() * ELITE.length)]];
+  }
+
+  // Final colours trimmed to number of slices
+  const donutColors = palette.slice(0, sliceCount);
 
   if (charts[donutId]) charts[donutId].destroy();
   const donutCtx = document.getElementById(donutId).getContext('2d');
@@ -780,9 +824,9 @@ function renderCharts(g, w) {
   charts[donutId] = new Chart(donutCtx, {
     type: 'doughnut',
     data: {
-      labels: dLabels,
+      labels: shuffledLabels,
       datasets: [{
-        data: dData,
+        data: shuffledData,
         backgroundColor: donutColors,
         borderColor: '#111',
         borderWidth: 1
@@ -822,7 +866,7 @@ function renderCharts(g, w) {
             usePointStyle: true,
             pointStyle: 'circle',
 
-            // ★ MULTI-ROW LEGEND LOGIC (keeps 1–2 natural) ★
+            // ★ Multi-row legend logic (unchanged)
             generateLabels(chart) {
               const original = Chart.overrides.doughnut.plugins.legend.labels.generateLabels(chart);
               const total = original.length;
@@ -832,7 +876,7 @@ function renderCharts(g, w) {
 
               const arranged = [];
 
-              // Odd number → center first name with an invisible spacer
+              // ODD number → centered first row
               if (total % 2 === 1) {
                 arranged.push({
                   text: '',
@@ -845,7 +889,6 @@ function renderCharts(g, w) {
                 arranged.push(original[0]);
               }
 
-              // Pairs for all remaining
               const start = (total % 2 === 1) ? 1 : 0;
               for (let i = start; i < total; i += 2) {
                 arranged.push(original[i]);
@@ -947,13 +990,13 @@ function renderCharts(g, w) {
   const lowOutCount  = sorted.filter(v => v <  lowerFence).length;
   const highOutCount = sorted.filter(v => v >  upperFence).length;
 
-  // If everything flagged, treat all as normal
+  // If everything flagged as outlier, treat all as normal
   if (!normalVals.length) normalVals = sorted.slice();
 
   const minNorm = normalVals[0];
   const maxNorm = normalVals[normalVals.length - 1];
 
-  // Freedman–Diaconis calculation
+  // Freedman–Diaconis suggested bins
   let suggestedBins = null;
   if (iqr > 0 && isFinite(iqr)) {
     const h = 2 * iqr / Math.cbrt(N);
@@ -963,7 +1006,8 @@ function renderCharts(g, w) {
   }
 
   let innerBins = suggestedBins || Math.round(Math.sqrt(N));
-  innerBins = Math.max(3, Math.min(innerBins, 10)); // ensures <=12 total bins
+  // Max 10 "inner" bins → +2 potential outlier bins = max 12 total
+  innerBins = Math.max(3, Math.min(innerBins, 10));
 
   const bw = (maxNorm - minNorm) / innerBins || 1;
 
@@ -981,9 +1025,9 @@ function renderCharts(g, w) {
   const labelsH = [];
   const colorsH = [];
   const normalColors = getBlueGradientColors(innerBins);
-  const outlierColor = "rgb(30, 58, 138)";
+  const outlierColor = 'rgb(30, 58, 138)';
 
-  // Left outlier bin (only if needed)
+  // Left outlier bin only if needed
   if (lowOutCount > 0) {
     countsH.push(lowOutCount);
     labelsH.push(`< ${lowerFence.toFixed(0)}`);
@@ -999,23 +1043,23 @@ function renderCharts(g, w) {
     colorsH.push(normalColors[i]);
   }
 
-  // Right outlier bin (only if needed)
+  // Right outlier bin only if needed
   if (highOutCount > 0) {
     countsH.push(highOutCount);
     labelsH.push(`> ${upperFence.toFixed(0)}`);
     colorsH.push(outlierColor);
   }
 
-  // Y-axis clean stepping (2s)
+  // Y-axis – clean constant step of 2
   const maxC = Math.max(...countsH);
   const yStep = 2;
   const yMax = Math.max(yStep, Math.ceil(maxC / yStep) * yStep);
 
   if (charts[histId]) charts[histId].destroy();
-  const histCtx = document.getElementById(histId).getContext("2d");
+  const histCtx = document.getElementById(histId).getContext('2d');
 
   charts[histId] = new Chart(histCtx, {
-    type: "bar",
+    type: 'bar',
     data: {
       labels: labelsH,
       datasets: [{
@@ -1031,26 +1075,26 @@ function renderCharts(g, w) {
       maintainAspectRatio: false,
       layout: { padding: { bottom: 60 } },
       events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
-      interaction: { mode: "nearest", intersect: true },
+      interaction: { mode: 'nearest', intersect: true },
       plugins: {
         centerHistArea: { enabled: true },
         legend: { display: false },
         datalabels: {
-          color: "#fff",
-          font: { size: s.histBarLabel, weight: "normal" },
-          formatter: (v) => v > 0 ? v : "",
-          anchor: "center",
-          align: "center",
+          color: '#fff',
+          font: { size: s.histBarLabel, weight: 'normal' },
+          formatter: (v) => v > 0 ? v : '',
+          anchor: 'center',
+          align: 'center',
           clamp: true
         },
         tooltip: {
           usePointStyle: true,
           boxWidth: 8,
           boxHeight: 8,
-          pointStyle: "circle",
+          pointStyle: 'circle',
           callbacks: {
-            labelPointStyle: () => ({ pointStyle: "circle", rotation: 0 }),
-            title: (items) => items[0]?.label || "",
+            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
+            title: (items) => (items[0]?.label) || '',
             label: (ctx) => `Vote Count - ${ctx.parsed.y}`
           }
         }
@@ -1059,18 +1103,18 @@ function renderCharts(g, w) {
         x: {
           offset: true,
           ticks: {
-            color: "#ccc",
+            color: '#ccc',
             font: { size: s.axisTick },
             autoSkip: false,
             maxRotation: 60,
             minRotation: 45,
-            callback: (value, index) => labelsH[index] || ""
+            callback: (value, index) => labelsH[index] || ''
           },
           title: {
             display: true,
-            text: "Predicted Total (kg)",
-            color: "#ccc",
-            font: { size: s.axisTitle, weight: "bold" }
+            text: 'Predicted Total (kg)',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
           },
           grid: { display: false }
         },
@@ -1079,15 +1123,15 @@ function renderCharts(g, w) {
           min: 0,
           max: yMax,
           ticks: {
-            color: "#ccc",
+            color: '#ccc',
             font: { size: s.axisTick },
             stepSize: yStep
           },
           title: {
             display: true,
             text: `Vote Count (Total = ${N})`,
-            color: "#ccc",
-            font: { size: s.axisTitle, weight: "bold" }
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
           },
           grid: { display: false }
         }
@@ -1098,6 +1142,7 @@ function renderCharts(g, w) {
   charts[histId].$histCentered = false;
   enableDesktopTooltipLinger(charts[histId], 5000);
 
+  // Final transform cleanup after both donut + hist render
   requestAnimationFrame(stripTransformsForCharts);
 }
 
