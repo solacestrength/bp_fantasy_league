@@ -947,7 +947,8 @@ function renderCharts(g, w) {
 
   enableDesktopTooltipLinger(charts[donutId], 5000);
 
-  /  /* --- HISTOGRAM (FD + smart outliers, trimmed empty bins, min bin width) --- */
+  //* --- HISTOGRAM (FD + smart outliers, trimmed empty bins, min bin width) --- */
+  
   const vals = rows
     .map(r => parseFloat(r.PredictedTotal))
     .filter(v => !isNaN(v) && v > 0);
