@@ -947,7 +947,7 @@ function renderCharts(g, w) {
 
   enableDesktopTooltipLinger(charts[donutId], 5000);
 
-/* --- HISTOGRAM (Freedman–Diaconis + optional outlier bins, max 12 total bars) --- */
+/* --- HISTOGRAM (Freedman–Diaconis, softened outlier logic) --- */
 const vals = rows
   .map(r => parseFloat(r.PredictedTotal))
   .filter(v => !isNaN(v) && v > 0);
@@ -967,22 +967,22 @@ const q1  = quantile(sorted, 0.25);
 const q3  = quantile(sorted, 0.75);
 const iqr = q3 - q1;
 
-// Outlier fences
-const lowerFence = q1 - 1.5 * iqr;
-const upperFence = q3 + 1.5 * iqr;
+// 🔧 Softer outlier fences (2.0 * IQR instead of 1.5)
+const lowerFence = q1 - 2.0 * iqr;
+const upperFence = q3 + 2.0 * iqr;
 
 // Separate into normal + outliers
 let normalVals = sorted.filter(v => v >= lowerFence && v <= upperFence);
 const lowOutCount  = sorted.filter(v => v <  lowerFence).length;
 const highOutCount = sorted.filter(v => v >  upperFence).length;
 
-// If everything flagged, treat all as normal
+// If everything flagged as outlier, treat all as normal
 if (!normalVals.length) normalVals = sorted.slice();
 
 const minNorm = normalVals[0];
 const maxNorm = normalVals[normalVals.length - 1];
 
-// --- Freedman–Diaconis calculation ---
+// --- Freedman–Diaconis calculation for bin count ---
 let suggestedBins = null;
 if (iqr > 0 && isFinite(iqr)) {
   const h = 2 * iqr / Math.cbrt(N);
@@ -991,12 +991,20 @@ if (iqr > 0 && isFinite(iqr)) {
   }
 }
 
+// Base inner bin count
 let innerBins = suggestedBins || Math.round(Math.sqrt(N));
-innerBins = Math.max(3, Math.min(innerBins, 10)); // ensures <=12 total bins
 
-const bw = (maxNorm - minNorm) / innerBins || 1;
+// Clamp bin count for readability (3–7 normal bins)
+innerBins = Math.max(3, Math.min(innerBins, 7));
 
-// Count normal bin values
+// Minimum bin width so ranges don’t get too tight (e.g. "<398", "398–399")
+let bw = (maxNorm - minNorm) / innerBins || 1;
+const MIN_BIN_WIDTH = 3; // in kg
+if (bw < MIN_BIN_WIDTH) {
+  bw = MIN_BIN_WIDTH;
+}
+
+// Re-count normal bin values
 const normalCounts = Array(innerBins).fill(0);
 normalVals.forEach(v => {
   let i = Math.floor((v - minNorm) / bw);
@@ -1005,14 +1013,18 @@ normalVals.forEach(v => {
   normalCounts[i]++;
 });
 
-// Build final bins (outliers + normal), THEN colour with a smooth gradient
+// Build final bins conditionally
 const countsH = [];
 const labelsH = [];
+const colorsH = [];
+const normalColors = getBlueGradientColors(innerBins);
+const outlierColor = "rgb(30, 64, 175)"; // darkest blue from gradient
 
-// Left outlier bin?
+// Left outlier bin (if any)
 if (lowOutCount > 0) {
   countsH.push(lowOutCount);
   labelsH.push(`< ${lowerFence.toFixed(0)}`);
+  colorsH.push(outlierColor);
 }
 
 // Normal bins
@@ -1021,21 +1033,20 @@ for (let i = 0; i < innerBins; i++) {
   const end   = minNorm + (i + 1) * bw;
   countsH.push(normalCounts[i]);
   labelsH.push(`${start.toFixed(0)}–${end.toFixed(0)}`);
+  colorsH.push(normalColors[i]);
 }
 
-// Right outlier bin?
+// Right outlier bin (if any)
 if (highOutCount > 0) {
   countsH.push(highOutCount);
   labelsH.push(`> ${upperFence.toFixed(0)}`);
+  colorsH.push(outlierColor);
 }
-
-// Now generate a gradient spanning *all* bins (including outliers)
-const colorsH = getBlueGradientColors(countsH.length);
 
 // Y-axis clean stepping
 const maxC = Math.max(...countsH);
 const yStep = 2;
-const yMax = Math.ceil(maxC / yStep) * yStep || yStep;
+const yMax = Math.max(yStep, Math.ceil(maxC / yStep) * yStep);
 
 if (charts[histId]) charts[histId].destroy();
 const histCtx = document.getElementById(histId).getContext("2d");
