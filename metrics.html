@@ -746,163 +746,207 @@ function renderCharts(g, w) {
   const s = sizing();
   const donutId = g === 'F' ? 'womenDonut' : 'menDonut';
   const histId  = g === 'F' ? 'womenHist'  : 'menHist';
+
   // Randomise order so colour assignment cannot reveal first voter
-const rows = shuffleArray(
-  allData.filter(r => r.Gender === g && r.Class === w)
-);
+  const rows = shuffleArray(
+    allData.filter(r => r.Gender === g && r.Class === w)
+  );
   if (!rows.length) return;
 
-  /* --- DONUT (Sorted + Fixed Colours for Top Shares) --- */
+  /* --- DONUT --- */
+  // Count votes per athlete
+  const counts = {};
+  rows.forEach(r => {
+    counts[r.Athlete] = (counts[r.Athlete] || 0) + 1;
+  });
 
-// count votes
-const counts = {};
-rows.forEach(r => {
-  counts[r.Athlete] = (counts[r.Athlete] || 0) + 1;
-});
+  // Sort athletes by vote count (largest → smallest)
+  const entries = Object.entries(counts); // [ [athlete, count], ... ]
+  entries.sort((a, b) => b[1] - a[1]);
 
-// Convert to sortable array
-let donutData = Object.keys(counts).map(name => ({
-  name,
-  votes: counts[name]
-}));
+  const dLabels = entries.map(e => e[0]);
+  const dData   = entries.map(e => e[1]);
+  const total   = dData.reduce((a, b) => a + b, 0);
 
-// Sort by votes (descending)
-donutData.sort((a, b) => b.votes - a.votes);
+  // ===== MEDAL COLOURS (for top 3) =====
+  const GOLD   = '#e0b84f'; // tuned for white text
+  const SILVER = '#9ea2a6';
+  const BRONZE = '#b46d32';
 
-const totalVotes = donutData.reduce((a,b) => a + b.votes, 0);
+  // ===== Remaining palette (for 4th, 5th, …) =====
+  // All colours chosen to work with white labels + your dark theme
+  const EXTRA_COLOURS = [
+    '#22c55e', // emerald
+    '#3b82f6', // blue
+    '#8b5cf6', // purple
+    '#ec4899', // pink
+    '#06b6d4', // cyan
+    '#14b8a6', // teal
+    '#84cc16', // lime
+    '#d946ef', // fuchsia
+    '#fb7185'  // rose
+  ];
 
-// FIXED COLOUR ORDER: red → orange → green → blue then rest
-const donutColorMap = [
-  '#ef4444', // red (largest)
-  '#f97316', // orange
-  '#22c55e', // green
-  '#3b82f6', // blue
-  '#facc15', // yellow
-  '#14b8a6', // teal
-  '#8b5cf6', // purple
-  '#ec4899', // pink
-  '#06b6d4', // cyan
-  '#84cc16', // lime
-  '#d946ef', // fuchsia
-  '#fb7185'  // rose
-];
-
-// Assign colours in sorted order
-const donutLabels = donutData.map(d => d.name);
-const donutValues = donutData.map(d => d.votes);
-const donutColors = donutData.map((d, i) => donutColorMap[i % donutColorMap.length]);
-
-// destroy old
-if (charts[donutId]) charts[donutId].destroy();
-
-const donutCtx = document.getElementById(donutId).getContext('2d');
-
-charts[donutId] = new Chart(donutCtx, {
-  type: 'doughnut',
-  data: {
-    labels: donutLabels,
-    datasets: [{
-      data: donutValues,
-      backgroundColor: donutColors,
-      borderColor: '#111',
-      borderWidth: 1
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    cutout: '57%',
-    rotation: -90 * (Math.PI / 180),  // <-- Start at 12 o’clock
-    layout: { padding: 0 },
-    events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
-    interaction: { mode:'nearest', intersect:true },
-    plugins: {
-      title: {
-        display: true,
-        text: 'Share of Votes',
-        color: '#ccc',
-        font: { weight:'bold', size: s.donutTitle },
-        padding: { bottom: 8 }
-      },
-      subtitle: {
-        display: true,
-        text: `Total Votes – ${totalVotes}`,
-        color: '#aaa',
-        font: { size: s.donutSubtitle },
-        padding: { top: 2, bottom: 18 }
-      },
-      legend: {
-        position: 'bottom',
-        onClick: null,
-        onHover: null,
-        labels: {
-          color: '#ccc',
-          boxWidth: 10,
-          boxHeight: 10,
-          font: { size: s.donutLegend },
-          usePointStyle: true,
-          pointStyle: 'circle'
-        }
-      },
-      tooltip: {
-        usePointStyle: true,
-        boxWidth: 8,
-        boxHeight: 8,
-        pointStyle: 'circle',
-        callbacks: {
-          labelPointStyle: () => ({ pointStyle:'circle', rotation:0 }),
-          label: (ctx) => {
-            const v = ctx.parsed;
-            const pct = ((v / totalVotes) * 100).toFixed(1);
-            const word = v === 1 ? 'Vote' : 'Votes';
-            return `${v} ${word} – ${pct}%`;
-          }
-        }
-      },
-      datalabels: {
-        color: '#fff',
-        font: (ctx) => {
-          const dataset = ctx.chart.data.datasets[0];
-          const val = dataset.data[ctx.dataIndex];
-          const total = dataset.data.reduce((a,b)=>a+b,0);
-          const pct = (val/total)*100;
-
-          const angle = (pct / 100) * 360;
-          const base = s.donutPercent;
-          let size;
-
-          if (angle < 10) size = base * 0.45;
-          else if (angle < 20) size = base * 0.6;
-          else if (angle < 40) size = base * 0.8;
-          else size = base;
-
-          return { weight:'bold', size: Math.max(8, size) };
-        },
-        formatter: (v, ctx) => {
-          const dataset = ctx.chart.data.datasets[0];
-          const total = dataset.data.reduce((a,b)=>a+b,0);
-          const p = (v/total)*100;
-          return p >= 2 ? `${p.toFixed(1)}%` : '';
-        },
-        display: (ctx) => {
-          const dataset = ctx.chart.data.datasets[0];
-          const val = dataset.data[ctx.dataIndex];
-          const total = dataset.data.reduce((a,b)=>a+b,0);
-          return (val/total)*100 >= 3.5;
-        },
-        anchor:'center',
-        align:'center',
-        clamp:true,
-        clip:true,
-        offset:0
-      }
-    },
-    onClick: (evt, elements) => handleDonutClick(g, w, donutId, evt, elements, rows)
+  const donutColors = [];
+  for (let i = 0; i < dLabels.length; i++) {
+    if (i === 0) {
+      donutColors.push(GOLD);   // largest share → gold
+    } else if (i === 1) {
+      donutColors.push(SILVER); // second → silver
+    } else if (i === 2) {
+      donutColors.push(BRONZE); // third → bronze
+    } else {
+      // Cycle through remaining palette for 4th, 5th, etc.
+      donutColors.push(EXTRA_COLOURS[(i - 3) % EXTRA_COLOURS.length]);
+    }
   }
-});
 
-enableDesktopTooltipLinger(charts[donutId], 5000);
-  
+  // Build donut chart
+  if (charts[donutId]) charts[donutId].destroy();
+  const donutCtx = document.getElementById(donutId).getContext('2d');
+
+  charts[donutId] = new Chart(donutCtx, {
+    type: 'doughnut',
+    data: {
+      labels: dLabels,
+      datasets: [{
+        data: dData,
+        backgroundColor: donutColors,
+        borderColor: '#111',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false, // container defines size
+      // Chart.js starts at 12 o'clock by default (rotation = -0.5 * Math.PI)
+      // and draws slices in array order ⇒ sorted & medal logic respected.
+      cutout: '57%',
+      layout: { padding: 0 },
+      events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
+      interaction: { mode: 'nearest', intersect: true },
+      plugins: {
+        title: {
+          display: true,
+          text: 'Share of Votes',
+          color: '#ccc',
+          font: { weight: 'bold', size: s.donutTitle },
+          padding: { bottom: 8 }
+        },
+        subtitle: {
+          display: true,
+          text: `Total Votes – ${total}`,
+          color: '#aaa',
+          font: { size: s.donutSubtitle },
+          padding: { top: 2, bottom: 18 }
+        },
+        legend: {
+          position: 'bottom',
+          onClick: null,
+          onHover: null,
+          labels: {
+            color: '#ccc',
+            boxWidth: 10,
+            boxHeight: 10,
+            font: { size: s.donutLegend },
+            usePointStyle: true,
+            pointStyle: 'circle',
+            // ★ Keeps your existing multi-row legend layout ★
+            generateLabels(chart) {
+              const original =
+                Chart.overrides.doughnut.plugins.legend.labels.generateLabels(chart);
+              const total = original.length;
+
+              if (total <= 2) return original;
+
+              const arranged = [];
+
+              // ODD COUNT → centre the first name by adding a spacer
+              if (total % 2 === 1) {
+                arranged.push({
+                  text: '',
+                  fillStyle: 'rgba(0,0,0,0)',
+                  strokeStyle: 'rgba(0,0,0,0)',
+                  hidden: true,
+                  index: null,
+                  pointStyle: 'circle'
+                });
+                arranged.push(original[0]);
+              }
+
+              const start = (total % 2 === 1) ? 1 : 0;
+              for (let i = start; i < total; i += 2) {
+                arranged.push(original[i]);
+                if (original[i + 1]) arranged.push(original[i + 1]);
+              }
+
+              return arranged;
+            }
+          }
+        },
+        tooltip: {
+          usePointStyle: true,
+          boxWidth: 8,
+          boxHeight: 8,
+          pointStyle: 'circle',
+          callbacks: {
+            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
+            label: (ctx) => {
+              const dataset = ctx.chart.data.datasets[0];
+              const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
+              const value = ctx.parsed;
+              const percentage = ((value / totalLocal) * 100).toFixed(1);
+              const voteWord = value === 1 ? 'Vote' : 'Votes';
+              return `${value} ${voteWord} – ${percentage}%`;
+            }
+          }
+        },
+        datalabels: {
+          color: '#fff',
+          font: (ctx) => {
+            const dataset = ctx.chart.data.datasets[0];
+            const value = dataset.data[ctx.dataIndex];
+            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
+            const percentage = (value / totalLocal) * 100;
+
+            const angle = (percentage / 100) * 360;
+            const base = s.donutPercent;
+            let size;
+
+            if (angle < 10)       size = base * 0.45;
+            else if (angle < 20)  size = base * 0.6;
+            else if (angle < 40)  size = base * 0.8;
+            else                  size = base;
+
+            return { weight: 'bold', size: Math.max(8, size) };
+          },
+          formatter: (v, ctx) => {
+            const dataset = ctx.chart.data.datasets[0];
+            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
+            const p = (v / totalLocal) * 100;
+            return p >= 2 ? `${p.toFixed(1)}%` : '';
+          },
+          display: (ctx) => {
+            const dataset = ctx.chart.data.datasets[0];
+            const value = dataset.data[ctx.dataIndex];
+            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
+            const percentage = (value / totalLocal) * 100;
+            return percentage >= 3.5;
+          },
+          anchor: 'center',
+          align: 'center',
+          clamp: true,
+          clip: true,
+          offset: 0
+        }
+      },
+      onClick: (evt, elements) =>
+        handleDonutClick(g, w, donutId, evt, elements, rows)
+    }
+  });
+
+  enableDesktopTooltipLinger(charts[donutId], 5000);
+
 /* --- HISTOGRAM (Freedman–Diaconis + optional outlier bins, max 12 total bars) --- */
 const vals = rows
   .map(r => parseFloat(r.PredictedTotal))
