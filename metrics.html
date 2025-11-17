@@ -1086,31 +1086,31 @@ function renderCharts(g, w) {
   const effectiveMinEdge = binStarts[firstNonZero];
   const effectiveMaxEdge = binEnds[lastNonZero];
 
-  // Left outlier bin (if still present) – lightest colour
-  if (lowVals.length > 0) {
-    countsH.push(lowVals.length);
-    labelsH.push(`< ${effectiveMinEdge.toFixed(0)}`);
-    colorsH.push(coreColors[0]);
-  }
+  // Left outlier bin
+if (lowVals.length > 0) {
+  countsH.push(lowVals.length);
+  labelsH.push(`< ${effectiveMinEdge.toFixed(0)} kg`);
+  colorsH.push(coreColors[0]);
+}
 
-  // Core bins (trimmed)
-  for (let i = firstNonZero; i <= lastNonZero; i++) {
-    const idx = i - firstNonZero;
-    countsH.push(fullCounts[i]);
+// Core bins (unchanged)
+for (let i = firstNonZero; i <= lastNonZero; i++) {
+  const idx = i - firstNonZero;
+  countsH.push(fullCounts[i]);
 
-    const start = binStarts[i];
-    const end   = binEnds[i];
-    labelsH.push(`${start.toFixed(0)}–${end.toFixed(0)}`);
+  const start = binStarts[i];
+  const end   = binEnds[i];
+  labelsH.push(`${start.toFixed(0)}–${end.toFixed(0)}`); // no kg here
 
-    colorsH.push(coreColors[idx]);
-  }
+  colorsH.push(coreColors[idx]);
+}
 
-  // Right outlier bin (if still present) – darkest colour
-  if (highVals.length > 0) {
-    countsH.push(highVals.length);
-    labelsH.push(`> ${effectiveMaxEdge.toFixed(0)}`);
-    colorsH.push(coreColors[coreColors.length - 1]);
-  }
+// Right outlier bin
+if (highVals.length > 0) {
+  countsH.push(highVals.length);
+  labelsH.push(`> ${effectiveMaxEdge.toFixed(0)} kg`);
+  colorsH.push(coreColors[coreColors.length - 1]);
+}
 
   // Y-axis stepping
   const maxC = Math.max(...countsH);
