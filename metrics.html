@@ -947,237 +947,178 @@ function renderCharts(g, w) {
 
   enableDesktopTooltipLinger(charts[donutId], 5000);
 
-/* --- HISTOGRAM (Freedman–Diaconis + scaled min width + clamped bins, 2×IQR fences) --- */
+  /* --- HISTOGRAM (FD + smart outliers, trimmed empty bins) --- */
+  const vals = rows
+    .map(r => parseFloat(r.PredictedTotal))
+    .filter(v => !isNaN(v) && v > 0);
 
-const vals = rows
-  .map(r => parseFloat(r.PredictedTotal))
-  .filter(v => !isNaN(v) && v > 0);
+  if (!vals.length) {
+    if (charts[histId]) charts[histId].destroy();
+    return;
+  }
 
-if (!vals.length) {
-  if (charts[histId]) charts[histId].destroy();
-  return;
-}
+  const N = vals.length;
+  const sorted = [...vals].sort((a, b) => a - b);
+  const meanVal = sorted.reduce((a, b) => a + b, 0) / N;
 
-const N = vals.length;
-const sorted = [...vals].sort((a, b) => a - b);
+  // Initial quartiles + IQR using full data
+  const q1 = quantile(sorted, 0.25);
+  const q3 = quantile(sorted, 0.75);
+  const iqr = q3 - q1;
 
-// Quartiles
-const q1  = quantile(sorted, 0.25);
-const q3  = quantile(sorted, 0.75);
-const iqr = q3 - q1;
+  // 2×IQR fences
+  const lowerFence = q1 - 2 * iqr;
+  const upperFence = q3 + 2 * iqr;
 
-// ----------------------------------------------------
-// ★ Corrected fences: 2× IQR (not 1.5×)
-// ----------------------------------------------------
-const lowerFence = q1 - 2 * iqr;
-const upperFence = q3 + 2 * iqr;
+  let lowVals   = sorted.filter(v => v <  lowerFence);
+  let coreVals  = sorted.filter(v => v >= lowerFence && v <= upperFence);
+  let highVals  = sorted.filter(v => v >  upperFence);
 
-// Normal values only
-let normalVals = sorted.filter(v => v >= lowerFence && v <= upperFence);
+  // If everything gets flagged, treat all as core
+  if (!coreVals.length) {
+    coreVals = sorted.slice();
+    lowVals = [];
+    highVals = [];
+  }
 
-// If IQR collapses, treat all values as normal
-if (!normalVals.length) normalVals = sorted.slice();
+  // Base bin width from FD, plus a modest minimum scaled by mean
+  let baseWidth = 0;
+  if (iqr > 0 && isFinite(iqr)) {
+    const h = 2 * iqr / Math.cbrt(N); // FD rule
+    if (h > 0 && isFinite(h)) baseWidth = h;
+  }
+  if (!baseWidth || !isFinite(baseWidth)) {
+    const fullRange = sorted[sorted.length - 1] - sorted[0] || 1;
+    baseWidth = fullRange / Math.max(3, Math.round(Math.sqrt(N)));
+  }
 
-// Min + max of normal span
-const minNorm = normalVals[0];
-const maxNorm = normalVals[normalVals.length - 1];
+  // Minimum bin width scaled by class size (gentle)
+  const minBinWidth = Math.max(2, Math.floor(meanVal / 100)); // you can tweak divisor if desired
+  let binWidth = Math.max(baseWidth, minBinWidth);
 
-// Mean for scaled minimum bin width
-const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+  // --- SMART OUTLIER RULE (cluster ≥3 OR gap > binWidth) ---
+  let normalVals = coreVals.slice(); // will be our final "normal" set
 
-// Divide by 100 logic
-const minBinWidth = Math.max(1, Math.floor(mean / 100));
-
-// FD suggested bins
-let fdBins = null;
-if (iqr > 0 && isFinite(iqr)) {
-  const h = 2 * iqr / Math.cbrt(N);
-  if (h > 0 && isFinite(h)) fdBins = Math.round((maxNorm - minNorm) / h);
-}
-
-// Inner bin count limits
-let binCount = fdBins || Math.round(Math.sqrt(N));
-binCount = Math.max(3, Math.min(binCount, 10)); // option B max 10 internal
-
-// Compute raw bin width but clamp to scaled min
-let binWidth = (maxNorm - minNorm) / binCount;
-if (binWidth < minBinWidth) binWidth = minBinWidth;
-
-// ----- Build clamped normal bins -----
-let bins = [];
-for (let i = 0; i < binCount; i++) {
-  let start = minNorm + i * binWidth;
-  let end   = start + binWidth;
-
-  // Clamp bins to not exceed upperFence
-  if (start > upperFence) continue;
-  if (end > upperFence) end = upperFence;
-
-  bins.push({ start, end });
-}
-
-// Count normal bins
-const normalCounts = new Array(bins.length).fill(0);
-normalVals.forEach(v => {
-  for (let i = 0; i < bins.length; i++) {
-    if (v >= bins[i].start && v <= bins[i].end) {
-      normalCounts[i]++;
-      break;
+  if (lowVals.length && normalVals.length) {
+    const gapLow = normalVals[0] - lowVals[lowVals.length - 1];
+    if (lowVals.length < 3 && gapLow <= binWidth) {
+      // Merge back into normal; no left outlier bin
+      normalVals = lowVals.concat(normalVals);
+      lowVals = [];
     }
   }
-});
 
-// Build final arrays (left outlier + normal + right outlier)
-const countsH = [];
-const labelsH = [];
-const colorsH = [];
-
-// Full gradient across all bars including outliers
-const gradient = getBlueGradientColors(bins.length + 2);
-let gi = 0;
-
-// Left outlier
-const lowOutCount = sorted.filter(v => v < lowerFence).length;
-if (lowOutCount > 0) {
-  countsH.push(lowOutCount);
-  labelsH.push(`< ${lowerFence.toFixed(0)}`);
-  colorsH.push(gradient[gi++]);
-}
-
-// Normal bins
-for (let i = 0; i < bins.length; i++) {
-  const { start, end } = bins[i];
-  countsH.push(normalCounts[i]);
-  labelsH.push(`${start.toFixed(0)}–${end.toFixed(0)}`);
-  colorsH.push(gradient[gi++]);
-}
-
-// Right outlier
-const highOutCount = sorted.filter(v => v > upperFence).length;
-if (highOutCount > 0) {
-  countsH.push(highOutCount);
-  labelsH.push(`> ${upperFence.toFixed(0)}`);
-  colorsH.push(gradient[gi++]);
-}
-
-// Y-axis stepping
-const maxC = Math.max(...countsH);
-const yStep = 2;
-const yMax = Math.max(yStep, Math.ceil(maxC / yStep) * yStep);
-
-if (charts[histId]) charts[histId].destroy();
-const histCtx = document.getElementById(histId).getContext("2d");
-
-charts[histId] = new Chart(histCtx, {
-  type: "bar",
-  data: {
-    labels: labelsH,
-    datasets: [{
-      data: countsH,
-      backgroundColor: colorsH,
-      borderRadius: 5,
-      barPercentage: 0.9,
-      categoryPercentage: 1.0
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    layout: { padding: { bottom: 60 } },
-    events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
-    interaction: { mode: "nearest", intersect: true },
-    plugins: {
-      centerHistArea: { enabled: true },
-      legend: { display: false },
-      datalabels: {
-        color: "#fff",
-        font: { size: s.histBarLabel, weight: "normal" },
-        formatter: (v) => v > 0 ? v : "",
-        anchor: "center",
-        align: "center",
-        clamp: true
-      },
-      tooltip: {
-        usePointStyle: true,
-        boxWidth: 8,
-        boxHeight: 8,
-        pointStyle: "circle",
-        callbacks: {
-          labelPointStyle: () => ({ pointStyle: "circle", rotation: 0 }),
-          title: (items) => items[0]?.label || "",
-          label: (ctx) => `Vote Count - ${ctx.parsed.y}`
-        }
-      }
-    },
-    scales: {
-      x: {
-        offset: true,
-        ticks: {
-          color: "#ccc",
-          font: { size: s.axisTick },
-          autoSkip: false,
-          maxRotation: 60,
-          minRotation: 45,
-          callback: (value, index) => labelsH[index] || ""
-        },
-        title: {
-          display: true,
-          text: "Predicted Total (kg)",
-          color: "#ccc",
-          font: { size: s.axisTitle, weight: "bold" }
-        },
-        grid: { display: false }
-      },
-      y: {
-        beginAtZero: true,
-        min: 0,
-        max: yMax,
-        ticks: {
-          color: "#ccc",
-          font: { size: s.axisTick },
-          stepSize: yStep
-        },
-        title: {
-          display: true,
-          text: `Vote Count (Total = ${N})`,
-          color: "#ccc",
-          font: { size: s.axisTitle, weight: "bold" }
-        },
-        grid: { display: false }
-      }
+  if (highVals.length && normalVals.length) {
+    const gapHigh = highVals[0] - normalVals[normalVals.length - 1];
+    if (highVals.length < 3 && gapHigh <= binWidth) {
+      // Merge back into normal; no right outlier bin
+      normalVals = normalVals.concat(highVals);
+      highVals = [];
     }
   }
-});
 
-charts[histId].$histCentered = false;
-enableDesktopTooltipLinger(charts[histId], 5000);
-requestAnimationFrame(stripTransformsForCharts);
-}
+  // After possible merges, recompute range & FD on the "core" only
+  const minNorm = normalVals[0];
+  const maxNorm = normalVals[normalVals.length - 1];
+  const coreRange = maxNorm - minNorm || 1;
 
-/* ========= DRILLDOWN CHART ========= */
-function renderDrillChart(g, athlete) {
-  const state = drillState[g];
-  if (!state || !state.athleteMap[athlete]) return;
+  let suggestedBins = null;
+  const coreQ1 = quantile(normalVals, 0.25);
+  const coreQ3 = quantile(normalVals, 0.75);
+  const coreIQR = coreQ3 - coreQ1;
 
-  const s = sizing();
-  const votes = state.athleteMap[athlete].votes || [];
-  const colors = getRedGradientColors();
+  if (coreIQR > 0 && isFinite(coreIQR)) {
+    const hCore = 2 * coreIQR / Math.cbrt(normalVals.length);
+    if (hCore > 0 && isFinite(hCore)) {
+      suggestedBins = Math.round(coreRange / hCore);
+    }
+  }
 
-  const counts = Array(16).fill(0);
-  votes.forEach(v => {
-    if (v >= 1 && v <= 16) counts[v - 1]++;
+  let innerBins = suggestedBins || Math.round(Math.sqrt(normalVals.length));
+  innerBins = Math.max(3, Math.min(innerBins, 10)); // max 10 "core" bins
+
+  const bw = coreRange / innerBins || 1;
+
+  // Count core values into bins
+  const fullCounts = Array(innerBins).fill(0);
+  const binStarts = [];
+  const binEnds   = [];
+
+  for (let i = 0; i < innerBins; i++) {
+    const start = minNorm + i * bw;
+    const end   = minNorm + (i + 1) * bw;
+    binStarts.push(start);
+    binEnds.push(end);
+  }
+
+  normalVals.forEach(v => {
+    let idx = Math.floor((v - minNorm) / bw);
+    if (idx < 0) idx = 0;
+    if (idx >= innerBins) idx = innerBins - 1;
+    fullCounts[idx]++;
   });
 
-  if (state.chart) state.chart.destroy();
+  // Trim empty edge bins between core and outliers
+  let firstNonZero = 0;
+  let lastNonZero = innerBins - 1;
+  while (firstNonZero < innerBins && fullCounts[firstNonZero] === 0) firstNonZero++;
+  while (lastNonZero >= 0 && fullCounts[lastNonZero] === 0) lastNonZero--;
 
-  const ctx = state.canvas.getContext('2d');
-  state.chart = new Chart(ctx, {
+  if (firstNonZero > lastNonZero) {
+    firstNonZero = 0;
+    lastNonZero = innerBins - 1;
+  }
+
+  const trimmedCount  = lastNonZero - firstNonZero + 1;
+  const coreColors    = getBlueGradientColors(trimmedCount);
+  const countsH = [];
+  const labelsH = [];
+  const colorsH = [];
+
+  const effectiveMinEdge = binStarts[firstNonZero];
+  const effectiveMaxEdge = binEnds[lastNonZero];
+
+  // Left outlier bin (if still present) – uses lightest gradient colour
+  if (lowVals.length > 0) {
+    countsH.push(lowVals.length);
+    labelsH.push(`< ${effectiveMinEdge.toFixed(0)}`);
+    colorsH.push(coreColors[0]);
+  }
+
+  // Core bins (trimmed)
+  for (let i = firstNonZero; i <= lastNonZero; i++) {
+    const idx = i - firstNonZero;
+    countsH.push(fullCounts[i]);
+
+    const start = binStarts[i];
+    const end   = binEnds[i];
+    labelsH.push(`${start.toFixed(0)}–${end.toFixed(0)}`);
+
+    colorsH.push(coreColors[idx]);
+  }
+
+  // Right outlier bin (if still present) – uses darkest gradient colour
+  if (highVals.length > 0) {
+    countsH.push(highVals.length);
+    labelsH.push(`> ${effectiveMaxEdge.toFixed(0)}`);
+    colorsH.push(coreColors[coreColors.length - 1]);
+  }
+
+  // Y-axis stepping (clean, at least 2)
+  const maxC = Math.max(...countsH);
+  const yStep = 2;
+  const yMax = Math.max(yStep, Math.ceil(maxC / yStep) * yStep);
+
+  if (charts[histId]) charts[histId].destroy();
+  const histCtx = document.getElementById(histId).getContext('2d');
+
+  charts[histId] = new Chart(histCtx, {
     type: 'bar',
     data: {
-      labels: Array.from({ length: 16 }, (_, i) => i + 1),
+      labels: labelsH,
       datasets: [{
-        data: counts,
-        backgroundColor: colors,
+        data: countsH,
+        backgroundColor: colorsH,
         borderRadius: 5,
         barPercentage: 0.9,
         categoryPercentage: 1.0
@@ -1186,7 +1127,7 @@ function renderDrillChart(g, athlete) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      layout: { padding: { bottom: 30 } },
+      layout: { padding: { bottom: 60 } },
       events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
       interaction: { mode: 'nearest', intersect: true },
       plugins: {
@@ -1208,22 +1149,24 @@ function renderDrillChart(g, athlete) {
           callbacks: {
             labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
             title: (items) => (items[0]?.label) || '',
-            label: (ctx2) => `Vote Count - ${ctx2.parsed.y}`
+            label: (ctx) => `Vote Count - ${ctx.parsed.y}`
           }
-        },
-        title: { display: false }
+        }
       },
       scales: {
         x: {
+          offset: true,
           ticks: {
             color: '#ccc',
             font: { size: s.axisTick },
-            maxRotation: 0,
-            minRotation: 0
+            autoSkip: false,
+            maxRotation: 60,
+            minRotation: 45,
+            callback: (value, index) => labelsH[index] || ''
           },
           title: {
             display: true,
-            text: 'Points / Confidence Level',
+            text: 'Predicted Total (kg)',
             color: '#ccc',
             font: { size: s.axisTitle, weight: 'bold' }
           },
@@ -1231,14 +1174,16 @@ function renderDrillChart(g, athlete) {
         },
         y: {
           beginAtZero: true,
+          min: 0,
+          max: yMax,
           ticks: {
             color: '#ccc',
             font: { size: s.axisTick },
-            precision: 0
+            stepSize: yStep
           },
           title: {
             display: true,
-            text: 'Vote Count',
+            text: `Vote Count (Total = ${N})`,
             color: '#ccc',
             font: { size: s.axisTitle, weight: 'bold' }
           },
@@ -1248,8 +1193,8 @@ function renderDrillChart(g, athlete) {
     }
   });
 
-  state.chart.$histCentered = false;
-  enableDesktopTooltipLinger(state.chart, 5000);
+  charts[histId].$histCentered = false;
+  enableDesktopTooltipLinger(charts[histId], 5000);
   requestAnimationFrame(stripTransformsForCharts);
 }
 
