@@ -999,7 +999,16 @@ innerBins = Math.max(3, Math.min(innerBins, 7));
 
 // Minimum bin width so ranges don’t get too tight (e.g. "<398", "398–399")
 let bw = (maxNorm - minNorm) / innerBins || 1;
-const MIN_BIN_WIDTH = 3; // in kg
+// ---- Dynamic minimum bin width based on class strength ----
+// Example: mean 450kg → min width = floor(450/10) = 4 kg
+const meanVal = vals.reduce((a,b) => a + b, 0) / vals.length;
+let MIN_BIN_WIDTH = Math.floor(meanVal / 100);
+
+// Safety clamp (avoid extreme cases)
+if (MIN_BIN_WIDTH < 3) MIN_BIN_WIDTH = 3;
+if (MIN_BIN_WIDTH > 15) MIN_BIN_WIDTH = 15;
+
+// Apply dynamic minimum
 if (bw < MIN_BIN_WIDTH) {
   bw = MIN_BIN_WIDTH;
 }
