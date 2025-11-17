@@ -1206,6 +1206,106 @@ function renderCharts(g, w) {
   requestAnimationFrame(stripTransformsForCharts);
 }
 
+/* ========= DRILLDOWN CHART ========= */
+function renderDrillChart(g, athlete) {
+  const state = drillState[g];
+  if (!state || !state.athleteMap[athlete]) return;
+
+  const s = sizing();
+  const votes = state.athleteMap[athlete].votes || [];
+  const colors = getRedGradientColors();
+
+  // points 1–16 -> bins
+  const counts = Array(16).fill(0);
+  votes.forEach(v => {
+    if (v >= 1 && v <= 16) counts[v - 1]++;
+  });
+
+  if (state.chart) state.chart.destroy();
+
+  const ctx = state.canvas.getContext('2d');
+  state.chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: Array.from({ length: 16 }, (_, i) => i + 1),
+      datasets: [{
+        data: counts,
+        backgroundColor: colors,
+        borderRadius: 5,
+        barPercentage: 0.9,
+        categoryPercentage: 1.0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { bottom: 30 } },
+      events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
+      interaction: { mode: 'nearest', intersect: true },
+      plugins: {
+        centerHistArea: { enabled: true },
+        legend: { display: false },
+        datalabels: {
+          color: '#fff',
+          font: { size: s.histBarLabel, weight: 'normal' },
+          formatter: (v) => v > 0 ? v : '',
+          anchor: 'center',
+          align: 'center',
+          clamp: true
+        },
+        tooltip: {
+          usePointStyle: true,
+          boxWidth: 8,
+          boxHeight: 8,
+          pointStyle: 'circle',
+          callbacks: {
+            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
+            title: (items) => (items[0]?.label) || '',
+            label: (ctx2) => `Vote Count - ${ctx2.parsed.y}`
+          }
+        },
+        title: { display: false }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: '#ccc',
+            font: { size: s.axisTick },
+            maxRotation: 0,
+            minRotation: 0
+          },
+          title: {
+            display: true,
+            text: 'Points / Confidence Level',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            color: '#ccc',
+            font: { size: s.axisTick },
+            precision: 0
+          },
+          title: {
+            display: true,
+            text: 'Vote Count',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+
+  state.chart.$histCentered = false;
+  enableDesktopTooltipLinger(state.chart, 5000);
+  requestAnimationFrame(stripTransformsForCharts);
+}
+
 /* ========= DRILLDOWN HELPERS ========= */
 
 // double-click donut -> drilldown
