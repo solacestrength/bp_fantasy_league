@@ -584,7 +584,7 @@ function setupDropdowns() {
     const select = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
     if (!select) return;
 
-    select.innerHTML = classes.map((c) => `<option value="${c}">${c}kg</option>`).join('');
+    select.innerHTML = classes.map((c) => `<option value="${c}">${c} kg</option>`).join('');
     select.onchange = () => {
       const newClass = select.value;
       renderCharts(g, newClass);
@@ -1594,7 +1594,7 @@ async function shareChart(id, g) {
   header.style.margin = '0 0 6px 0';
 
   const sub = document.createElement('p');
-  const label = (w ? `${w}kg ` : '') + (g === 'F' ? 'Women' : 'Men');
+  const label = (w ? `${w} kg ` : '') + (g === 'F' ? 'Women' : 'Men');
   sub.innerHTML = isDonut
     ? label
     : `${label}<br>Distribution of Predicted Winning Totals`;
