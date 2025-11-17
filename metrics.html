@@ -760,12 +760,21 @@ const rows = shuffleArray(
   const dData   = Object.values(counts);
   const total   = dData.reduce((a, b) => a + b, 0);
 
-  const colors = [
-    '#ef4444','#f97316','#facc15','#22c55e','#14b8a6',
-    '#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16',
-    '#d946ef','#fb7185'
-  ];
-
+const colors = [
+  '#ef4444', // red
+  '#f97316', // orange
+  '#22c55e', // green (moved to index 2)
+  '#3b82f6', // blue (moved to index 3)
+  '#facc15', // yellow (moved to index 4)
+  '#14b8a6', // teal (moved to index 5)
+  '#8b5cf6', // purple
+  '#ec4899', // pink
+  '#06b6d4', // cyan
+  '#84cc16', // lime
+  '#d946ef', // fuchsia
+  '#fb7185'  // rose
+];
+  
   if (charts[donutId]) charts[donutId].destroy();
   const donutCtx = document.getElementById(donutId).getContext('2d');
 
