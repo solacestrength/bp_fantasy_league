@@ -1086,31 +1086,31 @@ function renderCharts(g, w) {
   const effectiveMinEdge = binStarts[firstNonZero];
   const effectiveMaxEdge = binEnds[lastNonZero];
 
-  // Left outlier bin
-if (lowVals.length > 0) {
-  countsH.push(lowVals.length);
-  labelsH.push(`< ${effectiveMinEdge.toFixed(0)} kg`);
-  colorsH.push(coreColors[0]);
-}
+  // Left outlier bin (if still present) – lightest colour
+  if (lowVals.length > 0) {
+    countsH.push(lowVals.length);
+    labelsH.push(`< ${effectiveMinEdge.toFixed(0)}`);
+    colorsH.push(coreColors[0]);
+  }
 
-// Core bins (unchanged)
-for (let i = firstNonZero; i <= lastNonZero; i++) {
-  const idx = i - firstNonZero;
-  countsH.push(fullCounts[i]);
+  // Core bins (trimmed)
+  for (let i = firstNonZero; i <= lastNonZero; i++) {
+    const idx = i - firstNonZero;
+    countsH.push(fullCounts[i]);
 
-  const start = binStarts[i];
-  const end   = binEnds[i];
-  labelsH.push(`${start.toFixed(0)}–${end.toFixed(0)}`); // no kg here
+    const start = binStarts[i];
+    const end   = binEnds[i];
+    labelsH.push(`${start.toFixed(0)}–${end.toFixed(0)}`);
 
-  colorsH.push(coreColors[idx]);
-}
+    colorsH.push(coreColors[idx]);
+  }
 
-// Right outlier bin
-if (highVals.length > 0) {
-  countsH.push(highVals.length);
-  labelsH.push(`> ${effectiveMaxEdge.toFixed(0)} kg`);
-  colorsH.push(coreColors[coreColors.length - 1]);
-}
+  // Right outlier bin (if still present) – darkest colour
+  if (highVals.length > 0) {
+    countsH.push(highVals.length);
+    labelsH.push(`> ${effectiveMaxEdge.toFixed(0)}`);
+    colorsH.push(coreColors[coreColors.length - 1]);
+  }
 
   // Y-axis stepping
   const maxC = Math.max(...countsH);
@@ -1157,10 +1157,20 @@ if (highVals.length > 0) {
           callbacks: {
             labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
             title: (items) => {
-  const raw = items[0]?.label || '';
-  return raw.includes('–')
-    ? raw + ' kg'
-    : raw; // outliers already have < X or > Y
+  const raw = items[0]?.label || "";
+
+  // Always convert raw label → numeric + unit
+  // NORMAL BIN: "550–555" → "550–555 kg"
+  // LEFT OUTLIER: "< 408" → "< 408 kg"
+  // RIGHT OUTLIER: "> 1035" → "> 1035 kg"
+
+  // If it contains a dash, it's already a range
+  if (raw.includes("–")) {
+    return raw + " kg";
+  }
+
+  // Otherwise it's an outlier (< X or > Y) → just append kg
+  return raw + " kg";
 },
             label: (ctx) => `Vote Count - ${ctx.parsed.y}`
           }
