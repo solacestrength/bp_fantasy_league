@@ -947,7 +947,7 @@ function renderCharts(g, w) {
 
   enableDesktopTooltipLinger(charts[donutId], 5000);
 
-  /* --- HISTOGRAM (FD + smart outliers, trimmed empty bins) --- */
+  /  /* --- HISTOGRAM (FD + smart outliers, trimmed empty bins, min bin width) --- */
   const vals = rows
     .map(r => parseFloat(r.PredictedTotal))
     .filter(v => !isNaN(v) && v > 0);
@@ -961,7 +961,7 @@ function renderCharts(g, w) {
   const sorted = [...vals].sort((a, b) => a - b);
   const meanVal = sorted.reduce((a, b) => a + b, 0) / N;
 
-  // Initial quartiles + IQR using full data
+  // Quartiles + IQR on full data
   const q1 = quantile(sorted, 0.25);
   const q3 = quantile(sorted, 0.75);
   const iqr = q3 - q1;
@@ -974,57 +974,57 @@ function renderCharts(g, w) {
   let coreVals  = sorted.filter(v => v >= lowerFence && v <= upperFence);
   let highVals  = sorted.filter(v => v >  upperFence);
 
-  // If everything gets flagged, treat all as core
+  // If everything is flagged, treat all as core (no outliers)
   if (!coreVals.length) {
     coreVals = sorted.slice();
     lowVals = [];
     highVals = [];
   }
 
-  // Base bin width from FD, plus a modest minimum scaled by mean
-  let baseWidth = 0;
-  if (iqr > 0 && isFinite(iqr)) {
-    const h = 2 * iqr / Math.cbrt(N); // FD rule
-    if (h > 0 && isFinite(h)) baseWidth = h;
-  }
-  if (!baseWidth || !isFinite(baseWidth)) {
-    const fullRange = sorted[sorted.length - 1] - sorted[0] || 1;
-    baseWidth = fullRange / Math.max(3, Math.round(Math.sqrt(N)));
-  }
+  // --- SMART OUTLIER RULE (cluster ≥3 OR gap > 1×minBinWidth later) ---
+  // For now just keep lowVals/highVals; we’ll compare their gaps once we know minBinWidth
 
-  // Minimum bin width scaled by class size (gentle)
-  const minBinWidth = Math.max(2, Math.floor(meanVal / 100)); // you can tweak divisor if desired
-  let binWidth = Math.max(baseWidth, minBinWidth);
+  // Build initial "normal" set
+  let normalVals = coreVals.slice();
 
-  // --- SMART OUTLIER RULE (cluster ≥3 OR gap > binWidth) ---
-  let normalVals = coreVals.slice(); // will be our final "normal" set
+  // We'll decide on minBinWidth after we know the core range,
+  // but we still need a first pass at range for the merge logic.
+  const tmpMin = normalVals[0];
+  const tmpMax = normalVals[normalVals.length - 1];
+  const tmpRange = tmpMax - tmpMin || 1;
 
+  // Provisional minimum width from mean
+  const minBinWidth = Math.max(2, Math.floor(meanVal / 100));
+
+  // Decide whether to keep or merge low outliers
   if (lowVals.length && normalVals.length) {
     const gapLow = normalVals[0] - lowVals[lowVals.length - 1];
-    if (lowVals.length < 3 && gapLow <= binWidth) {
-      // Merge back into normal; no left outlier bin
+    if (lowVals.length < 3 && gapLow <= minBinWidth) {
+      // Merge back; no left outlier bin
       normalVals = lowVals.concat(normalVals);
       lowVals = [];
     }
   }
 
+  // Decide whether to keep or merge high outliers
   if (highVals.length && normalVals.length) {
     const gapHigh = highVals[0] - normalVals[normalVals.length - 1];
-    if (highVals.length < 3 && gapHigh <= binWidth) {
-      // Merge back into normal; no right outlier bin
+    if (highVals.length < 3 && gapHigh <= minBinWidth) {
+      // Merge back; no right outlier bin
       normalVals = normalVals.concat(highVals);
       highVals = [];
     }
   }
 
-  // After possible merges, recompute range & FD on the "core" only
+  // Recompute core range after any merges
   const minNorm = normalVals[0];
   const maxNorm = normalVals[normalVals.length - 1];
   const coreRange = maxNorm - minNorm || 1;
 
+  // Freedman–Diaconis on "core" only
   let suggestedBins = null;
-  const coreQ1 = quantile(normalVals, 0.25);
-  const coreQ3 = quantile(normalVals, 0.75);
+  const coreQ1  = quantile(normalVals, 0.25);
+  const coreQ3  = quantile(normalVals, 0.75);
   const coreIQR = coreQ3 - coreQ1;
 
   if (coreIQR > 0 && isFinite(coreIQR)) {
@@ -1035,11 +1035,17 @@ function renderCharts(g, w) {
   }
 
   let innerBins = suggestedBins || Math.round(Math.sqrt(normalVals.length));
-  innerBins = Math.max(3, Math.min(innerBins, 10)); // max 10 "core" bins
+  innerBins = Math.max(3, Math.min(innerBins, 10)); // 3–10 core bins
 
-  const bw = coreRange / innerBins || 1;
+  // ★ Enforce minimum bin width relative to mean total ★
+  if (coreRange / innerBins < minBinWidth) {
+    let adjusted = Math.floor(coreRange / minBinWidth) || 1;
+    innerBins = Math.max(1, Math.min(adjusted, 10));
+  }
 
-  // Count core values into bins
+  const bw = coreRange / innerBins || minBinWidth || 1;
+
+  // Count normal values into bins
   const fullCounts = Array(innerBins).fill(0);
   const binStarts = [];
   const binEnds   = [];
@@ -1069,8 +1075,9 @@ function renderCharts(g, w) {
     lastNonZero = innerBins - 1;
   }
 
-  const trimmedCount  = lastNonZero - firstNonZero + 1;
-  const coreColors    = getBlueGradientColors(trimmedCount);
+  const trimmedCount = lastNonZero - firstNonZero + 1;
+  const coreColors = getBlueGradientColors(trimmedCount);
+
   const countsH = [];
   const labelsH = [];
   const colorsH = [];
@@ -1078,7 +1085,7 @@ function renderCharts(g, w) {
   const effectiveMinEdge = binStarts[firstNonZero];
   const effectiveMaxEdge = binEnds[lastNonZero];
 
-  // Left outlier bin (if still present) – uses lightest gradient colour
+  // Left outlier bin (if still present) – lightest colour
   if (lowVals.length > 0) {
     countsH.push(lowVals.length);
     labelsH.push(`< ${effectiveMinEdge.toFixed(0)}`);
@@ -1097,14 +1104,14 @@ function renderCharts(g, w) {
     colorsH.push(coreColors[idx]);
   }
 
-  // Right outlier bin (if still present) – uses darkest gradient colour
+  // Right outlier bin (if still present) – darkest colour
   if (highVals.length > 0) {
     countsH.push(highVals.length);
     labelsH.push(`> ${effectiveMaxEdge.toFixed(0)}`);
     colorsH.push(coreColors[coreColors.length - 1]);
   }
 
-  // Y-axis stepping (clean, at least 2)
+  // Y-axis stepping
   const maxC = Math.max(...countsH);
   const yStep = 2;
   const yMax = Math.max(yStep, Math.ceil(maxC / yStep) * yStep);
