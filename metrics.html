@@ -429,7 +429,7 @@ const centerHistAreaPlugin = {
 
 Chart.register(ChartDataLabels, centerHistAreaPlugin);
 
-/* ========= HELPERS ========= */
+/* ========= DATA / LAYOUT HELPERS ========= */
 
 const SHEET_URL =
   'https://docs.google.com/spreadsheets/d/e/2PACX-1vSuA8YB98ghNeM-cS6Fs1pJNkEBOI0x7WKI4R0vtvAG68mo7PJZYVj2HsdxH3DDqvieaTpe9zUzJcNW/pub?gid=1506853737&single=true&output=csv';
@@ -480,11 +480,8 @@ if (menuBtn) {
     toggleMenu(menuVisible);
   });
 }
-
 document.addEventListener('click', (e) => {
-  if (!mobileMenu.contains(e.target) &&
-      !menuBtn.contains(e.target) &&
-      menuVisible) {
+  if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target) && menuVisible) {
     menuVisible = false;
     toggleMenu(false);
   }
@@ -524,11 +521,31 @@ const drillState = {
   }
 };
 
-/* ========= DRILLDOWN COLOUR GRADIENT ========= */
+/* ========= BLUE GRADIENT FOR HISTOGRAM ========= */
+/* Start from a mid blue for a smoother transition into dark blue */
+function getBlueGradientColors(n) {
+  const colors = [];
+  const start = { r: 96, g: 165, b: 250 }; // mid blue
+  const end   = { r: 30, g: 64,  b: 175 }; // dark blue
+  if (n <= 1) {
+    colors.push(`rgb(${start.r},${start.g},${start.b})`);
+    return colors;
+  }
+  for (let i = 0; i < n; i++) {
+    const t = i / (n - 1);
+    const r = Math.round(start.r + (end.r - start.r) * t);
+    const g = Math.round(start.g + (end.g - start.g) * t);
+    const b = Math.round(start.b + (end.b - start.b) * t);
+    colors.push(`rgb(${r},${g},${b})`);
+  }
+  return colors;
+}
+
+/* ========= RED GRADIENT FOR DRILLDOWN ========= */
 function getRedGradientColors(n = 16) {
   const colors = [];
-  const start = { r: 248, g: 113, b: 113 };
-  const end   = { r: 185, g: 28,  b: 28 };
+  const start = { r: 248, g: 113, b: 113 }; // soft red (#f87171)
+  const end   = { r: 185, g:  28, b:  28 }; // deep red (#b91c1c)
   if (n <= 1) {
     colors.push(`rgb(${start.r},${start.g},${start.b})`);
     return colors;
@@ -543,41 +560,20 @@ function getRedGradientColors(n = 16) {
   return colors;
 }
 
-/* ========= BLUE GRADIENT FOR HISTOGRAM ========= */
-function getBlueGradientColors(n = 10) {
-  const colors = [];
-  const start = { r: 96, g: 165, b: 250 };  // light blue (#60A5FA)
-  const end   = { r: 30, g: 64,  b: 175 };  // deep blue (#1E40AF)
-
-  if (n <= 1) {
-    colors.push(`rgb(${start.r},${start.g},${start.b})`);
-    return colors;
-  }
-
-  for (let i = 0; i < n; i++) {
-    const t = i / (n - 1);
-    const r = Math.round(start.r + (end.r - start.r) * t);
-    const g = Math.round(start.g + (end.g - start.g) * t);
-    const b = Math.round(start.b + (end.b - start.b) * t);
-    colors.push(`rgb(${r},${g},${b})`);
-  }
-
-  return colors;
-}
-
-/* ========= QUANTILE (used for FD bins) ========= */
+// Return the q-quantile of a *sorted* numeric array (0–1)
 function quantile(sorted, q) {
   if (!sorted.length) return NaN;
   const pos = (sorted.length - 1) * q;
   const base = Math.floor(pos);
   const rest = pos - base;
+
   if (sorted[base + 1] !== undefined) {
     return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
   }
   return sorted[base];
 }
 
-/* ========= DROPDOWNS ========= */
+/* ========= SETUP DROPDOWNS ========= */
 function setupDropdowns() {
   ['F', 'M'].forEach((g) => {
     const d = allData.filter((r) => r.Gender === g);
@@ -585,24 +581,17 @@ function setupDropdowns() {
       .filter(Boolean)
       .sort((a, b) => parseFloat(a) - parseFloat(b));
 
-    const select = document.getElementById(
-      g === 'F' ? 'womenSelect' : 'menSelect'
-    );
+    const select = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
     if (!select) return;
 
-    select.innerHTML = classes
-      .map((c) => `<option value="${c}">${c}kg</option>`)
-      .join('');
-
+    select.innerHTML = classes.map((c) => `<option value="${c}">${c}kg</option>`).join('');
     select.onchange = () => {
       const newClass = select.value;
       renderCharts(g, newClass);
 
       const state = drillState[g];
       if (state && state.wrapper.style.display === 'block') {
-        const rows = allData.filter(
-          r => r.Gender === g && r.Class === newClass
-        );
+        const rows = allData.filter(r => r.Gender === g && r.Class === newClass);
         const firstAthlete = rows[0]?.Athlete;
         if (firstAthlete) {
           openDrilldown(g, newClass, firstAthlete, rows, { skipFade: true });
@@ -630,18 +619,17 @@ function fadeOut(el) {
   setTimeout(() => { el.style.display = 'none'; }, 250);
 }
 
-/* ========= DESKTOP TOOLTIP LINGER (FINAL VERSION — KEEP) ========= */
+/* ========= DESKTOP TOOLTIP LINGER (Patched) ========= */
 function enableDesktopTooltipLinger(chart, ms = 5000) {
   // Desktop only
   if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
   if (!chart || !chart.canvas) return;
 
-  // Remove auto-mouseout clearing
+  // 1) Stop Chart.js from auto-clearing tooltips on mouseout
   const evts = chart.options.events || [];
-  chart.options.events = evts.filter(
-    e => e !== 'mouseout' && e !== 'mouseleave'
-  );
+  chart.options.events = evts.filter(e => e !== 'mouseout' && e !== 'mouseleave');
 
+  // Make sure tooltips are enabled
   if (!chart.options.plugins) chart.options.plugins = {};
   if (!chart.options.plugins.tooltip) chart.options.plugins.tooltip = {};
   chart.options.plugins.tooltip.enabled = true;
@@ -658,37 +646,25 @@ function enableDesktopTooltipLinger(chart, ms = 5000) {
     chart.update('none');
   }
 
+  // Track last element under cursor
   canvas.addEventListener('mousemove', (e) => {
     hovering = true;
-    const pts = chart.getElementsAtEventForMode(
-      e,
-      'nearest',
-      { intersect: true },
-      true
-    );
+    const pts = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
     if (pts && pts.length) {
-      lastActive = pts.map(p => ({
-        datasetIndex: p.datasetIndex,
-        index: p.index
-      }));
+      lastActive = pts.map(p => ({ datasetIndex: p.datasetIndex, index: p.index }));
     }
-    if (lingerTimer) {
-      clearTimeout(lingerTimer);
-      lingerTimer = null;
-    }
+    if (lingerTimer) { clearTimeout(lingerTimer); lingerTimer = null; }
   });
 
+  // Freeze when pointer leaves the canvas
   canvas.addEventListener('mouseleave', () => {
     hovering = false;
     if (!lastActive.length) return;
 
+    // Run on next frame so any remaining internal handlers finish first
     requestAnimationFrame(() => {
       if (!chart || chart._destroyed) return;
-
-      chart.tooltip.setActiveElements(
-        lastActive,
-        { x: chart.width / 2, y: chart.height / 2 }
-      );
+      chart.tooltip.setActiveElements(lastActive, { x: chart.width / 2, y: chart.height / 2 });
       chart.update('none');
 
       lingerTimer = setTimeout(() => {
@@ -697,40 +673,38 @@ function enableDesktopTooltipLinger(chart, ms = 5000) {
     });
   });
 
+  // Clear if the chart scrolls off-screen
   window.addEventListener('scroll', () => {
     const r = canvas.getBoundingClientRect();
     const visible = r.bottom > 0 && r.top < window.innerHeight;
     if (!visible) clearLinger();
   });
 
+  // Clear on outside click
   document.addEventListener('click', (e) => {
     if (lingerTimer && !canvas.contains(e.target)) clearLinger();
   });
 
+  // Cancel any lingering state when re-entering the chart
   canvas.addEventListener('mouseenter', () => {
     hovering = true;
-    if (lingerTimer) {
-      clearTimeout(lingerTimer);
-      lingerTimer = null;
-    }
-    chart.tooltip.setActiveElements([], {x: 0, y: 0});
+    if (lingerTimer) { clearTimeout(lingerTimer); lingerTimer = null; }
+    chart.tooltip.setActiveElements([], {x:0, y:0});
     chart.update('none');
   });
 }
 
-/* ========= STRIP TRANSFORMS (FINAL VERSION — KEEP) ========= */
+  /* ========= DESKTOP: STRIP TRANSFORMS AROUND CHARTS ========= */
 function stripTransformsForCharts() {
+  // Skip mobile/touch devices
   if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
 
-  const ids = [
-    'womenDonut','menDonut',
-    'womenHist','menHist',
-    'womenDrill','menDrill'
-  ];
-
+  const ids = ['womenDonut','menDonut','womenHist','menHist','womenDrill','menDrill'];
   ids.forEach(id => {
     const canvas = document.getElementById(id);
     if (!canvas) return;
+
+    // Walk up a few ancestors and nuke transforms that skew pointer math
     let el = canvas.parentElement;
     let hops = 0;
     while (el && el !== document.body && hops < 6) {
@@ -745,16 +719,12 @@ function stripTransformsForCharts() {
   });
 }
 
+// When any fade-in animation finishes, clear transforms again
 document.addEventListener('animationend', (e) => {
   if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
-
   const t = e.target;
   if (!t) return;
-
-  if (
-    t.classList.contains('animate-fade-in') ||
-    t.classList.contains('animate-fade-in-up')
-  ) {
+  if (t.classList.contains('animate-fade-in') || t.classList.contains('animate-fade-in-up')) {
     t.classList.add('no-transform');
     t.style.transform = 'none';
     requestAnimationFrame(stripTransformsForCharts);
@@ -769,74 +739,20 @@ function renderCharts(g, w) {
   const rows = allData.filter(r => r.Gender === g && r.Class === w);
   if (!rows.length) return;
 
-  /* ========= DONUT: BUILD COUNTS ========= */
+  /* --- DONUT --- */
   const counts = {};
   rows.forEach(r => { counts[r.Athlete] = (counts[r.Athlete] || 0) + 1; });
 
   const dLabels = Object.keys(counts);
   const dData   = Object.values(counts);
-  const total   = dData.reduce((a,b)=>a+b,0);
+  const total   = dData.reduce((a, b) => a + b, 0);
 
-  /* ========= DONUT PALETTE (Option B) ========= */
-  const CRIMSON    = '#DC143C';
-  const DARK_ORANGE= '#FF8C00';
-  const EMERALD    = '#00A878';
-  const SKY_BLUE   = '#38BDF8';
-  const INDIGO     = '#555555';  // replaced Indigo with Grey
-  const ROYAL_BLUE = '#4169E1';
-
-  const BASE_COLOURS = [
-    CRIMSON, DARK_ORANGE,
-    EMERALD, SKY_BLUE, INDIGO, ROYAL_BLUE
+  const colors = [
+    '#ef4444','#f97316','#facc15','#22c55e','#14b8a6',
+    '#3b82f6','#8b5cf6','#ec4899','#06b6d4','#84cc16',
+    '#d946ef','#fb7185'
   ];
 
-  function shuffle(arr) {
-    const a = arr.slice();
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  }
-
-  /* ========= DONUT COLOUR SELECTION (Rules enforced) ========= */
-  function pickColours(n) {
-    // Base shuffle every call
-    let colours = shuffle(BASE_COLOURS);
-
-    // --- Only 1 athlete ---
-    if (n === 1) {
-      // Must be one of the 3 primaries
-      return [shuffle([CRIMSON, DARK_ORANGE, SKY_BLUE])[0]];
-    }
-
-    // --- Exactly 2 athletes ---
-    if (n === 2) {
-      // Crimson must be included
-      const first = CRIMSON;
-
-      // Forbidden: Crimson + Pastel Red
-      const allowedSeconds = [DARK_ORANGE, EMERALD, SKY_BLUE, INDIGO, ROYAL_BLUE];
-      const second = shuffle(allowedSeconds)[0];
-
-      return [CRIMSON, second];
-    }
-
-// 3 Athletes Rules 
-
-if (n === 3) {
-  // Just pick any 3 while ensuring CRIMSON + GOLD + one more OR any 3 random
-  let pool = BASE_COLOURS.slice();
-  return shuffle(pool).slice(0, 3);
-}
-
-    // --- 4+ athletes — free selection from full palette ---
-    return shuffle(BASE_COLOURS).slice(0, n);
-  }
-
-  const donutColours = pickColours(dLabels.length);
-
-  /* ========= RENDER DONUT ========= */
   if (charts[donutId]) charts[donutId].destroy();
   const donutCtx = document.getElementById(donutId).getContext('2d');
 
@@ -846,14 +762,14 @@ if (n === 3) {
       labels: dLabels,
       datasets: [{
         data: dData,
-        backgroundColor: donutColours,
+        backgroundColor: colors,
         borderColor: '#111',
         borderWidth: 1
       }]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false,
+      maintainAspectRatio: false, // container defines size
       cutout: '57%',
       layout: { padding: 0 },
       events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
@@ -874,31 +790,68 @@ if (n === 3) {
           padding: { top: 2, bottom: 18 }
         },
         legend: {
-          position: 'bottom',
-          onClick: null,
-          onHover: null,
-          labels: {
-            color: '#ccc',
-            boxWidth: 10,
-            boxHeight: 10,
-            font: { size: s.donutLegend },
-            usePointStyle: true,
-            pointStyle: 'circle'
-          }
-        },
+  position: 'bottom',
+  onClick: null,
+  onHover: null,
+  labels: {
+    color: '#ccc',
+    boxWidth: 10,
+    boxHeight: 10,
+    font: { size: s.donutLegend },
+    usePointStyle: true,
+    pointStyle: 'circle',
+
+    // ★ NEW — MULTI-ROW LEGEND LOGIC ★
+    generateLabels(chart) {
+  const original = Chart.overrides.doughnut.plugins.legend.labels.generateLabels(chart);
+  const total = original.length;
+
+  // Leave 1–2 names untouched (natural)
+  if (total <= 2) return original;
+
+  const arranged = [];
+
+  // ----- ODD NUMBER → need centered first row -----
+  if (total % 2 === 1) {
+    // Insert a spacer (invisible legend item)
+    arranged.push({
+      text: '',
+      fillStyle: 'rgba(0,0,0,0)',     // invisible
+      strokeStyle: 'rgba(0,0,0,0)',
+      hidden: true,
+      index: null,
+      pointStyle: 'circle'
+    });
+
+    // Push the first actual name (centered visually)
+    arranged.push(original[0]);
+  }
+
+  // ----- PAIRS for all remaining items -----
+  const start = (total % 2 === 1) ? 1 : 0;
+  for (let i = start; i < total; i += 2) {
+    arranged.push(original[i]);
+    if (original[i + 1]) arranged.push(original[i + 1]);
+  }
+
+  return arranged;
+}
+  }
+},
         tooltip: {
           usePointStyle: true,
           boxWidth: 8,
           boxHeight: 8,
           pointStyle: 'circle',
           callbacks: {
-            labelPointStyle: () => ({ pointStyle:'circle', rotation:0 }),
+            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
             label: (ctx) => {
               const dataset = ctx.chart.data.datasets[0];
-              const total = dataset.data.reduce((a,b)=>a+b,0);
+              const total = dataset.data.reduce((a, b) => a + b, 0);
               const value = ctx.parsed;
               const percentage = ((value / total) * 100).toFixed(1);
-              return `${value} Vote${value!==1?'s':''} – ${percentage}%`;
+              const voteWord = value === 1 ? 'Vote' : 'Votes';
+              return `${value} ${voteWord} – ${percentage}%`;
             }
           }
         },
@@ -907,33 +860,38 @@ if (n === 3) {
           font: (ctx) => {
             const dataset = ctx.chart.data.datasets[0];
             const value = dataset.data[ctx.dataIndex];
-            const totalLocal = dataset.data.reduce((a,b)=>a+b,0);
-            const pct = (value/totalLocal)*100;
+            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
+            const percentage = (value / totalLocal) * 100;
+
+            const angle = (percentage / 100) * 360;
             const base = s.donutPercent;
-            let size =
-              pct < 3  ? base*0.45 :
-              pct < 8  ? base*0.6  :
-              pct < 15 ? base*0.8  :
-                          base;
-            return { weight:'bold', size:Math.max(8,size) };
+            let size;
+
+            if (angle < 10)       size = base * 0.45;
+            else if (angle < 20)  size = base * 0.6;
+            else if (angle < 40)  size = base * 0.8;
+            else                  size = base;
+
+            return { weight: 'bold', size: Math.max(8, size) };
           },
-          formatter: (v,ctx)=>{
-            const d = ctx.chart.data.datasets[0].data;
-            const t = d.reduce((a,b)=>a+b,0);
-            const p = (v/t)*100;
-            return p>=2 ? `${p.toFixed(1)}%` : '';
+          formatter: (v, ctx) => {
+            const dataset = ctx.chart.data.datasets[0];
+            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
+            const p = (v / totalLocal) * 100;
+            return p >= 2 ? `${p.toFixed(1)}%` : '';
           },
-          display: (ctx)=>{
-            const d = ctx.chart.data.datasets[0].data;
-            const t = d.reduce((a,b)=>a+b,0);
-            const p = (ctx.dataset.data[ctx.dataIndex]/t)*100;
-            return p>=3.5;
+          display: (ctx) => {
+            const dataset = ctx.chart.data.datasets[0];
+            const value = dataset.data[ctx.dataIndex];
+            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
+            const percentage = (value / totalLocal) * 100;
+            return percentage >= 3.5;
           },
-          anchor:'center',
-          align:'center',
-          clamp:true,
-          clip:true,
-          offset:0
+          anchor: 'center',
+          align: 'center',
+          clamp: true,
+          clip: true,
+          offset: 0
         }
       },
       onClick: (evt, elements) => handleDonutClick(g, w, donutId, evt, elements, rows)
@@ -941,111 +899,214 @@ if (n === 3) {
   });
 
   enableDesktopTooltipLinger(charts[donutId], 5000);
-  
-  /* --- HISTOGRAM (Freedman–Diaconis + optional outlier bins, max 12 total bars) --- */
-  const vals = rows
-    .map(r => parseFloat(r.PredictedTotal))
-    .filter(v => !isNaN(v) && v > 0);
 
-  if (!vals.length) {
-    if (charts[histId]) charts[histId].destroy();
-    return;
+/* --- HISTOGRAM (Freedman–Diaconis + optional outlier bins, max 12 total bars) --- */
+const vals = rows
+  .map(r => parseFloat(r.PredictedTotal))
+  .filter(v => !isNaN(v) && v > 0);
+
+if (!vals.length) {
+  if (charts[histId]) charts[histId].destroy();
+  return;
+}
+
+const N = vals.length;
+
+// Sort values
+const sorted = [...vals].sort((a, b) => a - b);
+
+// Quartiles + IQR
+const q1  = quantile(sorted, 0.25);
+const q3  = quantile(sorted, 0.75);
+const iqr = q3 - q1;
+
+// Outlier fences
+const lowerFence = q1 - 1.5 * iqr;
+const upperFence = q3 + 1.5 * iqr;
+
+// Separate into normal + outliers
+let normalVals = sorted.filter(v => v >= lowerFence && v <= upperFence);
+const lowOutCount  = sorted.filter(v => v <  lowerFence).length;
+const highOutCount = sorted.filter(v => v >  upperFence).length;
+
+// If everything flagged, treat all as normal
+if (!normalVals.length) normalVals = sorted.slice();
+
+const minNorm = normalVals[0];
+const maxNorm = normalVals[normalVals.length - 1];
+
+// --- Freedman–Diaconis calculation ---
+let suggestedBins = null;
+if (iqr > 0 && isFinite(iqr)) {
+  const h = 2 * iqr / Math.cbrt(N);
+  if (h > 0 && isFinite(h)) {
+    suggestedBins = Math.round((maxNorm - minNorm) / h);
   }
+}
 
-  const N = vals.length;
+let innerBins = suggestedBins || Math.round(Math.sqrt(N));
+innerBins = Math.max(3, Math.min(innerBins, 10)); // ensures <=12 total bins
 
-  // Sort values
-  const sorted = [...vals].sort((a, b) => a - b);
+const bw = (maxNorm - minNorm) / innerBins || 1;
 
-  // Quartiles + IQR
-  const q1  = quantile(sorted, 0.25);
-  const q3  = quantile(sorted, 0.75);
-  const iqr = q3 - q1;
+// Count normal bin values
+const normalCounts = Array(innerBins).fill(0);
+normalVals.forEach(v => {
+  let i = Math.floor((v - minNorm) / bw);
+  if (i < 0) i = 0;
+  if (i >= innerBins) i = innerBins - 1;
+  normalCounts[i]++;
+});
 
-  // Outlier fences
-  const lowerFence = q1 - 1.5 * iqr;
-  const upperFence = q3 + 1.5 * iqr;
+// Build final bins conditionally
+const countsH = [];
+const labelsH = [];
+const colorsH = [];
+const normalColors = getBlueGradientColors(innerBins);
+const outlierColor = "rgb(30, 58, 138)";
 
-  // Separate into normal + outliers
-  let normalVals = sorted.filter(v => v >= lowerFence && v <= upperFence);
-  const lowOutCount  = sorted.filter(v => v <  lowerFence).length;
-  const highOutCount = sorted.filter(v => v >  upperFence).length;
+// Left outlier bin?
+if (lowOutCount > 0) {
+  countsH.push(lowOutCount);
+  labelsH.push(`< ${lowerFence.toFixed(0)}`);
+  colorsH.push(outlierColor);
+}
 
-  // If everything flagged as outlier, treat all as normal
-  if (!normalVals.length) normalVals = sorted.slice();
+// Normal bins
+for (let i = 0; i < innerBins; i++) {
+  const start = minNorm + i * bw;
+  const end   = minNorm + (i + 1) * bw;
+  countsH.push(normalCounts[i]);
+  labelsH.push(`${start.toFixed(0)}–${end.toFixed(0)}`);
+  colorsH.push(normalColors[i]);
+}
 
-  const minNorm = normalVals[0];
-  const maxNorm = normalVals[normalVals.length - 1];
+// Right outlier bin?
+if (highOutCount > 0) {
+  countsH.push(highOutCount);
+  labelsH.push(`> ${upperFence.toFixed(0)}`);
+  colorsH.push(outlierColor);
+}
 
-  // Freedman–Diaconis suggested bins
-  let suggestedBins = null;
-  if (iqr > 0 && isFinite(iqr)) {
-    const h = 2 * iqr / Math.cbrt(N);
-    if (h > 0 && isFinite(h)) {
-      suggestedBins = Math.round((maxNorm - minNorm) / h);
+// Y-axis clean stepping
+const maxC = Math.max(...countsH);
+const yStep = 2;
+const yMax = Math.ceil(maxC / yStep) * yStep;
+
+if (charts[histId]) charts[histId].destroy();
+const histCtx = document.getElementById(histId).getContext("2d");
+
+charts[histId] = new Chart(histCtx, {
+  type: "bar",
+  data: {
+    labels: labelsH,
+    datasets: [{
+      data: countsH,
+      backgroundColor: colorsH,
+      borderRadius: 5,
+      barPercentage: 0.9,
+      categoryPercentage: 1.0
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: { padding: { bottom: 60 } },
+    events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
+    interaction: { mode: "nearest", intersect: true },
+    plugins: {
+      centerHistArea: { enabled: true },
+      legend: { display: false },
+      datalabels: {
+        color: "#fff",
+        font: { size: s.histBarLabel, weight: "normal" },
+        formatter: (v) => v > 0 ? v : "",
+        anchor: "center",
+        align: "center",
+        clamp: true
+      },
+      tooltip: {
+        usePointStyle: true,
+        boxWidth: 8,
+        boxHeight: 8,
+        pointStyle: "circle",
+        callbacks: {
+          labelPointStyle: () => ({ pointStyle: "circle", rotation: 0 }),
+          title: (items) => items[0]?.label || "",
+          label: (ctx) => `Vote Count - ${ctx.parsed.y}`
+        }
+      }
+    },
+    scales: {
+      x: {
+        offset: true,
+        ticks: {
+          color: "#ccc",
+          font: { size: s.axisTick },
+          autoSkip: false,
+          maxRotation: 60,
+          minRotation: 45,
+          callback: (value, index) => labelsH[index] || ""
+        },
+        title: {
+          display: true,
+          text: "Predicted Total (kg)",
+          color: "#ccc",
+          font: { size: s.axisTitle, weight: "bold" }
+        },
+        grid: { display: false }
+      },
+      y: {
+        beginAtZero: true,
+        min: 0,
+        max: yMax,
+        ticks: {
+          color: "#ccc",
+          font: { size: s.axisTick },
+          stepSize: yStep
+        },
+        title: {
+          display: true,
+          text: `Vote Count (Total = ${N})`,
+          color: "#ccc",
+          font: { size: s.axisTitle, weight: "bold" }
+        },
+        grid: { display: false }
+      }
     }
   }
+});
 
-  let innerBins = suggestedBins || Math.round(Math.sqrt(N));
-  // Max 10 "inner" bins → +2 potential outlier bins = max 12 total
-  innerBins = Math.max(3, Math.min(innerBins, 10));
+charts[histId].$histCentered = false;
+enableDesktopTooltipLinger(charts[histId], 5000);
 
-  const bw = (maxNorm - minNorm) / innerBins || 1;
+requestAnimationFrame(stripTransformsForCharts);
+}
 
-  // Count normal bin values
-  const normalCounts = Array(innerBins).fill(0);
-  normalVals.forEach(v => {
-    let i = Math.floor((v - minNorm) / bw);
-    if (i < 0) i = 0;
-    if (i >= innerBins) i = innerBins - 1;
-    normalCounts[i]++;
+/* ========= DRILLDOWN CHART ========= */
+function renderDrillChart(g, athlete) {
+  const state = drillState[g];
+  if (!state || !state.athleteMap[athlete]) return;
+
+  const s = sizing();
+  const votes = state.athleteMap[athlete].votes || [];
+  const colors = getRedGradientColors();
+
+  const counts = Array(16).fill(0);
+  votes.forEach(v => {
+    if (v >= 1 && v <= 16) counts[v - 1]++;
   });
 
-  // Build final bins conditionally
-  const countsH = [];
-  const labelsH = [];
-  const colorsH = [];
-  const normalColors = getBlueGradientColors(innerBins);
-  const outlierColor = 'rgb(30, 58, 138)';
+  if (state.chart) state.chart.destroy();
 
-  // Left outlier bin only if needed
-  if (lowOutCount > 0) {
-    countsH.push(lowOutCount);
-    labelsH.push(`< ${lowerFence.toFixed(0)}`);
-    colorsH.push(outlierColor);
-  }
-
-  // Normal bins
-  for (let i = 0; i < innerBins; i++) {
-    const start = minNorm + i * bw;
-    const end   = minNorm + (i + 1) * bw;
-    countsH.push(normalCounts[i]);
-    labelsH.push(`${start.toFixed(0)}–${end.toFixed(0)}`);
-    colorsH.push(normalColors[i]);
-  }
-
-  // Right outlier bin only if needed
-  if (highOutCount > 0) {
-    countsH.push(highOutCount);
-    labelsH.push(`> ${upperFence.toFixed(0)}`);
-    colorsH.push(outlierColor);
-  }
-
-  // Y-axis – clean constant step of 2
-  const maxC = Math.max(...countsH);
-  const yStep = 2;
-  const yMax = Math.max(yStep, Math.ceil(maxC / yStep) * yStep);
-
-  if (charts[histId]) charts[histId].destroy();
-  const histCtx = document.getElementById(histId).getContext('2d');
-
-  charts[histId] = new Chart(histCtx, {
+  const ctx = state.canvas.getContext('2d');
+  state.chart = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: labelsH,
+      labels: Array.from({ length: 16 }, (_, i) => i + 1),
       datasets: [{
-        data: countsH,
-        backgroundColor: colorsH,
+        data: counts,
+        backgroundColor: colors,
         borderRadius: 5,
         barPercentage: 0.9,
         categoryPercentage: 1.0
@@ -1054,7 +1115,7 @@ if (n === 3) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      layout: { padding: { bottom: 60 } },
+      layout: { padding: { bottom: 30 } },
       events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
       interaction: { mode: 'nearest', intersect: true },
       plugins: {
@@ -1076,24 +1137,22 @@ if (n === 3) {
           callbacks: {
             labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
             title: (items) => (items[0]?.label) || '',
-            label: (ctx) => `Vote Count - ${ctx.parsed.y}`
+            label: (ctx2) => `Vote Count - ${ctx2.parsed.y}`
           }
-        }
+        },
+        title: { display: false }
       },
       scales: {
         x: {
-          offset: true,
           ticks: {
             color: '#ccc',
             font: { size: s.axisTick },
-            autoSkip: false,
-            maxRotation: 60,
-            minRotation: 45,
-            callback: (value, index) => labelsH[index] || ''
+            maxRotation: 0,
+            minRotation: 0
           },
           title: {
             display: true,
-            text: 'Predicted Total (kg)',
+            text: 'Points / Confidence Level',
             color: '#ccc',
             font: { size: s.axisTitle, weight: 'bold' }
           },
@@ -1101,16 +1160,14 @@ if (n === 3) {
         },
         y: {
           beginAtZero: true,
-          min: 0,
-          max: yMax,
           ticks: {
             color: '#ccc',
             font: { size: s.axisTick },
-            stepSize: yStep
+            precision: 0
           },
           title: {
             display: true,
-            text: `Vote Count (Total = ${N})`,
+            text: 'Vote Count',
             color: '#ccc',
             font: { size: s.axisTitle, weight: 'bold' }
           },
@@ -1120,10 +1177,8 @@ if (n === 3) {
     }
   });
 
-  charts[histId].$histCentered = false;
-  enableDesktopTooltipLinger(charts[histId], 5000);
-
-  // Final transform cleanup after both donut + hist render
+  state.chart.$histCentered = false;
+  enableDesktopTooltipLinger(state.chart, 5000);
   requestAnimationFrame(stripTransformsForCharts);
 }
 
@@ -1299,111 +1354,6 @@ window.addEventListener('resize', () => {
     }
   });
 });
-
-/* ========= DRILLDOWN RENDERING ========= */
-function renderDrillChart(g, athlete) {
-  const state = drillState[g];
-  if (!state || !state.athleteMap[athlete]) return;
-
-  const s = sizing();
-  const votes = state.athleteMap[athlete].votes || [];
-  const colors = getRedGradientColors(); // your existing function
-
-  // Count votes 1–16
-  const counts = Array(16).fill(0);
-  votes.forEach(v => {
-    if (v >= 1 && v <= 16) counts[v - 1]++;
-  });
-
-  // Destroy previous if exists
-  if (state.chart) state.chart.destroy();
-
-  const ctx = state.canvas.getContext('2d');
-
-  state.chart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: Array.from({ length: 16 }, (_, i) => i + 1),
-      datasets: [{
-        data: counts,
-        backgroundColor: colors,
-        borderRadius: 5,
-        barPercentage: 0.9,
-        categoryPercentage: 1.0
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      layout: { padding: { bottom: 60 } },
-      events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
-      interaction: { mode: 'nearest', intersect: true },
-      plugins: {
-        centerHistArea: { enabled: true },
-        legend: { display: false },
-        datalabels: {
-          color: '#fff',
-          font: { size: s.histBarLabel, weight: 'normal' },
-          formatter: (v) => v > 0 ? v : '',
-          anchor: 'center',
-          align: 'center',
-          clamp: true
-        },
-        tooltip: {
-          usePointStyle: true,
-          boxWidth: 8,
-          boxHeight: 8,
-          pointStyle: 'circle',
-          callbacks: {
-            labelPointStyle: () => ({ pointStyle:'circle', rotation:0 }),
-            title: (items) => (items[0]?.label) || '',
-            label: (ctx2) => `Vote Count - ${ctx2.parsed.y}`
-          }
-        }
-      },
-      scales: {
-        x: {
-          ticks: {
-            color: '#ccc',
-            font: { size: s.axisTick },
-            maxRotation: 0,
-            minRotation: 0
-          },
-          title: {
-            display: true,
-            text: 'Points / Confidence Level',
-            color: '#ccc',
-            font: { size: s.axisTitle, weight: 'bold' }
-          },
-          grid: { display: false }
-        },
-        y: {
-          beginAtZero: true,
-          ticks: {
-            color: '#ccc',
-            font: { size: s.axisTick },
-            precision: 0
-          },
-          title: {
-            display: true,
-            text: 'Vote Count',
-            color: '#ccc',
-            font: { size: s.axisTitle, weight: 'bold' }
-          },
-          grid: { display: false }
-        }
-      }
-    }
-  });
-
-  // enable linger
-  enableDesktopTooltipLinger(state.chart, 5000);
-
-  // ensure pointer correctness
-  requestAnimationFrame(stripTransformsForCharts);
-
-  state.chart.$histCentered = false;
-}
 
 /* ========= SHARE / EXPORT HELPERS ========= */
 
