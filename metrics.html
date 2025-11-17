@@ -980,18 +980,14 @@ normalVals.forEach(v => {
   normalCounts[i]++;
 });
 
-// Build final bins conditionally
+// Build final bins (outliers + normal), THEN colour with a smooth gradient
 const countsH = [];
 const labelsH = [];
-const colorsH = [];
-const normalColors = getBlueGradientColors(innerBins);
-const outlierColor = "rgb(30, 58, 138)";
 
 // Left outlier bin?
 if (lowOutCount > 0) {
   countsH.push(lowOutCount);
   labelsH.push(`< ${lowerFence.toFixed(0)}`);
-  colorsH.push(outlierColor);
 }
 
 // Normal bins
@@ -1000,20 +996,21 @@ for (let i = 0; i < innerBins; i++) {
   const end   = minNorm + (i + 1) * bw;
   countsH.push(normalCounts[i]);
   labelsH.push(`${start.toFixed(0)}–${end.toFixed(0)}`);
-  colorsH.push(normalColors[i]);
 }
 
 // Right outlier bin?
 if (highOutCount > 0) {
   countsH.push(highOutCount);
   labelsH.push(`> ${upperFence.toFixed(0)}`);
-  colorsH.push(outlierColor);
 }
+
+// Now generate a gradient spanning *all* bins (including outliers)
+const colorsH = getBlueGradientColors(countsH.length);
 
 // Y-axis clean stepping
 const maxC = Math.max(...countsH);
 const yStep = 2;
-const yMax = Math.ceil(maxC / yStep) * yStep;
+const yMax = Math.ceil(maxC / yStep) * yStep || yStep;
 
 if (charts[histId]) charts[histId].destroy();
 const histCtx = document.getElementById(histId).getContext("2d");
@@ -1101,7 +1098,6 @@ charts[histId] = new Chart(histCtx, {
 
 charts[histId].$histCentered = false;
 enableDesktopTooltipLinger(charts[histId], 5000);
-
 requestAnimationFrame(stripTransformsForCharts);
 }
 
