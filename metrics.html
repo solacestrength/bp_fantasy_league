@@ -1156,7 +1156,12 @@ function renderCharts(g, w) {
           pointStyle: 'circle',
           callbacks: {
             labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
-            title: (items) => (items[0]?.label) || '',
+            title: (items) => {
+  const raw = items[0]?.label || '';
+  return raw.includes('–')
+    ? raw + ' kg'
+    : raw; // outliers already have < X or > Y
+},
             label: (ctx) => `Vote Count - ${ctx.parsed.y}`
           }
         }
@@ -1260,8 +1265,17 @@ function renderDrillChart(g, athlete) {
           pointStyle: 'circle',
           callbacks: {
             labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
-            title: (items) => (items[0]?.label) || '',
-            label: (ctx2) => `Vote Count - ${ctx2.parsed.y}`
+            title: (items) => {
+  const bin = items[0]?.label;
+  if (!bin) return '';
+  const n = parseInt(bin, 10);
+  return isNaN(n)
+    ? bin
+    : n === 1
+      ? `${n} Point`
+      : `${n} Points`;
+},
+label: (ctx2) => `Vote Count – ${ctx2.parsed.y}`
           }
         },
         title: { display: false }
