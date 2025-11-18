@@ -1382,7 +1382,10 @@ function openDrilldown(g, w, athlete, rows, opts = {}) {
   state.totalVotesInClass = rows.length;
 
   // rebuild dropdown for available athletes
-  const names = Object.keys(state.athleteMap);
+  // Sort athletes by vote share descending to match donut order
+const names = Object.entries(state.athleteMap)
+  .sort((a, b) => b[1].votes.length - a[1].votes.length)
+  .map(e => e[0]);
   state.select.innerHTML = '';
   names.forEach(name => {
     const opt = document.createElement('option');
