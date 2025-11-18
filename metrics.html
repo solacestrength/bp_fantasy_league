@@ -1299,13 +1299,11 @@ label: (ctx2) => `Vote Count – ${ctx2.parsed.y}`
             minRotation: 0
           },
           title: {
-            display: true,
-            text: 'Points / Confidence Level',
-            color: '#ccc',
-            font: { size: s.axisTitle, weight: 'bold' }
-          },
-          grid: { display: false }
-        },
+  display: true,
+  text: `Vote Count (Total = ${votes.length})`,
+  color: '#ccc',
+  font: { size: s.axisTitle, weight: 'bold' }
+},
         y: {
           beginAtZero: true,
           ticks: {
