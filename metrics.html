@@ -1291,35 +1291,38 @@ label: (ctx2) => `Vote Count – ${ctx2.parsed.y}`
         title: { display: false }
       },
       scales: {
-        x: {
-          ticks: {
-            color: '#ccc',
-            font: { size: s.axisTick },
-            maxRotation: 0,
-            minRotation: 0
-          },
-          title: {
-  display: true,
-  text: `Vote Count (Total = ${votes.length})`,
-  color: '#ccc',
-  font: { size: s.axisTitle, weight: 'bold' }
-},
-        y: {
-          beginAtZero: true,
-          ticks: {
-            color: '#ccc',
-            font: { size: s.axisTick },
-            precision: 0
-          },
-          title: {
-            display: true,
-            text: 'Vote Count',
-            color: '#ccc',
-            font: { size: s.axisTitle, weight: 'bold' }
-          },
-          grid: { display: false }
-        }
-      }
+  x: {
+    ticks: {
+      color: '#ccc',
+      font: { size: s.axisTick },
+      maxRotation: 0,
+      minRotation: 0
+    },
+    title: {
+      display: true,
+      text: 'Points / Confidence Level',
+      color: '#ccc',
+      font: { size: s.axisTitle, weight: 'bold' }
+    },
+    grid: { display: false }
+  },
+
+  y: {
+    beginAtZero: true,
+    ticks: {
+      color: '#ccc',
+      font: { size: s.axisTick },
+      precision: 0
+    },
+    title: {
+      display: true,
+      text: `Vote Count (Total = ${votes.length})`,
+      color: '#ccc',
+      font: { size: s.axisTitle, weight: 'bold' }
+    },
+    grid: { display: false }
+  }
+}
     }
   });
 
