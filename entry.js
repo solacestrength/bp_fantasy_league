@@ -226,18 +226,7 @@ function validateStep(stepIndex) {
       valid = false;
     }
   }
-
-  if (stepIndex === 3) {
-    if (!femaleBestInput.value.trim()) {
-      setError('femaleBestError', 'Please choose a female best lifter.');
-      valid = false;
-    }
-    if (!maleBestInput.value.trim()) {
-      setError('maleBestError', 'Please choose a male best lifter.');
-      valid = false;
-    }
-  }
-
+  
   return valid;
 }
 
