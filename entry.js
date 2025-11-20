@@ -1,6 +1,6 @@
 
 // ========= CONFIG =========
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxb-8_mIv4QBkDiTNan-vzsx0FQ7xEgx4jKR_5SaokNJomG9YhU0kqFpCeQNoyuImPG/exec'; // <-- paste your deployed Apps Script Web App URL
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyBGdFc2n1Ogu-AQADw_03uSoNk-OSQltl5Z-zEgjRDCdwwLIioVerSmGgDlqZWO4qM/exec'; // <-- paste your deployed Apps Script Web App URL
 
 // ========= DOM ELEMENTS =========
 const form = document.getElementById('bcfl-form');
