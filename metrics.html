@@ -353,35 +353,45 @@ select {
     </main>
 
           <!-- BEST LIFTERS -->
-      <div class="bg-gray-800/60 border border-gray-700 backdrop-blur-sm shadow-lg rounded-2xl p-4">
-        <h3 class="text-lg font-bold mb-1">Best Lifters</h3>
-        <p class="text-gray-400 text-sm mb-4">
-          Overall Best Lifter vote distributions across all classes.<br />
-          Female Best Lifter doughnut shown first, followed by Male Best Lifter.
-        </p>
+<div class="bg-gray-800/60 border border-gray-700 backdrop-blur-sm shadow-lg rounded-2xl p-4">
+  <button onclick="toggleSection('bestlifters')"
+          class="flex items-center justify-between w-full text-left text-lg font-bold">
+    <span>Best Lifters</span>
+    <svg id="arrow-bestlifters" xmlns="http://www.w3.org/2000/svg"
+         class="h-5 w-5 arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M19 9l-7 7-7-7"/>
+    </svg>
+  </button>
 
-        <!-- FEMALE BEST LIFTER DONUT -->
-        <div class="chart-container" id="bestLifterWomenContainer">
-          <div class="flex justify-end mb-1">
-            <button class="share-btn" onclick="shareChart('bestLifterWomenDonut','F')">
-              <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
-                   class="share-icon" alt="Share Female Best Lifter"/>
-            </button>
-          </div>
-          <canvas id="bestLifterWomenDonut"></canvas>
-        </div>
+  <div id="bestlifters" class="collapsible-content mt-4">
 
-        <!-- MALE BEST LIFTER DONUT -->
-        <div class="chart-container mt-6" id="bestLifterMenContainer">
-          <div class="flex justify-end mb-1">
-            <button class="share-btn" onclick="shareChart('bestLifterMenDonut','M')">
-              <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
-                   class="share-icon" alt="Share Male Best Lifter"/>
-            </button>
-          </div>
-          <canvas id="bestLifterMenDonut"></canvas>
-        </div>
+    <!-- FEMALE BEST LIFTER -->
+    <h3 class="text-center text-lg font-semibold mb-4">Female Best Lifter – Share of Votes</h3>
+    <div class="chart-container" id="bestFContainer" style="padding-bottom: 40px;">
+      <div class="flex justify-end mb-1">
+        <button class="share-btn" onclick="shareBestLifter('F')">
+          <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
+               class="share-icon" />
+        </button>
       </div>
+      <canvas id="bestF"></canvas>
+    </div>
+
+    <!-- MALE BEST LIFTER -->
+    <h3 class="text-center text-lg font-semibold mt-8 mb-4">Male Best Lifter – Share of Votes</h3>
+    <div class="chart-container" id="bestMContainer" style="padding-bottom: 40px;">
+      <div class="flex justify-end mb-1">
+        <button class="share-btn" onclick="shareBestLifter('M')">
+          <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
+               class="share-icon" />
+        </button>
+      </div>
+      <canvas id="bestM"></canvas>
+    </div>
+
+  </div>
+</div>
 
     <!-- VIEW LEADERBOARD BUTTON -->
     <div class="flex justify-center mt-8">
@@ -1505,81 +1515,72 @@ function closeDrilldown(g) {
   state.totalVotesInClass = 0;
 }
 
-/* ========= BEST LIFTER DOUGHNUTS ========= */
+/* ========= BEST LIFTER CHARTS ========= */
 
-function setupBestLifterCharts() {
-  if (!bestLifterData || !bestLifterData.length) return;
+const BEST_URL =
+  'https://docs.google.com/spreadsheets/d/e/2PACX-1vSuA8YB98ghNeM-cS6Fs1pJNkEBOI0x7WKI4R0vtvAG68mo7PJZYVj2HsdxH3DDqvieaTpe9zUzJcNW/pub?gid=1929429371&single=true&output=csv';
 
-  const femaleRows = bestLifterData.filter(r => r.Gender === 'F');
-  const maleRows   = bestLifterData.filter(r => r.Gender === 'M');
+let bestData = [];
 
-  renderBestLifterDonut('F', femaleRows, 'bestLifterWomenDonut');
-  renderBestLifterDonut('M', maleRows,   'bestLifterMenDonut');
-}
-
-function renderBestLifterDonut(g, rows, canvasId) {
-  const s = sizing();
-
-  if (!rows || !rows.length) {
-    if (charts[canvasId]) charts[canvasId].destroy();
-    return;
+// Load best lifters CSV
+Papa.parse(BEST_URL, {
+  download: true,
+  header: true,
+  complete: r => {
+    bestData = r.data;
+    renderBestLifter('F');
+    renderBestLifter('M');
   }
+});
 
-  // Shuffle for privacy (no consistent "first" voter → colour)
-  const shuffled = shuffleArray(rows);
+function renderBestLifter(g) {
+  const s = sizing();
+  const containerId = g === 'F' ? 'bestFContainer' : 'bestMContainer';
+  const canvasId    = g === 'F' ? 'bestF' : 'bestM';
 
-  // Count votes per athlete
+  const rows = bestData.filter(r => r.Gender === g && r.Athlete);
+  if (!rows.length) return;
+
+  // Count votes
   const counts = {};
-  shuffled.forEach(r => {
-    const name = r.Athlete;
-    if (!name) return;
-    counts[name] = (counts[name] || 0) + 1;
+  rows.forEach(r => {
+    counts[r.Athlete] = (counts[r.Athlete] || 0) + 1;
   });
 
-  // Sort by vote count (largest → smallest)
-  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  let entries = Object.entries(counts);
+  entries.sort((a, b) => b[1] - a[1]);
 
-  const dLabels = entries.map(e => e[0]);
-  const dData   = entries.map(e => e[1]);
-  const total   = dData.reduce((a, b) => a + b, 0);
+  const labels = entries.map(e => e[0]);
+  const data = entries.map(e => e[1]);
+  const total = data.reduce((a, b) => a + b, 0);
 
-  // Medal colours
+  // Colours identical to winner donuts
   const GOLD   = '#efbf04';
   const SILVER = '#9ea2a6';
   const BRONZE = '#b46d32';
-
-  // Extra palette (same as main donuts)
-  const EXTRA_COLOURS = [
-    '#22c55e', // emerald
-    '#3b82f6', // blue
-    '#8b5cf6', // purple
-    '#ec4899', // pink
-    '#06b6d4', // cyan
-    '#14b8a6', // teal
-    '#84cc16', // lime
-    '#d946ef', // fuchsia
-    '#fb7185'  // rose
+  const EXTRA_COLS = [
+    '#22c55e','#3b82f6','#8b5cf6','#ec4899','#06b6d4',
+    '#14b8a6','#84cc16','#d946ef','#fb7185'
   ];
 
-  const donutColors = [];
-  for (let i = 0; i < dLabels.length; i++) {
-    if (i === 0)      donutColors.push(GOLD);
-    else if (i === 1) donutColors.push(SILVER);
-    else if (i === 2) donutColors.push(BRONZE);
-    else              donutColors.push(EXTRA_COLOURS[(i - 3) % EXTRA_COLOURS.length]);
-  }
+  const colors = labels.map((_, i) =>
+    i === 0 ? GOLD :
+    i === 1 ? SILVER :
+    i === 2 ? BRONZE :
+    EXTRA_COLS[(i - 3) % EXTRA_COLS.length]
+  );
 
+  // Build chart
+  const ctx = document.getElementById(canvasId).getContext('2d');
   if (charts[canvasId]) charts[canvasId].destroy();
-  const ctx = document.getElementById(canvasId)?.getContext('2d');
-  if (!ctx) return;
 
   charts[canvasId] = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: dLabels,
+      labels,
       datasets: [{
-        data: dData,
-        backgroundColor: donutColors,
+        data,
+        backgroundColor: colors,
         borderColor: '#111',
         borderWidth: 1
       }]
@@ -1588,116 +1589,47 @@ function renderBestLifterDonut(g, rows, canvasId) {
       responsive: true,
       maintainAspectRatio: false,
       cutout: '57%',
-      layout: { padding: 0 },
-      events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
-      interaction: { mode: 'nearest', intersect: true },
       plugins: {
         title: {
           display: true,
-          text: g === 'F'
-            ? 'Female Best Lifter – Share of Votes'
-            : 'Male Best Lifter – Share of Votes',
+          text: 'Share of Votes',
           color: '#ccc',
-          font: { weight: 'bold', size: s.donutTitle },
-          padding: { bottom: 8 }
+          font: { size: s.donutTitle, weight: 'bold' },
+          padding: { bottom: 6 }
         },
         subtitle: {
           display: true,
           text: `Total Votes – ${total}`,
           color: '#aaa',
           font: { size: s.donutSubtitle },
-          padding: { top: 2, bottom: 18 }
+          padding: { bottom: 18 }
         },
         legend: {
           position: 'bottom',
-          onClick: null,
-          onHover: null,
           labels: {
             color: '#ccc',
             boxWidth: 10,
             boxHeight: 10,
             font: { size: s.donutLegend },
-            usePointStyle: true,
-            pointStyle: 'circle',
-            generateLabels(chart) {
-              const original =
-                Chart.overrides.doughnut.plugins.legend.labels.generateLabels(chart);
-              const total = original.length;
-              if (total <= 2) return original;
-
-              const arranged = [];
-              if (total % 2 === 1) {
-                arranged.push({
-                  text: '',
-                  fillStyle: 'rgba(0,0,0,0)',
-                  strokeStyle: 'rgba(0,0,0,0)',
-                  hidden: true,
-                  index: null,
-                  pointStyle: 'circle'
-                });
-                arranged.push(original[0]);
-              }
-
-              const start = (total % 2 === 1) ? 1 : 0;
-              for (let i = start; i < total; i += 2) {
-                arranged.push(original[i]);
-                if (original[i + 1]) arranged.push(original[i + 1]);
-              }
-              return arranged;
-            }
+            usePointStyle: true
           }
         },
         tooltip: {
-          usePointStyle: true,
-          boxWidth: 8,
-          boxHeight: 8,
-          pointStyle: 'circle',
           callbacks: {
-            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
-            label: (ctx) => {
-              const dataset = ctx.chart.data.datasets[0];
-              const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
-              const value = ctx.parsed;
-              const percentage = ((value / totalLocal) * 100).toFixed(1);
-              const voteWord = value === 1 ? 'Vote' : 'Votes';
-              return `${value} ${voteWord} – ${percentage}%`;
+            label: ctx => {
+              const val = ctx.parsed;
+              const pct = (val / total * 100).toFixed(1);
+              return `${val} Votes – ${pct}%`;
             }
           }
         },
         datalabels: {
           color: '#fff',
-          font: (ctx) => {
-            const dataset = ctx.chart.data.datasets[0];
-            const value = dataset.data[ctx.dataIndex];
-            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
-            const percentage = (value / totalLocal) * 100;
-            const angle = (percentage / 100) * 360;
-            const base = s.donutPercent;
-            let size;
-            if (angle < 10)       size = base * 0.45;
-            else if (angle < 20)  size = base * 0.6;
-            else if (angle < 40)  size = base * 0.8;
-            else                  size = base;
-            return { weight: 'bold', size: Math.max(8, size) };
-          },
-          formatter: (v, ctx) => {
-            const dataset = ctx.chart.data.datasets[0];
-            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
-            const p = (v / totalLocal) * 100;
-            return p >= 2 ? `${p.toFixed(1)}%` : '';
-          },
-          display: (ctx) => {
-            const dataset = ctx.chart.data.datasets[0];
-            const value = dataset.data[ctx.dataIndex];
-            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
-            const percentage = (value / totalLocal) * 100;
-            return percentage >= 3.5;
-          },
-          anchor: 'center',
-          align: 'center',
-          clamp: true,
-          clip: true,
-          offset: 0
+          font: { size: s.donutPercent, weight: 'bold' },
+          formatter: v => {
+            const pct = v / total * 100;
+            return pct >= 3.5 ? `${pct.toFixed(1)}%` : '';
+          }
         }
       }
     }
@@ -1981,6 +1913,10 @@ sub.innerHTML = isDonut
   }
 
   resetShareIcon();
+}
+
+function shareBestLifter(g) {
+  shareChart(g === 'F' ? 'bestF' : 'bestM', g);
 }
 
 /* ========= DRILLDOWN SHARE ========= */
