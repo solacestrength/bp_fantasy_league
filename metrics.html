@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -58,26 +60,24 @@ select {
 .chart-container {
   position: relative;
   width: 100%;
-  height: 336px; /* default mobile/tablet height */
-  max-width: 600px;
+  height: 390px; /* larger donuts */
+  max-width: 650px; /* match other containers */
   margin: 0 auto;
   display: block;
   transition: opacity 0.25s ease;
+  padding-bottom: 40px; /* prevent bottom spill */
 }
 
 @media (min-width: 1024px) {
   .chart-container {
-    height: 375px; /* desktop height */
+    height: 430px;
   }
 }
 
-/* Canvas fills container exactly (no CSS scaling) */
 .chart-container > canvas {
   width: 100% !important;
   height: 100% !important;
   display: block;
-  margin-left: auto;
-  margin-right: auto;
   object-fit: contain;
 }
 
@@ -91,18 +91,8 @@ select {
 
 .collapsible-content.open {
   opacity: 1;
-  max-height: 1000px;
+  max-height: 2000px;
   padding-bottom: 1rem;
-}
-
-@media (max-width: 1023px) {
-  .collapsible-content,
-  .collapsible-content.open {
-    width: 100%;
-    margin-left: 0;
-    padding-left: 0;
-    padding-right: 0;
-  }
 }
 
 .arrow {
@@ -120,8 +110,8 @@ select {
   align-items: center;
   justify-content: center;
   border-radius: .5rem;
-  height: 36px;
-  width: 36px;
+  height: 40px;
+  width: 40px;
   transition: background-color .2s ease, transform .2s ease;
 }
 
@@ -132,22 +122,11 @@ select {
 
 .share-icon {
   filter: invert(1);
-  height: 18px;
-  width: 18px;
+  height: 20px;
+  width: 20px;
 }
 
-/* --- Adjust histogram share button alignment --- */
-.chart-container + .chart-container .share-btn {
-  margin-top: 20px; /* small offset so it sits just below donut legend */
-}
-
-@media (min-width: 1024px) {
-  .chart-container + .chart-container .share-btn {
-    margin-top: 24px; /* slightly more breathing room on desktop */
-  }
-}
-
-/* === BACK PILL (Drilldown) === */
+/* === BACK PILL === */
 .back-pill {
   display: inline-flex;
   align-items: center;
@@ -161,38 +140,26 @@ select {
   font-size: 0.7rem;
   font-weight: 500;
   backdrop-filter: blur(6px);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.35);
   transition: all .2s ease;
 }
 
 .back-pill:hover {
   background-color: #374151;
   color: #f97316;
-  transform: translateY(-1px);
 }
 
-/* === ANIMATIONS === */
-@keyframes fadeInUp {
-  0% { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
-.animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
-
-/* === UTILITY (transform stripper marker) === */
+/* === UTILITY === */
 .no-transform {
   transform: none !important;
 }
-</style>
+  </style>
 </head>
 
 <body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
   <div class="absolute inset-0 bg-[url('bc25_logo.jpg')] bg-cover bg-center opacity-45"></div>
   <div class="absolute inset-0 bg-black/70"></div>
 
-  <div class="relative z-10 flex flex-col flex-grow animate-fade-in">
-    <!-- HEADER -->
+  <div class="relative z-10 flex flex-col flex-grow">
     <header class="site-header w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 relative z-50">
       <div class="w-full flex items-center justify-center px-4 py-3">
         <div class="flex-1 text-center">
@@ -201,6 +168,7 @@ select {
             British Classic Fantasy League 2025 🇬🇧
           </a>
         </div>
+
         <div class="absolute right-4 top-1/2 -translate-y-1/2">
           <button id="menu-btn" aria-expanded="false"
                   class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
@@ -214,11 +182,9 @@ select {
       </div>
     </header>
 
-    <!-- MOBILE MENU -->
     <div id="mobile-menu"
          class="fixed top-16 right-4 w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-md
-                shadow-lg z-50 scale-y-0 opacity-0 origin-top transition-transform duration-300 ease-in-out
-                pointer-events-none">
+                shadow-lg z-50 scale-y-0 opacity-0 origin-top transition-transform duration-300 pointer-events-none">
       <nav class="flex flex-col py-2 text-white">
         <a href="index.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Home</a>
         <a href="entry.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">League Entry</a>
@@ -228,28 +194,29 @@ select {
       </nav>
     </div>
 
-    <!-- MAIN -->
-    <main class="max-w-5xl mx-auto p-6 space-y-8 mt-6 animate-fade-in-up">
+    <main class="max-w-5xl mx-auto p-6 space-y-8 mt-6">
       <section class="text-center">
         <h2 class="text-xl font-semibold mb-1">Metrics Dashboard</h2>
         <p class="text-gray-400 text-sm">
           Explore the predicted winner and total distributions by weight class.<br />
-          Double tap/click doughnut segments to view points distributions by athlete 📊<br />
-          User note - labels seen from tapping chart elements will also be visible in your shared images.<br />For visible labels on desktop exports, move cursor outside collapsible section from chart element, then click share button within five seconds.
+          Double tap/click doughnut segments for points distributions 📊<br />
+          User note – labels seen from tapping chart elements will be visible in shared images.
         </p>
       </section>
 
-      <!-- WOMEN -->
+      <!-- WOMEN SECTION -->
       <div class="bg-gray-800/60 border border-gray-700 backdrop-blur-sm shadow-lg rounded-2xl p-4">
         <button onclick="toggleSection('women')"
                 class="flex items-center justify-between w-full text-left text-lg font-bold">
           <span>Women</span>
           <svg id="arrow-women" xmlns="http://www.w3.org/2000/svg"
-               class="h-5 w-5 arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               class="h-5 w-5 arrow" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M19 9l-7 7-7-7"/>
+
           </svg>
         </button>
+
         <div id="women" class="collapsible-content mt-4">
           <select id="womenSelect" class="p-2 rounded mb-4 text-sm"></select>
 
@@ -270,7 +237,7 @@ select {
               <select id="womenDrillSelect" class="drill-select"></select>
               <button class="share-btn" onclick="shareDrilldown('F')">
                 <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
-                     class="share-icon" alt="Share Drilldown"/>
+                     class="share-icon"/>
               </button>
             </div>
             <div class="mb-2">
@@ -287,7 +254,7 @@ select {
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('womenHist','F')">
                 <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
-                     class="share-icon" alt="Share"/>
+                     class="share-icon"/>
               </button>
             </div>
             <canvas id="womenHist"></canvas>
@@ -295,17 +262,18 @@ select {
         </div>
       </div>
 
-      <!-- MEN -->
+      <!-- MEN SECTION -->
       <div class="bg-gray-800/60 border border-gray-700 backdrop-blur-sm shadow-lg rounded-2xl p-4">
         <button onclick="toggleSection('men')"
                 class="flex items-center justify-between w-full text-left text-lg font-bold">
           <span>Men</span>
           <svg id="arrow-men" xmlns="http://www.w3.org/2000/svg"
-               class="h-5 w-5 arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               class="h-5 w-5 arrow" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M19 9l-7 7-7-7"/>
           </svg>
         </button>
+
         <div id="men" class="collapsible-content mt-4">
           <select id="menSelect" class="p-2 rounded mb-4 text-sm"></select>
 
@@ -314,7 +282,7 @@ select {
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('menDonut','M')">
                 <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
-                     class="share-icon" alt="Share"/>
+                     class="share-icon"/>
               </button>
             </div>
             <canvas id="menDonut"></canvas>
@@ -326,7 +294,7 @@ select {
               <select id="menDrillSelect" class="drill-select"></select>
               <button class="share-btn" onclick="shareDrilldown('M')">
                 <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
-                     class="share-icon" alt="Share Drilldown"/>
+                     class="share-icon"/>
               </button>
             </div>
             <div class="mb-2">
@@ -343,82 +311,89 @@ select {
             <div class="flex justify-end mb-1">
               <button class="share-btn" onclick="shareChart('menHist','M')">
                 <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
-                     class="share-icon" alt="Share"/>
+                     class="share-icon"/>
               </button>
             </div>
             <canvas id="menHist"></canvas>
           </div>
         </div>
       </div>
+
+      <!-- BEST LIFTERS SECTION -->
+      <div class="bg-gray-800/60 border border-gray-700 backdrop-blur-sm shadow-lg rounded-2xl p-4">
+        <button onclick="toggleSection('bestlifters')"
+                class="flex items-center justify-between w-full text-left text-lg font-bold">
+          <span>Best Lifters</span>
+          <svg id="arrow-bestlifters" xmlns="http://www.w3.org/2000/svg"
+               class="h-5 w-5 arrow" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+
+        <div id="bestlifters" class="collapsible-content mt-4">
+
+          <!-- FEMALE BEST LIFTER -->
+          <h3 class="text-center text-lg font-semibold mb-4">
+            Female Best Lifter – Share of Votes
+          </h3>
+
+          <div class="chart-container" id="bestFContainer">
+            <div class="flex justify-end mb-1">
+              <button class="share-btn" onclick="shareBestLifter('F')">
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
+                     class="share-icon"/>
+              </button>
+            </div>
+            <canvas id="bestF"></canvas>
+          </div>
+
+          <!-- MALE BEST LIFTER -->
+          <h3 class="text-center text-lg font-semibold mt-8 mb-4">
+            Male Best Lifter – Share of Votes
+          </h3>
+
+          <div class="chart-container" id="bestMContainer">
+            <div class="flex justify-end mb-1">
+              <button class="share-btn" onclick="shareBestLifter('M')">
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
+                     class="share-icon"/>
+              </button>
+            </div>
+            <canvas id="bestM"></canvas>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- VIEW LEADERBOARD BUTTON -->
+      <div class="flex justify-center mt-8">
+        <a href="leaderboard.html"
+           class="inline-flex items-center justify-center bg-gray-800/60 border border-gray-700
+                  text-gray-200 font-semibold px-6 py-3 rounded-full backdrop-blur-sm shadow-lg
+                  hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
+          View Leaderboard
+        </a>
+      </div>
+
+      <!-- BACK TO TOP -->
+      <div class="flex justify-center mt-8">
+        <button id="bottomBackToTop"
+                class="bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full
+                       flex items-center justify-center backdrop-blur-sm shadow-lg
+                       hover:bg-gray-700/70 hover:text-red-400 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24"
+               stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M5 15l7-7 7 7" />
+          </svg>
+        </button>
+      </div>
+
+      <footer class="text-center text-gray-500 text-sm py-4 bg-transparent">
+        Sponsored by the Sabado Sessions Podcast
+      </footer>
     </main>
-
-          <!-- BEST LIFTERS -->
-<div class="bg-gray-800/60 border border-gray-700 backdrop-blur-sm shadow-lg rounded-2xl p-4">
-  <button onclick="toggleSection('bestlifters')"
-          class="flex items-center justify-between w-full text-left text-lg font-bold">
-    <span>Best Lifters</span>
-    <svg id="arrow-bestlifters" xmlns="http://www.w3.org/2000/svg"
-         class="h-5 w-5 arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M19 9l-7 7-7-7"/>
-    </svg>
-  </button>
-
-  <div id="bestlifters" class="collapsible-content mt-4">
-
-    <!-- FEMALE BEST LIFTER -->
-    <h3 class="text-center text-lg font-semibold mb-4">Female Best Lifter – Share of Votes</h3>
-    <div class="chart-container" id="bestFContainer" style="padding-bottom: 40px;">
-      <div class="flex justify-end mb-1">
-        <button class="share-btn" onclick="shareBestLifter('F')">
-          <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
-               class="share-icon" />
-        </button>
-      </div>
-      <canvas id="bestF"></canvas>
-    </div>
-
-    <!-- MALE BEST LIFTER -->
-    <h3 class="text-center text-lg font-semibold mt-8 mb-4">Male Best Lifter – Share of Votes</h3>
-    <div class="chart-container" id="bestMContainer" style="padding-bottom: 40px;">
-      <div class="flex justify-end mb-1">
-        <button class="share-btn" onclick="shareBestLifter('M')">
-          <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
-               class="share-icon" />
-        </button>
-      </div>
-      <canvas id="bestM"></canvas>
-    </div>
-
-  </div>
-</div>
-
-    <!-- VIEW LEADERBOARD BUTTON -->
-    <div class="flex justify-center mt-8">
-      <a href="leaderboard.html"
-         class="inline-flex items-center justify-center bg-gray-800/60 border border-gray-700
-                text-gray-200 font-semibold px-6 py-3 rounded-full backdrop-blur-sm shadow-lg
-                hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
-        View Leaderboard
-      </a>
-    </div>
-
-    <!-- BACK TO TOP BUTTON -->
-    <div class="flex justify-center mt-8">
-      <button id="bottomBackToTop"
-              class="bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full
-                     flex items-center justify-center backdrop-blur-sm shadow-lg
-                     hover:bg-gray-700/70 hover:text-red-400 transition">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
-             viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
-        </svg>
-      </button>
-    </div>
-
-    <footer class="text-center text-gray-500 text-sm py-4 bg-transparent">
-      Sponsored by the Sabado Sessions Podcast
-    </footer>
   </div>
 
 <script>
@@ -534,7 +509,7 @@ document.addEventListener('click', (e) => {
 });
 
 /* ========= LOAD CSV ========= */
-/* ========= LOAD CSV ========= */
+
 Papa.parse(SHEET_URL, {
   download: true,
   header: true,
@@ -549,7 +524,6 @@ Papa.parse(SHEET_URL_BEST, {
   download: true,
   header: true,
   complete: (r) => {
-    // Keep only rows with both Gender and Athlete
     bestLifterData = (r.data || []).filter(row =>
       row.Gender && row.Athlete
     );
@@ -582,11 +556,10 @@ const drillState = {
 };
 
 /* ========= BLUE GRADIENT FOR HISTOGRAM ========= */
-/* Start from a mid blue for a smoother transition into dark blue */
 function getBlueGradientColors(n) {
   const colors = [];
-  const start = { r: 96, g: 165, b: 250 }; // mid blue
-  const end   = { r: 30, g: 64,  b: 175 }; // dark blue
+  const start = { r: 96, g: 165, b: 250 };
+  const end   = { r: 30, g: 64,  b: 175 };
   if (n <= 1) {
     colors.push(`rgb(${start.r},${start.g},${start.b})`);
     return colors;
@@ -604,8 +577,8 @@ function getBlueGradientColors(n) {
 /* ========= RED GRADIENT FOR DRILLDOWN ========= */
 function getRedGradientColors(n = 16) {
   const colors = [];
-  const start = { r: 248, g: 113, b: 113 }; // soft red (#f87171)
-  const end   = { r: 185, g:  28, b:  28 }; // deep red (#b91c1c)
+  const start = { r: 248, g: 113, b: 113 };
+  const end   = { r: 185, g: 28,  b: 28 };
   if (n <= 1) {
     colors.push(`rgb(${start.r},${start.g},${start.b})`);
     return colors;
@@ -620,178 +593,7 @@ function getRedGradientColors(n = 16) {
   return colors;
 }
 
-// Return the q-quantile of a *sorted* numeric array (0–1)
-function quantile(sorted, q) {
-  if (!sorted.length) return NaN;
-  const pos = (sorted.length - 1) * q;
-  const base = Math.floor(pos);
-  const rest = pos - base;
-
-  if (sorted[base + 1] !== undefined) {
-    return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
-  }
-  return sorted[base];
-}
-
-/* ========= SETUP DROPDOWNS ========= */
-function setupDropdowns() {
-  ['F', 'M'].forEach((g) => {
-    const d = allData.filter((r) => r.Gender === g);
-    const classes = [...new Set(d.map((r) => r.Class))]
-      .filter(Boolean)
-      .sort((a, b) => parseFloat(a) - parseFloat(b));
-
-    const select = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
-    if (!select) return;
-
-    select.innerHTML = classes.map((c) => `<option value="${c}">${c} kg</option>`).join('');
-    select.onchange = () => {
-      const newClass = select.value;
-      renderCharts(g, newClass);
-
-      const state = drillState[g];
-      if (state && state.wrapper.style.display === 'block') {
-        const rows = allData.filter(r => r.Gender === g && r.Class === newClass);
-        const firstAthlete = rows[0]?.Athlete;
-        if (firstAthlete) {
-          openDrilldown(g, newClass, firstAthlete, rows, { skipFade: true });
-        } else {
-          closeDrilldown(g);
-        }
-      }
-    };
-
-    if (classes[0]) renderCharts(g, classes[0]);
-  });
-}
-
-/* ========= FADE HELPERS ========= */
-function fadeIn(el) {
-  if (!el) return;
-  el.style.display = 'block';
-  el.style.opacity = 0;
-  requestAnimationFrame(() => { el.style.opacity = 1; });
-}
-
-function fadeOut(el) {
-  if (!el) return;
-  el.style.opacity = 0;
-  setTimeout(() => { el.style.display = 'none'; }, 250);
-}
-
-/* ========= DESKTOP TOOLTIP LINGER (Patched) ========= */
-function enableDesktopTooltipLinger(chart, ms = 5000) {
-  // Desktop only
-  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
-  if (!chart || !chart.canvas) return;
-
-  // 1) Stop Chart.js from auto-clearing tooltips on mouseout
-  const evts = chart.options.events || [];
-  chart.options.events = evts.filter(e => e !== 'mouseout' && e !== 'mouseleave');
-
-  // Make sure tooltips are enabled
-  if (!chart.options.plugins) chart.options.plugins = {};
-  if (!chart.options.plugins.tooltip) chart.options.plugins.tooltip = {};
-  chart.options.plugins.tooltip.enabled = true;
-
-  const canvas = chart.canvas;
-  let lastActive = [];
-  let lingerTimer = null;
-  let hovering = false;
-
-  function clearLinger() {
-    if (lingerTimer) { clearTimeout(lingerTimer); lingerTimer = null; }
-    if (!chart || chart._destroyed) return;
-    chart.tooltip.setActiveElements([], {x: 0, y: 0});
-    chart.update('none');
-  }
-
-  // Track last element under cursor
-  canvas.addEventListener('mousemove', (e) => {
-    hovering = true;
-    const pts = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
-    if (pts && pts.length) {
-      lastActive = pts.map(p => ({ datasetIndex: p.datasetIndex, index: p.index }));
-    }
-    if (lingerTimer) { clearTimeout(lingerTimer); lingerTimer = null; }
-  });
-
-  // Freeze when pointer leaves the canvas
-  canvas.addEventListener('mouseleave', () => {
-    hovering = false;
-    if (!lastActive.length) return;
-
-    // Run on next frame so any remaining internal handlers finish first
-    requestAnimationFrame(() => {
-      if (!chart || chart._destroyed) return;
-      chart.tooltip.setActiveElements(lastActive, { x: chart.width / 2, y: chart.height / 2 });
-      chart.update('none');
-
-      lingerTimer = setTimeout(() => {
-        if (!hovering) clearLinger();
-      }, ms);
-    });
-  });
-
-  // Clear if the chart scrolls off-screen
-  window.addEventListener('scroll', () => {
-    const r = canvas.getBoundingClientRect();
-    const visible = r.bottom > 0 && r.top < window.innerHeight;
-    if (!visible) clearLinger();
-  });
-
-  // Clear on outside click
-  document.addEventListener('click', (e) => {
-    if (lingerTimer && !canvas.contains(e.target)) clearLinger();
-  });
-
-  // Cancel any lingering state when re-entering the chart
-  canvas.addEventListener('mouseenter', () => {
-    hovering = true;
-    if (lingerTimer) { clearTimeout(lingerTimer); lingerTimer = null; }
-    chart.tooltip.setActiveElements([], {x:0, y:0});
-    chart.update('none');
-  });
-}
-
-  /* ========= DESKTOP: STRIP TRANSFORMS AROUND CHARTS ========= */
-function stripTransformsForCharts() {
-  // Skip mobile/touch devices
-  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
-
-  const ids = ['womenDonut','menDonut','womenHist','menHist','womenDrill','menDrill'];
-  ids.forEach(id => {
-    const canvas = document.getElementById(id);
-    if (!canvas) return;
-
-    // Walk up a few ancestors and nuke transforms that skew pointer math
-    let el = canvas.parentElement;
-    let hops = 0;
-    while (el && el !== document.body && hops < 6) {
-      const tf = getComputedStyle(el).transform;
-      if (tf && tf !== 'none') {
-        el.classList.add('no-transform');
-        el.style.transform = 'none';
-      }
-      el = el.parentElement;
-      hops++;
-    }
-  });
-}
-
-// When any fade-in animation finishes, clear transforms again
-document.addEventListener('animationend', (e) => {
-  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
-  const t = e.target;
-  if (!t) return;
-  if (t.classList.contains('animate-fade-in') || t.classList.contains('animate-fade-in-up')) {
-    t.classList.add('no-transform');
-    t.style.transform = 'none';
-    requestAnimationFrame(stripTransformsForCharts);
-  }
-});
-
-// Fisher–Yates shuffle (fast, unbiased)
+/* ========= ARRAY SHUFFLE ========= */
 function shuffleArray(arr) {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
@@ -828,40 +630,31 @@ function renderCharts(g, w) {
   const dData   = entries.map(e => e[1]);
   const total   = dData.reduce((a, b) => a + b, 0);
 
-  // ===== MEDAL COLOURS (for top 3) =====
-  const GOLD   = '#efbf04'; // tuned for white text
+  /* ========= MEDAL COLOURS FOR TOP 3 ========= */
+  const GOLD   = '#efbf04'; // readable with white labels
   const SILVER = '#9ea2a6';
   const BRONZE = '#b46d32';
 
-  // ===== Remaining palette (for 4th, 5th, …) =====
-  // All colours chosen to work with white labels + your dark theme
+  /* ========= COLOURS FOR 4th, 5th, … ========= */
   const EXTRA_COLOURS = [
-    '#22c55e', // emerald
-    '#3b82f6', // blue
-    '#8b5cf6', // purple
-    '#ec4899', // pink
-    '#06b6d4', // cyan
-    '#14b8a6', // teal
-    '#84cc16', // lime
-    '#d946ef', // fuchsia
-    '#fb7185'  // rose
+    '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4',
+    '#14b8a6', '#84cc16', '#d946ef', '#fb7185'
   ];
 
   const donutColors = [];
   for (let i = 0; i < dLabels.length; i++) {
     if (i === 0) {
-      donutColors.push(GOLD);   // largest share → gold
+      donutColors.push(GOLD);
     } else if (i === 1) {
-      donutColors.push(SILVER); // second → silver
+      donutColors.push(SILVER);
     } else if (i === 2) {
-      donutColors.push(BRONZE); // third → bronze
+      donutColors.push(BRONZE);
     } else {
-      // Cycle through remaining palette for 4th, 5th, etc.
       donutColors.push(EXTRA_COLOURS[(i - 3) % EXTRA_COLOURS.length]);
     }
   }
 
-  // Build donut chart
+  // Destroy existing donut if present
   if (charts[donutId]) charts[donutId].destroy();
   const donutCtx = document.getElementById(donutId).getContext('2d');
 
@@ -878,9 +671,7 @@ function renderCharts(g, w) {
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false, // container defines size
-      // Chart.js starts at 12 o'clock by default (rotation = -0.5 * Math.PI)
-      // and draws slices in array order ⇒ sorted & medal logic respected.
+      maintainAspectRatio: false,
       cutout: '57%',
       layout: { padding: 0 },
       events: ['mousemove','mouseout','click','touchstart','touchmove','touchend'],
@@ -911,17 +702,18 @@ function renderCharts(g, w) {
             font: { size: s.donutLegend },
             usePointStyle: true,
             pointStyle: 'circle',
-            // ★ Keeps your existing multi-row legend layout ★
+
+            /* === MULTI-ROW LEGEND LAYOUT === */
             generateLabels(chart) {
               const original =
                 Chart.overrides.doughnut.plugins.legend.labels.generateLabels(chart);
-              const total = original.length;
 
+              const total = original.length;
               if (total <= 2) return original;
 
               const arranged = [];
 
-              // ODD COUNT → centre the first name by adding a spacer
+              // ODD COUNT → centre first label using a spacer
               if (total % 2 === 1) {
                 arranged.push({
                   text: '',
@@ -955,12 +747,13 @@ function renderCharts(g, w) {
               const dataset = ctx.chart.data.datasets[0];
               const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
               const value = ctx.parsed;
-              const percentage = ((value / totalLocal) * 100).toFixed(1);
+              const pct = ((value / totalLocal) * 100).toFixed(1);
               const voteWord = value === 1 ? 'Vote' : 'Votes';
-              return `${value} ${voteWord} – ${percentage}%`;
+              return `${value} ${voteWord} – ${pct}%`;
             }
           }
         },
+
         datalabels: {
           color: '#fff',
           font: (ctx) => {
@@ -971,12 +764,12 @@ function renderCharts(g, w) {
 
             const angle = (percentage / 100) * 360;
             const base = s.donutPercent;
-            let size;
 
-            if (angle < 10)       size = base * 0.45;
-            else if (angle < 20)  size = base * 0.6;
-            else if (angle < 40)  size = base * 0.8;
-            else                  size = base;
+            let size;
+            if (angle < 10) size = base * 0.45;
+            else if (angle < 20) size = base * 0.6;
+            else if (angle < 40) size = base * 0.8;
+            else size = base;
 
             return { weight: 'bold', size: Math.max(8, size) };
           },
@@ -984,14 +777,14 @@ function renderCharts(g, w) {
             const dataset = ctx.chart.data.datasets[0];
             const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
             const p = (v / totalLocal) * 100;
-            return p >= 2 ? `${p.toFixed(1)}%` : '';
+            return p >= 3.5 ? `${p.toFixed(1)}%` : '';
           },
           display: (ctx) => {
             const dataset = ctx.chart.data.datasets[0];
             const value = dataset.data[ctx.dataIndex];
             const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
-            const percentage = (value / totalLocal) * 100;
-            return percentage >= 3.5;
+            const p = (value / totalLocal) * 100;
+            return p >= 3.5;
           },
           anchor: 'center',
           align: 'center',
@@ -1007,7 +800,7 @@ function renderCharts(g, w) {
 
   enableDesktopTooltipLinger(charts[donutId], 5000);
 
-  //* --- HISTOGRAM (FD + smart outliers, trimmed empty bins, min bin width) --- */
+  /* --- HISTOGRAM (FD + smart outliers, trimmed empty bins, min bin width) --- */
   
   const vals = rows
     .map(r => parseFloat(r.PredictedTotal))
@@ -1042,63 +835,49 @@ function renderCharts(g, w) {
     highVals = [];
   }
 
-  // --- SMART OUTLIER RULE (cluster ≥3 OR gap > 1×minBinWidth later) ---
-  // For now just keep lowVals/highVals; we’ll compare their gaps once we know minBinWidth
-
-  // Build initial "normal" set
-  let normalVals = coreVals.slice();
-
-  // We'll decide on minBinWidth after we know the core range,
-  // but we still need a first pass at range for the merge logic.
-  const tmpMin = normalVals[0];
-  const tmpMax = normalVals[normalVals.length - 1];
-  const tmpRange = tmpMax - tmpMin || 1;
-
-  // Provisional minimum width from mean
+  // --- SMART OUTLIER RULE (cluster <3 OR gap <= minBinWidth) ---
   const minBinWidth = Math.max(2, Math.floor(meanVal / 100));
 
-  // Decide whether to keep or merge low outliers
-  if (lowVals.length && normalVals.length) {
-    const gapLow = normalVals[0] - lowVals[lowVals.length - 1];
+  // Low outliers merge test
+  if (lowVals.length && coreVals.length) {
+    const gapLow = coreVals[0] - lowVals[lowVals.length - 1];
     if (lowVals.length < 3 && gapLow <= minBinWidth) {
-      // Merge back; no left outlier bin
-      normalVals = lowVals.concat(normalVals);
+      coreVals = lowVals.concat(coreVals);
       lowVals = [];
     }
   }
 
-  // Decide whether to keep or merge high outliers
-  if (highVals.length && normalVals.length) {
-    const gapHigh = highVals[0] - normalVals[normalVals.length - 1];
+  // High outliers merge test
+  if (highVals.length && coreVals.length) {
+    const gapHigh = highVals[0] - coreVals[coreVals.length - 1];
     if (highVals.length < 3 && gapHigh <= minBinWidth) {
-      // Merge back; no right outlier bin
-      normalVals = normalVals.concat(highVals);
+      coreVals = coreVals.concat(highVals);
       highVals = [];
     }
   }
 
-  // Recompute core range after any merges
-  const minNorm = normalVals[0];
-  const maxNorm = normalVals[normalVals.length - 1];
+  // Recompute final core range
+  const minNorm = coreVals[0];
+  const maxNorm = coreVals[coreVals.length - 1];
   const coreRange = maxNorm - minNorm || 1;
 
-  // Freedman–Diaconis on "core" only
+  // Freedman–Diaconis using core values only
   let suggestedBins = null;
-  const coreQ1  = quantile(normalVals, 0.25);
-  const coreQ3  = quantile(normalVals, 0.75);
+  const coreQ1  = quantile(coreVals, 0.25);
+  const coreQ3  = quantile(coreVals, 0.75);
   const coreIQR = coreQ3 - coreQ1;
 
   if (coreIQR > 0 && isFinite(coreIQR)) {
-    const hCore = 2 * coreIQR / Math.cbrt(normalVals.length);
-    if (hCore > 0 && isFinite(hCore)) {
-      suggestedBins = Math.round(coreRange / hCore);
+    const h = 2 * coreIQR / Math.cbrt(coreVals.length);
+    if (h > 0 && isFinite(h)) {
+      suggestedBins = Math.round(coreRange / h);
     }
   }
 
-  let innerBins = suggestedBins || Math.round(Math.sqrt(normalVals.length));
-  innerBins = Math.max(3, Math.min(innerBins, 10)); // 3–10 core bins
+  let innerBins = suggestedBins || Math.round(Math.sqrt(coreVals.length));
+  innerBins = Math.max(3, Math.min(innerBins, 10)); // clamp 3–10 bins
 
-  // ★ Enforce minimum bin width relative to mean total ★
+  // Enforce minimum bin width relative to mean
   if (coreRange / innerBins < minBinWidth) {
     let adjusted = Math.floor(coreRange / minBinWidth) || 1;
     innerBins = Math.max(1, Math.min(adjusted, 10));
@@ -1106,7 +885,7 @@ function renderCharts(g, w) {
 
   const bw = coreRange / innerBins || minBinWidth || 1;
 
-  // Count normal values into bins
+  // Populate bins
   const fullCounts = Array(innerBins).fill(0);
   const binStarts = [];
   const binEnds   = [];
@@ -1118,14 +897,14 @@ function renderCharts(g, w) {
     binEnds.push(end);
   }
 
-  normalVals.forEach(v => {
+  coreVals.forEach(v => {
     let idx = Math.floor((v - minNorm) / bw);
     if (idx < 0) idx = 0;
     if (idx >= innerBins) idx = innerBins - 1;
     fullCounts[idx]++;
   });
 
-  // Trim empty edge bins between core and outliers
+  // Trim empty interior bins
   let firstNonZero = 0;
   let lastNonZero = innerBins - 1;
   while (firstNonZero < innerBins && fullCounts[firstNonZero] === 0) firstNonZero++;
@@ -1136,8 +915,8 @@ function renderCharts(g, w) {
     lastNonZero = innerBins - 1;
   }
 
-  const trimmedCount = lastNonZero - firstNonZero + 1;
-  const coreColors = getBlueGradientColors(trimmedCount);
+  const trimmedBinCount = lastNonZero - firstNonZero + 1;
+  const coreColors = getBlueGradientColors(trimmedBinCount);
 
   const countsH = [];
   const labelsH = [];
@@ -1146,26 +925,25 @@ function renderCharts(g, w) {
   const effectiveMinEdge = binStarts[firstNonZero];
   const effectiveMaxEdge = binEnds[lastNonZero];
 
-  // Left outlier bin (if still present) – lightest colour
+  // --- Left outlier bin ---
   if (lowVals.length > 0) {
     countsH.push(lowVals.length);
     labelsH.push(`< ${effectiveMinEdge.toFixed(0)}`);
-    colorsH.push(coreColors[0]);
+    colorsH.push(coreColors[0]); // lightest blue
   }
 
-  // Core bins (trimmed)
+  // --- Core bins (trimmed) ---
   for (let i = firstNonZero; i <= lastNonZero; i++) {
-    const idx = i - firstNonZero;
-    countsH.push(fullCounts[i]);
-
+    const pos = i - firstNonZero;
     const start = binStarts[i];
     const end   = binEnds[i];
-    labelsH.push(`${start.toFixed(0)}–${end.toFixed(0)}`);
 
-    colorsH.push(coreColors[idx]);
+    countsH.push(fullCounts[i]);
+    labelsH.push(`${start.toFixed(0)}–${end.toFixed(0)}`);
+    colorsH.push(coreColors[pos]);
   }
 
-  // Right outlier bin (if still present) – darkest colour
+  // --- Right outlier bin ---
   if (highVals.length > 0) {
     countsH.push(highVals.length);
     labelsH.push(`> ${effectiveMaxEdge.toFixed(0)}`);
@@ -1204,7 +982,7 @@ function renderCharts(g, w) {
         datalabels: {
           color: '#fff',
           font: { size: s.histBarLabel, weight: 'normal' },
-          formatter: (v) => v > 0 ? v : '',
+          formatter: v => v > 0 ? v : '',
           anchor: 'center',
           align: 'center',
           clamp: true
@@ -1215,24 +993,11 @@ function renderCharts(g, w) {
           boxHeight: 8,
           pointStyle: 'circle',
           callbacks: {
-            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
             title: (items) => {
-  const raw = items[0]?.label || "";
-
-  // Always convert raw label → numeric + unit
-  // NORMAL BIN: "550–555" → "550–555 kg"
-  // LEFT OUTLIER: "< 408" → "< 408 kg"
-  // RIGHT OUTLIER: "> 1035" → "> 1035 kg"
-
-  // If it contains a dash, it's already a range
-  if (raw.includes("–")) {
-    return raw + " kg";
-  }
-
-  // Otherwise it's an outlier (< X or > Y) → just append kg
-  return raw + " kg";
-},
-            label: (ctx) => `Vote Count - ${ctx.parsed.y}`
+              const raw = items[0]?.label || "";
+              return raw + " kg";   // Always append kg ONCE
+            },
+            label: (ctx) => `Vote Count – ${ctx.parsed.y}`
           }
         }
       },
@@ -1245,7 +1010,7 @@ function renderCharts(g, w) {
             autoSkip: false,
             maxRotation: 60,
             minRotation: 45,
-            callback: (value, index) => labelsH[index] || ''
+            callback: (_, i) => labelsH[i]
           },
           title: {
             display: true,
@@ -1336,53 +1101,52 @@ function renderDrillChart(g, athlete) {
           callbacks: {
             labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
             title: (items) => {
-  const bin = items[0]?.label;
-  if (!bin) return '';
-  const n = parseInt(bin, 10);
-  return isNaN(n)
-    ? bin
-    : n === 1
-      ? `${n} Point`
-      : `${n} Points`;
-},
-label: (ctx2) => `Vote Count – ${ctx2.parsed.y}`
+              const bin = items[0]?.label;
+              if (!bin) return '';
+              const n = parseInt(bin, 10);
+              return isNaN(n)
+                ? bin
+                : n === 1
+                  ? `${n} Point`
+                  : `${n} Points`;
+            },
+            label: (ctx2) => `Vote Count – ${ctx2.parsed.y}`
           }
         },
         title: { display: false }
       },
       scales: {
-  x: {
-    ticks: {
-      color: '#ccc',
-      font: { size: s.axisTick },
-      maxRotation: 0,
-      minRotation: 0
-    },
-    title: {
-      display: true,
-      text: 'Points / Confidence Level',
-      color: '#ccc',
-      font: { size: s.axisTitle, weight: 'bold' }
-    },
-    grid: { display: false }
-  },
-
-  y: {
-    beginAtZero: true,
-    ticks: {
-      color: '#ccc',
-      font: { size: s.axisTick },
-      precision: 0
-    },
-    title: {
-      display: true,
-      text: `Vote Count (Total = ${votes.length})`,
-      color: '#ccc',
-      font: { size: s.axisTitle, weight: 'bold' }
-    },
-    grid: { display: false }
-  }
-}
+        x: {
+          ticks: {
+            color: '#ccc',
+            font: { size: s.axisTick },
+            maxRotation: 0,
+            minRotation: 0
+          },
+          title: {
+            display: true,
+            text: 'Points / Confidence Level',
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            color: '#ccc',
+            font: { size: s.axisTick },
+            precision: 0
+          },
+          title: {
+            display: true,
+            text: `Vote Count (Total = ${votes.length})`,
+            color: '#ccc',
+            font: { size: s.axisTitle, weight: 'bold' }
+          },
+          grid: { display: false }
+        }
+      }
     }
   });
 
@@ -1442,11 +1206,11 @@ function openDrilldown(g, w, athlete, rows, opts = {}) {
   state.currentClass = w;
   state.totalVotesInClass = rows.length;
 
-  // rebuild dropdown for available athletes
-  // Sort athletes by vote share descending to match donut order
-const names = Object.entries(state.athleteMap)
-  .sort((a, b) => b[1].votes.length - a[1].votes.length)
-  .map(e => e[0]);
+  // rebuild dropdown for available athletes (sorted by vote share desc)
+  const names = Object.entries(state.athleteMap)
+    .sort((a, b) => b[1].votes.length - a[1].votes.length)
+    .map(e => e[0]);
+
   state.select.innerHTML = '';
   names.forEach(name => {
     const opt = document.createElement('option');
@@ -1517,44 +1281,27 @@ function closeDrilldown(g) {
 
 /* ========= BEST LIFTER CHARTS ========= */
 
-const BEST_URL =
-  'https://docs.google.com/spreadsheets/d/e/2PACX-1vSuA8YB98ghNeM-cS6Fs1pJNkEBOI0x7WKI4R0vtvAG68mo7PJZYVj2HsdxH3DDqvieaTpe9zUzJcNW/pub?gid=1929429371&single=true&output=csv';
-
-let bestData = [];
-
-// Load best lifters CSV
-Papa.parse(BEST_URL, {
-  download: true,
-  header: true,
-  complete: r => {
-    bestData = r.data;
-    renderBestLifter('F');
-    renderBestLifter('M');
-  }
-});
-
 function renderBestLifter(g) {
   const s = sizing();
-  const containerId = g === 'F' ? 'bestFContainer' : 'bestMContainer';
-  const canvasId    = g === 'F' ? 'bestF' : 'bestM';
+  const canvasId = g === 'F' ? 'bestF' : 'bestM';
 
   const rows = bestData.filter(r => r.Gender === g && r.Athlete);
   if (!rows.length) return;
 
-  // Count votes
+  // Count votes per athlete
   const counts = {};
   rows.forEach(r => {
     counts[r.Athlete] = (counts[r.Athlete] || 0) + 1;
   });
 
   let entries = Object.entries(counts);
-  entries.sort((a, b) => b[1] - a[1]);
+  entries.sort((a, b) => b[1] - a[1]); // largest share first
 
   const labels = entries.map(e => e[0]);
-  const data = entries.map(e => e[1]);
-  const total = data.reduce((a, b) => a + b, 0);
+  const data   = entries.map(e => e[1]);
+  const total  = data.reduce((a, b) => a + b, 0);
 
-  // Colours identical to winner donuts
+  // Medal colours (same as main donuts)
   const GOLD   = '#efbf04';
   const SILVER = '#9ea2a6';
   const BRONZE = '#b46d32';
@@ -1570,9 +1317,8 @@ function renderBestLifter(g) {
     EXTRA_COLS[(i - 3) % EXTRA_COLS.length]
   );
 
-  // Build chart
-  const ctx = document.getElementById(canvasId).getContext('2d');
   if (charts[canvasId]) charts[canvasId].destroy();
+  const ctx = document.getElementById(canvasId).getContext('2d');
 
   charts[canvasId] = new Chart(ctx, {
     type: 'doughnut',
@@ -1589,47 +1335,106 @@ function renderBestLifter(g) {
       responsive: true,
       maintainAspectRatio: false,
       cutout: '57%',
+      layout: { padding: 0 },
       plugins: {
-        title: {
-          display: true,
-          text: 'Share of Votes',
-          color: '#ccc',
-          font: { size: s.donutTitle, weight: 'bold' },
-          padding: { bottom: 6 }
-        },
-        subtitle: {
-          display: true,
-          text: `Total Votes – ${total}`,
-          color: '#aaa',
-          font: { size: s.donutSubtitle },
-          padding: { bottom: 18 }
-        },
+        // No internal title/subtitle – we use the H3 above instead
+        title: { display: false },
+        subtitle: { display: false },
         legend: {
           position: 'bottom',
+          onClick: null,
+          onHover: null,
           labels: {
             color: '#ccc',
             boxWidth: 10,
             boxHeight: 10,
             font: { size: s.donutLegend },
-            usePointStyle: true
+            usePointStyle: true,
+            pointStyle: 'circle',
+            generateLabels(chart) {
+              const original =
+                Chart.overrides.doughnut.plugins.legend.labels.generateLabels(chart);
+              const total = original.length;
+
+              if (total <= 2) return original;
+
+              const arranged = [];
+
+              // ODD COUNT → centre first with spacer
+              if (total % 2 === 1) {
+                arranged.push({
+                  text: '',
+                  fillStyle: 'rgba(0,0,0,0)',
+                  strokeStyle: 'rgba(0,0,0,0)',
+                  hidden: true,
+                  index: null,
+                  pointStyle: 'circle'
+                });
+                arranged.push(original[0]);
+              }
+
+              const start = (total % 2 === 1) ? 1 : 0;
+              for (let i = start; i < total; i += 2) {
+                arranged.push(original[i]);
+                if (original[i + 1]) arranged.push(original[i + 1]);
+              }
+
+              return arranged;
+            }
           }
         },
         tooltip: {
+          usePointStyle: true,
+          boxWidth: 8,
+          boxHeight: 8,
+          pointStyle: 'circle',
           callbacks: {
-            label: ctx => {
+            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 }),
+            label: (ctx) => {
               const val = ctx.parsed;
               const pct = (val / total * 100).toFixed(1);
-              return `${val} Votes – ${pct}%`;
+              const word = val === 1 ? 'Vote' : 'Votes';
+              return `${val} ${word} – ${pct}%`;
             }
           }
         },
         datalabels: {
           color: '#fff',
-          font: { size: s.donutPercent, weight: 'bold' },
-          formatter: v => {
-            const pct = v / total * 100;
-            return pct >= 3.5 ? `${pct.toFixed(1)}%` : '';
-          }
+          font: (ctx) => {
+            const dataset = ctx.chart.data.datasets[0];
+            const value = dataset.data[ctx.dataIndex];
+            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
+            const percentage = (value / totalLocal) * 100;
+
+            const angle = (percentage / 100) * 360;
+            const base = s.donutPercent;
+            let size;
+
+            if (angle < 10)       size = base * 0.45;
+            else if (angle < 20)  size = base * 0.6;
+            else if (angle < 40)  size = base * 0.8;
+            else                  size = base;
+
+            return { weight: 'bold', size: Math.max(8, size) };
+          },
+          formatter: (v, ctx) => {
+            const dataset = ctx.chart.data.datasets[0];
+            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
+            const p = (v / totalLocal) * 100;
+            return p >= 2 ? `${p.toFixed(1)}%` : '';
+          },
+          display: (ctx) => {
+            const dataset = ctx.chart.data.datasets[0];
+            const value = dataset.data[ctx.dataIndex];
+            const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
+            const percentage = (value / totalLocal) * 100;
+            return percentage >= 3.5;
+          },
+          anchor: 'center',
+          align: 'center',
+          clamp: true,
+          clip: true,
+          offset: 0
         }
       }
     }
@@ -1715,7 +1520,7 @@ function sanitizeFilename(str) {
     .toLowerCase();
 }
 
-/* ========= SHARE STANDARD CHARTS ========= */
+/* ========= SHARE STANDARD CHARTS (WINNERS + BEST LIFTERS + HISTOGRAMS) ========= */
 async function shareChart(id, g) {
   const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
   const s = sizing();
@@ -1746,20 +1551,22 @@ async function shareChart(id, g) {
   await new Promise(requestAnimationFrame);
 
   const sel = document.getElementById(g === 'F' ? 'womenSelect' : 'menSelect');
-let w = sel ? sel.value : '';
-const isDonut = id.includes('Donut');
-const isMobile = window.innerWidth < 768;
-const isBestLifter = id.startsWith('bestLifter');
+  let w = sel ? sel.value : '';
 
-// Filename base: class vs best lifter
-let baseLabel;
-if (isBestLifter) {
-  baseLabel = (g === 'F') ? 'female_best_lifter' : 'male_best_lifter';
-} else {
-  baseLabel = w || 'class';
-}
+  const isBestLifter = (id === 'bestF' || id === 'bestM');
+  const isDonut = id.toLowerCase().includes('donut') || isBestLifter;
+  const isMobile = window.innerWidth < 768;
 
-const fn = `metrics_${g}_${baseLabel}_${isDonut ? 'donut' : 'hist'}.png`;
+  // Filename base
+  let baseLabel;
+  if (isBestLifter) {
+    // As requested: metrics_F_BL_donut / metrics_M_BL_donut
+    baseLabel = 'BL';
+  } else {
+    baseLabel = w || 'class';
+  }
+
+  const fn = `metrics_${g}_${baseLabel}_${isDonut ? 'donut' : 'hist'}.png`;
 
   // Capture chart as image
   const dataURL = src.toDataURL('image/png');
@@ -1803,17 +1610,18 @@ const fn = `metrics_${g}_${baseLabel}_${isDonut ? 'donut' : 'hist'}.png`;
   const sub = document.createElement('p');
   let label;
 
-if (isBestLifter) {
-  label = (g === 'F')
-    ? 'Female Best Lifter'
-    : 'Male Best Lifter';
-} else {
-  label = (w ? `${w} kg ` : '') + (g === 'F' ? 'Women' : 'Men');
-}
+  if (isBestLifter) {
+    label = (g === 'F')
+      ? 'Female Best Lifter – Share of Votes'
+      : 'Male Best Lifter – Share of Votes';
+  } else {
+    const genderLabel = (g === 'F' ? 'Women' : 'Men');
+    label = isDonut
+      ? `${w ? w + ' ' : ''}${genderLabel}`
+      : `${w ? w + ' ' : ''}${genderLabel}<br>Distribution of Predicted Winning Totals`;
+  }
 
-sub.innerHTML = isDonut
-  ? label
-  : `${label}<br>Distribution of Predicted Winning Totals`;
+  sub.innerHTML = label;
   sub.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.5) + 'px';
   sub.style.fontWeight = '600';
   sub.style.color = '#e5e7eb';
@@ -1822,7 +1630,6 @@ sub.innerHTML = isDonut
   img.style.display = 'block';
   img.style.margin = '0 auto 16px auto';
   img.style.borderRadius = '14px';
-  // Unified export width so background scale matches donut
   img.style.width = '82%';
   img.style.height = 'auto';
 
