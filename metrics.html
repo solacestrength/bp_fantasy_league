@@ -332,9 +332,8 @@ select {
         <div id="bestlifters" class="collapsible-content mt-4">
 
           <!-- FEMALE BEST LIFTER -->
-          <h3 class="text-center text-lg font-semibold mb-4">
-            Female Best Lifter – Share of Votes
-          </h3>
+          <h3 id="bestFTitle" class="text-center font-bold"></h3>
+<p id="bestFSubtitle" class="text-center"></p>
 
           <div class="chart-container" id="bestFContainer">
             <div class="flex justify-end mb-1">
@@ -347,9 +346,8 @@ select {
           </div>
 
           <!-- MALE BEST LIFTER -->
-          <h3 class="text-center text-lg font-semibold mt-8 mb-4">
-            Male Best Lifter – Share of Votes
-          </h3>
+          <h3 id="bestMTitle" class="text-center font-bold mt-8"></h3>
+<p id="bestMSubtitle" class="text-center"></p>
 
           <div class="chart-container" id="bestMContainer">
             <div class="flex justify-end mb-1">
@@ -1469,6 +1467,27 @@ function closeDrilldown(g) {
   state.totalVotesInClass = 0;
 }
 
+/* ========= BEST LIFTER TITLES (MATCH MAIN DONUTS) ========= */
+function setBestLifterTitles(g, totalVotes) {
+  const s = sizing();
+
+  const titleEl = document.getElementById(g === "F" ? "bestFTitle" : "bestMTitle");
+  const subtitleEl = document.getElementById(g === "F" ? "bestFSubtitle" : "bestMSubtitle");
+
+  if (!titleEl || !subtitleEl) return;
+
+  titleEl.style.fontSize = s.donutTitle + "px";
+  titleEl.style.fontWeight = "700";
+  titleEl.style.color = "#ccc";
+  titleEl.style.marginBottom = "4px";
+
+  subtitleEl.textContent = `Total Votes – ${totalVotes}`;
+  subtitleEl.style.fontSize = s.donutSubtitle + "px";
+  subtitleEl.style.color = "#aaa";
+  subtitleEl.style.marginTop = "0px";
+  subtitleEl.style.marginBottom = "14px";
+}
+
 /* ========= BEST LIFTER CHARTS ========= */
 
 function renderBestLifter(g) {
@@ -1488,8 +1507,11 @@ function renderBestLifter(g) {
   entries.sort((a, b) => b[1] - a[1]); // largest share first
 
   const labels = entries.map(e => e[0]);
-  const data   = entries.map(e => e[1]);
-  const total  = data.reduce((a, b) => a + b, 0);
+const data   = entries.map(e => e[1]);
+const total  = data.reduce((a, b) => a + b, 0);
+
+// NEW — update title + subtitle
+setBestLifterTitles(g, total);
 
   // Medal colours (same as main donuts)
   const GOLD   = '#efbf04';
@@ -1524,7 +1546,7 @@ function renderBestLifter(g) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      cutout: '57%',
+      cutout: '55%',
       layout: { padding: 0 },
       plugins: {
         // No internal title/subtitle – we use the H3 above instead
