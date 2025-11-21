@@ -30,6 +30,18 @@ const maleClasses   = ['59m','66m','74m','83m','93m','105m','120m','120pm'];
 // ========= STATE =========
 let currentStep = 0;
 
+function scrollToFormTop() {
+  const formContainer = document.getElementById('form-container');
+  if (formContainer) {
+    const rect = formContainer.getBoundingClientRect();
+    const targetY = rect.top + window.pageYOffset - 16; // small margin
+    window.scrollTo({ top: targetY, behavior: 'smooth' });
+  } else {
+    // Fallback – just scroll to page top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
 // ========= UTILS =========function showStep(index) {
   function showStep(index) {
   steps.forEach((step, i) => {
@@ -52,9 +64,6 @@ let currentStep = 0;
     'Step 4 of 4 – Best Lifters'
   ];
   stepLabel.textContent = labels[index] || '';
-
-  // ⭐ NEW: always scroll the user back to the top of the form
-  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function showStatus(message, isError = false) {
@@ -352,6 +361,7 @@ async function submitForm() {
 backBtn.addEventListener('click', () => {
   if (currentStep > 0) {
     showStep(currentStep - 1);
+    scrollToFormTop();
   }
 });
 
@@ -360,8 +370,9 @@ nextBtn.addEventListener('click', () => {
     // Validate current step before moving on
     if (!validateStep(currentStep)) return;
     showStep(currentStep + 1);
+    scrollToFormTop();
   } else {
-    // On the last step, submit
+    // On the last step, submit (no auto-scroll here to keep errors visible if any)
     submitForm();
   }
 });
