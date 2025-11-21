@@ -30,8 +30,8 @@ const maleClasses   = ['59m','66m','74m','83m','93m','105m','120m','120pm'];
 // ========= STATE =========
 let currentStep = 0;
 
-// ========= UTILS =========
-function showStep(index) {
+// ========= UTILS =========function showStep(index) {
+  function showStep(index) {
   steps.forEach((step, i) => {
     step.style.display = i === index ? 'block' : 'none';
   });
@@ -52,6 +52,9 @@ function showStep(index) {
     'Step 4 of 4 – Best Lifters'
   ];
   stepLabel.textContent = labels[index] || '';
+
+  // ⭐ NEW: always scroll the user back to the top of the form
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function showStatus(message, isError = false) {
