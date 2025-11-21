@@ -1471,16 +1471,22 @@ function closeDrilldown(g) {
 function setBestLifterTitles(g, totalVotes) {
   const s = sizing();
 
-  const titleEl = document.getElementById(g === "F" ? "bestFTitle" : "bestMTitle");
+  const titleEl    = document.getElementById(g === "F" ? "bestFTitle"    : "bestMTitle");
   const subtitleEl = document.getElementById(g === "F" ? "bestFSubtitle" : "bestMSubtitle");
 
   if (!titleEl || !subtitleEl) return;
 
+  // Title text + style
+  titleEl.textContent = (g === "F"
+    ? "Female Best Lifter – Share of Votes"
+    : "Male Best Lifter – Share of Votes"
+  );
   titleEl.style.fontSize = s.donutTitle + "px";
   titleEl.style.fontWeight = "700";
   titleEl.style.color = "#ccc";
   titleEl.style.marginBottom = "4px";
 
+  // Subtitle text + style
   subtitleEl.textContent = `Total Votes – ${totalVotes}`;
   subtitleEl.style.fontSize = s.donutSubtitle + "px";
   subtitleEl.style.color = "#aaa";
@@ -1489,7 +1495,6 @@ function setBestLifterTitles(g, totalVotes) {
 }
 
 /* ========= BEST LIFTER CHARTS ========= */
-
 function renderBestLifter(g) {
   const s = sizing();
   const canvasId = g === 'F' ? 'bestF' : 'bestM';
@@ -1507,18 +1512,11 @@ function renderBestLifter(g) {
   entries.sort((a, b) => b[1] - a[1]); // largest share first
 
   const labels = entries.map(e => e[0]);
-const data   = entries.map(e => e[1]);
-const total  = data.reduce((a, b) => a + b, 0);
+  const data   = entries.map(e => e[1]);
+  const total  = data.reduce((a, b) => a + b, 0);
 
-  // Update subtitle under the chart on page
-const subId = g === 'F' ? "bestFSubtitle" : "bestMSubtitle";
-const subEl = document.getElementById(subId);
-if (subEl) {
-  subEl.textContent = `Total Votes – ${total}`;
-}
-
-// NEW — update title + subtitle
-setBestLifterTitles(g, total);
+  // Update title + subtitle under chart on the page
+  setBestLifterTitles(g, total);
 
   // Medal colours (same as main donuts)
   const GOLD   = '#efbf04';
@@ -1556,7 +1554,6 @@ setBestLifterTitles(g, total);
       cutout: '55%',
       layout: { padding: 0 },
       plugins: {
-        // No internal title/subtitle – we use the H3 above instead
         title: { display: false },
         subtitle: { display: false },
         legend: {
@@ -1578,8 +1575,6 @@ setBestLifterTitles(g, total);
               if (total <= 2) return original;
 
               const arranged = [];
-
-              // ODD COUNT → centre first with spacer
               if (total % 2 === 1) {
                 arranged.push({
                   text: '',
@@ -1624,7 +1619,6 @@ setBestLifterTitles(g, total);
             const value = dataset.data[ctx.dataIndex];
             const totalLocal = dataset.data.reduce((a, b) => a + b, 0);
             const percentage = (value / totalLocal) * 100;
-
             const angle = (percentage / 100) * 360;
             const base = s.donutPercent;
             let size;
@@ -1871,7 +1865,23 @@ async function shareChart(id, g) {
   qr.style.height = qrsz + 'px';
   qr.style.borderRadius = '6px';
 
-  inner.append(header, sub, img, credit);
+  // Insert subtitle for Best Lifter exports
+if (isBestLifter) {
+  const totalVotes =
+    charts[id]?.data?.datasets?.[0]?.data?.reduce((a, b) => a + b, 0) || 0;
+
+  const subVotes = document.createElement('p');
+  subVotes.textContent = `Total Votes – ${totalVotes}`;
+  subVotes.style.fontSize = (isMobile ? s.donutSubtitle * 1.5 : s.donutSubtitle * 1.5) + 'px';
+  subVotes.style.color = '#d1d5db';
+  subVotes.style.margin = '0 0 14px 0';
+
+  inner.append(header, sub, subVotes);
+} else {
+  inner.append(header, sub);
+}
+
+inner.append(img, credit);
   card.appendChild(qr);
   document.body.appendChild(card);
 
