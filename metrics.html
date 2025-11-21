@@ -1510,6 +1510,13 @@ function renderBestLifter(g) {
 const data   = entries.map(e => e[1]);
 const total  = data.reduce((a, b) => a + b, 0);
 
+  // Update subtitle under the chart on page
+const subId = g === 'F' ? "bestFsubtitle" : "bestMsubtitle";
+const subEl = document.getElementById(subId);
+if (subEl) {
+  subEl.textContent = `Total Votes – ${total}`;
+}
+
 // NEW — update title + subtitle
 setBestLifterTitles(g, total);
 
