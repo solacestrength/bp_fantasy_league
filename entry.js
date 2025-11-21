@@ -167,16 +167,21 @@ function buildBestLifterLists() {
 // ========= VALIDATION =========
 
 const totalRegex = /^(?:[0-9]|[1-9][0-9]{1,2}|1[0-9]{3}|2000)(?:\.0|\.5)?$/;
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function validateStep(stepIndex) {
   clearErrors();
   let valid = true;
 
   if (stepIndex === 0) {
-    if (!emailInput.value.trim()) {
-      setError('emailError', 'Email is required.');
-      valid = false;
-    }
+    const emailVal = emailInput.value.trim();
+if (!emailVal) {
+  setError('emailError', 'Email is required.');
+  valid = false;
+} else if (!emailRegex.test(emailVal)) {
+  setError('emailError', 'Please enter a valid email address.');
+  valid = false;
+}
     if (!leaderboardInput.value.trim()) {
       setError('leaderboardError', 'Leaderboard name is required.');
       valid = false;
@@ -319,6 +324,8 @@ async function prefillIfToken() {
 async function submitForm() {
   clearErrors();
   showStatus('');
+
+  emailInput.value = emailInput.value.trim().toLowerCase();
 
   // Final step validation (step 3) plus earlier sections
   // We validate all steps in sequence to catch errors even if user jumps.
