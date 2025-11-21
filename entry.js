@@ -59,8 +59,8 @@ function scrollToFormTop() {
 
   const labels = [
     'Step 1 of 4 – Contact',
-    'Step 2 of 4 – Women’s Classes',
-    'Step 3 of 4 – Men’s Classes',
+    'Step 2 of 4 – Women’s Predictions',
+    'Step 3 of 4 – Men’s Predictions',
     'Step 4 of 4 – Best Lifters'
   ];
   stepLabel.textContent = labels[index] || '';
