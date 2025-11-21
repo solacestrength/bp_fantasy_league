@@ -601,6 +601,198 @@ function shuffleArray(arr) {
   return a;
 }
 
+/* ========= COMMON HELPERS (MISSING BEFORE) ========= */
+
+// Quantile helper for Freedman–Diaconis
+function quantile(sorted, q) {
+  if (!sorted.length) return NaN;
+  const pos = (sorted.length - 1) * q;
+  const base = Math.floor(pos);
+  const rest = pos - base;
+
+  if (sorted[base + 1] !== undefined) {
+    return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
+  }
+  return sorted[base];
+}
+
+// Simple fade helpers used by drilldown
+function fadeIn(el) {
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.opacity = 0;
+  requestAnimationFrame(() => {
+    el.style.opacity = 1;
+  });
+}
+
+function fadeOut(el) {
+  if (!el) return;
+  el.style.opacity = 0;
+  setTimeout(() => {
+    el.style.display = 'none';
+  }, 250);
+}
+
+/* Desktop tooltip linger (donut / hist / drill) */
+function enableDesktopTooltipLinger(chart, ms = 5000) {
+  // Desktop only
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
+  if (!chart || !chart.canvas) return;
+
+  // Remove mouseout from Chart.js events so it doesn't auto-clear
+  const evts = chart.options.events || [];
+  chart.options.events = evts.filter(
+    e => e !== 'mouseout' && e !== 'mouseleave'
+  );
+
+  if (!chart.options.plugins) chart.options.plugins = {};
+  if (!chart.options.plugins.tooltip) chart.options.plugins.tooltip = {};
+  chart.options.plugins.tooltip.enabled = true;
+
+  const canvas = chart.canvas;
+  let lastActive = [];
+  let lingerTimer = null;
+  let hovering = false;
+
+  function clearLinger() {
+    if (lingerTimer) {
+      clearTimeout(lingerTimer);
+      lingerTimer = null;
+    }
+    if (!chart || chart._destroyed) return;
+    chart.tooltip.setActiveElements([], { x: 0, y: 0 });
+    chart.update('none');
+  }
+
+  canvas.addEventListener('mousemove', (e) => {
+    hovering = true;
+    const pts = chart.getElementsAtEventForMode(
+      e,
+      'nearest',
+      { intersect: true },
+      true
+    );
+    if (pts && pts.length) {
+      lastActive = pts.map(p => ({
+        datasetIndex: p.datasetIndex,
+        index: p.index
+      }));
+    }
+    if (lingerTimer) {
+      clearTimeout(lingerTimer);
+      lingerTimer = null;
+    }
+  });
+
+  canvas.addEventListener('mouseleave', () => {
+    hovering = false;
+    if (!lastActive.length) return;
+
+    requestAnimationFrame(() => {
+      if (!chart || chart._destroyed) return;
+      chart.tooltip.setActiveElements(
+        lastActive,
+        { x: chart.width / 2, y: chart.height / 2 }
+      );
+      chart.update('none');
+
+      lingerTimer = setTimeout(() => {
+        if (!hovering) clearLinger();
+      }, ms);
+    });
+  });
+
+  window.addEventListener('scroll', () => {
+    const r = canvas.getBoundingClientRect();
+    const visible = r.bottom > 0 && r.top < window.innerHeight;
+    if (!visible) clearLinger();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (lingerTimer && !canvas.contains(e.target)) {
+      clearLinger();
+    }
+  });
+
+  canvas.addEventListener('mouseenter', () => {
+    hovering = true;
+    if (lingerTimer) {
+      clearTimeout(lingerTimer);
+      lingerTimer = null;
+    }
+    chart.tooltip.setActiveElements([], { x: 0, y: 0 });
+    chart.update('none');
+  });
+}
+
+// Strip transforms around charts (desktop only) to keep hover/click maths correct
+function stripTransformsForCharts() {
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
+
+  const ids = ['womenDonut','menDonut','womenHist','menHist','womenDrill','menDrill','bestF','bestM'];
+  ids.forEach(id => {
+    const canvas = document.getElementById(id);
+    if (!canvas) return;
+
+    let el = canvas.parentElement;
+    let hops = 0;
+    while (el && el !== document.body && hops < 6) {
+      const tf = getComputedStyle(el).transform;
+      if (tf && tf !== 'none') {
+        el.classList.add('no-transform');
+        el.style.transform = 'none';
+      }
+      el = el.parentElement;
+      hops++;
+    }
+  });
+}
+
+/* ========= SETUP DROPDOWNS ========= */
+function setupDropdowns() {
+  ['F', 'M'].forEach((g) => {
+    const genderRows = allData.filter(r => r.Gender === g);
+    const classes = [...new Set(genderRows.map(r => r.Class))]
+      .filter(Boolean)
+      .sort((a, b) => parseFloat(a) - parseFloat(b));
+
+    const select = document.getElementById(
+      g === 'F' ? 'womenSelect' : 'menSelect'
+    );
+    if (!select) return;
+
+    // Populate options: "63 kg" etc.
+    select.innerHTML = classes
+      .map(c => `<option value="${c}">${c} kg</option>`)
+      .join('');
+
+    // On change, re-render donut + histogram (+ reopen drilldown if needed)
+    select.onchange = () => {
+      const newClass = select.value;
+      renderCharts(g, newClass);
+
+      const state = drillState[g];
+      if (state && state.wrapper.style.display === 'block') {
+        const rows = allData.filter(
+          r => r.Gender === g && r.Class === newClass
+        );
+        const firstAthlete = rows[0]?.Athlete;
+        if (firstAthlete) {
+          openDrilldown(g, newClass, firstAthlete, rows, { skipFade: true });
+        } else {
+          closeDrilldown(g);
+        }
+      }
+    };
+
+    // Initial load: render first class for each gender
+    if (classes[0]) {
+      renderCharts(g, classes[0]);
+    }
+  });
+}
+
 /* ========= CHART RENDERING ========= */
 function renderCharts(g, w) {
   const s = sizing();
