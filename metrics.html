@@ -2020,7 +2020,7 @@ async function shareDrilldown(g) {
 let weightClass = state.currentClass;  // Already stored when user opened drilldown
 let genderLabel = (g === 'F') ? 'Women' : 'Men';
 
-let athleteLine = `${athlete} – ${weightClass} kg ${genderLabel}`;
+let athleteLine = `${weightClass} kg ${genderLabel} - ${athlete}`;
 
 // Build title line
 const sub1 = document.createElement('p');
