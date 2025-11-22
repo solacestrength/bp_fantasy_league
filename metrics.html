@@ -1771,23 +1771,16 @@ async function shareChart(id, g) {
   const isMobile = window.innerWidth < 768;
 
   // Filename base
-  let baseLabel;
-  if (isBestLifter) {
-    // As requested: metrics_F_BL_donut / metrics_M_BL_donut
-    baseLabel = 'BL';
-  } else {
-    baseLabel = w || 'class';
-  }
-
+  let baseLabel = isBestLifter ? 'BL' : (w || 'class');
   const fn = `metrics_${g}_${baseLabel}_${isDonut ? 'donut' : 'hist'}.png`;
 
-  // Capture chart as image
+  // Capture chart
   const dataURL = src.toDataURL('image/png');
   const img = new Image();
   img.src = dataURL;
   await img.decode();
 
-  // Build share card
+  // === CARD ===
   const card = document.createElement('div');
   card.style.position = 'relative';
   card.style.width = s.exportWidth + 'px';
@@ -1814,6 +1807,7 @@ async function shareChart(id, g) {
   inner.style.padding = '32px 26px 26px 26px';
   card.appendChild(inner);
 
+  // === TITLE ===
   const header = document.createElement('h2');
   header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
   header.style.fontSize = (isMobile ? s.headerFont * 1.4 : s.headerFont * 1.2) + 'px';
@@ -1824,7 +1818,7 @@ async function shareChart(id, g) {
   let label;
 
   if (isBestLifter) {
-    label = (g === 'F')
+    label = g === 'F'
       ? 'Female Best Lifter – Share of Votes'
       : 'Male Best Lifter – Share of Votes';
   } else {
@@ -1839,48 +1833,70 @@ async function shareChart(id, g) {
   sub.style.fontWeight = '600';
   sub.style.color = '#e5e7eb';
   sub.style.margin = '0 0 18px 0';
-/* ==== NEW WRAPPER SYSTEM FOR HISTOGRAM SPACING ==== */
 
-img.style.display = 'block';
-img.style.borderRadius = '14px';
-img.style.width = '82%';
-img.style.height = 'auto';
+  // === OPTIONAL BL SUBTITLE ===
+  if (isBestLifter) {
+    const totalVotes =
+      charts[id]?.data?.datasets?.[0]?.data?.reduce((a, b) => a + b, 0) || 0;
 
-/* Donuts: unchanged spacing */
-if (isDonut) {
-  img.style.margin = '0 auto 16px auto';
-}
+    const subVotes = document.createElement('p');
+    subVotes.textContent = `Total Votes – ${totalVotes}`;
+    subVotes.style.fontSize = (isMobile ? s.donutSubtitle * 1.5 : s.donutSubtitle * 1.5) + 'px';
+    subVotes.style.color = '#d1d5db';
+    subVotes.style.margin = '0 0 14px 0';
 
-/* Histograms: compress space massively */
-else {
-  const wrap = document.createElement('div');
-  wrap.style.width = '100%';
-  wrap.style.display = 'flex';
-  wrap.style.justifyContent = 'center';
-  wrap.style.margin = '0';
-  wrap.style.padding = '0';
-  wrap.style.transform = 'translateY(-14px)';  // pulls histogram DOWN, reducing bottom space
+    inner.append(header, sub, subVotes);
+  } else {
+    inner.append(header, sub);
+  }
 
-  wrap.appendChild(img);
-  inner.appendChild(wrap);
-}
+  // ======================================================
+  // SINGLE, CLEAN WRAPPER SYSTEM (Donuts untouched)
+  // ======================================================
 
-/* Credits — tighter for histograms only */
-const credit = document.createElement('p');
-credit.style.fontSize = (isMobile ? s.creditFont * 1.5 : s.creditFont * 1.5) + 'px';
-credit.style.color = '#d1d5db';
-credit.style.lineHeight = '1.5';
-credit.style.textAlign = 'center';
+  const wrapper = document.createElement('div');
+  wrapper.style.display = 'flex';
+  wrapper.style.flexDirection = 'column';
+  wrapper.style.alignItems = 'center';
+  wrapper.style.width = '100%';
 
-if (isDonut) {
-  credit.style.marginTop = '8px';
-} else {
-  credit.style.marginTop = '-10px';   // aggressively reduced
-}
+  // DONUT → leave exactly as before
+  if (isDonut) {
+    img.style.display = 'block';
+    img.style.margin = '0 auto 16px auto';
+    img.style.borderRadius = '14px';
+    img.style.width = '82%';
+    wrapper.appendChild(img);
+  }
 
-credit.innerHTML =
-  'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
+  // HISTOGRAM → controlled tightening ONLY below chart
+  else {
+    img.style.display = 'block';
+    img.style.borderRadius = '14px';
+    img.style.width = '82%';
+    img.style.margin = '0 auto 4px auto';     // small bottom gap only
 
+    wrapper.style.marginBottom = '2px';        // minimal outer gap
+
+    wrapper.appendChild(img);
+  }
+
+  inner.append(wrapper);
+
+  // === CREDIT ===
+  const credit = document.createElement('p');
+  credit.style.fontSize = (isMobile ? s.creditFont * 1.5 : s.creditFont * 1.5) + 'px';
+  credit.style.color = '#d1d5db';
+  credit.style.lineHeight = '1.5';
+  credit.style.textAlign = 'center';
+  credit.style.marginTop = isDonut ? '8px' : '-2px'; // histogram tighter
+
+  credit.innerHTML =
+    'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
+
+  inner.appendChild(credit);
+
+  // === QR ===
   const qr = new Image();
   const qrsz = s.qrSize;
   qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent('https://solacestrength.github.io/britishclassicfl/metrics.html')}`;
@@ -1890,46 +1906,10 @@ credit.innerHTML =
   qr.style.width = qrsz + 'px';
   qr.style.height = qrsz + 'px';
   qr.style.borderRadius = '6px';
-
-  // Insert subtitle for Best Lifter exports
-if (isBestLifter) {
-  const totalVotes =
-    charts[id]?.data?.datasets?.[0]?.data?.reduce((a, b) => a + b, 0) || 0;
-
-  const subVotes = document.createElement('p');
-  subVotes.textContent = `Total Votes – ${totalVotes}`;
-  subVotes.style.fontSize = (isMobile ? s.donutSubtitle * 1.5 : s.donutSubtitle * 1.5) + 'px';
-  subVotes.style.color = '#d1d5db';
-  subVotes.style.margin = '0 0 14px 0';
-
-  inner.append(header, sub, subVotes);
-} else {
-  inner.append(header, sub);
-}
-
-  // === WRAPPER SYSTEM (donut unchanged, histogram tightened) ===
-const wrapper = document.createElement('div');
-wrapper.style.display = 'flex';
-wrapper.style.flexDirection = 'column';
-wrapper.style.alignItems = 'center';
-wrapper.style.width = '100%';
-
-// Donut: default margins
-if (isDonut) {
-  wrapper.style.marginBottom = '16px';
-}
-
-// Histogram: collapse white space under chart
-else {
-  wrapper.style.marginBottom = '4px';   // reduced from ~30–40px total
-  img.style.marginBottom = '2px';       // tighten gap below chart
-}
-
-wrapper.appendChild(img);
-inner.append(wrapper, credit);
   card.appendChild(qr);
-  document.body.appendChild(card);
 
+  // === RENDER EXPORT ===
+  document.body.appendChild(card);
   await new Promise(requestAnimationFrame);
   const canvas = await html2canvas(card, { backgroundColor: null, scale: 2, useCORS: true, scrollY: 0 });
   card.remove();
@@ -1941,7 +1921,7 @@ inner.append(wrapper, credit);
   }
   const file = new File([blob], fn, { type: 'image/png' });
 
-  // Android Chrome: show dedicated share button so user gets full native sheet
+  // === SHARE ===
   if (isAndroidChrome) {
     const shareBtn = makeBtn("Share Generated Image");
     shareBtn.onclick = async () => {
@@ -1962,16 +1942,13 @@ inner.append(wrapper, credit);
           a.remove();
           URL.revokeObjectURL(url);
         }
-      } catch (e) {
-        console.error(e);
-      }
+      } catch {}
       resetShareIcon();
     };
     swapShareButtonFor(shareBar, shareBtn);
     return;
   }
 
-  // Other platforms: try native share; fallback to direct PNG download
   try {
     if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
@@ -1989,15 +1966,9 @@ inner.append(wrapper, credit);
       link.remove();
       URL.revokeObjectURL(url);
     }
-  } catch (err) {
-    console.error('Share failed:', err);
-  }
+  } catch {}
 
   resetShareIcon();
-}
-
-function shareBestLifter(g) {
-  shareChart(g === 'F' ? 'bestF' : 'bestM', g);
 }
 
 /* ========= DRILLDOWN SHARE ========= */
