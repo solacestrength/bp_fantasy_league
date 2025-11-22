@@ -1839,36 +1839,47 @@ async function shareChart(id, g) {
   sub.style.fontWeight = '600';
   sub.style.color = '#e5e7eb';
   sub.style.margin = '0 0 18px 0';
+/* ==== NEW WRAPPER SYSTEM FOR HISTOGRAM SPACING ==== */
 
-  img.style.display = 'block';
-    // OLD
-  // img.style.margin = '0 auto 16px auto';
+img.style.display = 'block';
+img.style.borderRadius = '14px';
+img.style.width = '82%';
+img.style.height = 'auto';
 
-  // NEW – tighter spacing for histograms
-  if (isDonut) {
-    img.style.margin = '0 auto 16px auto';
-  } else {
-    // Histogram: reduce white space under x-axis
-    img.style.margin = '0 auto 6px auto';
-  }
-  img.style.borderRadius = '14px';
-  img.style.width = '82%';
-  img.style.height = 'auto';
+/* Donuts: unchanged spacing */
+if (isDonut) {
+  img.style.margin = '0 auto 16px auto';
+}
 
-  const credit = document.createElement('p');
-    credit.style.fontSize = (isMobile ? s.creditFont * 1.5 : s.creditFont * 1.5) + 'px';
-  credit.style.color = '#d1d5db';
-  credit.style.lineHeight = '1.5';
+/* Histograms: compress space massively */
+else {
+  const wrap = document.createElement('div');
+  wrap.style.width = '100%';
+  wrap.style.display = 'flex';
+  wrap.style.justifyContent = 'center';
+  wrap.style.margin = '0';
+  wrap.style.padding = '0';
+  wrap.style.transform = 'translateY(-14px)';  // pulls histogram DOWN, reducing bottom space
 
-  if (isDonut) {
-    credit.style.marginTop = '8px';
-  } else {
-    credit.style.marginTop = '2px'; // histogram – pull text closer
-  }
+  wrap.appendChild(img);
+  inner.appendChild(wrap);
+}
 
-  credit.style.textAlign = 'center';
-  credit.innerHTML =
-    'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
+/* Credits — tighter for histograms only */
+const credit = document.createElement('p');
+credit.style.fontSize = (isMobile ? s.creditFont * 1.5 : s.creditFont * 1.5) + 'px';
+credit.style.color = '#d1d5db';
+credit.style.lineHeight = '1.5';
+credit.style.textAlign = 'center';
+
+if (isDonut) {
+  credit.style.marginTop = '8px';
+} else {
+  credit.style.marginTop = '-10px';   // aggressively reduced
+}
+
+credit.innerHTML =
+  'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
   const qr = new Image();
   const qrsz = s.qrSize;
