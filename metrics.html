@@ -1896,7 +1896,26 @@ if (isBestLifter) {
   inner.append(header, sub);
 }
 
-inner.append(img, credit);
+  // === WRAPPER SYSTEM (donut unchanged, histogram tightened) ===
+const wrapper = document.createElement('div');
+wrapper.style.display = 'flex';
+wrapper.style.flexDirection = 'column';
+wrapper.style.alignItems = 'center';
+wrapper.style.width = '100%';
+
+// Donut: default margins
+if (isDonut) {
+  wrapper.style.marginBottom = '16px';
+}
+
+// Histogram: collapse white space under chart
+else {
+  wrapper.style.marginBottom = '4px';   // reduced from ~30–40px total
+  img.style.marginBottom = '2px';       // tighten gap below chart
+}
+
+wrapper.appendChild(img);
+inner.append(wrapper, credit);
   card.appendChild(qr);
   document.body.appendChild(card);
 
