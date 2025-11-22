@@ -1806,22 +1806,17 @@ async function shareChart(id, g) {
   const isDonut = id.toLowerCase().includes('donut') || isBestLifter;
   const isMobile = window.innerWidth < 768;
 
-  // Filename base
-  let baseLabel;
-  if (isBestLifter) {
-    baseLabel = 'BL';                  // metrics_F_BL_donut / metrics_M_BL_donut
-  } else {
-    baseLabel = w || 'class';
-  }
+  // Filename
+  const baseLabel = isBestLifter ? 'BL' : (w || 'class');
   const fn = `metrics_${g}_${baseLabel}_${isDonut ? 'donut' : 'hist'}.png`;
 
-  // Capture chart as image
+  // Chart → PNG
   const dataURL = src.toDataURL('image/png');
   const img = new Image();
   img.src = dataURL;
   await img.decode();
 
-  // Build share card
+  // Share card
   const card = document.createElement('div');
   card.style.position = 'relative';
   card.style.width = s.exportWidth + 'px';
@@ -1848,18 +1843,19 @@ async function shareChart(id, g) {
   inner.style.padding = '32px 26px 26px 26px';
   card.appendChild(inner);
 
-  // Title
+  // Header
   const header = document.createElement('h2');
   header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
   header.style.fontSize = (isMobile ? s.headerFont * 1.4 : s.headerFont * 1.2) + 'px';
   header.style.fontWeight = '700';
   header.style.margin = '0 0 6px 0';
 
-  // Subtitle (weight class + gender / BL text)
+  // Subheader
   const sub = document.createElement('p');
   let label;
+
   if (isBestLifter) {
-    label = (g === 'F')
+    label = g === 'F'
       ? 'Female Best Lifter – Share of Votes'
       : 'Male Best Lifter – Share of Votes';
   } else {
@@ -1868,44 +1864,14 @@ async function shareChart(id, g) {
       ? `${w ? w + ' kg ' : ''}${genderLabel}`
       : `${w ? w + ' kg ' : ''}${genderLabel}<br>Distribution of Predicted Winning Totals`;
   }
+
   sub.innerHTML = label;
   sub.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.5) + 'px';
   sub.style.fontWeight = '600';
   sub.style.color = '#e5e7eb';
-  sub.style.margin = '0 0 12px 0';
+  sub.style.margin = '0 0 18px 0';
 
-  // Chart image
-  img.style.display = 'block';
-  img.style.borderRadius = '14px';
-  img.style.width = '82%';
-  img.style.height = 'auto';
-  // Donut vs histogram spacing: histograms a bit tighter (~18px feel)
-  img.style.margin = isDonut
-    ? '0 auto 16px auto'
-    : '0 auto 6px auto';
-
-  // Credits
-  const credit = document.createElement('p');
-  credit.style.fontSize = (isMobile ? s.creditFont * 1.5 : s.creditFont * 1.5) + 'px';
-  credit.style.color = '#d1d5db';
-  credit.style.lineHeight = '1.5';
-  credit.style.textAlign = 'center';
-  credit.style.marginTop = isDonut ? '8px' : '4px';   // histograms slightly tighter
-  credit.innerHTML =
-    'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
-
-  // QR in bottom-left
-  const qr = new Image();
-  const qrsz = s.qrSize;
-  qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent('https://solacestrength.github.io/britishclassicfl/metrics.html')}`;
-  qr.style.position = 'absolute';
-  qr.style.bottom = '18px';
-  qr.style.left = '18px';
-  qr.style.width = qrsz + 'px';
-  qr.style.height = qrsz + 'px';
-  qr.style.borderRadius = '6px';
-
-  // Optional subtitle for Best Lifter exports: "Total Votes – X"
+  // Best Lifter total votes
   if (isBestLifter) {
     const totalVotes =
       charts[id]?.data?.datasets?.[0]?.data?.reduce((a, b) => a + b, 0) || 0;
@@ -1916,22 +1882,55 @@ async function shareChart(id, g) {
     subVotes.style.color = '#d1d5db';
     subVotes.style.margin = '0 0 14px 0';
 
-    inner.append(header, sub, subVotes, img, credit);
+    inner.append(header, sub, subVotes);
   } else {
-    inner.append(header, sub, img, credit);
+    inner.append(header, sub);
   }
+
+  // Chart image layout
+  img.style.display = 'block';
+  img.style.borderRadius = '14px';
+  img.style.width = '82%';
+  img.style.height = 'auto';
+
+  if (isDonut) {
+    img.style.margin = '0 auto 16px auto';
+  } else {
+    img.style.margin = '0 auto 18px auto';       // ← Clean final spacing
+  }
+
+  inner.appendChild(img);
+
+  // Credits
+  const credit = document.createElement('p');
+  credit.style.fontSize = (isMobile ? s.creditFont * 1.5 : s.creditFont * 1.5) + 'px';
+  credit.style.color = '#d1d5db';
+  credit.style.lineHeight = '1.5';
+  credit.style.textAlign = 'center';
+  credit.style.marginTop = isDonut ? '8px' : '4px';
+
+  credit.innerHTML =
+    'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
+
+  inner.appendChild(credit);
+
+  // QR Code
+  const qr = new Image();
+  const qrsz = s.qrSize;
+  qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent('https://solacestrength.github.io/britishclassicfl/metrics.html')}`;
+  qr.style.position = 'absolute';
+  qr.style.bottom = '18px';
+  qr.style.left = '18px';
+  qr.style.width = qrsz + 'px';
+  qr.style.height = qrsz + 'px';
+  qr.style.borderRadius = '6px';
 
   card.appendChild(qr);
   document.body.appendChild(card);
 
-  // Render card → PNG
+  // Capture final
   await new Promise(requestAnimationFrame);
-  const canvas = await html2canvas(card, {
-    backgroundColor: null,
-    scale: 2,
-    useCORS: true,
-    scrollY: 0
-  });
+  const canvas = await html2canvas(card, { backgroundColor: null, scale: 2, useCORS: true, scrollY: 0 });
   card.remove();
 
   const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
@@ -1939,9 +1938,10 @@ async function shareChart(id, g) {
     resetShareIcon();
     return;
   }
+
   const file = new File([blob], fn, { type: 'image/png' });
 
-  // Android Chrome: dedicated second-step share button
+  // Android special share
   if (isAndroidChrome) {
     const shareBtn = makeBtn("Share Generated Image");
     shareBtn.onclick = async () => {
@@ -1967,11 +1967,11 @@ async function shareChart(id, g) {
       }
       resetShareIcon();
     };
-    swapShareButtonFor(shareBar, shareBtn);
+    swapShareButtonFor(shareBtn, generatingBtn);
     return;
   }
 
-  // Other platforms: try native share; fallback to download
+  // Other platforms
   try {
     if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
