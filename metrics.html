@@ -1830,8 +1830,8 @@ async function shareChart(id, g) {
   } else {
     const genderLabel = (g === 'F' ? 'Women' : 'Men');
     label = isDonut
-      ? `${w ? w + ' ' : ''}${genderLabel}`
-      : `${w ? w + ' ' : ''}${genderLabel}<br>Distribution of Predicted Winning Totals`;
+      ? `${w ? w + ' kg ' : ''}${genderLabel}`
+      : `${w ? w + ' kg ' : ''}${genderLabel}<br>Distribution of Predicted Winning Totals`;
   }
 
   sub.innerHTML = label;
@@ -1843,8 +1843,15 @@ async function shareChart(id, g) {
   img.style.display = 'block';
   img.style.margin = '0 auto 16px auto';
   img.style.borderRadius = '14px';
-  img.style.width = '82%';
-  img.style.height = 'auto';
+  if (isDonut) {
+  img.style.width = "82%";
+  img.style.height = "auto";
+} else {
+  // Histogram — make it taller and fuller
+  img.style.width = "92%";
+  img.style.height = "auto";
+  img.style.marginTop = "6px";
+}
 
   const credit = document.createElement('p');
   credit.style.fontSize = (isMobile ? s.creditFont * 1.5 : s.creditFont * 1.5) + 'px';
@@ -2009,8 +2016,15 @@ async function shareDrilldown(g) {
   header.style.fontWeight = '700';
   header.style.margin = '0 0 6px 0';
 
-  const sub1 = document.createElement('p');
-  sub1.textContent = athlete;
+  // === NEW: Add "47 kg Women" style label ===
+let weightClass = state.currentClass;  // Already stored when user opened drilldown
+let genderLabel = (g === 'F') ? 'Women' : 'Men';
+
+let athleteLine = `${athlete} – ${weightClass} kg ${genderLabel}`;
+
+// Build title line
+const sub1 = document.createElement('p');
+sub1.textContent = athleteLine;
   sub1.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.5) + 'px';
   sub1.style.fontWeight = '600';
   sub1.style.margin = '0 0 4px 0';
