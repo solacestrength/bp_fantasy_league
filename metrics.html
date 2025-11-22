@@ -1841,23 +1841,31 @@ async function shareChart(id, g) {
   sub.style.margin = '0 0 18px 0';
 
   img.style.display = 'block';
-  img.style.margin = '0 auto 16px auto';
-  img.style.borderRadius = '14px';
+    // OLD
+  // img.style.margin = '0 auto 16px auto';
+
+  // NEW – tighter spacing for histograms
   if (isDonut) {
-  img.style.width = "82%";
-  img.style.height = "auto";
-} else {
-  // Histogram — make it taller and fuller
-  img.style.width = "92%";
-  img.style.height = "auto";
-  img.style.marginTop = "6px";
-}
+    img.style.margin = '0 auto 16px auto';
+  } else {
+    // Histogram: reduce white space under x-axis
+    img.style.margin = '0 auto 6px auto';
+  }
+  img.style.borderRadius = '14px';
+  img.style.width = '82%';
+  img.style.height = 'auto';
 
   const credit = document.createElement('p');
-  credit.style.fontSize = (isMobile ? s.creditFont * 1.5 : s.creditFont * 1.5) + 'px';
+    credit.style.fontSize = (isMobile ? s.creditFont * 1.5 : s.creditFont * 1.5) + 'px';
   credit.style.color = '#d1d5db';
   credit.style.lineHeight = '1.5';
-  credit.style.marginTop = '8px';
+
+  if (isDonut) {
+    credit.style.marginTop = '8px';
+  } else {
+    credit.style.marginTop = '2px'; // histogram – pull text closer
+  }
+
   credit.style.textAlign = 'center';
   credit.innerHTML =
     'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
