@@ -1809,22 +1809,14 @@ async function shareChart(id, g) {
   // Filename base
   let baseLabel;
   if (isBestLifter) {
-    // As requested: metrics_F_BL_donut / metrics_M_BL_donut
-    baseLabel = 'BL';
+    baseLabel = 'BL';                  // metrics_F_BL_donut / metrics_M_BL_donut
   } else {
     baseLabel = w || 'class';
   }
   const fn = `metrics_${g}_${baseLabel}_${isDonut ? 'donut' : 'hist'}.png`;
 
-  /* ==== NEW: decide which canvas to export (crop histograms only) ==== */
-  const chartInstance = charts[id];
-  let exportCanvas = src;
-  if (!isDonut && chartInstance) {
-    exportCanvas = cropHistogramCanvas(src, chartInstance);
-  }
-
-  // Capture chart as image from (possibly cropped) canvas
-  const dataURL = exportCanvas.toDataURL('image/png');
+  // Capture chart as image
+  const dataURL = src.toDataURL('image/png');
   const img = new Image();
   img.src = dataURL;
   await img.decode();
@@ -1856,12 +1848,14 @@ async function shareChart(id, g) {
   inner.style.padding = '32px 26px 26px 26px';
   card.appendChild(inner);
 
+  // Title
   const header = document.createElement('h2');
   header.textContent = 'British Classic Fantasy League 2025 🇬🇧';
   header.style.fontSize = (isMobile ? s.headerFont * 1.4 : s.headerFont * 1.2) + 'px';
   header.style.fontWeight = '700';
   header.style.margin = '0 0 6px 0';
 
+  // Subtitle (weight class + gender / BL text)
   const sub = document.createElement('p');
   let label;
   if (isBestLifter) {
@@ -1878,26 +1872,29 @@ async function shareChart(id, g) {
   sub.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.5) + 'px';
   sub.style.fontWeight = '600';
   sub.style.color = '#e5e7eb';
-  sub.style.margin = '0 0 18px 0';
+  sub.style.margin = '0 0 12px 0';
 
-  // Chart image (same spacing for donuts + hist; hist already cropped)
+  // Chart image
   img.style.display = 'block';
-  img.style.margin = '0 auto 16px auto';
   img.style.borderRadius = '14px';
   img.style.width = '82%';
   img.style.height = 'auto';
+  // Donut vs histogram spacing: histograms a bit tighter (~18px feel)
+  img.style.margin = isDonut
+    ? '0 auto 16px auto'
+    : '0 auto 6px auto';
 
-  // Credits (identical for all charts)
+  // Credits
   const credit = document.createElement('p');
   credit.style.fontSize = (isMobile ? s.creditFont * 1.5 : s.creditFont * 1.5) + 'px';
   credit.style.color = '#d1d5db';
   credit.style.lineHeight = '1.5';
-  credit.style.marginTop = '8px';
   credit.style.textAlign = 'center';
+  credit.style.marginTop = isDonut ? '8px' : '4px';   // histograms slightly tighter
   credit.innerHTML =
     'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-  // QR (unchanged)
+  // QR in bottom-left
   const qr = new Image();
   const qrsz = s.qrSize;
   qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent('https://solacestrength.github.io/britishclassicfl/metrics.html')}`;
@@ -1908,7 +1905,7 @@ async function shareChart(id, g) {
   qr.style.height = qrsz + 'px';
   qr.style.borderRadius = '6px';
 
-  // Best Lifter extra subtitle (Total Votes – X)
+  // Optional subtitle for Best Lifter exports: "Total Votes – X"
   if (isBestLifter) {
     const totalVotes =
       charts[id]?.data?.datasets?.[0]?.data?.reduce((a, b) => a + b, 0) || 0;
@@ -1927,6 +1924,7 @@ async function shareChart(id, g) {
   card.appendChild(qr);
   document.body.appendChild(card);
 
+  // Render card → PNG
   await new Promise(requestAnimationFrame);
   const canvas = await html2canvas(card, {
     backgroundColor: null,
@@ -1973,7 +1971,7 @@ async function shareChart(id, g) {
     return;
   }
 
-  // Other platforms: try native share; fallback to direct PNG download
+  // Other platforms: try native share; fallback to download
   try {
     if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
