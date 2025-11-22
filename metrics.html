@@ -1733,6 +1733,42 @@ function sanitizeFilename(str) {
     .toLowerCase();
 }
 
+// Crop histogram canvas bottom so we keep x-axis labels + a little padding
+function cropHistogramCanvas(srcCanvas, chart) {
+  try {
+    if (!chart || chart.config?.type !== 'bar') return srcCanvas;
+    // Only touch the main histograms (not drilldown)
+    if (!/(Hist)$/i.test(chart.canvas?.id || '')) return srcCanvas;
+
+    const xScale = chart.scales?.x;
+    if (!xScale || typeof xScale.bottom !== 'number') return srcCanvas;
+
+    const { width, height } = srcCanvas;
+    // Keep labels and a small buffer below them
+    const extra = 10; // px below label baseline
+    const cropBottom = Math.min(height, Math.round(xScale.bottom + extra));
+
+    // If something looks wrong, bail out and use full canvas
+    if (cropBottom <= 0 || cropBottom >= height) return srcCanvas;
+
+    const tmp = document.createElement('canvas');
+    tmp.width = width;
+    tmp.height = cropBottom;
+
+    const ctx = tmp.getContext('2d');
+    ctx.drawImage(
+      srcCanvas,
+      0, 0, width, cropBottom, // from original
+      0, 0, width, cropBottom  // into tmp
+    );
+
+    return tmp;
+  } catch (err) {
+    console.error('Histogram crop failed, using full canvas.', err);
+    return srcCanvas;
+  }
+}
+
 /* ========= SHARE STANDARD CHARTS (WINNERS + BEST LIFTERS + HISTOGRAMS) ========= */
 async function shareChart(id, g) {
   const { isAndroidChrome, isChromeIOS } = detectBrowserShareSupport();
@@ -1778,11 +1814,17 @@ async function shareChart(id, g) {
   } else {
     baseLabel = w || 'class';
   }
-
   const fn = `metrics_${g}_${baseLabel}_${isDonut ? 'donut' : 'hist'}.png`;
 
-  // Capture chart as image
-  const dataURL = src.toDataURL('image/png');
+  /* ==== NEW: decide which canvas to export (crop histograms only) ==== */
+  const chartInstance = charts[id];
+  let exportCanvas = src;
+  if (!isDonut && chartInstance) {
+    exportCanvas = cropHistogramCanvas(src, chartInstance);
+  }
+
+  // Capture chart as image from (possibly cropped) canvas
+  const dataURL = exportCanvas.toDataURL('image/png');
   const img = new Image();
   img.src = dataURL;
   await img.decode();
@@ -1822,7 +1864,6 @@ async function shareChart(id, g) {
 
   const sub = document.createElement('p');
   let label;
-
   if (isBestLifter) {
     label = (g === 'F')
       ? 'Female Best Lifter – Share of Votes'
@@ -1833,59 +1874,30 @@ async function shareChart(id, g) {
       ? `${w ? w + ' kg ' : ''}${genderLabel}`
       : `${w ? w + ' kg ' : ''}${genderLabel}<br>Distribution of Predicted Winning Totals`;
   }
-
   sub.innerHTML = label;
   sub.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.5) + 'px';
   sub.style.fontWeight = '600';
   sub.style.color = '#e5e7eb';
   sub.style.margin = '0 0 18px 0';
 
-  // === IMAGE + WRAPPER (ONLY HISTOGRAM WHITESPACE CHANGED) ===
-
-  // Slightly reduce inner bottom padding for histograms only
-  if (!isDonut) {
-    inner.style.paddingBottom = '18px'; // was 26px – keeps chart size, shrinks card a bit
-  }
-
-  // Wrapper kills baseline + extra spacing html2canvas likes to add
-  const imgWrapper = document.createElement('div');
-  imgWrapper.style.display = 'block';
-  imgWrapper.style.width = '100%';
-  imgWrapper.style.textAlign = 'center';
-  imgWrapper.style.lineHeight = '0';   // remove text baseline gap
-  imgWrapper.style.fontSize = '0';
-
-  img.style.display = 'inline-block';
+  // Chart image (same spacing for donuts + hist; hist already cropped)
+  img.style.display = 'block';
+  img.style.margin = '0 auto 16px auto';
   img.style.borderRadius = '14px';
   img.style.width = '82%';
   img.style.height = 'auto';
 
-  if (isDonut) {
-    img.style.margin = '0 auto 16px auto'; // unchanged donut spacing
-    imgWrapper.style.margin = '0 0 4px 0';
-  } else {
-    img.style.margin = '0 auto 0 auto';    // no extra bottom margin
-    imgWrapper.style.margin = '0';         // collapse wrapper bottom
-  }
-
-  imgWrapper.appendChild(img);
-
-  // Credits – keep donut as-is, tighten histograms only
+  // Credits (identical for all charts)
   const credit = document.createElement('p');
   credit.style.fontSize = (isMobile ? s.creditFont * 1.5 : s.creditFont * 1.5) + 'px';
   credit.style.color = '#d1d5db';
   credit.style.lineHeight = '1.5';
+  credit.style.marginTop = '8px';
   credit.style.textAlign = 'center';
-
-  if (isDonut) {
-    credit.style.marginTop = '8px';   // unchanged
-  } else {
-    credit.style.marginTop = '-14px'; // pull credits up closer to x-axis
-  }
-
   credit.innerHTML =
     'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
+  // QR (unchanged)
   const qr = new Image();
   const qrsz = s.qrSize;
   qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent('https://solacestrength.github.io/britishclassicfl/metrics.html')}`;
@@ -1896,7 +1908,7 @@ async function shareChart(id, g) {
   qr.style.height = qrsz + 'px';
   qr.style.borderRadius = '6px';
 
-  // Insert subtitle for Best Lifter exports
+  // Best Lifter extra subtitle (Total Votes – X)
   if (isBestLifter) {
     const totalVotes =
       charts[id]?.data?.datasets?.[0]?.data?.reduce((a, b) => a + b, 0) || 0;
@@ -1907,16 +1919,21 @@ async function shareChart(id, g) {
     subVotes.style.color = '#d1d5db';
     subVotes.style.margin = '0 0 14px 0';
 
-    inner.append(header, sub, subVotes, imgWrapper, credit);
+    inner.append(header, sub, subVotes, img, credit);
   } else {
-    inner.append(header, sub, imgWrapper, credit);
+    inner.append(header, sub, img, credit);
   }
 
   card.appendChild(qr);
   document.body.appendChild(card);
 
   await new Promise(requestAnimationFrame);
-  const canvas = await html2canvas(card, { backgroundColor: null, scale: 2, useCORS: true, scrollY: 0 });
+  const canvas = await html2canvas(card, {
+    backgroundColor: null,
+    scale: 2,
+    useCORS: true,
+    scrollY: 0
+  });
   card.remove();
 
   const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
@@ -1926,7 +1943,7 @@ async function shareChart(id, g) {
   }
   const file = new File([blob], fn, { type: 'image/png' });
 
-  // Android Chrome: show dedicated share button so user gets full native sheet
+  // Android Chrome: dedicated second-step share button
   if (isAndroidChrome) {
     const shareBtn = makeBtn("Share Generated Image");
     shareBtn.onclick = async () => {
@@ -1979,6 +1996,10 @@ async function shareChart(id, g) {
   }
 
   resetShareIcon();
+}
+
+function shareBestLifter(g) {
+  shareChart(g === 'F' ? 'bestF' : 'bestM', g);
 }
 
 /* ========= DRILLDOWN SHARE ========= */
