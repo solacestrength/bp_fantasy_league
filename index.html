@@ -304,39 +304,44 @@
   attachCollapsible(contactToggle, contactContent, contactArrow);
 
   /* ============================
-        AUTO-EXPAND + AUTO-SCROLL
-  ============================= */
+      AUTO-EXPAND + AUTO-SCROLL
+============================= */
 
-  function scrollToSection(id) {
-    const el = document.getElementById(id);
-    if (!el) return;
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
 
-    // Delay ensures the collapsible animation finishes
-    setTimeout(() => {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 300);
-  }
+  // First attempt (after the collapsible opens)
+  setTimeout(() => {
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 300);
 
-  // Auto-open Rules
-  if (window.location.hash === '#rulesToggle') {
-    rulesContent.classList.add('open');
-    rulesArrow.classList.add('rotate');
-    scrollToSection('rulesToggle');
-  }
+  // Safari fallback (ensures reliable scrolling)
+  setTimeout(() => {
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 700);
+}
 
-  // Auto-open Prizes
-  if (window.location.hash === '#prizesToggle') {
-    prizesContent.classList.add('open');
-    prizesArrow.classList.add('rotate');
-    scrollToSection('prizesToggle');
-  }
+// Auto-open Rules
+if (window.location.hash === '#rulesToggle') {
+  rulesContent.classList.add('open');
+  rulesArrow.classList.add('rotate');
+  scrollToSection('rulesToggle');
+}
 
-  // Auto-open Contact
-  if (window.location.hash === '#contactToggle') {
-    contactContent.classList.add('open');
-    contactArrow.classList.add('rotate');
-    scrollToSection('contactToggle');
-  }
+// Auto-open Prizes
+if (window.location.hash === '#prizesToggle') {
+  prizesContent.classList.add('open');
+  prizesArrow.classList.add('rotate');
+  scrollToSection('prizesToggle');
+}
+
+// Auto-open Contact
+if (window.location.hash === '#contactToggle') {
+  contactContent.classList.add('open');
+  contactArrow.classList.add('rotate');
+  scrollToSection('contactToggle');
+}
 
   // Ensure mobile menu starts hidden
   toggleMenu(false);
