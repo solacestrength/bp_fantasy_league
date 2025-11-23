@@ -276,6 +276,10 @@ async function prefillIfToken() {
     if (d.instagramHandle) igInput.value = d.instagramHandle;
     if (d.leaderboardName) leaderboardInput.value = d.leaderboardName;
 
+    // 🔒 When editing via token, lock the email field
+    emailInput.readOnly = true;
+    emailInput.classList.add('bg-gray-700', 'cursor-not-allowed');
+
     // Winners – Women
     femaleClasses.forEach(cls => {
       const wSel = document.getElementById('w' + cls);
