@@ -234,6 +234,9 @@
   </div>
 
   <script>
+  /* ============================
+        MOBILE MENU
+  ============================= */
   const menuBtn = document.getElementById('menu-btn');
   const mobileMenu = document.getElementById('mobile-menu');
 
@@ -268,21 +271,17 @@
 
   const bottomBackToTop = document.getElementById('bottomBackToTop');
   if (bottomBackToTop) {
-    bottomBackToTop.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
+    bottomBackToTop.addEventListener('click', () =>
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    );
   }
 
-  // === Collapsibles ===
+  /* ============================
+        COLLAPSIBLES
+  ============================= */
   const rulesToggle = document.getElementById('rulesToggle');
   const rulesContent = document.getElementById('rulesContent');
   const rulesArrow = document.getElementById('rulesArrow');
-
-  // Auto-open Rules section if linked with #rulesToggle
-if (window.location.hash === '#rulesToggle') {
-  rulesContent.classList.add('open');
-  rulesArrow.classList.add('rotate');
-}
 
   const prizesToggle = document.getElementById('prizesToggle');
   const prizesContent = document.getElementById('prizesContent');
@@ -292,30 +291,56 @@ if (window.location.hash === '#rulesToggle') {
   const contactContent = document.getElementById('contactContent');
   const contactArrow = document.getElementById('contactArrow');
 
-  if (rulesToggle && rulesContent && rulesArrow) {
-    rulesToggle.addEventListener('click', () => {
-      const isOpen = rulesContent.classList.toggle('open');
-      rulesArrow.classList.toggle('rotate', isOpen);
+  function attachCollapsible(toggle, content, arrow) {
+    if (!toggle || !content || !arrow) return;
+    toggle.addEventListener('click', () => {
+      const isOpen = content.classList.toggle('open');
+      arrow.classList.toggle('rotate', isOpen);
     });
   }
 
-  if (prizesToggle && prizesContent && prizesArrow) {
-    prizesToggle.addEventListener('click', () => {
-      const isOpen = prizesContent.classList.toggle('open');
-      prizesArrow.classList.toggle('rotate', isOpen);
-    });
+  attachCollapsible(rulesToggle, rulesContent, rulesArrow);
+  attachCollapsible(prizesToggle, prizesContent, prizesArrow);
+  attachCollapsible(contactToggle, contactContent, contactArrow);
+
+  /* ============================
+        AUTO-EXPAND + AUTO-SCROLL
+  ============================= */
+
+  function scrollToSection(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    // Delay ensures the collapsible animation finishes
+    setTimeout(() => {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 300);
   }
 
-  if (contactToggle && contactContent && contactArrow) {
-    contactToggle.addEventListener('click', () => {
-      const isOpen = contactContent.classList.toggle('open');
-      contactArrow.classList.toggle('rotate', isOpen);
-    });
+  // Auto-open Rules
+  if (window.location.hash === '#rulesToggle') {
+    rulesContent.classList.add('open');
+    rulesArrow.classList.add('rotate');
+    scrollToSection('rulesToggle');
   }
 
-  // Initialize menu as hidden
+  // Auto-open Prizes
+  if (window.location.hash === '#prizesToggle') {
+    prizesContent.classList.add('open');
+    prizesArrow.classList.add('rotate');
+    scrollToSection('prizesToggle');
+  }
+
+  // Auto-open Contact
+  if (window.location.hash === '#contactToggle') {
+    contactContent.classList.add('open');
+    contactArrow.classList.add('rotate');
+    scrollToSection('contactToggle');
+  }
+
+  // Ensure mobile menu starts hidden
   toggleMenu(false);
-  </script>
+</script>
 
 </body>
 </html>
