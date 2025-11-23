@@ -278,6 +278,12 @@
   const rulesContent = document.getElementById('rulesContent');
   const rulesArrow = document.getElementById('rulesArrow');
 
+  // Auto-open Rules section if linked with #rulesToggle
+if (window.location.hash === '#rulesToggle') {
+  rulesContent.classList.add('open');
+  rulesArrow.classList.add('rotate');
+}
+
   const prizesToggle = document.getElementById('prizesToggle');
   const prizesContent = document.getElementById('prizesContent');
   const prizesArrow = document.getElementById('prizesArrow');
