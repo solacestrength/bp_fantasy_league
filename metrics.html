@@ -2139,22 +2139,20 @@ async function shareDrilldown(g) {
   credit.innerHTML =
     'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-  // QR in bottom-left, matching other charts
-  const qrSize = s.qrSize;
-  const qrWrapper = document.createElement('div');
-  qrWrapper.style.position = 'absolute';
-  qrWrapper.style.bottom = '18px';
-  qrWrapper.style.left = '18px';
-  new QRCode(qrWrapper, {
-    text: 'https://solacestrength.github.io/britishclassicfl/metrics.html',
-    width: qrSize,
-    height: qrSize,
-    margin: 0
-  });
+// QR in bottom-left, matching donut & histogram exports
+const qr = new Image();
+const qrsz = s.qrSize;
+qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrsz}x${qrsz}&data=${encodeURIComponent('https://solacestrength.github.io/britishclassicfl/metrics.html')}`;
+qr.style.position = 'absolute';
+qr.style.bottom = '18px';
+qr.style.left  = '18px';
+qr.style.width = qrsz + 'px';
+qr.style.height = qrsz + 'px';
+qr.style.borderRadius = '6px';
 
-  inner.append(header, sub1, sub2, chartImg, credit);
-  card.appendChild(qrWrapper);
-  document.body.appendChild(card);
+inner.append(header, sub1, sub2, chartImg, credit);
+card.appendChild(qr);
+document.body.appendChild(card);
 
   await new Promise(requestAnimationFrame);
   const canvas = await html2canvas(card, {
