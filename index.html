@@ -234,21 +234,18 @@
   </div>
 
   <script>
-  /* ============================
-        MOBILE MENU
-  ============================= */
   const menuBtn = document.getElementById('menu-btn');
   const mobileMenu = document.getElementById('mobile-menu');
 
   function toggleMenu(show) {
     if (show) {
-      mobileMenu.classList.remove('scale-y-0', 'opacity-0', 'pointer-events-none');
-      mobileMenu.classList.add('scale-y-100', 'opacity-100');
-      menuBtn.setAttribute('aria-expanded', 'true');
+      mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');
+      mobileMenu.classList.add('scale-y-100','opacity-100');
+      menuBtn.setAttribute('aria-expanded','true');
     } else {
-      mobileMenu.classList.add('scale-y-0', 'opacity-0', 'pointer-events-none');
-      mobileMenu.classList.remove('scale-y-100', 'opacity-100');
-      menuBtn.setAttribute('aria-expanded', 'false');
+      mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');
+      mobileMenu.classList.remove('scale-y-100','opacity-100');
+      menuBtn.setAttribute('aria-expanded','false');
     }
   }
 
@@ -271,79 +268,98 @@
 
   const bottomBackToTop = document.getElementById('bottomBackToTop');
   if (bottomBackToTop) {
-    bottomBackToTop.addEventListener('click', () =>
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    );
-  }
-
-  /* ============================
-        COLLAPSIBLES
-  ============================= */
-  const rulesToggle = document.getElementById('rulesToggle');
-  const rulesContent = document.getElementById('rulesContent');
-  const rulesArrow = document.getElementById('rulesArrow');
-
-  const prizesToggle = document.getElementById('prizesToggle');
-  const prizesContent = document.getElementById('prizesContent');
-  const prizesArrow = document.getElementById('prizesArrow');
-
-  const contactToggle = document.getElementById('contactToggle');
-  const contactContent = document.getElementById('contactContent');
-  const contactArrow = document.getElementById('contactArrow');
-
-  function attachCollapsible(toggle, content, arrow) {
-    if (!toggle || !content || !arrow) return;
-    toggle.addEventListener('click', () => {
-      const isOpen = content.classList.toggle('open');
-      arrow.classList.toggle('rotate', isOpen);
+    bottomBackToTop.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
 
-  attachCollapsible(rulesToggle, rulesContent, rulesArrow);
-  attachCollapsible(prizesToggle, prizesContent, prizesArrow);
-  attachCollapsible(contactToggle, contactContent, contactArrow);
+  /* =============================
+       COLLAPSIBLES
+  ============================== */
 
-  /* ============================
-      AUTO-EXPAND + AUTO-SCROLL
-============================= */
+  const rulesToggle   = document.getElementById('rulesToggle');
+  const rulesContent  = document.getElementById('rulesContent');
+  const rulesArrow    = document.getElementById('rulesArrow');
 
-function scrollToSection(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
+  const prizesToggle  = document.getElementById('prizesToggle');
+  const prizesContent = document.getElementById('prizesContent');
+  const prizesArrow   = document.getElementById('prizesArrow');
 
-  // First attempt (after the collapsible opens)
-  setTimeout(() => {
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, 300);
+  const contactToggle  = document.getElementById('contactToggle');
+  const contactContent = document.getElementById('contactContent');
+  const contactArrow   = document.getElementById('contactArrow');
 
-  // Safari fallback (ensures reliable scrolling)
-  setTimeout(() => {
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, 700);
-}
+  // DEFAULT STATES:
+  // Prizes → OPEN
+  // Rules → CLOSED
+  // Contact → CLOSED
 
-// Auto-open Rules
-if (window.location.hash === '#rulesToggle') {
-  rulesContent.classList.add('open');
-  rulesArrow.classList.add('rotate');
-  scrollToSection('rulesToggle');
-}
-
-// Auto-open Prizes
-if (window.location.hash === '#prizesToggle') {
   prizesContent.classList.add('open');
   prizesArrow.classList.add('rotate');
-  scrollToSection('prizesToggle');
-}
 
-// Auto-open Contact
-if (window.location.hash === '#contactToggle') {
-  contactContent.classList.add('open');
-  contactArrow.classList.add('rotate');
-  scrollToSection('contactToggle');
-}
+  rulesContent.classList.remove('open');
+  rulesArrow.classList.remove('rotate');
 
-  // Ensure mobile menu starts hidden
+  contactContent.classList.remove('open');   // <-- NOW CLOSED BY DEFAULT
+  contactArrow.classList.remove('rotate');
+
+  /* =============================
+        AUTO-SCROLL LOGIC
+  ============================== */
+
+  function scrollToSection(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    setTimeout(() => {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 300);
+
+    setTimeout(() => {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 700);
+  }
+
+  // Auto-open Rules from URL
+  if (window.location.hash === '#rulesToggle') {
+    rulesContent.classList.add('open');
+    rulesArrow.classList.add('rotate');
+    scrollToSection('rulesToggle');
+  }
+
+  // Auto-open Prizes from URL
+  if (window.location.hash === '#prizesToggle') {
+    prizesContent.classList.add('open');
+    prizesArrow.classList.add('rotate');
+    scrollToSection('prizesToggle');
+  }
+
+  // Auto-open Contact from URL
+  if (window.location.hash === '#contactToggle') {
+    contactContent.classList.add('open');
+    contactArrow.classList.add('rotate');
+    scrollToSection('contactToggle');
+  }
+
+  /* =============================
+        CLICK TOGGLES
+  ============================== */
+
+  rulesToggle.addEventListener('click', () => {
+    const isOpen = rulesContent.classList.toggle('open');
+    rulesArrow.classList.toggle('rotate', isOpen);
+  });
+
+  prizesToggle.addEventListener('click', () => {
+    const isOpen = prizesContent.classList.toggle('open');
+    prizesArrow.classList.toggle('rotate', isOpen);
+  });
+
+  contactToggle.addEventListener('click', () => {
+    const isOpen = contactContent.classList.toggle('open');
+    contactArrow.classList.toggle('rotate', isOpen);
+  });
+
   toggleMenu(false);
 </script>
 
