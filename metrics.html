@@ -1805,6 +1805,29 @@ async function shareChart(id, g) {
   const isBestLifter = (id === 'bestF' || id === 'bestM');
   const isDonut = id.toLowerCase().includes('donut') || isBestLifter;
   const isMobile = window.innerWidth < 768;
+  const isHistogram = id.toLowerCase().includes('hist');
+
+  // ===== TEMPORARY HISTOGRAM PADDING REDUCTION (EXPORT ONLY) =====
+  let originalPaddingBottom = null;
+  if (isHistogram && charts[id] && charts[id].options) {
+    const chart = charts[id];
+    const layout = chart.options.layout || (chart.options.layout = {});
+    const padding = layout.padding || (layout.padding = {});
+    originalPaddingBottom = (typeof padding.bottom === 'number') ? padding.bottom : 0;
+
+    // Reduce bottom padding just for export
+    padding.bottom = 20;
+    chart.update('none');
+  }
+
+  function restoreHistogramPadding() {
+    if (!isHistogram || !charts[id] || originalPaddingBottom === null) return;
+    const chart = charts[id];
+    const layout = chart.options.layout || (chart.options.layout = {});
+    const padding = layout.padding || (layout.padding = {});
+    padding.bottom = originalPaddingBottom;
+    chart.update('none');
+  }
 
   // Filename
   const baseLabel = isBestLifter ? 'BL' : (w || 'class');
@@ -1871,7 +1894,7 @@ async function shareChart(id, g) {
   sub.style.color = '#e5e7eb';
   sub.style.margin = '0 0 18px 0';
 
-  // Best Lifter total votes
+  // Best Lifter total votes (export subtitle)
   if (isBestLifter) {
     const totalVotes =
       charts[id]?.data?.datasets?.[0]?.data?.reduce((a, b) => a + b, 0) || 0;
@@ -1896,7 +1919,7 @@ async function shareChart(id, g) {
   if (isDonut) {
     img.style.margin = '0 auto 16px auto';
   } else {
-    img.style.margin = '0 auto 18px auto';       // ← Clean final spacing
+    img.style.margin = '0 auto 18px auto'; // histogram: slightly tighter but safe
   }
 
   inner.appendChild(img);
@@ -1908,7 +1931,6 @@ async function shareChart(id, g) {
   credit.style.lineHeight = '1.5';
   credit.style.textAlign = 'center';
   credit.style.marginTop = isDonut ? '8px' : '4px';
-
   credit.innerHTML =
     'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
@@ -1934,6 +1956,10 @@ async function shareChart(id, g) {
   card.remove();
 
   const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+
+  // Restore histogram padding as soon as we've captured the export
+  restoreHistogramPadding();
+
   if (!blob) {
     resetShareIcon();
     return;
@@ -1967,7 +1993,8 @@ async function shareChart(id, g) {
       }
       resetShareIcon();
     };
-    swapShareButtonFor(shareBtn, generatingBtn);
+    // ✅ fixed argument order
+    swapShareButtonFor(shareBar, shareBtn);
     return;
   }
 
