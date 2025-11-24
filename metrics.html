@@ -1479,26 +1479,22 @@ function setBestLifterTitles(g, totalVotes) {
 
   if (!titleEl || !subtitleEl) return;
 
-  // ---- MATCH CHART.JS TITLE EXACTLY ----
+  // Title text + style
   titleEl.textContent = (g === "F"
     ? "Female Best Lifter – Share of Votes"
     : "Male Best Lifter – Share of Votes"
   );
   titleEl.style.fontSize = s.donutTitle + "px";
-  titleEl.style.fontWeight = "bold";         // Chart.js uses "bold"
+  titleEl.style.fontWeight = "700";
   titleEl.style.color = "#ccc";
-  titleEl.style.margin = "0";
-  titleEl.style.paddingBottom = "8px";       // chart.js default title padding
-  titleEl.style.lineHeight = "1.2";          // closer visual match
+  titleEl.style.marginBottom = "4px";
 
-  // ---- MATCH CHART.JS SUBTITLE EXACTLY ----
+  // Subtitle text + style
   subtitleEl.textContent = `Total Votes – ${totalVotes}`;
   subtitleEl.style.fontSize = s.donutSubtitle + "px";
   subtitleEl.style.color = "#aaa";
-  subtitleEl.style.margin = "0";
-  subtitleEl.style.paddingTop = "2px";       // chart.js default subtitle padding
-  subtitleEl.style.paddingBottom = "18px";   // matches donut spacing
-  subtitleEl.style.lineHeight = "1.2";
+  subtitleEl.style.marginTop = "0px";
+  subtitleEl.style.marginBottom = "14px";
 }
 
 /* ========= BEST LIFTER CHARTS ========= */
