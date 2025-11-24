@@ -2034,10 +2034,18 @@ async function shareDrilldown(g) {
   const isMobile = window.innerWidth < 768;
 
   const athlete = state.currentAthlete;
-  const votes = state.athleteMap[athlete]?.votes || [];
-  const votesForAthlete = votes.length;
-  const n = state.totalVotesInClass || votesForAthlete;
-  const fn = `metrics_drill_${g}_${sanitizeFilename(state.currentClass)}_${sanitizeFilename(athlete)}.png`;
+const votes = state.athleteMap[athlete]?.votes || [];
+const votesForAthlete = votes.length;
+const n = state.totalVotesInClass || votesForAthlete;
+
+// Keep the raw class label so 84+ / 120+ stay intact in the filename,
+// just like donut & histogram exports.
+const classLabel = (state.currentClass || 'class').toString();
+
+// Still safely sanitize the athlete name to avoid odd characters in filenames.
+const safeAthlete = sanitizeFilename(athlete);
+
+const fn = `metrics_drill_${g}_${classLabel}_${safeAthlete}.png`;
 
   const srcCanvas = state.canvas;
 
