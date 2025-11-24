@@ -1816,7 +1816,7 @@ async function shareChart(id, g) {
     originalPaddingBottom = (typeof padding.bottom === 'number') ? padding.bottom : 0;
 
     // Reduce bottom padding just for export
-    padding.bottom = 20;
+    padding.bottom = 10;
     chart.update('none');
   }
 
@@ -2043,10 +2043,39 @@ async function shareDrilldown(g) {
   const fn = `metrics_drill_${g}_${sanitizeFilename(state.currentClass)}_${sanitizeFilename(athlete)}.png`;
 
   const srcCanvas = state.canvas;
+
+  /* === TEMPORARY PADDING REDUCTION FOR EXPORT ONLY === */
+  let originalPadding = null;
+  try {
+    const chart = state.chart;
+    if (chart && chart.options && chart.options.layout && chart.options.layout.padding) {
+      const pad = chart.options.layout.padding;
+      originalPadding = { ...pad };           // store existing padding
+      chart.options.layout.padding = {
+        ...pad,
+        bottom: 10                             // tighter bottom padding for export
+      };
+      chart.update('none');
+    }
+  } catch (e) {
+    console.warn("Drilldown export padding adjust failed", e);
+  }
+
+  // Capture the chart with export padding
   const chartDataUrl = srcCanvas.toDataURL('image/png');
   const chartImg = new Image();
   chartImg.src = chartDataUrl;
   await chartImg.decode();
+
+  // Restore original padding for on-page chart
+  try {
+    if (originalPadding && state.chart) {
+      state.chart.options.layout.padding = originalPadding;
+      state.chart.update('none');
+    }
+  } catch (e) {
+    console.warn("Failed restoring drilldown padding", e);
+  }
 
   const exportWidth = s.exportWidth;
   const card = document.createElement('div');
@@ -2081,15 +2110,13 @@ async function shareDrilldown(g) {
   header.style.fontWeight = '700';
   header.style.margin = '0 0 6px 0';
 
-  // === NEW: Add "47 kg Women" style label ===
-let weightClass = state.currentClass;  // Already stored when user opened drilldown
-let genderLabel = (g === 'F') ? 'Women' : 'Men';
+  // "47 kg Women - Athlete Name" line
+  const weightClass = state.currentClass;
+  const genderLabel = (g === 'F') ? 'Women' : 'Men';
+  const athleteLine = `${weightClass} kg ${genderLabel} - ${athlete}`;
 
-let athleteLine = `${weightClass} kg ${genderLabel} - ${athlete}`;
-
-// Build title line
-const sub1 = document.createElement('p');
-sub1.textContent = athleteLine;
+  const sub1 = document.createElement('p');
+  sub1.textContent = athleteLine;
   sub1.style.fontSize = (isMobile ? s.subFont * 1.5 : s.subFont * 1.5) + 'px';
   sub1.style.fontWeight = '600';
   sub1.style.margin = '0 0 4px 0';
@@ -2115,27 +2142,36 @@ sub1.textContent = athleteLine;
   credit.innerHTML =
     'Data from tinyurl.com/britishclassicfl-metrics<br><br>Sponsored by the Sabado Sessions Podcast';
 
-  const qr = new Image();
-qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=${s.qrSize}x${s.qrSize}&data=${encodeURIComponent('https://solacestrength.github.io/britishclassicfl/metrics.html')}`;
-qr.style.position = 'absolute';
-qr.style.bottom = '18px';
-qr.style.left = '18px';
-qr.style.width = s.qrSize + 'px';
-qr.style.height = s.qrSize + 'px';
-qr.style.borderRadius = '6px';
+  // QR in bottom-left, matching other charts
+  const qrSize = s.qrSize;
+  const qrWrapper = document.createElement('div');
+  qrWrapper.style.position = 'absolute';
+  qrWrapper.style.bottom = '18px';
+  qrWrapper.style.left = '18px';
+  new QRCode(qrWrapper, {
+    text: 'https://solacestrength.github.io/britishclassicfl/metrics.html',
+    width: qrSize,
+    height: qrSize,
+    margin: 0
+  });
 
   inner.append(header, sub1, sub2, chartImg, credit);
-  card.appendChild(qr);
+  card.appendChild(qrWrapper);
   document.body.appendChild(card);
 
   await new Promise(requestAnimationFrame);
-  const canvas = await html2canvas(card, { backgroundColor: null, scale: 2, useCORS: true, scrollY: 0 });
+  const canvas = await html2canvas(card, {
+    backgroundColor: null,
+    scale: 2,
+    useCORS: true,
+    scrollY: 0
+  });
   card.remove();
 
   const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
   if (!blob) return;
 
-  const file = new File([blob], fn, { type: 'image/png' });
+  const file = new File([blob], { type: 'image/png' });
 
   try {
     if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
