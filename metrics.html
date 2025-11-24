@@ -1910,17 +1910,12 @@ async function shareChart(id, g) {
     inner.append(header, sub);
   }
 
-  // Chart image layout
+  // Chart image layout  (histogram + drilldown will now both effectively use 10px bottom margin)
   img.style.display = 'block';
   img.style.borderRadius = '14px';
   img.style.width = '82%';
   img.style.height = 'auto';
-
-  if (isDonut) {
-    img.style.margin = '0 auto 16px auto';
-  } else {
-    img.style.margin = '0 auto 18px auto'; // histogram: slightly tighter but safe
-  }
+  img.style.margin = isDonut ? '0 auto 16px auto' : '0 auto 10px auto';
 
   inner.appendChild(img);
 
@@ -1993,7 +1988,6 @@ async function shareChart(id, g) {
       }
       resetShareIcon();
     };
-    // ✅ fixed argument order
     swapShareButtonFor(shareBar, shareBtn);
     return;
   }
@@ -2110,7 +2104,7 @@ async function shareDrilldown(g) {
   header.style.fontWeight = '700';
   header.style.margin = '0 0 6px 0';
 
-  // "47 kg Women - Athlete Name" line
+  // "84+ kg Women - Athlete Name" line
   const weightClass = state.currentClass;
   const genderLabel = (g === 'F') ? 'Women' : 'Men';
   const athleteLine = `${weightClass} kg ${genderLabel} - ${athlete}`;
@@ -2128,7 +2122,7 @@ async function shareDrilldown(g) {
   sub2.style.margin = '0 0 18px 0';
 
   chartImg.style.display = 'block';
-  chartImg.style.margin = '0 auto 16px auto';
+  chartImg.style.margin = '0 auto 10px auto';  // ⬅ matches histogram export
   chartImg.style.borderRadius = '14px';
   chartImg.style.width = '82%';
   chartImg.style.height = 'auto';
@@ -2171,7 +2165,7 @@ async function shareDrilldown(g) {
   const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
   if (!blob) return;
 
-  const file = new File([blob], { type: 'image/png' });
+  const file = new File([blob], fn, { type: 'image/png' }); // ✅ filename added
 
   try {
     if (!isChromeIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
