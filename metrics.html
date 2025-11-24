@@ -1240,6 +1240,7 @@ function renderDrillChart(g, athlete) {
   if (!state || !state.athleteMap[athlete]) return;
 
   const s = sizing();
+  const isMobile = window.innerWidth < 768;
   const votes = state.athleteMap[athlete].votes || [];
   const colors = getRedGradientColors();
 
@@ -1306,11 +1307,13 @@ function renderDrillChart(g, athlete) {
       scales: {
         x: {
           ticks: {
-            color: '#ccc',
-            font: { size: s.axisTick },
-            maxRotation: 0,
-            minRotation: 0
-          },
+  color: '#ccc',
+  // Slightly smaller font on mobile so all 1–16 labels fit comfortably
+  font: { size: isMobile ? Math.max(9, s.axisTick - 2) : s.axisTick },
+  maxRotation: 0,
+  minRotation: 0,
+  autoSkip: false           // <- FORCE all tick labels to render
+},
           title: {
             display: true,
             text: 'Points / Confidence Level',
