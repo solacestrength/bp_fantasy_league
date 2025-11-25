@@ -846,14 +846,29 @@
     const softGateImage = document.getElementById('softGateImage');
 
     spotifyLink.addEventListener('click', (e) => {
-      // allow new tab to open, then fade out overlay
-      setTimeout(() => {
-        softGateImage.classList.add('fade-out');
-        setTimeout(() => {
-          spotifyLock.classList.add('hidden');
-        }, 600);
-      }, 50);
-    });
+  e.preventDefault(); // allow us to control the open action
+
+  const url = spotifyLink.href;
+
+  // Make sure the gate never shows again
+  sessionStorage.setItem('spotifyPassed', '1');
+  spotifyLock.classList.add('hidden');
+
+  // MAXIMUM chance of Android opening a new tab
+  // (must be triggered synchronously within the click event)
+  const opened = window.open(url, '_blank');
+
+  // Fallback: if Android blocked new tab, open same tab
+  if (!opened) {
+    window.location.href = url;
+  }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (sessionStorage.getItem('spotifyPassed') === '1') {
+    spotifyLock.classList.add('hidden');
+  }
+});
 
     // Back to top
     const bottomBackToTop = document.getElementById('bottomBackToTop');
