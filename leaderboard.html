@@ -26,17 +26,17 @@
       font-weight: bold;
     }
 
-    /* Make leaderboard table fit screen and wrap long content */
-#leaderboardTable {
+    #leaderboardTable {
   table-layout: fixed;
   width: 100%;
 }
 
 #leaderboardTable th,
 #leaderboardTable td {
-  white-space: normal;
-  word-wrap: break-word;
-  word-break: break-word;
+  white-space: normal !important;   /* force wrapping */
+  overflow-wrap: break-word !important;
+  word-break: break-word !important;
+  text-align: center; /* maintain your centering */
 }
 
     /* Back-to-top FAB transitions */
