@@ -331,8 +331,7 @@ async function submitForm() {
 
   emailInput.value = emailInput.value.trim().toLowerCase();
 
-  // Final step validation (step 3) plus earlier sections
-  // We validate all steps in sequence to catch errors even if user jumps.
+  // Validate ALL steps before submitting
   for (let s = 0; s < steps.length; s++) {
     if (!validateStep(s)) {
       showStep(s);
@@ -350,6 +349,7 @@ async function submitForm() {
       method: 'POST',
       body: formData
     });
+
     const json = await res.json();
 
     if (!json.ok) {
@@ -359,12 +359,31 @@ async function submitForm() {
       return;
     }
 
+    // Success message
     showStatus(json.message || 'Entry saved. Check your email for confirmation and your edit link.', false);
+
+    // === SHOW EDIT LINK ON PAGE ===
+    if (json.ok && json.token) {
+      const editLink = `https://solacestrength.github.io/britishclassicfl/entry.html?token=${encodeURIComponent(json.token)}`;
+      const linkBox = document.getElementById('edit-link-box');
+
+      if (linkBox) {
+        linkBox.innerHTML = `
+          <div class="p-4 mt-4 rounded-lg bg-gray-800 border border-gray-700 text-center text-sm text-gray-200">
+              <p class="font-semibold mb-2">Your private edit link:</p>
+              <a href="${editLink}" class="text-blue-400 break-all" target="_blank">${editLink}</a>
+              <p class="text-gray-400 mt-2">(This has also been emailed to you.)</p>
+          </div>
+        `;
+      }
+    }
+
   } catch (err) {
     showStatus('Network or server error. Please try again.', true);
-    nextBtn.disabled = false;
-    backBtn.disabled = false;
   }
+
+  nextBtn.disabled = false;
+  backBtn.disabled = false;
 }
 
 // ========= NAVIGATION HANDLERS =========
