@@ -26,6 +26,19 @@
       font-weight: bold;
     }
 
+    /* Make leaderboard table fit screen and wrap long content */
+#leaderboardTable {
+  table-layout: fixed;
+  width: 100%;
+}
+
+#leaderboardTable th,
+#leaderboardTable td {
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
     /* Back-to-top FAB transitions */
     #backToTopFab {
       transition: opacity 0.25s ease-in-out, transform 0.25s ease-in-out;
@@ -116,8 +129,8 @@
           </div>
 
           <!-- Leaderboard table -->
-          <div class="overflow-x-auto rounded-xl border border-gray-700">
-            <table id="leaderboardTable" class="min-w-full text-sm text-gray-200 text-center">
+          <div class="overflow-hidden rounded-xl border border-gray-700">
+           <table id="leaderboardTable" class="w-full text-sm text-gray-200 text-center">
               <thead class="bg-gray-700 text-gray-100">
                 <tr id="leaderboardHeader"></tr>
               </thead>
