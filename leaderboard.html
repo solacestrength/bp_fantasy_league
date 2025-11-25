@@ -131,7 +131,12 @@
           <!-- Leaderboard table -->
           <div class="overflow-hidden rounded-xl border border-gray-700">
            <table id="leaderboardTable" class="w-full text-sm text-gray-200 text-center">
-              <thead class="bg-gray-700 text-gray-100">
+              <colgroup>
+    <col style="width: 18%;">   <!-- Rank -->
+    <col style="width: 64%;">   <!-- Name (biggest) -->
+    <col style="width: 18%;">   <!-- Points -->
+  </colgroup>
+             <thead class="bg-gray-700 text-gray-100">
                 <tr id="leaderboardHeader"></tr>
               </thead>
               <tbody id="leaderboardBody" class="divide-y divide-gray-700"></tbody>
