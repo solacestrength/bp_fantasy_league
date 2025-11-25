@@ -31,17 +31,30 @@
       transition: opacity 0.25s ease-in-out, transform 0.25s ease-in-out;
     }
 
-    /* Center all accuracy table cells */
-    #accuracyTable th,
-    #accuracyTable td {
-      text-align: center;
-    }
+    /* Existing centering rules */
+#accuracyTable th,
+#accuracyTable td {
+  text-align: center;
+}
 
-    /* Explicitly center Name column (2nd col) */
-    #accuracyTable th:nth-child(2),
-    #accuracyTable td:nth-child(2) {
-      text-align: center !important;
-    }
+/* Explicitly center Name column (2nd col) */
+#accuracyTable th:nth-child(2),
+#accuracyTable td:nth-child(2) {
+  text-align: center !important;
+}
+
+/* New: make table fixed-width and wrap long content */
+#accuracyTable {
+  table-layout: fixed;
+  width: 100%;
+}
+
+#accuracyTable th,
+#accuracyTable td {
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-word;
+}
   </style>
 </head>
 
@@ -128,8 +141,8 @@
           </div>
 
           <!-- Table -->
-          <div class="overflow-x-auto rounded-xl border border-gray-700">
-            <table id="accuracyTable" class="min-w-full text-sm text-gray-200 text-center">
+          <div class="overflow-hidden rounded-xl border border-gray-700">
+           <table id="accuracyTable" class="w-full text-sm text-gray-200 text-center">
               <thead class="bg-gray-700 text-gray-100">
                 <tr id="accuracyHeader"></tr>
               </thead>
