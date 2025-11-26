@@ -169,7 +169,7 @@ function buildBestLifterLists() {
 const totalRegex = /^(?:[0-9]|[1-9][0-9]{1,2}|1[0-9]{3}|2000)(?:\.0|\.5)?$/;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function validateStep(stepIndex) {
+async function validateStep(stepIndex) {
   clearErrors();
   let valid = true;
 
@@ -182,6 +182,22 @@ function validateStep(stepIndex) {
       setError('emailError', 'Please enter a valid email address.');
       valid = false;
     }
+
+    // === EMAIL ALREADY USED CHECK (frontend) ===
+if (!tokenInput.value) {
+  const res = await fetch(
+    SCRIPT_URL + '?action=checkEmail&email=' + encodeURIComponent(emailVal),
+    { method: 'GET' }
+  );
+  const json = await res.json();
+
+  if (json.exists) {
+    setError('emailError', 'This email already has an entry. Use your private edit link.');
+    alert('This email already has an existing entry. We can send you your private edit link.');
+
+    valid = false;
+  }
+}
 
     if (!leaderboardInput.value.trim()) {
       setError('leaderboardError', 'Leaderboard name is required.');
@@ -363,7 +379,7 @@ async function submitForm() {
 
   // Validate ALL steps before submitting
   for (let s = 0; s < steps.length; s++) {
-    if (!validateStep(s)) {
+    if (!(await validateStep(s))) {
       showStep(s);
       return;
     }
@@ -428,7 +444,7 @@ backBtn.addEventListener('click', () => {
 nextBtn.addEventListener('click', () => {
   if (currentStep < steps.length - 1) {
     // Validate current step before moving on
-    if (!validateStep(currentStep)) return;
+    if (!(await validateStep(currentStep))) return;
     showStep(currentStep + 1);
     scrollToFormTop();
   } else {
