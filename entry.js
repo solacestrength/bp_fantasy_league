@@ -243,6 +243,26 @@ if (!emailVal) {
       valid = false;
     }
   }
+
+  if (stepIndex === 3) {
+    const femaleInput = document.getElementById("femaleBest");
+    const maleInput   = document.getElementById("maleBest");
+
+    const femaleOptions = [...document.querySelectorAll("#femaleBestList option")].map(o => o.value.trim());
+    const maleOptions   = [...document.querySelectorAll("#maleBestList option")].map(o => o.value.trim());
+
+    // Validate female best lifter
+    if (!femaleOptions.includes(femaleInput.value.trim())) {
+        document.getElementById("femaleBestError").textContent = "Please select a lifter from the list.";
+        return false;
+    }
+
+    // Validate male best lifter
+    if (!maleOptions.includes(maleInput.value.trim())) {
+        document.getElementById("maleBestError").textContent = "Please select a lifter from the list.";
+        return false;
+    }
+}
   
   return valid;
 }
