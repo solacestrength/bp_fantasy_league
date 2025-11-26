@@ -63,10 +63,10 @@ function showStep(index) {
   nextBtn.textContent = index === steps.length - 1 ? "Submit" : "Next";
 
   const labels = [
-    "STEP 1 — Contact",
-    "STEP 2 — Women’s Predictions",
-    "STEP 3 — Men’s Predictions",
-    "STEP 4 — Best Lifters",
+    "STEP 1 OF 4 — Contact",
+    "STEP 2 OF 4 — Women’s Predictions",
+    "STEP 3 OF 4 — Men’s Predictions",
+    "STEP 4 OF 4 — Best Lifters",
   ];
 
   stepLabel.textContent = labels[index] || "";
@@ -328,29 +328,45 @@ async function prefillIfToken() {
   }
 }
 
-// ========= DUPLICATE EMAIL CHECK (BLUR) =========
-// IMPORTANT — no validateStep() here (prevents pagination from breaking)
+// ========= DUPLICATE EMAIL CHECK (BLUR) WITH SEND-LINK OPTION =========
 
 emailInput.addEventListener("blur", async () => {
   const emailVal = emailInput.value.trim().toLowerCase();
   if (!emailVal) return;
 
-  if (!emailRegex.test(emailVal))
-    return; // Only check valid emails
+  if (!emailRegex.test(emailVal)) return; // Only check valid emails
 
   try {
     const res = await fetch(
-      SCRIPT_URL +
-        "?action=checkEmail&email=" +
-        encodeURIComponent(emailVal)
+      `${SCRIPT_URL}?action=checkEmail&email=${encodeURIComponent(emailVal)}`
     );
     const json = await res.json();
 
     if (json.exists) {
-      alert(
-        "This email address already has an existing entry.\n\n" +
-          "Use your private edit link to modify your predictions."
+      // === Show options ===
+      const wantsLink = confirm(
+        "This email already has an existing entry.\n\n" +
+        "Would you like us to send your private edit link?"
       );
+
+      if (wantsLink) {
+        // Request backend to send private edit link
+        try {
+          const res2 = await fetch(
+            `${SCRIPT_URL}?action=sendLink&email=${encodeURIComponent(emailVal)}`
+          );
+          const j2 = await res2.json();
+          if (j2.ok) {
+            alert("Your edit link has been sent to your email inbox.");
+          } else {
+            alert("Could not send edit link. Please try again later.");
+          }
+        } catch (err) {
+          alert("Network error. Could not send your edit link.");
+        }
+      }
+
+      // Clear email regardless (force them to use the link)
       emailInput.value = "";
       return;
     }
