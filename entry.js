@@ -245,23 +245,35 @@ if (!emailVal) {
   }
 
   if (stepIndex === 3) {
-    const femaleInput = document.getElementById("femaleBest");
-    const maleInput   = document.getElementById("maleBest");
+  const femaleInput = document.getElementById("femaleBest");
+  const maleInput   = document.getElementById("maleBest");
 
-    const femaleOptions = [...document.querySelectorAll("#femaleBestList option")].map(o => o.value.trim());
-    const maleOptions   = [...document.querySelectorAll("#maleBestList option")].map(o => o.value.trim());
+  const femaleOptions = [...document.querySelectorAll("#femaleBestList option")]
+    .map(o => o.value.trim().toLowerCase());
 
-    // Validate female best lifter
-    if (!femaleOptions.includes(femaleInput.value.trim())) {
-        document.getElementById("femaleBestError").textContent = "Please select a lifter from the list.";
-        return false;
-    }
+  const maleOptions = [...document.querySelectorAll("#maleBestList option")]
+    .map(o => o.value.trim().toLowerCase());
 
-    // Validate male best lifter
-    if (!maleOptions.includes(maleInput.value.trim())) {
-        document.getElementById("maleBestError").textContent = "Please select a lifter from the list.";
-        return false;
-    }
+  const femaleVal = femaleInput.value.trim().toLowerCase();
+  const maleVal   = maleInput.value.trim().toLowerCase();
+
+  let validStep = true;
+
+  // Female validation
+  if (!femaleOptions.includes(femaleVal)) {
+    document.getElementById("femaleBestError").textContent =
+      "Please select a lifter from the list.";
+    validStep = false;
+  }
+
+  // Male validation
+  if (!maleOptions.includes(maleVal)) {
+    document.getElementById("maleBestError").textContent =
+      "Please select a lifter from the list.";
+    validStep = false;
+  }
+
+  if (!validStep) return false;
 }
   
   return valid;
