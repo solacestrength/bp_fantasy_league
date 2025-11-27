@@ -85,19 +85,28 @@ function setError(id, msg) {
 
 function initConfidenceOptions() {
   confSelects.forEach(sel => {
-    // Clear any existing
     sel.innerHTML = '';
+
+    // Placeholder
     const placeholder = document.createElement('option');
     placeholder.value = '';
     placeholder.textContent = 'Select rating…';
     sel.appendChild(placeholder);
 
+    // Ratings 1–16
     for (let i = 1; i <= 16; i++) {
       const opt = document.createElement('option');
       opt.value = String(i);
       opt.textContent = String(i);
       sel.appendChild(opt);
     }
+
+    // CLEAR ALL OPTION — new
+    const clearOpt = document.createElement('option');
+    clearOpt.value = 'CLEAR_ALL';
+    clearOpt.textContent = '⚠️ Clear ALL confidence ratings';
+    clearOpt.classList.add('text-red-400', 'font-semibold');
+    sel.appendChild(clearOpt);
   });
 }
 
@@ -117,8 +126,34 @@ function refreshConfidenceDisables() {
   });
 }
 
+// ========= CLEAR CONFIDENCE RATINGS =========
+
 confSelects.forEach(sel => {
   sel.addEventListener('change', () => {
+
+    if (sel.value !== 'CLEAR_ALL') return;
+
+    const isFemale = sel.id.includes('w'); // w47w, w52w, etc.
+
+    const ok = confirm(
+      `Are you sure you want to clear ALL confidence ratings for all ${
+        isFemale ? 'women’s' : 'men’s'
+      } classes?`
+    );
+
+    if (!ok) {
+      sel.value = '';
+      return;
+    }
+
+    const targetClassList = isFemale ? femaleClasses : maleClasses;
+
+    // Clear all for that gender
+    targetClassList.forEach(cls => {
+      const cSel = document.getElementById('c' + cls);
+      if (cSel) cSel.value = '';
+    });
+
     refreshConfidenceDisables();
   });
 });
