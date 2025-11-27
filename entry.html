@@ -89,33 +89,56 @@
               <!-- Hidden token (for edits) -->
               <input type="hidden" id="token" name="token" />
 
+              <!-- TOP NAV BUTTONS FOR PAGE 2 (Steps 2 & 3) -->
+              <div id="predictionsTopNav"
+                   class="hidden items-center justify-between pt-3 pb-3 border-b border-gray-700 mb-4">
+                <button type="button" id="topBackBtn"
+                        class="px-3 py-2 rounded-full bg-gray-800 text-xs font-semibold border border-gray-700 hover:bg-gray-700 transition">
+                  Back
+                </button>
+
+                <button type="button" id="topNextBtn"
+                        class="px-4 py-2 rounded-full bg-red-600 text-xs sm:text-sm font-semibold hover:bg-red-500 transition">
+                  Next
+                </button>
+              </div>
+
               <!-- STEP 0: Contact -->
               <div class="step" data-step="0">
                 <div class="space-y-3">
                   <div>
                     <p class="text-sm text-gray-300 mb-4">
-                      Click 
+                      Click
                       <a href="index.html#rulesToggle" target="_blank" rel="noopener noreferrer" class="underline hover:text-gray-200">
-                        here</a> for competition rules and 
+                        here</a> for competition rules and
                       <a href="index.html#prizesToggle" target="_blank" rel="noopener noreferrer" class="underline hover:text-gray-200">
-                        here</a> for our prize list thanks to our sponsors at the 
-                      <a href="https://www.instagram.com/sabadosessionspodcast/?hl=en-gb" 
-                         target="_blank" rel="noopener noreferrer" 
+                        here</a> for our prize list thanks to our sponsors at the
+                      <a href="https://www.instagram.com/sabadosessionspodcast/?hl=en-gb"
+                         target="_blank" rel="noopener noreferrer"
                          class="underline hover:text-gray-200">
                         Sabado Sessions Podcast</a>.
                     </p>
-                    <label for="email" class="block text-sm font-semibold mb-1">Email Address<span class="text-red-500">*</span></label>
-                    <input type="email" id="email" name="email" class="w-full px-3 py-2 rounded-md bg-gray-800 border border-gray-700 text-sm" />
+                    <label for="email" class="block text-sm font-semibold mb-1">
+                      Email Address<span class="text-red-500">*</span>
+                    </label>
+                    <input type="email" id="email" name="email"
+                           class="w-full px-3 py-2 rounded-md bg-gray-800 border border-gray-700 text-sm" />
                     <p id="emailError" class="text-xs text-red-400 mt-1"></p>
                   </div>
                   <div>
                     <label for="instagramHandle" class="block text-sm font-semibold mb-1">Instagram Handle</label>
-                    <input type="text" id="instagramHandle" name="instagramHandle" class="w-full px-3 py-2 rounded-md bg-gray-800 border border-gray-700 text-sm" />
+                    <input type="text" id="instagramHandle" name="instagramHandle"
+                           class="w-full px-3 py-2 rounded-md bg-gray-800 border border-gray-700 text-sm" />
                   </div>
                   <div>
-                    <label for="leaderboardName" class="block text-sm font-semibold mb-1">Leaderboard Name <span class="text-red-500">*</span></label>
-                    <input type="text" id="leaderboardName" name="leaderboardName" class="w-full px-3 py-2 rounded-md bg-gray-800 border border-gray-700 text-sm" />
-                    <p class="text-xs text-gray-400 mt-1">This is how you will appear on the public leaderboard.</p>
+                    <label for="leaderboardName" class="block text-sm font-semibold mb-1">
+                      Leaderboard Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="leaderboardName" name="leaderboardName"
+                           class="w-full px-3 py-2 rounded-md bg-gray-800 border border-gray-700 text-sm" />
+                    <p class="text-xs text-gray-400 mt-1">
+                      This is how you will appear on the public leaderboard.
+                    </p>
                     <p id="leaderboardError" class="text-xs text-red-400 mt-1"></p>
                   </div>
                 </div>
@@ -123,8 +146,11 @@
 
               <!-- STEP 1: Women (8 classes) -->
               <div class="step" data-step="1">
+                <h2 class="text-xs uppercase tracking-wide text-gray-400 mb-1">
+                  Step 2 of 4 — Women’s Predictions
+                </h2>
                 <p class="text-xs text-gray-400 mb-4">
-                  For each class, pick your winner, assign a unique confidence rating from 1 (least confident) to 16 (most), and optionally enter a winning total. Totals are used to calculate accuracy scores which will be used as a 
+                  For each class, pick your winner, assign a unique confidence rating from 1 (least confident) to 16 (most), and optionally enter a winning total. Totals are used to calculate accuracy scores which will be used as a
                   tie-breaker - don't skip if you're in it to win it!
                 </p>
 
@@ -133,8 +159,11 @@
                   <h3 class="font-semibold text-sm mb-2">47 kg Women</h3>
                   <div class="space-y-2">
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Predicted Winner <span class="text-red-500">*</span></label>
-                      <select id="w47w" name="w47w" data-gender="female" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w47w" name="w47w" data-gender="female"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select a lifter…</option>
                         <option>Anais Falcon (325 kg)</option>
                         <option>Sharvari Karnik (322.5 kg)</option>
@@ -145,15 +174,19 @@
                       <p id="w47wError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Confidence Rating (1–16) <span class="text-red-500">*</span></label>
-                      <select id="c47w" name="c47w" class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c47w" name="c47w"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select rating…</option>
                       </select>
                       <p id="c47wError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
                       <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-                      <input type="text" id="t47w" name="t47w" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <input type="text" id="t47w" name="t47w"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
                       <p id="t47wError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                   </div>
@@ -164,8 +197,11 @@
                   <h3 class="font-semibold text-sm mb-2">52 kg Women</h3>
                   <div class="space-y-2">
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Predicted Winner <span class="text-red-500">*</span></label>
-                      <select id="w52w" name="w52w" data-gender="female" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w52w" name="w52w" data-gender="female"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select a lifter…</option>
                         <option>Leoni Tatman (395 kg)</option>
                         <option>Molly Clark (383 kg)</option>
@@ -180,15 +216,19 @@
                       <p id="w52wError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Confidence Rating (1–16) <span class="text-red-500">*</span></label>
-                      <select id="c52w" name="c52w" class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c52w" name="c52w"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select rating…</option>
                       </select>
                       <p id="c52wError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
                       <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-                      <input type="text" id="t52w" name="t52w" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <input type="text" id="t52w" name="t52w"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
                       <p id="t52wError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                   </div>
@@ -199,8 +239,11 @@
                   <h3 class="font-semibold text-sm mb-2">57 kg Women</h3>
                   <div class="space-y-2">
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Predicted Winner <span class="text-red-500">*</span></label>
-                      <select id="w57w" name="w57w" data-gender="female" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w57w" name="w57w" data-gender="female"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select a lifter…</option>
                         <option>Joy Nnamani (506 kg)</option>
                         <option>Bobbie Butters (491.5 kg)</option>
@@ -220,15 +263,19 @@
                       <p id="w57wError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Confidence Rating (1–16) <span class="text-red-500">*</span></label>
-                      <select id="c57w" name="c57w" class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c57w" name="c57w"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select rating…</option>
                       </select>
                       <p id="c57wError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
                       <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-                      <input type="text" id="t57w" name="t57w" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <input type="text" id="t57w" name="t57w"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
                       <p id="t57wError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                   </div>
@@ -239,8 +286,11 @@
                   <h3 class="font-semibold text-sm mb-2">63 kg Women</h3>
                   <div class="space-y-2">
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Predicted Winner <span class="text-red-500">*</span></label>
-                      <select id="w63w" name="w63w" data-gender="female" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w63w" name="w63w" data-gender="female"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select a lifter…</option>
                         <option>Sabrina Downes (487.5 kg)</option>
                         <option>Makeda Vidal (480.5 kg)</option>
@@ -260,15 +310,19 @@
                       <p id="w63wError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Confidence Rating (1–16) <span class="text-red-500">*</span></label>
-                      <select id="c63w" name="c63w" class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c63w" name="c63w"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select rating…</option>
                       </select>
                       <p id="c63wError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
                       <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-                      <input type="text" id="t63w" name="t63w" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <input type="text" id="t63w" name="t63w"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
                       <p id="t63wError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                   </div>
@@ -279,8 +333,11 @@
                   <h3 class="font-semibold text-sm mb-2">69 kg Women</h3>
                   <div class="space-y-2">
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Predicted Winner <span class="text-red-500">*</span></label>
-                      <select id="w69w" name="w69w" data-gender="female" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w69w" name="w69w" data-gender="female"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select a lifter…</option>
                         <option>Annie Nelson (530 kg)</option>
                         <option>Mariella Fisher (485 kg)</option>
@@ -300,15 +357,19 @@
                       <p id="w69wError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Confidence Rating (1–16) <span class="text-red-500">*</span></label>
-                      <select id="c69w" name="c69w" class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c69w" name="c69w"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select rating…</option>
                       </select>
                       <p id="c69wError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
                       <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-                      <input type="text" id="t69w" name="t69w" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <input type="text" id="t69w" name="t69w"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
                       <p id="t69wError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                   </div>
@@ -319,8 +380,11 @@
                   <h3 class="font-semibold text-sm mb-2">76 kg Women</h3>
                   <div class="space-y-2">
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Predicted Winner <span class="text-red-500">*</span></label>
-                      <select id="w76w" name="w76w" data-gender="female" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w76w" name="w76w" data-gender="female"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select a lifter…</option>
                         <option>Temitope Nuga (532.5 kg)</option>
                         <option>Ayana Porteous-Simpson (530 kg)</option>
@@ -339,15 +403,19 @@
                       <p id="w76wError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Confidence Rating (1–16) <span class="text-red-500">*</span></label>
-                      <select id="c76w" name="c76w" class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c76w" name="c76w"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select rating…</option>
                       </select>
                       <p id="c76wError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
                       <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-                      <input type="text" id="t76w" name="t76w" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <input type="text" id="t76w" name="t76w"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
                       <p id="t76wError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                   </div>
@@ -358,8 +426,11 @@
                   <h3 class="font-semibold text-sm mb-2">84 kg Women</h3>
                   <div class="space-y-2">
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Predicted Winner <span class="text-red-500">*</span></label>
-                      <select id="w84w" name="w84w" data-gender="female" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w84w" name="w84w" data-gender="female"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select a lifter…</option>
                         <option>Ziana Azariah (600 kg)</option>
                         <option>Melina Irawo (555.5 kg)</option>
@@ -378,15 +449,19 @@
                       <p id="w84wError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Confidence Rating (1–16) <span class="text-red-500">*</span></label>
-                      <select id="c84w" name="c84w" class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c84w" name="c84w"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select rating…</option>
                       </select>
                       <p id="c84wError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
                       <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-                      <input type="text" id="t84w" name="t84w" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <input type="text" id="t84w" name="t84w"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
                       <p id="t84wError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                   </div>
@@ -397,8 +472,11 @@
                   <h3 class="font-semibold text-sm mb-2">84+ kg Women</h3>
                   <div class="space-y-2">
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Predicted Winner <span class="text-red-500">*</span></label>
-                      <select id="w84pw" name="w84pw" data-gender="female" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w84pw" name="w84pw" data-gender="female"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select a lifter…</option>
                         <option>Aquinn Onuoha (618.5 kg)</option>
                         <option>Toyosi Omotoso (615.5 kg)</option>
@@ -418,30 +496,41 @@
                       <p id="w84pwError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Confidence Rating (1–16) <span class="text-red-500">*</span></label>
-                      <select id="c84pw" name="c84pw" class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c84pw" name="c84pw"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select rating…</option>
                       </select>
                       <p id="c84pwError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
                       <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-                      <input type="text" id="t84pw" name="t84pw" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <input type="text" id="t84pw" name="t84pw"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
                       <p id="t84pwError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- STEP 2: Men (same pattern, IDs: w59m/c59m/t59m ... w120pm/c120pm/t120pm) -->
+              <!-- STEP 2: Men -->
               <div class="step" data-step="2">
+                <h2 class="text-xs uppercase tracking-wide text-gray-400 mb-1 mt-4">
+                  Step 3 of 4 — Men’s Predictions
+                </h2>
+
                 <!-- 59 kg Men -->
                 <div class="border border-gray-700 rounded-md p-3 mb-3">
                   <h3 class="font-semibold text-sm mb-2">59 kg Men</h3>
                   <div class="space-y-2">
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Predicted Winner <span class="text-red-500">*</span></label>
-                      <select id="w59m" name="w59m" data-gender="male" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w59m" name="w59m" data-gender="male"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select a lifter…</option>
                         <option>Salman Desai (435 kg)</option>
                         <option>Samuel Parkin (432.5 kg)</option>
@@ -451,15 +540,19 @@
                       <p id="w59mError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Confidence Rating (1–16) <span class="text-red-500">*</span></label>
-                      <select id="c59m" name="c59m" class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c59m" name="c59m"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select rating…</option>
                       </select>
                       <p id="c59mError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
                       <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-                      <input type="text" id="t59m" name="t59m" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <input type="text" id="t59m" name="t59m"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
                       <p id="t59mError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                   </div>
@@ -470,8 +563,11 @@
                   <h3 class="font-semibold text-sm mb-2">66 kg Men</h3>
                   <div class="space-y-2">
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Predicted Winner <span class="text-red-500">*</span></label>
-                      <select id="w66m" name="w66m" data-gender="male" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w66m" name="w66m" data-gender="male"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select a lifter…</option>
                         <option>Joseph Diva (650.5 kg)</option>
                         <option>Benedict Grant (630 kg)</option>
@@ -484,15 +580,19 @@
                       <p id="w66mError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Confidence Rating (1–16) <span class="text-red-500">*</span></label>
-                      <select id="c66m" name="c66m" class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c66m" name="c66m"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select rating…</option>
                       </select>
                       <p id="c66mError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
                       <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-                      <input type="text" id="t66m" name="t66m" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <input type="text" id="t66m" name="t66m"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
                       <p id="t66mError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                   </div>
@@ -503,8 +603,11 @@
                   <h3 class="font-semibold text-sm mb-2">74 kg Men</h3>
                   <div class="space-y-2">
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Predicted Winner <span class="text-red-500">*</span></label>
-                      <select id="w74m" name="w74m" data-gender="male" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w74m" name="w74m" data-gender="male"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select a lifter…</option>
                         <option>Sam Dew (712.5 kg)</option>
                         <option>Krishan Mistry (707.5 kg)</option>
@@ -522,15 +625,19 @@
                       <p id="w74mError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Confidence Rating (1–16) <span class="text-red-500">*</span></label>
-                      <select id="c74m" name="c74m" class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c74m" name="c74m"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select rating…</option>
                       </select>
                       <p id="c74mError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
                       <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-                      <input type="text" id="t74m" name="t74m" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <input type="text" id="t74m" name="t74m"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
                       <p id="t74mError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                   </div>
@@ -541,8 +648,11 @@
                   <h3 class="font-semibold text-sm mb-2">83 kg Men</h3>
                   <div class="space-y-2">
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Predicted Winner <span class="text-red-500">*</span></label>
-                      <select id="w83m" name="w83m" data-gender="male" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w83m" name="w83m" data-gender="male"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select a lifter…</option>
                         <option>Jurins Kengamu (872.5 kg)</option>
                         <option>Ade Omisakin (850 kg)</option>
@@ -562,15 +672,19 @@
                       <p id="w83mError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Confidence Rating (1–16) <span class="text-red-500">*</span></label>
-                      <select id="c83m" name="c83m" class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c83m" name="c83m"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select rating…</option>
                       </select>
                       <p id="c83mError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
                       <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-                      <input type="text" id="t83m" name="t83m" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <input type="text" id="t83m" name="t83m"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
                       <p id="t83mError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                   </div>
@@ -581,8 +695,11 @@
                   <h3 class="font-semibold text-sm mb-2">93 kg Men</h3>
                   <div class="space-y-2">
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Predicted Winner <span class="text-red-500">*</span></label>
-                      <select id="w93m" name="w93m" data-gender="male" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w93m" name="w93m" data-gender="male"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select a lifter…</option>
                         <option>Christian Ayandokun (878.5 kg)</option>
                         <option>Maxwell Gyamfi (850 kg)</option>
@@ -602,15 +719,19 @@
                       <p id="w93mError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Confidence Rating (1–16) <span class="text-red-500">*</span></label>
-                      <select id="c93m" name="c93m" class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c93m" name="c93m"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select rating…</option>
                       </select>
                       <p id="c93mError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
                       <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-                      <input type="text" id="t93m" name="t93m" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <input type="text" id="t93m" name="t93m"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
                       <p id="t93mError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                   </div>
@@ -621,8 +742,11 @@
                   <h3 class="font-semibold text-sm mb-2">105 kg Men</h3>
                   <div class="space-y-2">
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Predicted Winner <span class="text-red-500">*</span></label>
-                      <select id="w105m" name="w105m" data-gender="male" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w105m" name="w105m" data-gender="male"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select a lifter…</option>
                         <option>Nathaniel Massiah (895 kg)</option>
                         <option>Sanchez Dillon (882.5 kg)</option>
@@ -640,15 +764,19 @@
                       <p id="w105mError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Confidence Rating (1–16) <span class="text-red-500">*</span></label>
-                      <select id="c105m" name="c105m" class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c105m" name="c105m"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select rating…</option>
                       </select>
                       <p id="c105mError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
                       <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-                      <input type="text" id="t105m" name="t105m" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <input type="text" id="t105m" name="t105m"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
                       <p id="t105mError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                   </div>
@@ -659,8 +787,11 @@
                   <h3 class="font-semibold text-sm mb-2">120 kg Men</h3>
                   <div class="space-y-2">
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Predicted Winner <span class="text-red-500">*</span></label>
-                      <select id="w120m" name="w120m" data-gender="male" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w120m" name="w120m" data-gender="male"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select a lifter…</option>
                         <option>Joshua Ngoka (945.5 kg)</option>
                         <option>Abdul Majeed Sulayman (930 kg)</option>
@@ -678,15 +809,19 @@
                       <p id="w120mError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Confidence Rating (1–16) <span class="text-red-500">*</span></label>
-                      <select id="c120m" name="c120m" class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c120m" name="c120m"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select rating…</option>
                       </select>
                       <p id="c120mError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
                       <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-                      <input type="text" id="t120m" name="t120m" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <input type="text" id="t120m" name="t120m"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
                       <p id="t120mError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                   </div>
@@ -697,8 +832,11 @@
                   <h3 class="font-semibold text-sm mb-2">120+ kg Men</h3>
                   <div class="space-y-2">
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Predicted Winner <span class="text-red-500">*</span></label>
-                      <select id="w120pm" name="w120pm" data-gender="male" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w120pm" name="w120pm" data-gender="male"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select a lifter…</option>
                         <option>Ajay Sharma (1,001 kg)</option>
                         <option>Paul Kirkbride-Richards (960 kg)</option>
@@ -714,15 +852,19 @@
                       <p id="w120pmError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
-                      <label class="text-xs font-semibold mb-1 block">Confidence Rating (1–16) <span class="text-red-500">*</span></label>
-                      <select id="c120pm" name="c120pm" class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c120pm" name="c120pm"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
                         <option value="">Select rating…</option>
                       </select>
                       <p id="c120pmError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                     <div>
                       <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-                      <input type="text" id="t120pm" name="t120pm" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <input type="text" id="t120pm" name="t120pm"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
                       <p id="t120pmError" class="text-xs text-red-400 mt-1"></p>
                     </div>
                   </div>
@@ -736,14 +878,20 @@
                 </p>
                 <div class="space-y-3">
                   <div>
-                    <label for="femaleBest" class="text-xs font-semibold mb-1 block">Female Best Lifter <span class="text-red-500">*</span></label>
-                    <input type="text" id="femaleBest" name="femaleBest" list="femaleBestList" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                    <label for="femaleBest" class="text-xs font-semibold mb-1 block">
+                      Female Best Lifter <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="femaleBest" name="femaleBest" list="femaleBestList"
+                           class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
                     <datalist id="femaleBestList"></datalist>
                     <p id="femaleBestError" class="text-xs text-red-400 mt-1"></p>
                   </div>
                   <div>
-                    <label for="maleBest" class="text-xs font-semibold mb-1 block">Male Best Lifter <span class="text-red-500">*</span></label>
-                    <input type="text" id="maleBest" name="maleBest" list="maleBestList" class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                    <label for="maleBest" class="text-xs font-semibold mb-1 block">
+                      Male Best Lifter <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="maleBest" name="maleBest" list="maleBestList"
+                           class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
                     <datalist id="maleBestList"></datalist>
                     <p id="maleBestError" class="text-xs text-red-400 mt-1"></p>
                   </div>
@@ -756,7 +904,7 @@
                 </p>
               </div>
 
-              <!-- Navigation buttons (page-level) -->
+              <!-- Navigation buttons (BOTTOM) -->
               <div class="flex items-center justify-between pt-4 border-t border-gray-700 mt-4">
                 <button type="button" id="backBtn"
                         class="px-3 py-2 rounded-full bg-gray-800 text-xs font-semibold border border-gray-700 hover:bg-gray-700 transition">
@@ -779,52 +927,43 @@
       <!-- View Metrics Button -->
       <div class="flex justify-center mt-8">
         <a href="metrics.html"
-          class="inline-flex items-center justify-center bg-gray-800/60 border border-gray-700
-                 text-gray-200 font-semibold px-6 py-3 rounded-full backdrop-blur-sm shadow-lg
-                 hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
+           class="inline-flex items-center justify-center bg-gray-800/60 border border-gray-700
+                  text-gray-200 font-semibold px-6 py-3 rounded-full backdrop-blur-sm shadow-lg
+                  hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
           View Metrics
         </a>
       </div>
 
-      <!-- Floating FAB pair (Back to Top + Scroll to Bottom) -->
-      <div id="fabContainer"
-           class="fixed right-4 bottom-20 flex flex-col gap-3 z-40 opacity-0 pointer-events-none transition-opacity duration-300">
-        <button id="fabTop"
+      <!-- Bottom Back to Top Button (existing behaviour) -->
+      <div class="flex justify-center mt-8">
+        <button id="bottomBackToTop"
                 class="bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full
                        flex items-center justify-center backdrop-blur-sm shadow-lg
                        hover:bg-gray-700/70 hover:text-red-400 transition">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
-          </svg>
-        </button>
-        <button id="fabBottom"
-                class="bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full
-                       flex items-center justify-center backdrop-blur-sm shadow-lg
-                       hover:bg-gray-700/70 hover:text-red-400 transition">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
-               viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
       </div>
 
-      <!-- Bottom pair: Back to Top + Scroll to Bottom -->
-      <div class="flex justify-center gap-4 mt-8">
-        <button id="bottomScrollTop"
-                class="bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full
+      <!-- FLOATING FAB: Back to Top / Scroll to Bottom -->
+      <div id="scrollFab"
+           class="fixed right-4 bottom-20 flex flex-col gap-3 z-40 opacity-0 pointer-events-none transition-opacity duration-300">
+        <button id="fabScrollTop"
+                class="bg-gray-800/70 border border-gray-700 text-red-500 w-10 h-10 rounded-full
                        flex items-center justify-center backdrop-blur-sm shadow-lg
-                       hover:bg-gray-700/70 hover:text-red-400 transition">
+                       hover:bg-gray-700/80 hover:text-red-400 transition">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
           </svg>
         </button>
 
-        <button id="bottomScrollBottom"
-                class="bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full
+        <button id="fabScrollBottom"
+                class="bg-gray-800/70 border border-gray-700 text-red-500 w-10 h-10 rounded-full
                        flex items-center justify-center backdrop-blur-sm shadow-lg
-                       hover:bg-gray-700/70 hover:text-red-400 transition">
+                       hover:bg-gray-700/80 hover:text-red-400 transition">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
@@ -873,24 +1012,21 @@
     });
     toggleMenu(false);
 
-    // Spotify gate: hide overlay after opening Spotify (try to force new tab)
+    // Spotify gate: ensure new tab where possible + remember pass
     const spotifyLink = document.getElementById('spotify-link');
     const spotifyLock = document.getElementById('spotify-lock');
     const softGateImage = document.getElementById('softGateImage');
 
     spotifyLink.addEventListener('click', (e) => {
-      e.preventDefault(); // allow us to control the open action
-
+      e.preventDefault();
       const url = spotifyLink.href;
 
-      // Make sure the gate never shows again
+      // Never show gate again this session
       sessionStorage.setItem('spotifyPassed', '1');
       spotifyLock.classList.add('hidden');
 
-      // MAXIMUM chance of Android opening a new tab
+      // Try to force new tab (especially on Android)
       const opened = window.open(url, '_blank');
-
-      // Fallback: if Android blocked new tab, open same tab
       if (!opened) {
         window.location.href = url;
       }
@@ -902,62 +1038,75 @@
       }
     });
 
-    // Floating FABs + bottom buttons
-    const fabContainer = document.getElementById('fabContainer');
-    const fabTop = document.getElementById('fabTop');
-    const fabBottom = document.getElementById('fabBottom');
-    const bottomScrollTop = document.getElementById('bottomScrollTop');
-    const bottomScrollBottom = document.getElementById('bottomScrollBottom');
-
-    function scrollTopSmooth() {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Bottom Back to Top
+    const bottomBackToTop = document.getElementById('bottomBackToTop');
+    if (bottomBackToTop) {
+      bottomBackToTop.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
     }
 
-    function scrollBottomSmooth() {
-      const docHeight = document.documentElement.scrollHeight;
-      window.scrollTo({ top: docHeight, behavior: 'smooth' });
-    }
+    // Floating FAB scroll behaviour
+    const scrollFab = document.getElementById('scrollFab');
+    const fabScrollTop = document.getElementById('fabScrollTop');
+    const fabScrollBottom = document.getElementById('fabScrollBottom');
 
-    if (fabTop) fabTop.addEventListener('click', scrollTopSmooth);
-    if (fabBottom) fabBottom.addEventListener('click', scrollBottomSmooth);
-    if (bottomScrollTop) bottomScrollTop.addEventListener('click', scrollTopSmooth);
-    if (bottomScrollBottom) bottomScrollBottom.addEventListener('click', scrollBottomSmooth);
-
-    window.addEventListener('scroll', () => {
+    function updateFabVisibility() {
+      if (!scrollFab) return;
       const scrollY = window.scrollY || window.pageYOffset;
-      const docHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
-      const winHeight = window.innerHeight || document.documentElement.clientHeight;
-      const distanceFromBottom = docHeight - (scrollY + winHeight);
+      const docHeight = document.documentElement.scrollHeight;
+      const winHeight = window.innerHeight;
 
-      if (scrollY > 300 && distanceFromBottom > 300) {
-        fabContainer.classList.remove('opacity-0','pointer-events-none');
-        fabContainer.classList.add('opacity-100');
+      const fromTop = scrollY;
+      const fromBottom = docHeight - (scrollY + winHeight);
+      const threshold = 200;
+
+      if (fromTop > threshold && fromBottom > threshold) {
+        scrollFab.classList.remove('opacity-0', 'pointer-events-none');
+        scrollFab.classList.add('opacity-100');
       } else {
-        fabContainer.classList.add('opacity-0','pointer-events-none');
-        fabContainer.classList.remove('opacity-100');
+        scrollFab.classList.add('opacity-0', 'pointer-events-none');
+        scrollFab.classList.remove('opacity-100');
       }
-    });
+    }
+
+    if (fabScrollTop) {
+      fabScrollTop.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+
+    if (fabScrollBottom) {
+      fabScrollBottom.addEventListener('click', () => {
+        const docHeight = document.documentElement.scrollHeight;
+        window.scrollTo({ top: docHeight, behavior: 'smooth' });
+      });
+    }
+
+    window.addEventListener('scroll', updateFabVisibility);
+    window.addEventListener('resize', updateFabVisibility);
+    updateFabVisibility();
   </script>
 
-  <!-- EMAIL EXISTS POPUP -->
+  <!-- EMAIL EXISTS POPUP (still here, even if JS currently uses confirm) -->
   <div id="emailExistsModal"
        class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[999] hidden">
     <div class="bg-gray-900 border border-gray-700 rounded-xl p-6 w-80 text-center">
-        <h2 class="text-lg font-semibold text-red-400 mb-3">Email Already Used</h2>
-        <p class="text-sm text-gray-300 mb-4">
-            This email already has an entry.<br>
-            Would you like us to resend your private edit link?
-        </p>
+      <h2 class="text-lg font-semibold text-red-400 mb-3">Email Already Used</h2>
+      <p class="text-sm text-gray-300 mb-4">
+        This email already has an entry.<br>
+        Would you like us to resend your private edit link?
+      </p>
 
-        <button id="resendLinkBtn"
-                class="w-full py-2 rounded-lg bg-red-600 font-semibold hover:bg-red-500 mb-2">
-            Send My Link
-        </button>
+      <button id="resendLinkBtn"
+              class="w-full py-2 rounded-lg bg-red-600 font-semibold hover:bg-red-500 mb-2">
+        Send My Link
+      </button>
 
-        <button id="cancelEmailExistsBtn"
-                class="w-full py-2 rounded-lg bg-gray-700 font-semibold hover:bg-gray-600">
-            Cancel
-        </button>
+      <button id="cancelEmailExistsBtn"
+              class="w-full py-2 rounded-lg bg-gray-700 font-semibold hover:bg-gray-600">
+        Cancel
+      </button>
     </div>
   </div>
 </body>
