@@ -89,7 +89,7 @@
               <!-- Hidden token (for edits) -->
               <input type="hidden" id="token" name="token" />
 
-              <!-- PAGE 2 — TOP NAV BAR (hidden until step 1 ends) -->
+              <!-- PAGE 2 — TOP NAV BAR (shown for steps 1 & 2 only) -->
               <div id="predictionsTopNav"
                    class="hidden flex items-center justify-between py-3 border-b border-gray-700 mb-4">
                 <button type="button" id="topBackBtn"
@@ -98,7 +98,7 @@
                 </button>
 
                 <span class="text-xs uppercase tracking-wide text-gray-400">
-                  Steps 2 & 3 of 4 — Predictions
+                  Steps 2 &amp; 3 of 4 — Predictions
                 </span>
 
                 <button type="button" id="topNextBtn"
@@ -108,7 +108,6 @@
               </div>
 
               <!-- STEP 0: Contact -->
-
               <div class="step" data-step="0">
                 <div class="space-y-3">
                   <div>
@@ -150,395 +149,394 @@
               </div>
 
               <!-- STEP 1: Women (8 classes) -->
-
               <div class="step" data-step="1">
-  <h2 class="text-xs uppercase tracking-wide text-gray-400 mb-1">
-    Step 2 of 4 — Women’s Predictions
-  </h2>
-  <p class="text-xs text-gray-400 mb-4">
-    For each class, pick your winner, assign a unique confidence rating from 1 (least confident) 
-    to 16 (most), and optionally enter a winning total. Totals are used to calculate accuracy scores 
-    which will be used as a tie-breaker — don't skip if you're in it to win it!
-  </p>
+                <h2 class="text-xs uppercase tracking-wide text-gray-400 mb-1">
+                  Step 2 of 4 — Women’s Predictions
+                </h2>
+                <p class="text-xs text-gray-400 mb-4">
+                  For each class, pick your winner, assign a unique confidence rating from 1 (least confident) 
+                  to 16 (most), and optionally enter a winning total. Totals are used to calculate accuracy scores 
+                  which will be used as a tie-breaker — don't skip if you're in it to win it!
+                </p>
 
-  <!-- 47 kg Women -->
-  <div class="border border-gray-700 rounded-md p-3 mb-3">
-    <h3 class="font-semibold text-sm mb-2">47 kg Women</h3>
-    <div class="space-y-2">
-      <div>
-        <label class="text-xs font-semibold mb-1 block">
-          Predicted Winner <span class="text-red-500">*</span>
-        </label>
-        <select id="w47w" name="w47w" data-gender="female"
-                class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
-          <option value="">Select a lifter…</option>
-          <option>Anais Falcon (325 kg)</option>
-          <option>Sharvari Karnik (322.5 kg)</option>
-          <option>Nikola Murray (320 kg)</option>
-          <option>Lauren Murray (307.5 kg)</option>
-          <option>Gigi Nicolson (305 kg)</option>
-        </select>
-        <p id="w47wError" class="text-xs text-red-400 mt-1"></p>
-      </div>
+                <!-- 47 kg Women -->
+                <div class="border border-gray-700 rounded-md p-3 mb-3">
+                  <h3 class="font-semibold text-sm mb-2">47 kg Women</h3>
+                  <div class="space-y-2">
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w47w" name="w47w" data-gender="female"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                        <option value="">Select a lifter…</option>
+                        <option>Anais Falcon (325 kg)</option>
+                        <option>Sharvari Karnik (322.5 kg)</option>
+                        <option>Nikola Murray (320 kg)</option>
+                        <option>Lauren Murray (307.5 kg)</option>
+                        <option>Gigi Nicolson (305 kg)</option>
+                      </select>
+                      <p id="w47wError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
 
-      <div>
-        <label class="text-xs font-semibold mb-1 block">
-          Confidence Rating (1–16) <span class="text-red-500">*</span>
-        </label>
-        <select id="c47w" name="c47w"
-                class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
-          <option value="">Select rating…</option>
-        </select>
-        <p id="c47wError" class="text-xs text-red-400 mt-1"></p>
-      </div>
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c47w" name="c47w"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                        <option value="">Select rating…</option>
+                      </select>
+                      <p id="c47wError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
 
-      <div>
-        <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-        <input type="text" id="t47w" name="t47w"
-               class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
-        <p id="t47wError" class="text-xs text-red-400 mt-1"></p>
-      </div>
-    </div>
-  </div>
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">Winning Total</label>
+                      <input type="text" id="t47w" name="t47w"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <p id="t47wError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
+                  </div>
+                </div>
 
-  <!-- 52 kg Women -->
-  <div class="border border-gray-700 rounded-md p-3 mb-3">
-    <h3 class="font-semibold text-sm mb-2">52 kg Women</h3>
-    <div class="space-y-2">
-      <div>
-        <label class="text-xs font-semibold mb-1 block">
-          Predicted Winner <span class="text-red-500">*</span>
-        </label>
-        <select id="w52w" name="w52w" data-gender="female"
-                class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
-          <option value="">Select a lifter…</option>
-          <option>Leoni Tatman (395 kg)</option>
-          <option>Molly Clark (383 kg)</option>
-          <option>Emily Caton (382.5 kg)</option>
-          <option>Cherry Yeung-Murray (372.5 kg)</option>
-          <option>Kayley Phillips (355 kg)</option>
-          <option>Alizée Tran (347.5 kg)</option>
-          <option>Christina Bull (320 kg)</option>
-          <option>Amethyst Johnson (320 kg)</option>
-          <option>Aimee Law (315 kg)</option>
-        </select>
-        <p id="w52wError" class="text-xs text-red-400 mt-1"></p>
-      </div>
+                <!-- 52 kg Women -->
+                <div class="border border-gray-700 rounded-md p-3 mb-3">
+                  <h3 class="font-semibold text-sm mb-2">52 kg Women</h3>
+                  <div class="space-y-2">
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w52w" name="w52w" data-gender="female"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                        <option value="">Select a lifter…</option>
+                        <option>Leoni Tatman (395 kg)</option>
+                        <option>Molly Clark (383 kg)</option>
+                        <option>Emily Caton (382.5 kg)</option>
+                        <option>Cherry Yeung-Murray (372.5 kg)</option>
+                        <option>Kayley Phillips (355 kg)</option>
+                        <option>Alizée Tran (347.5 kg)</option>
+                        <option>Christina Bull (320 kg)</option>
+                        <option>Amethyst Johnson (320 kg)</option>
+                        <option>Aimee Law (315 kg)</option>
+                      </select>
+                      <p id="w52wError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
 
-      <div>
-        <label class="text-xs font-semibold mb-1 block">
-          Confidence Rating (1–16) <span class="text-red-500">*</span>
-        </label>
-        <select id="c52w" name="c52w"
-                class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
-          <option value="">Select rating…</option>
-        </select>
-        <p id="c52wError" class="text-xs text-red-400 mt-1"></p>
-      </div>
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c52w" name="c52w"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                        <option value="">Select rating…</option>
+                      </select>
+                      <p id="c52wError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
 
-      <div>
-        <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-        <input type="text" id="t52w" name="t52w"
-               class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
-        <p id="t52wError" class="text-xs text-red-400 mt-1"></p>
-      </div>
-    </div>
-  </div>
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">Winning Total</label>
+                      <input type="text" id="t52w" name="t52w"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <p id="t52wError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
+                  </div>
+                </div>
 
-  <!-- 57 kg Women -->
-  <div class="border border-gray-700 rounded-md p-3 mb-3">
-    <h3 class="font-semibold text-sm mb-2">57 kg Women</h3>
-    <div class="space-y-2">
-      <div>
-        <label class="text-xs font-semibold mb-1 block">
-          Predicted Winner <span class="text-red-500">*</span>
-        </label>
-        <select id="w57w" name="w57w" data-gender="female"
-                class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
-          <option value="">Select a lifter…</option>
-          <option>Joy Nnamani (506 kg)</option>
-          <option>Bobbie Butters (491.5 kg)</option>
-          <option>Adejoke Adetayo (478 kg)</option>
-          <option>Caitlin Baxter (432.5 kg)</option>
-          <option>Katie Rimell (402.5 kg)</option>
-          <option>Sveva Galizia (395 kg)</option>
-          <option>Yana Lyntovska (390 kg)</option>
-          <option>Becky Clarke (385.5 kg)</option>
-          <option>Natalie Jeal (380 kg)</option>
-          <option>Kelly Canones (355 kg)</option>
-          <option>Morag Campbell (347.5 kg)</option>
-          <option>Holly Judge (342.5 kg)</option>
-          <option>Nasmeen Imran (337.5 kg)</option>
-          <option>Chloe Cheevers (330.5 kg)</option>
-        </select>
-        <p id="w57wError" class="text-xs text-red-400 mt-1"></p>
-      </div>
+                <!-- 57 kg Women -->
+                <div class="border border-gray-700 rounded-md p-3 mb-3">
+                  <h3 class="font-semibold text-sm mb-2">57 kg Women</h3>
+                  <div class="space-y-2">
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w57w" name="w57w" data-gender="female"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                        <option value="">Select a lifter…</option>
+                        <option>Joy Nnamani (506 kg)</option>
+                        <option>Bobbie Butters (491.5 kg)</option>
+                        <option>Adejoke Adetayo (478 kg)</option>
+                        <option>Caitlin Baxter (432.5 kg)</option>
+                        <option>Katie Rimell (402.5 kg)</option>
+                        <option>Sveva Galizia (395 kg)</option>
+                        <option>Yana Lyntovska (390 kg)</option>
+                        <option>Becky Clarke (385.5 kg)</option>
+                        <option>Natalie Jeal (380 kg)</option>
+                        <option>Kelly Canones (355 kg)</option>
+                        <option>Morag Campbell (347.5 kg)</option>
+                        <option>Holly Judge (342.5 kg)</option>
+                        <option>Nasmeen Imran (337.5 kg)</option>
+                        <option>Chloe Cheevers (330.5 kg)</option>
+                      </select>
+                      <p id="w57wError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
 
-      <div>
-        <label class="text-xs font-semibold mb-1 block">
-          Confidence Rating (1–16) <span class="text-red-500">*</span>
-        </label>
-        <select id="c57w" name="c57w"
-                class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
-          <option value="">Select rating…</option>
-        </select>
-        <p id="c57wError" class="text-xs text-red-400 mt-1"></p>
-      </div>
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c57w" name="c57w"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                        <option value="">Select rating…</option>
+                      </select>
+                      <p id="c57wError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
 
-      <div>
-        <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-        <input type="text" id="t57w" name="t57w"
-               class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
-        <p id="t57wError" class="text-xs text-red-400 mt-1"></p>
-      </div>
-    </div>
-  </div>
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">Winning Total</label>
+                      <input type="text" id="t57w" name="t57w"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <p id="t57wError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
+                  </div>
+                </div>
 
-  <!-- 63 kg Women -->
-  <div class="border border-gray-700 rounded-md p-3 mb-3">
-    <h3 class="font-semibold text-sm mb-2">63 kg Women</h3>
-    <div class="space-y-2">
-      <div>
-        <label class="text-xs font-semibold mb-1 block">
-          Predicted Winner <span class="text-red-500">*</span>
-        </label>
-        <select id="w63w" name="w63w" data-gender="female"
-                class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
-          <option value="">Select a lifter…</option>
-          <option>Sabrina Downes (487.5 kg)</option>
-          <option>Makeda Vidal (480.5 kg)</option>
-          <option>Suzanne Daniel (470 kg)</option>
-          <option>Kathleen Smartt (447.5 kg)</option>
-          <option>Tara Pigott (447.5 kg)</option>
-          <option>Hannah Yardy (447.5 kg)</option>
-          <option>Hannah Clayton (442.5 kg)</option>
-          <option>Jessica Conti (422.5 kg)</option>
-          <option>Lisa Kells (407.5 kg)</option>
-          <option>Claudia Nicolson (407.5 kg)</option>
-          <option>Katie Roberts (400 kg)</option>
-          <option>Robyn Rocks (362.5 kg)</option>
-          <option>Catriona Armstrong (347.5 kg)</option>
-          <option>Leigh-Ann McQuillan (322.5 kg)</option>
-        </select>
-        <p id="w63wError" class="text-xs text-red-400 mt-1"></p>
-      </div>
+                <!-- 63 kg Women -->
+                <div class="border border-gray-700 rounded-md p-3 mb-3">
+                  <h3 class="font-semibold text-sm mb-2">63 kg Women</h3>
+                  <div class="space-y-2">
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w63w" name="w63w" data-gender="female"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                        <option value="">Select a lifter…</option>
+                        <option>Sabrina Downes (487.5 kg)</option>
+                        <option>Makeda Vidal (480.5 kg)</option>
+                        <option>Suzanne Daniel (470 kg)</option>
+                        <option>Kathleen Smartt (447.5 kg)</option>
+                        <option>Tara Pigott (447.5 kg)</option>
+                        <option>Hannah Yardy (447.5 kg)</option>
+                        <option>Hannah Clayton (442.5 kg)</option>
+                        <option>Jessica Conti (422.5 kg)</option>
+                        <option>Lisa Kells (407.5 kg)</option>
+                        <option>Claudia Nicolson (407.5 kg)</option>
+                        <option>Katie Roberts (400 kg)</option>
+                        <option>Robyn Rocks (362.5 kg)</option>
+                        <option>Catriona Armstrong (347.5 kg)</option>
+                        <option>Leigh-Ann McQuillan (322.5 kg)</option>
+                      </select>
+                      <p id="w63wError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
 
-      <div>
-        <label class="text-xs font-semibold mb-1 block">
-          Confidence Rating (1–16) <span class="text-red-500">*</span>
-        </label>
-        <select id="c63w" name="c63w"
-                class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
-          <option value="">Select rating…</option>
-        </select>
-        <p id="c63wError" class="text-xs text-red-400 mt-1"></p>
-      </div>
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c63w" name="c63w"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                        <option value="">Select rating…</option>
+                      </select>
+                      <p id="c63wError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
 
-      <div>
-        <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-        <input type="text" id="t63w" name="t63w"
-               class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
-        <p id="t63wError" class="text-xs text-red-400 mt-1"></p>
-      </div>
-    </div>
-  </div>
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">Winning Total</label>
+                      <input type="text" id="t63w" name="t63w"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <p id="t63wError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
+                  </div>
+                </div>
 
-  <!-- 69 kg Women -->
-  <div class="border border-gray-700 rounded-md p-3 mb-3">
-    <h3 class="font-semibold text-sm mb-2">69 kg Women</h3>
-    <div class="space-y-2">
-      <div>
-        <label class="text-xs font-semibold mb-1 block">
-          Predicted Winner <span class="text-red-500">*</span>
-        </label>
-        <select id="w69w" name="w69w" data-gender="female"
-                class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
-          <option value="">Select a lifter…</option>
-          <option>Annie Nelson (530 kg)</option>
-          <option>Mariella Fisher (485 kg)</option>
-          <option>Grace Stilgoe (483.5 kg)</option>
-          <option>Benedetta Lupattelli Gencarelli (483 kg)</option>
-          <option>Dominique Cox (470 kg)</option>
-          <option>Helen Almond (470 kg)</option>
-          <option>Amy Craig (462.5 kg)</option>
-          <option>Katherine Brennan (460 kg)</option>
-          <option>Christina Kio-Bennett (457.5 kg)</option>
-          <option>Grace Allinson (457.5 kg)</option>
-          <option>Louise Bray (455 kg)</option>
-          <option>Stacie Jones (450 kg)</option>
-          <option>Faye McKie (447.5kg)</option>
-          <option>Dana Suitor (395 kg)</option>
-        </select>
-        <p id="w69wError" class="text-xs text-red-400 mt-1"></p>
-      </div>
+                <!-- 69 kg Women -->
+                <div class="border border-gray-700 rounded-md p-3 mb-3">
+                  <h3 class="font-semibold text-sm mb-2">69 kg Women</h3>
+                  <div class="space-y-2">
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w69w" name="w69w" data-gender="female"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                        <option value="">Select a lifter…</option>
+                        <option>Annie Nelson (530 kg)</option>
+                        <option>Mariella Fisher (485 kg)</option>
+                        <option>Grace Stilgoe (483.5 kg)</option>
+                        <option>Benedetta Lupattelli Gencarelli (483 kg)</option>
+                        <option>Dominique Cox (470 kg)</option>
+                        <option>Helen Almond (470 kg)</option>
+                        <option>Amy Craig (462.5 kg)</option>
+                        <option>Katherine Brennan (460 kg)</option>
+                        <option>Christina Kio-Bennett (457.5 kg)</option>
+                        <option>Grace Allinson (457.5 kg)</option>
+                        <option>Louise Bray (455 kg)</option>
+                        <option>Stacie Jones (450 kg)</option>
+                        <option>Faye McKie (447.5kg)</option>
+                        <option>Dana Suitor (395 kg)</option>
+                      </select>
+                      <p id="w69wError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
 
-      <div>
-        <label class="text-xs font-semibold mb-1 block">
-          Confidence Rating (1–16) <span class="text-red-500">*</span>
-        </label>
-        <select id="c69w" name="c69w"
-                class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
-          <option value="">Select rating…</option>
-        </select>
-        <p id="c69wError" class="text-xs text-red-400 mt-1"></p>
-      </div>
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c69w" name="c69w"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                        <option value="">Select rating…</option>
+                      </select>
+                      <p id="c69wError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
 
-      <div>
-        <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-        <input type="text" id="t69w" name="t69w"
-               class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
-        <p id="t69wError" class="text-xs text-red-400 mt-1"></p>
-      </div>
-    </div>
-  </div>
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">Winning Total</label>
+                      <input type="text" id="t69w" name="t69w"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <p id="t69wError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
+                  </div>
+                </div>
 
-  <!-- 76 kg Women -->
-  <div class="border border-gray-700 rounded-md p-3 mb-3">
-    <h3 class="font-semibold text-sm mb-2">76 kg Women</h3>
-    <div class="space-y-2">
-      <div>
-        <label class="text-xs font-semibold mb-1 block">
-          Predicted Winner <span class="text-red-500">*</span>
-        </label>
-        <select id="w76w" name="w76w" data-gender="female"
-                class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
-          <option value="">Select a lifter…</option>
-          <option>Temitope Nuga (532.5 kg)</option>
-          <option>Ayana Porteous-Simpson (530 kg)</option>
-          <option>Bettina Hanlon (520 kg)</option>
-          <option>Llio Godfrey-Flower (519.5 kg)</option>
-          <option>Alice Francis-Freeman (512.5 kg)</option>
-          <option>Romy Grieve (487.5 kg)</option>
-          <option>Aimee Guthrie (485.5 kg)</option>
-          <option>Ella Dronfield (481.5 kg)</option>
-          <option>Indiana Montaque (480 kg)</option>
-          <option>Naomi James (477.5 kg)</option>
-          <option>Millie Mabbutt (453.5 kg)</option>
-          <option>Charleigh Lacey (450 kg)</option>
-          <option>Izzy Hartley (445 kg)</option>
-        </select>
-        <p id="w76wError" class="text-xs text-red-400 mt-1"></p>
-      </div>
+                <!-- 76 kg Women -->
+                <div class="border border-gray-700 rounded-md p-3 mb-3">
+                  <h3 class="font-semibold text-sm mb-2">76 kg Women</h3>
+                  <div class="space-y-2">
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w76w" name="w76w" data-gender="female"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                        <option value="">Select a lifter…</option>
+                        <option>Temitope Nuga (532.5 kg)</option>
+                        <option>Ayana Porteous-Simpson (530 kg)</option>
+                        <option>Bettina Hanlon (520 kg)</option>
+                        <option>Llio Godfrey-Flower (519.5 kg)</option>
+                        <option>Alice Francis-Freeman (512.5 kg)</option>
+                        <option>Romy Grieve (487.5 kg)</option>
+                        <option>Aimee Guthrie (485.5 kg)</option>
+                        <option>Ella Dronfield (481.5 kg)</option>
+                        <option>Indiana Montaque (480 kg)</option>
+                        <option>Naomi James (477.5 kg)</option>
+                        <option>Millie Mabbutt (453.5 kg)</option>
+                        <option>Charleigh Lacey (450 kg)</option>
+                        <option>Izzy Hartley (445 kg)</option>
+                      </select>
+                      <p id="w76wError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
 
-      <div>
-        <label class="text-xs font-semibold mb-1 block">
-          Confidence Rating (1–16) <span class="text-red-500">*</span>
-        </label>
-        <select id="c76w" name="c76w"
-                class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
-          <option value="">Select rating…</option>
-        </select>
-        <p id="c76wError" class="text-xs text-red-400 mt-1"></p>
-      </div>
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c76w" name="c76w"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                        <option value="">Select rating…</option>
+                      </select>
+                      <p id="c76wError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
 
-      <div>
-        <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-        <input type="text" id="t76w" name="t76w"
-               class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
-        <p id="t76wError" class="text-xs text-red-400 mt-1"></p>
-      </div>
-    </div>
-  </div>
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">Winning Total</label>
+                      <input type="text" id="t76w" name="t76w"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <p id="t76wError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
+                  </div>
+                </div>
 
-  <!-- 84 kg Women -->
-  <div class="border border-gray-700 rounded-md p-3 mb-3">
-    <h3 class="font-semibold text-sm mb-2">84 kg Women</h3>
-    <div class="space-y-2">
-      <div>
-        <label class="text-xs font-semibold mb-1 block">
-          Predicted Winner <span class="text-red-500">*</span>
-        </label>
-        <select id="w84w" name="w84w" data-gender="female"
-                class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
-          <option value="">Select a lifter…</option>
-          <option>Ziana Azariah (600 kg)</option>
-          <option>Melina Irawo (555.5 kg)</option>
-          <option>Racheal Raji (507.5 kg)</option>
-          <option>Hollie Tobun (502.5 kg)</option>
-          <option>Sian Arterton (492.5 kg)</option>
-          <option>Hettie Simpson (480 kg)</option>
-          <option>Abigail Marshall (455 kg)</option>
-          <option>Hanah Andrew (454 kg)</option>
-          <option>Caitlin Dinnen (427.5 kg)</option>
-          <option>Ellen Judson (415 kg)</option>
-          <option>Sally Sweeny (412.5 kg)</option>
-          <option>Sarah Rose (407.5 kg)</option>
-          <option>Terri Britton (352.5 kg)</option>
-        </select>
-        <p id="w84wError" class="text-xs text-red-400 mt-1"></p>
-      </div>
+                <!-- 84 kg Women -->
+                <div class="border border-gray-700 rounded-md p-3 mb-3">
+                  <h3 class="font-semibold text-sm mb-2">84 kg Women</h3>
+                  <div class="space-y-2">
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w84w" name="w84w" data-gender="female"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                        <option value="">Select a lifter…</option>
+                        <option>Ziana Azariah (600 kg)</option>
+                        <option>Melina Irawo (555.5 kg)</option>
+                        <option>Racheal Raji (507.5 kg)</option>
+                        <option>Hollie Tobun (502.5 kg)</option>
+                        <option>Sian Arterton (492.5 kg)</option>
+                        <option>Hettie Simpson (480 kg)</option>
+                        <option>Abigail Marshall (455 kg)</option>
+                        <option>Hanah Andrew (454 kg)</option>
+                        <option>Caitlin Dinnen (427.5 kg)</option>
+                        <option>Ellen Judson (415 kg)</option>
+                        <option>Sally Sweeny (412.5 kg)</option>
+                        <option>Sarah Rose (407.5 kg)</option>
+                        <option>Terri Britton (352.5 kg)</option>
+                      </select>
+                      <p id="w84wError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
 
-      <div>
-        <label class="text-xs font-semibold mb-1 block">
-          Confidence Rating (1–16) <span class="text-red-500">*</span>
-        </label>
-        <select id="c84w" name="c84w"
-                class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
-          <option value="">Select rating…</option>
-        </select>
-        <p id="c84wError" class="text-xs text-red-400 mt-1"></p>
-      </div>
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c84w" name="c84w"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                        <option value="">Select rating…</option>
+                      </select>
+                      <p id="c84wError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
 
-      <div>
-        <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-        <input type="text" id="t84w" name="t84w"
-               class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
-        <p id="t84wError" class="text-xs text-red-400 mt-1"></p>
-      </div>
-    </div>
-  </div>
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">Winning Total</label>
+                      <input type="text" id="t84w" name="t84w"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <p id="t84wError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
+                  </div>
+                </div>
 
-  <!-- 84+ kg Women -->
-  <div class="border border-gray-700 rounded-md p-3 mb-3">
-    <h3 class="font-semibold text-sm mb-2">84+ kg Women</h3>
-    <div class="space-y-2">
-      <div>
-        <label class="text-xs font-semibold mb-1 block">
-          Predicted Winner <span class="text-red-500">*</span>
-        </label>
-        <select id="w84pw" name="w84pw" data-gender="female"
-                class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
-          <option value="">Select a lifter…</option>
-          <option>Aquinn Onuoha (618.5 kg)</option>
-          <option>Toyosi Omotoso (615.5 kg)</option>
-          <option>Dominique Fortune (572.5 kg)</option>
-          <option>Mel Rawsthrone (517.5 kg)</option>
-          <option>Victoria Cavalier-Hirth (517.5 kg)</option>
-          <option>Caitlin Davies (510 kg)</option>
-          <option>Rebecca Coggle (507.5 kg)</option>
-          <option>Catriona Bell (500 kg)</option>
-          <option>Milly Stoneley (482.5 kg)</option>
-          <option>Scarlett Sotiris (475 kg)</option>
-          <option>Victoria Alli (470 kg)</option>
-          <option>Jennifer Payet (455 kg)</option>
-          <option>Jenna Turner (455 kg)</option>
-          <option>Annalisa Valente (450 kg)</option>
-        </select>
-        <p id="w84pwError" class="text-xs text-red-400 mt-1"></p>
-      </div>
+                <!-- 84+ kg Women -->
+                <div class="border border-gray-700 rounded-md p-3 mb-3">
+                  <h3 class="font-semibold text-sm mb-2">84+ kg Women</h3>
+                  <div class="space-y-2">
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">
+                        Predicted Winner <span class="text-red-500">*</span>
+                      </label>
+                      <select id="w84pw" name="w84pw" data-gender="female"
+                              class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                        <option value="">Select a lifter…</option>
+                        <option>Aquinn Onuoha (618.5 kg)</option>
+                        <option>Toyosi Omotoso (615.5 kg)</option>
+                        <option>Dominique Fortune (572.5 kg)</option>
+                        <option>Mel Rawsthrone (517.5 kg)</option>
+                        <option>Victoria Cavalier-Hirth (517.5 kg)</option>
+                        <option>Caitlin Davies (510 kg)</option>
+                        <option>Rebecca Coggle (507.5 kg)</option>
+                        <option>Catriona Bell (500 kg)</option>
+                        <option>Milly Stoneley (482.5 kg)</option>
+                        <option>Scarlett Sotiris (475 kg)</option>
+                        <option>Victoria Alli (470 kg)</option>
+                        <option>Jennifer Payet (455 kg)</option>
+                        <option>Jenna Turner (455 kg)</option>
+                        <option>Annalisa Valente (450 kg)</option>
+                      </select>
+                      <p id="w84pwError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
 
-      <div>
-        <label class="text-xs font-semibold mb-1 block">
-          Confidence Rating (1–16) <span class="text-red-500">*</span>
-        </label>
-        <select id="c84pw" name="c84pw"
-                class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
-          <option value="">Select rating…</option>
-        </select>
-        <p id="c84pwError" class="text-xs text-red-400 mt-1"></p>
-      </div>
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">
+                        Confidence Rating (1–16) <span class="text-red-500">*</span>
+                      </label>
+                      <select id="c84pw" name="c84pw"
+                              class="conf-select w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm">
+                        <option value="">Select rating…</option>
+                      </select>
+                      <p id="c84pwError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
 
-      <div>
-        <label class="text-xs font-semibold mb-1 block">Winning Total</label>
-        <input type="text" id="t84pw" name="t84pw"
-               class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
-        <p id="t84pwError" class="text-xs text-red-400 mt-1"></p>
-      </div>
-    </div>
-  </div>
-</div>
+                    <div>
+                      <label class="text-xs font-semibold mb-1 block">Winning Total</label>
+                      <input type="text" id="t84pw" name="t84pw"
+                             class="w-full bg-gray-800 border border-gray-700 rounded-md px-2 py-1.5 text-sm" />
+                      <p id="t84pwError" class="text-xs text-red-400 mt-1"></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-      <!-- STEP 2: Men -->
+              <!-- STEP 2: Men -->
 <div class="step" data-step="2">
   <h2 class="text-xs uppercase tracking-wide text-gray-400 mb-1 mt-4">
     Step 3 of 4 — Men’s Predictions
@@ -910,8 +908,12 @@
   </div>
 </div>
 
-       <!-- STEP 3: Best Lifters -->
+<!-- STEP 3: Best Lifters -->
 <div class="step" data-step="3">
+  <h2 class="text-xs uppercase tracking-wide text-gray-400 mb-2 mt-4">
+    Step 4 of 4 — Best Lifters
+  </h2>
+
   <p class="text-xs text-gray-400 mb-3">
     Final tie-breaker: predict which lifters will achieve the highest IPF GL points.
   </p>
@@ -945,7 +947,7 @@
   </p>
 </div>
 
-<!-- Bottom navigation for STEP 3 -->
+<!-- Navigation buttons (BOTTOM — includes Submit on Step 3) -->
 <div class="flex items-center justify-between pt-4 border-t border-gray-700 mt-4">
   <button type="button" id="backBtn"
           class="px-3 py-2 rounded-full bg-gray-800 text-xs font-semibold border border-gray-700 hover:bg-gray-700 transition">
@@ -973,8 +975,8 @@
   </a>
 </div>
 
-<!-- Static bottom Back to Top button -->
-<div class="flex justify-center mt-6">
+<!-- Static Bottom Back to Top -->
+<div class="flex justify-center mt-8">
   <button id="bottomBackToTop"
           class="bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full
                  flex items-center justify-center backdrop-blur-sm shadow-lg
@@ -987,9 +989,9 @@
 </div>
 
 </div> <!-- END #form-container -->
-</section> <!-- END Spotify + form section -->
+</section> <!-- END form section -->
 
-<!-- FLOATING FAB -->
+      <!-- FLOATING FAB -->
 <div id="scrollFab"
      class="fixed right-4 bottom-20 flex flex-col gap-3 z-40 opacity-0 pointer-events-none transition-opacity duration-300">
   <button id="fabScrollTop"
@@ -1017,118 +1019,140 @@
   Sponsored by the Sabado Sessions Podcast
 </footer>
 
-<!-- Scripts -->
+</div> <!-- END .relative z-10 wrapper -->
+
+<!-- LOAD main JS -->
 <script src="entry.js"></script>
+
 <script>
-  // Mobile menu
-  const menuBtn = document.getElementById('menu-btn');
-  const mobileMenu = document.getElementById('mobile-menu');
+/* -------------------------------
+   Mobile menu
+--------------------------------*/
+const menuBtn = document.getElementById('menu-btn');
+const mobileMenu = document.getElementById('mobile-menu');
 
-  function toggleMenu(show) {
-    if (show) {
-      mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');
-      mobileMenu.classList.add('scale-y-100','opacity-100');
-      menuBtn.setAttribute('aria-expanded','true');
-    } else {
-      mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');
-      mobileMenu.classList.remove('scale-y-100','opacity-100');
-      menuBtn.setAttribute('aria-expanded','false');
+function toggleMenu(show) {
+  if (show) {
+    mobileMenu.classList.remove('scale-y-0','opacity-0','pointer-events-none');
+    mobileMenu.classList.add('scale-y-100','opacity-100');
+    menuBtn.setAttribute('aria-expanded','true');
+  } else {
+    mobileMenu.classList.add('scale-y-0','opacity-0','pointer-events-none');
+    mobileMenu.classList.remove('scale-y-100','opacity-100');
+    menuBtn.setAttribute('aria-expanded','false');
+  }
+}
+
+let menuVisible = false;
+
+menuBtn.addEventListener('click', e => {
+  menuVisible = !menuVisible;
+  toggleMenu(menuVisible);
+  e.stopPropagation();
+});
+
+document.addEventListener('click', e => {
+  if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+    if (menuVisible) {
+      menuVisible = false;
+      toggleMenu(false);
     }
   }
+});
 
-  let menuVisible = false;
-  menuBtn.addEventListener('click', (e) => {
-    menuVisible = !menuVisible;
-    toggleMenu(menuVisible);
-    e.stopPropagation();
-  });
+toggleMenu(false);
 
-  document.addEventListener('click', (e) => {
-    if(!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)){
-      if(menuVisible){
-        menuVisible = false;
-        toggleMenu(false);
-      }
-    }
-  });
+/* -------------------------------
+   Spotify Gate — force new tab
+--------------------------------*/
+const spotifyLink = document.getElementById('spotify-link');
+const spotifyLock = document.getElementById('spotify-lock');
 
-  toggleMenu(false);
+spotifyLink.addEventListener('click', e => {
+  e.preventDefault();
+  const url = spotifyLink.href;
 
-  // Spotify gate
-  const spotifyLink = document.getElementById('spotify-link');
-  const spotifyLock = document.getElementById('spotify-lock');
-  const softGateImage = document.getElementById('softGateImage');
+  // mark as passed
+  sessionStorage.setItem('spotifyPassed', '1');
+  spotifyLock.classList.add('hidden');
 
-  spotifyLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    const url = spotifyLink.href;
+  const opened = window.open(url, '_blank');
+  if (!opened) window.location.href = url;
+});
 
-    sessionStorage.setItem('spotifyPassed', '1');
+document.addEventListener('DOMContentLoaded', () => {
+  if (sessionStorage.getItem('spotifyPassed') === '1') {
     spotifyLock.classList.add('hidden');
-
-    const opened = window.open(url, '_blank');
-    if (!opened) {
-      window.location.href = url;
-    }
-  });
-
-  document.addEventListener('DOMContentLoaded', () => {
-    if (sessionStorage.getItem('spotifyPassed') === '1') {
-      spotifyLock.classList.add('hidden');
-    }
-  });
-
-  // Static bottom BTT
-  const bottomBackToTop = document.getElementById('bottomBackToTop');
-  if (bottomBackToTop) {
-    bottomBackToTop.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
   }
+});
 
-  // Floating FAB
-  const scrollFab = document.getElementById('scrollFab');
-  const fabScrollTop = document.getElementById('fabScrollTop');
-  const fabScrollBottom = document.getElementById('fabScrollBottom');
+/* -------------------------------
+   Static bottom Back to Top
+--------------------------------*/
+const bottomBackToTop = document.getElementById('bottomBackToTop');
+if (bottomBackToTop) {
+  bottomBackToTop.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
 
-  function updateFabVisibility() {
-    if (!scrollFab) return;
-    const scrollY = window.scrollY || window.pageYOffset;
+/* -------------------------------
+   Floating FAB scroll behaviour
+--------------------------------*/
+const scrollFab = document.getElementById('scrollFab');
+const fabScrollTop = document.getElementById('fabScrollTop');
+const fabScrollBottom = document.getElementById('fabScrollBottom');
+
+function updateFabVisibility() {
+  if (!scrollFab) return;
+
+  const scrollY = window.scrollY || window.pageYOffset;
+  const docHeight = document.documentElement.scrollHeight;
+  const winHeight = window.innerHeight;
+
+  const fromTop = scrollY;
+  const fromBottom = docHeight - (scrollY + winHeight);
+  const threshold = 200;
+
+  if (fromTop > threshold && fromBottom > threshold) {
+    scrollFab.classList.remove('opacity-0', 'pointer-events-none');
+    scrollFab.classList.add('opacity-100');
+  } else {
+    scrollFab.classList.add('opacity-0', 'pointer-events-none');
+    scrollFab.classList.remove('opacity-100');
+  }
+}
+
+if (fabScrollTop) {
+  fabScrollTop.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
+
+if (fabScrollBottom) {
+  fabScrollBottom.addEventListener('click', () => {
     const docHeight = document.documentElement.scrollHeight;
-    const winHeight = window.innerHeight;
+    window.scrollTo({ top: docHeight, behavior: 'smooth' });
+  });
+}
 
-    const fromTop = scrollY;
-    const fromBottom = docHeight - (scrollY + winHeight);
-    const threshold = 200;
+window.addEventListener('scroll', updateFabVisibility);
+window.addEventListener('resize', updateFabVisibility);
+updateFabVisibility();
 
-    if (fromTop > threshold && fromBottom > threshold) {
-      scrollFab.classList.remove('opacity-0', 'pointer-events-none');
-      scrollFab.classList.add('opacity-100');
-    } else {
-      scrollFab.classList.add('opacity-0', 'pointer-events-none');
-      scrollFab.classList.remove('opacity-100');
-    }
-  }
+/* -------------------------------
+   EMAIL EXISTS POPUP
+--------------------------------*/
+const emailExistsModal = document.getElementById('emailExistsModal');
+const resendLinkBtn = document.getElementById('resendLinkBtn');
+const cancelEmailExistsBtn = document.getElementById('cancelEmailExistsBtn');
 
-  if (fabScrollTop) {
-    fabScrollTop.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  }
+// JS logic for this modal is already handled in entry.js using confirm()
+// This modal stays available as a backup UI pattern.
 
-  if (fabScrollBottom) {
-    fabScrollBottom.addEventListener('click', () => {
-      const docHeight = document.documentElement.scrollHeight;
-      window.scrollTo({ top: docHeight, behavior: 'smooth' });
-    });
-  }
-
-  window.addEventListener('scroll', updateFabVisibility);
-  window.addEventListener('resize', updateFabVisibility);
-  updateFabVisibility();
 </script>
 
-<!-- EMAIL EXISTS POPUP -->
+<!-- EMAIL EXISTS MODAL -->
 <div id="emailExistsModal"
      class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[999] hidden">
   <div class="bg-gray-900 border border-gray-700 rounded-xl p-6 w-80 text-center">
@@ -1150,6 +1174,5 @@
   </div>
 </div>
 
-</div> <!-- END .relative z-10 wrapper -->
 </body>
 </html>
