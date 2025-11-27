@@ -1,5 +1,5 @@
 // ========= CONFIG =========
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyBGdFc2n1Ogu-AQADw_03uSoNk-OSQltl5Z-zEgjRDCdwwLIioVerSmGgDlqZWO4qM/exec'; // <-- your deployed Apps Script Web App URL
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyBGdFc2n1Ogu-AQADw_03uSoNk-OSQltl5Z-zEgjRDCdwwLIioVerSmGgDlqZWO4qM/exec';
 
 // ========= DOM ELEMENTS =========
 const form = document.getElementById('bcfl-form');
@@ -22,22 +22,33 @@ const maleBestList = document.getElementById('maleBestList');
 // All confidence selects
 const confSelects = Array.from(document.querySelectorAll('.conf-select'));
 
-// Class IDs (for looping)
+// Class IDs
 const femaleClasses = ['47w','52w','57w','63w','69w','76w','84w','84pw'];
 const maleClasses   = ['59m','66m','74m','83m','93m','105m','120m','120pm'];
 
 // ========= STATE =========
 let currentStep = 0;
 
-// ========= SCROLL HELPER =========
+// ========= SCROLL HELPERS =========
 function scrollToFormTop() {
   const formContainer = document.getElementById('form-container');
   if (formContainer) {
     const rect = formContainer.getBoundingClientRect();
-    const targetY = rect.top + window.pageYOffset - 16; // small margin
-    window.scrollTo({ top: targetY, behavior: 'smooth' });
+    const y = rect.top + window.pageYOffset - 16;
+    window.scrollTo({ top: y, behavior: 'smooth' });
   } else {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function scrollToFirstError() {
+  const errorFields = [...document.querySelectorAll('[id$="Error"]')]
+    .filter(el => el.textContent.trim() !== '');
+
+  if (errorFields.length > 0) {
+    const el = errorFields[0];
+    const y = el.getBoundingClientRect().top + window.pageYOffset - 120;
+    window.scrollTo({ top: y, behavior: 'smooth' });
   }
 }
 
@@ -49,12 +60,7 @@ function showStep(index) {
 
   currentStep = index;
   backBtn.style.visibility = index === 0 ? 'hidden' : 'visible';
-
-  if (index === steps.length - 1) {
-    nextBtn.textContent = 'Submit';
-  } else {
-    nextBtn.textContent = 'Next';
-  }
+  nextBtn.textContent = index === steps.length - 1 ? 'Submit' : 'Next';
 
   const labels = [
     'Step 1 of 4 – Contact',
@@ -71,9 +77,7 @@ function showStatus(message, isError = false) {
 }
 
 function clearErrors() {
-  document.querySelectorAll('[id$="Error"]').forEach(el => {
-    el.textContent = '';
-  });
+  document.querySelectorAll('[id$="Error"]').forEach(el => { el.textContent = ''; });
 }
 
 function setError(id, msg) {
@@ -87,13 +91,11 @@ function initConfidenceOptions() {
   confSelects.forEach(sel => {
     sel.innerHTML = '';
 
-    // Placeholder
     const placeholder = document.createElement('option');
     placeholder.value = '';
     placeholder.textContent = 'Select rating…';
     sel.appendChild(placeholder);
 
-    // Ratings 1–16
     for (let i = 1; i <= 16; i++) {
       const opt = document.createElement('option');
       opt.value = String(i);
@@ -101,7 +103,7 @@ function initConfidenceOptions() {
       sel.appendChild(opt);
     }
 
-    // CLEAR ALL OPTION — new
+    // NEW CLEAR ALL OPTION
     const clearOpt = document.createElement('option');
     clearOpt.value = 'CLEAR_ALL';
     clearOpt.textContent = '⚠️ Clear ALL confidence ratings';
@@ -112,15 +114,13 @@ function initConfidenceOptions() {
 
 function refreshConfidenceDisables() {
   const used = new Set(
-    confSelects
-      .map(sel => sel.value)
-      .filter(v => v !== '')
+    confSelects.map(sel => sel.value).filter(v => v !== '' && v !== 'CLEAR_ALL')
   );
 
   confSelects.forEach(sel => {
     const current = sel.value;
     Array.from(sel.options).forEach(opt => {
-      if (!opt.value) return; // skip placeholder
+      if (!opt.value || opt.value === 'CLEAR_ALL') return;
       opt.disabled = used.has(opt.value) && opt.value !== current;
     });
   });
@@ -130,15 +130,10 @@ function refreshConfidenceDisables() {
 
 confSelects.forEach(sel => {
   sel.addEventListener('change', () => {
-
     if (sel.value !== 'CLEAR_ALL') return;
 
-    const isFemale = sel.id.includes('w'); // w47w, w52w, etc.
-
     const ok = confirm(
-      `Are you sure you want to clear ALL confidence ratings for all ${
-        isFemale ? 'women’s' : 'men’s'
-      } classes?`
+      'Are you sure you want to clear ALL 16 confidence ratings?\n\nThis will reset every rating for both men’s and women’s classes.'
     );
 
     if (!ok) {
@@ -146,22 +141,19 @@ confSelects.forEach(sel => {
       return;
     }
 
-    const targetClassList = isFemale ? femaleClasses : maleClasses;
-
-    // Clear all for that gender
-    targetClassList.forEach(cls => {
-      const cSel = document.getElementById('c' + cls);
-      if (cSel) cSel.value = '';
-    });
+    // Clear ALL 16 confidence dropdowns
+    confSelects.forEach(s => { s.value = ''; });
 
     refreshConfidenceDisables();
+
+    showStatus('All confidence ratings have been cleared.', false);
+    scrollToFormTop();
   });
 });
 
 // ========= BEST LIFTER LISTS =========
 
 function buildBestLifterLists() {
-  // Collect options from all female and male class winner dropdowns
   const femaleOptions = new Set();
   const maleOptions = new Set();
 
@@ -207,6 +199,7 @@ function validateStep(stepIndex) {
   clearErrors();
   let valid = true;
 
+  // STEP 0 — CONTACT
   if (stepIndex === 0) {
     const emailVal = emailInput.value.trim();
     if (!emailVal) {
@@ -222,8 +215,8 @@ function validateStep(stepIndex) {
     }
   }
 
+  // STEP 1 — WOMEN'S
   if (stepIndex === 1) {
-    // Women – winners & confidence required
     femaleClasses.forEach(cls => {
       const wSel = document.getElementById('w' + cls);
       const cSel = document.getElementById('c' + cls);
@@ -246,8 +239,8 @@ function validateStep(stepIndex) {
     });
   }
 
+  // STEP 2 — MEN'S
   if (stepIndex === 2) {
-    // Men – winners & confidence required
     maleClasses.forEach(cls => {
       const wSel = document.getElementById('w' + cls);
       const cSel = document.getElementById('c' + cls);
@@ -269,53 +262,51 @@ function validateStep(stepIndex) {
       }
     });
 
-    // Ensure confidence ratings are unique across ALL 16 classes
-    const allValues = confSelects.map(sel => sel.value).filter(v => v !== '');
+    // UNIQUE RATING CHECK (16 ratings exactly once)
+    const allValues = confSelects
+      .map(sel => sel.value)
+      .filter(v => v !== '' && v !== 'CLEAR_ALL');
+
     const unique = new Set(allValues);
+
     if (allValues.length !== 16 || unique.size !== 16) {
-      showStatus('Each confidence rating 1–16 must be used exactly once across all weight classes.', true);
+      showStatus(
+        'Each confidence rating 1–16 must be used exactly once across ALL men’s and women’s classes.',
+        true
+      );
       valid = false;
     }
   }
 
+  // STEP 3 — BEST LIFTERS
   if (stepIndex === 3) {
-    const femaleInput = document.getElementById("femaleBest");
-    const maleInput   = document.getElementById("maleBest");
+    const femaleInput = femaleBestInput.value.trim().toLowerCase();
+    const maleInput   = maleBestInput.value.trim().toLowerCase();
 
-    const femaleOptions = [...document.querySelectorAll("#femaleBestList option")]
+    const femaleOpts = [...document.querySelectorAll('#femaleBestList option')]
+      .map(o => o.value.trim().toLowerCase());
+    const maleOpts = [...document.querySelectorAll('#maleBestList option')]
       .map(o => o.value.trim().toLowerCase());
 
-    const maleOptions = [...document.querySelectorAll("#maleBestList option")]
-      .map(o => o.value.trim().toLowerCase());
+    let localValid = true;
 
-    const femaleVal = femaleInput.value.trim().toLowerCase();
-    const maleVal   = maleInput.value.trim().toLowerCase();
-
-    let validStep = true;
-
-    // Female validation
-    if (!femaleOptions.includes(femaleVal)) {
-      document.getElementById("femaleBestError").textContent =
-        "Please select a lifter from the list.";
-      validStep = false;
+    if (!femaleOpts.includes(femaleInput)) {
+      setError('femaleBestError', 'Please select a lifter from the list.');
+      localValid = false;
+    }
+    if (!maleOpts.includes(maleInput)) {
+      setError('maleBestError', 'Please select a lifter from the list.');
+      localValid = false;
     }
 
-    // Male validation
-    if (!maleOptions.includes(maleVal)) {
-      document.getElementById("maleBestError").textContent =
-        "Please select a lifter from the list.";
-      validStep = false;
-    }
-
-    if (!validStep) return false;
+    if (!localValid) return false;
   }
-  
+
   return valid;
 }
 
 // ========= DUPLICATE EMAIL HELPERS =========
 
-// Assumes backend supports ?action=checkEmail&email=...
 async function checkEmailExists(email) {
   const res = await fetch(
     SCRIPT_URL + '?action=checkEmail&email=' + encodeURIComponent(email),
@@ -325,11 +316,9 @@ async function checkEmailExists(email) {
   if (!json.ok) {
     throw new Error(json.message || 'Could not check email.');
   }
-  // Expecting { ok:true, exists:true/false }
   return !!json.exists;
 }
 
-// Assumes backend supports ?action=sendLink&email=...
 async function sendEditLink(email) {
   const res = await fetch(
     SCRIPT_URL + '?action=sendLink&email=' + encodeURIComponent(email),
@@ -338,12 +327,10 @@ async function sendEditLink(email) {
   const json = await res.json();
 
   if (!json.ok) {
-    // Show message but don't blow up JS
     showStatus(json.message || 'Could not send your private link. Please try again later.', true);
     return false;
   }
 
-  // Optionally show a success message here, but main one is set in caller
   return true;
 }
 
@@ -355,69 +342,62 @@ async function prefillIfToken() {
 
   if (!existingToken) return;
 
-  // Put token into hidden input so submit will update same row
   tokenInput.value = existingToken;
 
   try {
     showStatus('Loading your saved entry…', false);
+
     const res = await fetch(
       SCRIPT_URL + '?action=prefill&token=' + encodeURIComponent(existingToken),
       { method: 'GET' }
     );
     const json = await res.json();
+
     if (!json.ok) {
       showStatus(json.message || 'Could not load previous entry.', true);
       return;
     }
+
     const d = json.data || {};
 
-    // Contact
+    // Prefill contact
     if (d.email)           emailInput.value = d.email;
     if (d.instagramHandle) igInput.value = d.instagramHandle;
     if (d.leaderboardName) leaderboardInput.value = d.leaderboardName;
 
-    // 🔒 When editing via token, lock the email field
+    // Lock email
     emailInput.readOnly = true;
     emailInput.classList.add('bg-gray-700', 'cursor-not-allowed');
 
-    // Winners – Women
+    // Prefill women
     femaleClasses.forEach(cls => {
       const wSel = document.getElementById('w' + cls);
       const tInput = document.getElementById('t' + cls);
       const cSel  = document.getElementById('c' + cls);
 
-      const wKey = 'w' + cls;
-      const tKey = 't' + cls;
-      const cKey = 'c' + cls;
-
-      if (d[wKey] && wSel)   wSel.value = d[wKey];
-      if (d[tKey] && tInput) tInput.value = d[tKey];
-      if (d[cKey] && cSel)   cSel.value = String(d[cKey]);
+      if (d['w' + cls] && wSel)   wSel.value = d['w' + cls];
+      if (d['t' + cls] && tInput) tInput.value = d['t' + cls];
+      if (d['c' + cls] && cSel)   cSel.value = String(d['c' + cls]);
     });
 
-    // Winners – Men
+    // Prefill men
     maleClasses.forEach(cls => {
       const wSel = document.getElementById('w' + cls);
       const tInput = document.getElementById('t' + cls);
       const cSel  = document.getElementById('c' + cls);
 
-      const wKey = 'w' + cls;
-      const tKey = 't' + cls;
-      const cKey = 'c' + cls;
-
-      if (d[wKey] && wSel)   wSel.value = d[wKey];
-      if (d[tKey] && tInput) tInput.value = d[tKey];
-      if (d[cKey] && cSel)   cSel.value = String(d[cKey]);
+      if (d['w' + cls] && wSel)   wSel.value = d['w' + cls];
+      if (d['t' + cls] && tInput) tInput.value = d['t' + cls];
+      if (d['c' + cls] && cSel)   cSel.value = String(d['c' + cls]);
     });
 
-    // Best lifters
+    // Prefill best lifters
     if (d.femaleBest) femaleBestInput.value = d.femaleBest;
     if (d.maleBest)   maleBestInput.value   = d.maleBest;
 
-    // After setting confidence values, refresh disables
     refreshConfidenceDisables();
-
     showStatus('Your previous entry has been loaded. You can edit and resubmit.', false);
+
   } catch (err) {
     showStatus('Error loading previous entry. You can still submit a new one.', true);
   }
@@ -429,10 +409,9 @@ async function submitForm() {
   clearErrors();
   showStatus('');
 
-  // Normalise email
   emailInput.value = emailInput.value.trim().toLowerCase();
 
-  // Validate ALL steps before submitting
+  // Validate *all* steps before submission
   for (let s = 0; s < steps.length; s++) {
     if (!validateStep(s)) {
       showStep(s);
@@ -447,11 +426,11 @@ async function submitForm() {
 
   try {
     const formData = new FormData(form);
+
     const res = await fetch(SCRIPT_URL, {
       method: 'POST',
       body: formData
     });
-
     const json = await res.json();
 
     if (!json.ok) {
@@ -461,20 +440,19 @@ async function submitForm() {
       return;
     }
 
-    // Success message
-    showStatus(json.message || 'Entry saved. Check your email for confirmation and your edit link.', false);
+    showStatus(json.message || 'Entry saved. Check your email for confirmation and edit link.', false);
 
-    // === SHOW EDIT LINK ON PAGE ===
+    // Display edit link on page
     if (json.ok && json.token) {
       const editLink = `https://solacestrength.github.io/britishclassicfl/entry.html?token=${encodeURIComponent(json.token)}`;
-      const linkBox = document.getElementById('edit-link-box');
+      const box = document.getElementById('edit-link-box');
 
-      if (linkBox) {
-        linkBox.innerHTML = `
+      if (box) {
+        box.innerHTML = `
           <div class="p-4 mt-4 rounded-lg bg-gray-800 border border-gray-700 text-center text-sm text-gray-200">
-              <p class="font-semibold mb-2">Your private edit link:</p>
-              <a href="${editLink}" class="text-blue-400 break-all" target="_blank">${editLink}</a>
-              <p class="text-gray-400 mt-2">(This has also been emailed to you.)</p>
+            <p class="font-semibold mb-2">Your private edit link:</p>
+            <a href="${editLink}" class="text-blue-400 break-all" target="_blank">${editLink}</a>
+            <p class="text-gray-400 mt-2">(This has also been emailed to you.)</p>
           </div>
         `;
       }
@@ -488,7 +466,7 @@ async function submitForm() {
   backBtn.disabled = false;
 }
 
-// ========= NAVIGATION HANDLERS =========
+// ========= NAVIGATION =========
 
 backBtn.addEventListener('click', () => {
   if (currentStep > 0) {
@@ -498,17 +476,23 @@ backBtn.addEventListener('click', () => {
 });
 
 nextBtn.addEventListener('click', async () => {
-  // Not on last step yet
   if (currentStep < steps.length - 1) {
-    // Local validation for current step
-    if (!validateStep(currentStep)) return;
 
-    // Special handling on Step 0 for duplicate emails
+    // validate current page
+    if (!validateStep(currentStep)) {
+      // NEW: Scroll to first error
+      const firstErr = document.querySelector('[id$="Error"]:not(:empty)');
+      if (firstErr) {
+        firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+
+    // STEP 0 — duplicate email check
     if (currentStep === 0) {
       const emailVal = emailInput.value.trim().toLowerCase();
       const tokenVal = tokenInput.value.trim();
 
-      // Only check for duplicates if this is NOT an edit via token
       if (emailVal && !tokenVal) {
         try {
           showStatus('Checking email…', false);
@@ -518,35 +502,30 @@ nextBtn.addEventListener('click', async () => {
           const exists = await checkEmailExists(emailVal);
 
           if (exists) {
-            // Popup: send link or cancel
-            const wantLink = window.confirm(
-              'An entry with this email address already exists.\n\n' +
-              'Press OK to send your private edit link to this email so you can edit your existing entry.\n' +
-              'Press Cancel to change the email address.'
+            const wantLink = confirm(
+              'An entry with this email already exists.\n\n' +
+              'Press OK to send your private edit link.\n' +
+              'Press Cancel to enter a different email.'
             );
 
             if (wantLink) {
-              const sentOk = await sendEditLink(emailVal);
-              if (sentOk) {
-                showStatus('Your private edit link has been emailed to you. Please use that link to update your entry.', false);
-              }
+              await sendEditLink(emailVal);
+              showStatus('Your private edit link has been emailed to you.', false);
             } else {
-              showStatus('Please enter a different email address to create a new entry.', true);
+              showStatus('Please enter a different email.', true);
             }
 
             nextBtn.disabled = false;
             backBtn.disabled = false;
-            // 🔒 Do NOT advance to Step 2 in either case
             return;
           }
 
-          // If no existing entry, clear any "checking" status
           showStatus('', false);
           nextBtn.disabled = false;
           backBtn.disabled = false;
 
-        } catch (err) {
-          showStatus('Could not check this email right now. Please try again.', true);
+        } catch {
+          showStatus('Could not check email right now. Try again.', true);
           nextBtn.disabled = false;
           backBtn.disabled = false;
           return;
@@ -554,11 +533,11 @@ nextBtn.addEventListener('click', async () => {
       }
     }
 
-    // If we reach here, it's safe to advance
+    // advance
     showStep(currentStep + 1);
     scrollToFormTop();
+
   } else {
-    // Last step -> submit
     submitForm();
   }
 });
@@ -566,8 +545,8 @@ nextBtn.addEventListener('click', async () => {
 // ========= INIT =========
 
 document.addEventListener('DOMContentLoaded', async () => {
-  initConfidenceOptions();
-  buildBestLifterLists();
-  showStep(0);
-  await prefillIfToken();
+  initConfidenceOptions();      // includes CLEAR ALL option
+  buildBestLifterLists();       // datalists for best lifter inputs
+  showStep(0);                  // show Step 1 on load
+  await prefillIfToken();       // load saved entry if ?token= present
 });
