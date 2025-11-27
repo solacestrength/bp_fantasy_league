@@ -27,14 +27,9 @@ const femaleClasses = ['47w','52w','57w','63w','69w','76w','84w','84pw'];
 const maleClasses   = ['59m','66m','74m','83m','93m','105m','120m','120pm'];
 
 // ========= STATE =========
-// We now use PAGES:
-//   Page 0 -> Step 1 (Contact)
-//   Page 1 -> Steps 2 & 3 (Women + Men predictions)
-//   Page 2 -> Step 4 (Best lifters)
-let currentPage = 0;
-const TOTAL_PAGES = 3;
+let currentStep = 0;
 
-// ========= SCROLL HELPERS =========
+// ========= SCROLL HELPER =========
 function scrollToFormTop() {
   const formContainer = document.getElementById('form-container');
   if (formContainer) {
@@ -46,32 +41,30 @@ function scrollToFormTop() {
   }
 }
 
-function scrollToFirstErrorOnCurrentPage() {
-  // Only look inside currently visible steps
-  const visibleSteps = steps.filter(step => step.style.display !== 'none');
-  let firstErrorEl = null;
+// ========= UTILS =========
+function showStep(index) {
+  steps.forEach((step, i) => {
+    step.style.display = i === index ? 'block' : 'none';
+  });
 
-  for (const step of visibleSteps) {
-    const errs = step.querySelectorAll('[id$="Error"]');
-    for (const el of errs) {
-      if (el.textContent && el.textContent.trim() !== '') {
-        firstErrorEl = el;
-        break;
-      }
-    }
-    if (firstErrorEl) break;
-  }
+  currentStep = index;
+  backBtn.style.visibility = index === 0 ? 'hidden' : 'visible';
 
-  if (firstErrorEl) {
-    const rect = firstErrorEl.getBoundingClientRect();
-    const targetY = rect.top + window.pageYOffset - 100;
-    window.scrollTo({ top: targetY, behavior: 'smooth' });
+  if (index === steps.length - 1) {
+    nextBtn.textContent = 'Submit';
   } else {
-    scrollToFormTop();
+    nextBtn.textContent = 'Next';
   }
+
+  const labels = [
+    'Step 1 of 4 – Contact',
+    'Step 2 of 4 – Women’s Predictions',
+    'Step 3 of 4 – Men’s Predictions',
+    'Step 4 of 4 – Best Lifters'
+  ];
+  stepLabel.textContent = labels[index] || '';
 }
 
-// ========= UTILS =========
 function showStatus(message, isError = false) {
   statusEl.textContent = message;
   statusEl.className = 'text-sm mt-1 ' + (isError ? 'text-red-400' : 'text-green-400');
@@ -86,49 +79,6 @@ function clearErrors() {
 function setError(id, msg) {
   const el = document.getElementById(id);
   if (el) el.textContent = msg;
-}
-
-// Page-level show/hide logic
-function showPage(pageIndex) {
-  currentPage = pageIndex;
-
-  // Page 0 -> show step[0] only
-  // Page 1 -> show step[1] + step[2]
-  // Page 2 -> show step[3] only
-  steps.forEach((step, idx) => {
-    let show = false;
-    if (pageIndex === 0) {
-      show = (idx === 0);
-    } else if (pageIndex === 1) {
-      show = (idx === 1 || idx === 2);
-    } else if (pageIndex === 2) {
-      show = (idx === 3);
-    }
-    step.style.display = show ? 'block' : 'none';
-  });
-
-  // Update step label at the top of the page
-  if (stepLabel) {
-    if (pageIndex === 0) {
-      stepLabel.textContent = 'Step 1 of 4 – Contact';
-    } else if (pageIndex === 1) {
-      stepLabel.textContent = 'Steps 2 & 3 of 4 – Predictions';
-    } else if (pageIndex === 2) {
-      stepLabel.textContent = 'Step 4 of 4 – Best Lifters';
-    } else {
-      stepLabel.textContent = '';
-    }
-  }
-
-  // Back button visibility
-  if (backBtn) {
-    backBtn.style.visibility = pageIndex === 0 ? 'hidden' : 'visible';
-  }
-
-  // Next button label
-  if (nextBtn) {
-    nextBtn.textContent = (pageIndex === TOTAL_PAGES - 1) ? 'Submit' : 'Next';
-  }
 }
 
 // ========= CONFIDENCE RATING LOGIC =========
@@ -148,50 +98,6 @@ function initConfidenceOptions() {
       opt.textContent = String(i);
       sel.appendChild(opt);
     }
-
-    // Special "clear all" option AFTER 16
-    const clearOpt = document.createElement('option');
-    clearOpt.value = '__clear_all__';
-    clearOpt.textContent = 'Clear all ratings';
-    sel.appendChild(clearOpt);
-
-    // Track previous value
-    sel.dataset.prevValue = sel.value || '';
-  });
-
-  // Attach event listeners AFTER we build all options
-  confSelects.forEach(sel => {
-    // Update prevValue when focused
-    sel.addEventListener('focus', () => {
-      sel.dataset.prevValue = sel.value || '';
-    });
-
-    sel.addEventListener('change', () => {
-      const newVal = sel.value;
-      const prevVal = sel.dataset.prevValue || '';
-
-      if (newVal === '__clear_all__') {
-        const confirmClear = window.confirm(
-          'Are you sure you want to clear ALL confidence ratings (1–16) across all classes?'
-        );
-        if (confirmClear) {
-          // Clear all ratings
-          confSelects.forEach(s2 => {
-            s2.value = '';
-            s2.dataset.prevValue = '';
-          });
-          refreshConfidenceDisables();
-          showStatus('All confidence ratings have been cleared.', false);
-        } else {
-          // Revert to previous value
-          sel.value = prevVal;
-        }
-      } else {
-        // Normal selection
-        sel.dataset.prevValue = newVal;
-        refreshConfidenceDisables();
-      }
-    });
   });
 }
 
@@ -199,17 +105,23 @@ function refreshConfidenceDisables() {
   const used = new Set(
     confSelects
       .map(sel => sel.value)
-      .filter(v => v !== '' && v !== '__clear_all__')
+      .filter(v => v !== '')
   );
 
   confSelects.forEach(sel => {
     const current = sel.value;
     Array.from(sel.options).forEach(opt => {
-      if (!opt.value || opt.value === '__clear_all__') return; // skip placeholder + clear-all
+      if (!opt.value) return; // skip placeholder
       opt.disabled = used.has(opt.value) && opt.value !== current;
     });
   });
 }
+
+confSelects.forEach(sel => {
+  sel.addEventListener('change', () => {
+    refreshConfidenceDisables();
+  });
+});
 
 // ========= BEST LIFTER LISTS =========
 
@@ -256,126 +168,113 @@ function buildBestLifterLists() {
 const totalRegex = /^(?:[0-9]|[1-9][0-9]{1,2}|1[0-9]{3}|2000)(?:\.0|\.5)?$/;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Step 1 (Contact) validation
-function validateContactStep() {
+function validateStep(stepIndex) {
   clearErrors();
   let valid = true;
 
-  const emailVal = emailInput.value.trim();
-  if (!emailVal) {
-    setError('emailError', 'Email is required.');
-    valid = false;
-  } else if (!emailRegex.test(emailVal)) {
-    setError('emailError', 'Please enter a valid email address.');
-    valid = false;
-  }
-
-  if (!leaderboardInput.value.trim()) {
-    setError('leaderboardError', 'Leaderboard name is required.');
-    valid = false;
-  }
-
-  return valid;
-}
-
-// Page 2 (Women + Men predictions) validation
-function validatePredictionsPage() {
-  clearErrors();
-  let valid = true;
-
-  // Women – winners & confidence required + total pattern
-  femaleClasses.forEach(cls => {
-    const wSel = document.getElementById('w' + cls);
-    const cSel = document.getElementById('c' + cls);
-    const tInput = document.getElementById('t' + cls);
-
-    if (wSel && !wSel.value) {
-      setError('w' + cls + 'Error', 'Please pick a winner.');
+  if (stepIndex === 0) {
+    const emailVal = emailInput.value.trim();
+    if (!emailVal) {
+      setError('emailError', 'Email is required.');
+      valid = false;
+    } else if (!emailRegex.test(emailVal)) {
+      setError('emailError', 'Please enter a valid email address.');
       valid = false;
     }
-    if (cSel && !cSel.value) {
-      setError('c' + cls + 'Error', 'Please choose a confidence rating.');
+    if (!leaderboardInput.value.trim()) {
+      setError('leaderboardError', 'Leaderboard name is required.');
       valid = false;
     }
+  }
 
-    if (tInput) {
+  if (stepIndex === 1) {
+    // Women – winners & confidence required
+    femaleClasses.forEach(cls => {
+      const wSel = document.getElementById('w' + cls);
+      const cSel = document.getElementById('c' + cls);
+      const tInput = document.getElementById('t' + cls);
+
+      if (!wSel.value) {
+        setError('w' + cls + 'Error', 'Please pick a winner.');
+        valid = false;
+      }
+      if (!cSel.value) {
+        setError('c' + cls + 'Error', 'Please choose a confidence rating.');
+        valid = false;
+      }
+
       const v = tInput.value.trim();
       if (v !== '' && !totalRegex.test(v)) {
         setError('t' + cls + 'Error', 'Use 0–2000 in steps of 0.5 (e.g. 865 or 865.5).');
         valid = false;
       }
-    }
-  });
+    });
+  }
 
-  // Men – winners & confidence required + total pattern
-  maleClasses.forEach(cls => {
-    const wSel = document.getElementById('w' + cls);
-    const cSel = document.getElementById('c' + cls);
-    const tInput = document.getElementById('t' + cls);
+  if (stepIndex === 2) {
+    // Men – winners & confidence required
+    maleClasses.forEach(cls => {
+      const wSel = document.getElementById('w' + cls);
+      const cSel = document.getElementById('c' + cls);
+      const tInput = document.getElementById('t' + cls);
 
-    if (wSel && !wSel.value) {
-      setError('w' + cls + 'Error', 'Please pick a winner.');
-      valid = false;
-    }
-    if (cSel && !cSel.value) {
-      setError('c' + cls + 'Error', 'Please choose a confidence rating.');
-      valid = false;
-    }
+      if (!wSel.value) {
+        setError('w' + cls + 'Error', 'Please pick a winner.');
+        valid = false;
+      }
+      if (!cSel.value) {
+        setError('c' + cls + 'Error', 'Please choose a confidence rating.');
+        valid = false;
+      }
 
-    if (tInput) {
       const v = tInput.value.trim();
       if (v !== '' && !totalRegex.test(v)) {
         setError('t' + cls + 'Error', 'Use 0–2000 in steps of 0.5 (e.g. 865 or 865.5).');
         valid = false;
       }
+    });
+
+    // Ensure confidence ratings are unique across ALL 16 classes
+    const allValues = confSelects.map(sel => sel.value).filter(v => v !== '');
+    const unique = new Set(allValues);
+    if (allValues.length !== 16 || unique.size !== 16) {
+      showStatus('Each confidence rating 1–16 must be used exactly once across all weight classes.', true);
+      valid = false;
     }
-  });
-
-  // Ensure confidence ratings are unique across ALL 16 classes
-  const allValues = confSelects
-    .map(sel => sel.value)
-    .filter(v => v !== '' && v !== '__clear_all__');
-  const unique = new Set(allValues);
-
-  if (allValues.length !== 16 || unique.size !== 16) {
-    showStatus('Each confidence rating 1–16 must be used exactly once across all weight classes.', true);
-    valid = false;
   }
 
-  return valid;
-}
+  if (stepIndex === 3) {
+    const femaleInput = document.getElementById("femaleBest");
+    const maleInput   = document.getElementById("maleBest");
 
-// Step 4 (Best lifters) validation
-function validateBestLiftersStep() {
-  clearErrors();
-  let valid = true;
+    const femaleOptions = [...document.querySelectorAll("#femaleBestList option")]
+      .map(o => o.value.trim().toLowerCase());
 
-  const femaleInput = document.getElementById("femaleBest");
-  const maleInput   = document.getElementById("maleBest");
+    const maleOptions = [...document.querySelectorAll("#maleBestList option")]
+      .map(o => o.value.trim().toLowerCase());
 
-  const femaleOptions = [...document.querySelectorAll("#femaleBestList option")]
-    .map(o => o.value.trim().toLowerCase());
+    const femaleVal = femaleInput.value.trim().toLowerCase();
+    const maleVal   = maleInput.value.trim().toLowerCase();
 
-  const maleOptions = [...document.querySelectorAll("#maleBestList option")]
-    .map(o => o.value.trim().toLowerCase());
+    let validStep = true;
 
-  const femaleVal = femaleInput.value.trim().toLowerCase();
-  const maleVal   = maleInput.value.trim().toLowerCase();
+    // Female validation
+    if (!femaleOptions.includes(femaleVal)) {
+      document.getElementById("femaleBestError").textContent =
+        "Please select a lifter from the list.";
+      validStep = false;
+    }
 
-  // Female validation
-  if (!femaleOptions.includes(femaleVal)) {
-    document.getElementById("femaleBestError").textContent =
-      "Please select a lifter from the list.";
-    valid = false;
+    // Male validation
+    if (!maleOptions.includes(maleVal)) {
+      document.getElementById("maleBestError").textContent =
+        "Please select a lifter from the list.";
+      validStep = false;
+    }
+
+    if (!validStep) return false;
   }
-
-  // Male validation
-  if (!maleOptions.includes(maleVal)) {
-    document.getElementById("maleBestError").textContent =
-      "Please select a lifter from the list.";
-    valid = false;
-  }
-
+  
   return valid;
 }
 
@@ -409,6 +308,7 @@ async function sendEditLink(email) {
     return false;
   }
 
+  // Optionally show a success message here, but main one is set in caller
   return true;
 }
 
@@ -479,10 +379,7 @@ async function prefillIfToken() {
     if (d.femaleBest) femaleBestInput.value = d.femaleBest;
     if (d.maleBest)   maleBestInput.value   = d.maleBest;
 
-    // After setting confidence values, refresh disables + prevValue
-    confSelects.forEach(sel => {
-      sel.dataset.prevValue = sel.value || '';
-    });
+    // After setting confidence values, refresh disables
     refreshConfidenceDisables();
 
     showStatus('Your previous entry has been loaded. You can edit and resubmit.', false);
@@ -500,25 +397,13 @@ async function submitForm() {
   // Normalise email
   emailInput.value = emailInput.value.trim().toLowerCase();
 
-  // 1) Contact
-  if (!validateContactStep()) {
-    showPage(0);
-    scrollToFirstErrorOnCurrentPage();
-    return;
-  }
-
-  // 2) Predictions page (women + men)
-  if (!validatePredictionsPage()) {
-    showPage(1);
-    scrollToFirstErrorOnCurrentPage();
-    return;
-  }
-
-  // 3) Best lifters
-  if (!validateBestLiftersStep()) {
-    showPage(2);
-    scrollToFirstErrorOnCurrentPage();
-    return;
+  // Validate ALL steps before submitting
+  for (let s = 0; s < steps.length; s++) {
+    if (!validateStep(s)) {
+      showStep(s);
+      scrollToFormTop();
+      return;
+    }
   }
 
   showStatus('Submitting your entry…', false);
@@ -568,30 +453,27 @@ async function submitForm() {
   backBtn.disabled = false;
 }
 
-// ========= NAVIGATION (PAGE-BASED) =========
+// ========= NAVIGATION HANDLERS =========
 
-if (backBtn) {
-  backBtn.addEventListener('click', () => {
-    if (currentPage > 0) {
-      showPage(currentPage - 1);
-      scrollToFormTop();
-    }
-  });
-}
+backBtn.addEventListener('click', () => {
+  if (currentStep > 0) {
+    showStep(currentStep - 1);
+    scrollToFormTop();
+  }
+});
 
-if (nextBtn) {
-  nextBtn.addEventListener('click', async () => {
-    // PAGE 0 -> validate contact + duplicate email check
-    if (currentPage === 0) {
-      if (!validateContactStep()) {
-        scrollToFirstErrorOnCurrentPage();
-        return;
-      }
+nextBtn.addEventListener('click', async () => {
+  // Not on last step yet
+  if (currentStep < steps.length - 1) {
+    // Local validation for current step
+    if (!validateStep(currentStep)) return;
 
+    // Special handling on Step 0 for duplicate emails
+    if (currentStep === 0) {
       const emailVal = emailInput.value.trim().toLowerCase();
       const tokenVal = tokenInput.value.trim();
 
-      // Only check duplicates for brand-new entries
+      // Only check for duplicates if this is NOT an edit via token
       if (emailVal && !tokenVal) {
         try {
           showStatus('Checking email…', false);
@@ -601,7 +483,7 @@ if (nextBtn) {
           const exists = await checkEmailExists(emailVal);
 
           if (exists) {
-            // Popup: send link or cancel (using confirm for now)
+            // Popup: send link or cancel
             const wantLink = window.confirm(
               'An entry with this email address already exists.\n\n' +
               'Press OK to send your private edit link to this email so you can edit your existing entry.\n' +
@@ -619,14 +501,15 @@ if (nextBtn) {
 
             nextBtn.disabled = false;
             backBtn.disabled = false;
-            // 🔒 Do NOT advance to Page 2 in either case
+            // 🔒 Do NOT advance to Step 2 in either case
             return;
           }
 
-          // No existing entry -> proceed
+          // If no existing entry, clear any "checking" status
           showStatus('', false);
           nextBtn.disabled = false;
           backBtn.disabled = false;
+
         } catch (err) {
           showStatus('Could not check this email right now. Please try again.', true);
           nextBtn.disabled = false;
@@ -634,40 +517,22 @@ if (nextBtn) {
           return;
         }
       }
-
-      // Safe to move to Page 2 (Predictions)
-      showPage(1);
-      scrollToFormTop();
-      return;
     }
 
-    // PAGE 1 -> validate predictions across BOTH Women + Men
-    if (currentPage === 1) {
-      if (!validatePredictionsPage()) {
-        scrollToFirstErrorOnCurrentPage();
-        return;
-      }
-      showPage(2);
-      scrollToFormTop();
-      return;
-    }
-
-    // PAGE 2 -> final submit (Best lifters validated inside)
-    if (currentPage === 2) {
-      if (!validateBestLiftersStep()) {
-        scrollToFirstErrorOnCurrentPage();
-        return;
-      }
-      submitForm();
-    }
-  });
-}
+    // If we reach here, it's safe to advance
+    showStep(currentStep + 1);
+    scrollToFormTop();
+  } else {
+    // Last step -> submit
+    submitForm();
+  }
+});
 
 // ========= INIT =========
 
 document.addEventListener('DOMContentLoaded', async () => {
   initConfidenceOptions();
   buildBestLifterLists();
-  showPage(0);
+  showStep(0);
   await prefillIfToken();
 });
