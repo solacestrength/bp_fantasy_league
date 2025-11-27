@@ -945,7 +945,7 @@
   </p>
 </div>
 
-<!-- Navigation buttons (BOTTOM) -->
+<!-- Bottom navigation for STEP 3 -->
 <div class="flex items-center justify-between pt-4 border-t border-gray-700 mt-4">
   <button type="button" id="backBtn"
           class="px-3 py-2 rounded-full bg-gray-800 text-xs font-semibold border border-gray-700 hover:bg-gray-700 transition">
@@ -963,7 +963,7 @@
 <!-- Edit link display box -->
 <div id="edit-link-box" class="mt-4"></div>
 
-            <!-- View Metrics Button -->
+<!-- View Metrics Button -->
 <div class="flex justify-center mt-8">
   <a href="metrics.html"
      class="inline-flex items-center justify-center bg-gray-800/60 border border-gray-700
@@ -973,8 +973,8 @@
   </a>
 </div>
 
-<!-- Bottom Back to Top Button (existing behaviour) -->
-<div class="flex justify-center mt-8">
+<!-- Static bottom Back to Top button -->
+<div class="flex justify-center mt-6">
   <button id="bottomBackToTop"
           class="bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full
                  flex items-center justify-center backdrop-blur-sm shadow-lg
@@ -986,7 +986,10 @@
   </button>
 </div>
 
-<!-- FLOATING FAB: Back to Top / Scroll to Bottom -->
+</div> <!-- END #form-container -->
+</section> <!-- END Spotify + form section -->
+
+<!-- FLOATING FAB -->
 <div id="scrollFab"
      class="fixed right-4 bottom-20 flex flex-col gap-3 z-40 opacity-0 pointer-events-none transition-opacity duration-300">
   <button id="fabScrollTop"
@@ -1014,7 +1017,7 @@
   Sponsored by the Sabado Sessions Podcast
 </footer>
 
-            <!-- Scripts -->
+<!-- Scripts -->
 <script src="entry.js"></script>
 <script>
   // Mobile menu
@@ -1051,7 +1054,7 @@
 
   toggleMenu(false);
 
-  // Spotify gate: ensure new tab where possible + remember pass
+  // Spotify gate
   const spotifyLink = document.getElementById('spotify-link');
   const spotifyLock = document.getElementById('spotify-lock');
   const softGateImage = document.getElementById('softGateImage');
@@ -1060,11 +1063,9 @@
     e.preventDefault();
     const url = spotifyLink.href;
 
-    // Never show gate again this session
     sessionStorage.setItem('spotifyPassed', '1');
     spotifyLock.classList.add('hidden');
 
-    // Try to force new tab (especially on Android)
     const opened = window.open(url, '_blank');
     if (!opened) {
       window.location.href = url;
@@ -1077,7 +1078,7 @@
     }
   });
 
-  // Bottom Back to Top
+  // Static bottom BTT
   const bottomBackToTop = document.getElementById('bottomBackToTop');
   if (bottomBackToTop) {
     bottomBackToTop.addEventListener('click', () => {
@@ -1085,7 +1086,7 @@
     });
   }
 
-  // Floating FAB scroll behaviour
+  // Floating FAB
   const scrollFab = document.getElementById('scrollFab');
   const fabScrollTop = document.getElementById('fabScrollTop');
   const fabScrollBottom = document.getElementById('fabScrollBottom');
@@ -1127,7 +1128,7 @@
   updateFabVisibility();
 </script>
 
-<!-- EMAIL EXISTS POPUP (legacy, still safe to keep even if JS uses confirm() now) -->
+<!-- EMAIL EXISTS POPUP -->
 <div id="emailExistsModal"
      class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[999] hidden">
   <div class="bg-gray-900 border border-gray-700 rounded-xl p-6 w-80 text-center">
@@ -1148,10 +1149,7 @@
     </button>
   </div>
 </div>
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
+
+</div> <!-- END .relative z-10 wrapper -->
 </body>
 </html>
