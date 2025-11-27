@@ -8,7 +8,7 @@ const backBtn = document.getElementById('backBtn');
 const nextBtn = document.getElementById('nextBtn');
 const statusEl = document.getElementById('status');
 const stepLabel = document.getElementById('step-label');
-const tokenInput = document.getElementById('token');
+const tokenInput = document.getElementElementById ? document.getElementById('token') : document.querySelector('#token'); // safety
 
 const emailInput = document.getElementById('email');
 const igInput = document.getElementById('instagramHandle');
@@ -27,9 +27,20 @@ const femaleClasses = ['47w','52w','57w','63w','69w','76w','84w','84pw'];
 const maleClasses   = ['59m','66m','74m','83m','93m','105m','120m','120pm'];
 
 // ========= STATE =========
-let currentStep = 0;
+// Pages:
+// 0 -> step[0] (Contact)
+// 1 -> step[1] + step[2] (Women + Men predictions)
+// 2 -> step[3] (Best Lifters)
+const pages = [
+  [0],
+  [1, 2],
+  [3]
+];
 
-// ========= SCROLL HELPER =========
+let currentPage = 0;
+let pendingDuplicateEmail = '';
+
+// ========= SCROLL HELPERS =========
 function scrollToFormTop() {
   const formContainer = document.getElementById('form-container');
   if (formContainer) {
@@ -41,30 +52,34 @@ function scrollToFormTop() {
   }
 }
 
-// ========= UTILS =========
-function showStep(index) {
-  steps.forEach((step, i) => {
-    step.style.display = i === index ? 'block' : 'none';
-  });
+function scrollToFirstErrorWithinPage(pageIndex) {
+  const indices = pages[pageIndex] || [];
+  let firstErrorEl = null;
 
-  currentStep = index;
-  backBtn.style.visibility = index === 0 ? 'hidden' : 'visible';
+  for (const stepIdx of indices) {
+    const stepEl = steps[stepIdx];
+    if (!stepEl) continue;
 
-  if (index === steps.length - 1) {
-    nextBtn.textContent = 'Submit';
-  } else {
-    nextBtn.textContent = 'Next';
+    const errorEls = Array.from(stepEl.querySelectorAll('[id$="Error"]'));
+    for (const err of errorEls) {
+      if (err.textContent && err.textContent.trim() !== '') {
+        firstErrorEl = err;
+        break;
+      }
+    }
+    if (firstErrorEl) break;
   }
 
-  const labels = [
-    'Step 1 of 4 – Contact',
-    'Step 2 of 4 – Women’s Predictions',
-    'Step 3 of 4 – Men’s Predictions',
-    'Step 4 of 4 – Best Lifters'
-  ];
-  stepLabel.textContent = labels[index] || '';
+  if (firstErrorEl) {
+    const rect = firstErrorEl.getBoundingClientRect();
+    const targetY = rect.top + window.pageYOffset - 80;
+    window.scrollTo({ top: targetY, behavior: 'smooth' });
+  } else {
+    scrollToFormTop();
+  }
 }
 
+// ========= UTILS =========
 function showStatus(message, isError = false) {
   statusEl.textContent = message;
   statusEl.className = 'text-sm mt-1 ' + (isError ? 'text-red-400' : 'text-green-400');
@@ -79,6 +94,37 @@ function clearErrors() {
 function setError(id, msg) {
   const el = document.getElementById(id);
   if (el) el.textContent = msg;
+}
+
+// Show a full "page" (one or more steps)
+function showPage(pageIndex) {
+  steps.forEach((stepEl, idx) => {
+    const shouldShow = (pages[pageIndex] || []).includes(idx);
+    stepEl.style.display = shouldShow ? 'block' : 'none';
+  });
+
+  currentPage = pageIndex;
+
+  // Back button visibility
+  backBtn.style.visibility = pageIndex === 0 ? 'hidden' : 'visible';
+
+  // Next button text
+  if (pageIndex === pages.length - 1) {
+    nextBtn.textContent = 'Submit';
+  } else {
+    nextBtn.textContent = 'Next';
+  }
+
+  // Step label text
+  if (pageIndex === 0) {
+    stepLabel.textContent = 'Step 1 of 4 – Contact';
+  } else if (pageIndex === 1) {
+    stepLabel.textContent = 'Steps 2 and 3 of 4 – Women’s & Men’s Predictions';
+  } else if (pageIndex === 2) {
+    stepLabel.textContent = 'Step 4 of 4 – Best Lifters';
+  } else {
+    stepLabel.textContent = '';
+  }
 }
 
 // ========= CONFIDENCE RATING LOGIC =========
@@ -168,8 +214,13 @@ function buildBestLifterLists() {
 const totalRegex = /^(?:[0-9]|[1-9][0-9]{1,2}|1[0-9]{3}|2000)(?:\.0|\.5)?$/;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function validateStep(stepIndex) {
-  clearErrors();
+function validateStep(stepIndex, opts = {}) {
+  const skipClear = opts.skipClear === true;
+
+  if (!skipClear) {
+    clearErrors();
+  }
+
   let valid = true;
 
   if (stepIndex === 0) {
@@ -244,13 +295,13 @@ function validateStep(stepIndex) {
   }
 
   if (stepIndex === 3) {
-    const femaleInput = document.getElementById("femaleBest");
-    const maleInput   = document.getElementById("maleBest");
+    const femaleInput = document.getElementById('femaleBest');
+    const maleInput   = document.getElementById('maleBest');
 
-    const femaleOptions = [...document.querySelectorAll("#femaleBestList option")]
+    const femaleOptions = [...document.querySelectorAll('#femaleBestList option')]
       .map(o => o.value.trim().toLowerCase());
 
-    const maleOptions = [...document.querySelectorAll("#maleBestList option")]
+    const maleOptions = [...document.querySelectorAll('#maleBestList option')]
       .map(o => o.value.trim().toLowerCase());
 
     const femaleVal = femaleInput.value.trim().toLowerCase();
@@ -260,21 +311,23 @@ function validateStep(stepIndex) {
 
     // Female validation
     if (!femaleOptions.includes(femaleVal)) {
-      document.getElementById("femaleBestError").textContent =
-        "Please select a lifter from the list.";
+      document.getElementById('femaleBestError').textContent =
+        'Please select a lifter from the list.';
       validStep = false;
     }
 
     // Male validation
     if (!maleOptions.includes(maleVal)) {
-      document.getElementById("maleBestError").textContent =
-        "Please select a lifter from the list.";
+      document.getElementById('maleBestError').textContent =
+        'Please select a lifter from the list.';
       validStep = false;
     }
 
-    if (!validStep) return false;
+    if (!validStep) {
+      valid = false;
+    }
   }
-  
+
   return valid;
 }
 
@@ -294,22 +347,56 @@ async function checkEmailExists(email) {
   return !!json.exists;
 }
 
-// Assumes backend supports ?action=sendLink&email=...
-async function sendEditLink(email) {
-  const res = await fetch(
-    SCRIPT_URL + '?action=sendLink&email=' + encodeURIComponent(email),
-    { method: 'GET' }
-  );
-  const json = await res.json();
+// POST: action=resendLink&email=...
+async function resendEditLink(email) {
+  const formData = new FormData();
+  formData.append('action', 'resendLink');
+  formData.append('email', email);
 
+  const res = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: formData
+  });
+
+  const json = await res.json();
   if (!json.ok) {
-    // Show message but don't blow up JS
-    showStatus(json.message || 'Could not send your private link. Please try again later.', true);
-    return false;
+    throw new Error(json.message || 'Could not send your private link.');
+  }
+  return true;
+}
+
+function openEmailExistsModal(emailVal) {
+  pendingDuplicateEmail = emailVal;
+
+  const modal = document.getElementById('emailExistsModal');
+  const resendBtn = document.getElementById('resendLinkBtn');
+  const cancelBtn = document.getElementById('cancelEmailExistsBtn');
+
+  if (!modal || !resendBtn || !cancelBtn) {
+    // Fallback: just show a status message.
+    showStatus('This email already has an entry. Please use your private edit link.', true);
+    return;
   }
 
-  // Optionally show a success message here, but main one is set in caller
-  return true;
+  modal.classList.remove('hidden');
+
+  // Ensure we don't stack listeners endlessly – overwrite handlers.
+  resendBtn.onclick = async () => {
+    try {
+      showStatus('Sending your private edit link…', false);
+      await resendEditLink(pendingDuplicateEmail);
+      showStatus('Your private edit link has been emailed to you. Please use that link to update your entry.', false);
+    } catch (err) {
+      showStatus(err.message || 'Could not send your private link. Please try again later.', true);
+    } finally {
+      modal.classList.add('hidden');
+    }
+  };
+
+  cancelBtn.onclick = () => {
+    modal.classList.add('hidden');
+    showStatus('Please enter a different email address to create a new entry.', true);
+  };
 }
 
 // ========= PREFILL LOGIC =========
@@ -397,13 +484,11 @@ async function submitForm() {
   // Normalise email
   emailInput.value = emailInput.value.trim().toLowerCase();
 
-  // Validate ALL steps before submitting
-  for (let s = 0; s < steps.length; s++) {
-    if (!validateStep(s)) {
-      showStep(s);
-      scrollToFormTop();
-      return;
-    }
+  // Validate final step (Best Lifters). Previous pages are validated on navigation.
+  const isValidLast = validateStep(3);
+  if (!isValidLast) {
+    scrollToFirstErrorWithinPage(2);
+    return;
   }
 
   showStatus('Submitting your entry…', false);
@@ -456,20 +541,23 @@ async function submitForm() {
 // ========= NAVIGATION HANDLERS =========
 
 backBtn.addEventListener('click', () => {
-  if (currentStep > 0) {
-    showStep(currentStep - 1);
+  if (currentPage > 0) {
+    showPage(currentPage - 1);
     scrollToFormTop();
   }
 });
 
 nextBtn.addEventListener('click', async () => {
-  // Not on last step yet
-  if (currentStep < steps.length - 1) {
-    // Local validation for current step
-    if (!validateStep(currentStep)) return;
+  // Not on last page yet
+  if (currentPage < pages.length - 1) {
+    // PAGE 0: Contact
+    if (currentPage === 0) {
+      const isValid = validateStep(0);
+      if (!isValid) {
+        scrollToFirstErrorWithinPage(0);
+        return;
+      }
 
-    // Special handling on Step 0 for duplicate emails
-    if (currentStep === 0) {
       const emailVal = emailInput.value.trim().toLowerCase();
       const tokenVal = tokenInput.value.trim();
 
@@ -483,29 +571,16 @@ nextBtn.addEventListener('click', async () => {
           const exists = await checkEmailExists(emailVal);
 
           if (exists) {
-            // Popup: send link or cancel
-            const wantLink = window.confirm(
-              'An entry with this email address already exists.\n\n' +
-              'Press OK to send your private edit link to this email so you can edit your existing entry.\n' +
-              'Press Cancel to change the email address.'
-            );
-
-            if (wantLink) {
-              const sentOk = await sendEditLink(emailVal);
-              if (sentOk) {
-                showStatus('Your private edit link has been emailed to you. Please use that link to update your entry.', false);
-              }
-            } else {
-              showStatus('Please enter a different email address to create a new entry.', true);
-            }
+            // Use popup modal for resend / cancel
+            openEmailExistsModal(emailVal);
 
             nextBtn.disabled = false;
             backBtn.disabled = false;
-            // 🔒 Do NOT advance to Step 2 in either case
+            // Do NOT advance to next page
             return;
           }
 
-          // If no existing entry, clear any "checking" status
+          // No existing entry
           showStatus('', false);
           nextBtn.disabled = false;
           backBtn.disabled = false;
@@ -517,13 +592,34 @@ nextBtn.addEventListener('click', async () => {
           return;
         }
       }
+
+      // Safe to move to Predictions page
+      showPage(1);
+      scrollToFormTop();
+      return;
     }
 
-    // If we reach here, it's safe to advance
-    showStep(currentStep + 1);
-    scrollToFormTop();
+    // PAGE 1: Women + Men predictions
+    if (currentPage === 1) {
+      clearErrors();
+      let ok = true;
+
+      // Validate Women (stepIndex 1) and Men (stepIndex 2) together
+      if (!validateStep(1, { skipClear: true })) ok = false;
+      if (!validateStep(2, { skipClear: true })) ok = false;
+
+      if (!ok) {
+        scrollToFirstErrorWithinPage(1);
+        return;
+      }
+
+      // All good, go to Best Lifters
+      showPage(2);
+      scrollToFormTop();
+      return;
+    }
   } else {
-    // Last step -> submit
+    // Last page -> submit
     submitForm();
   }
 });
@@ -533,6 +629,7 @@ nextBtn.addEventListener('click', async () => {
 document.addEventListener('DOMContentLoaded', async () => {
   initConfidenceOptions();
   buildBestLifterLists();
-  showStep(0);
+  showPage(0);
   await prefillIfToken();
+  refreshConfidenceDisables();
 });
