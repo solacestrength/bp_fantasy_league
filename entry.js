@@ -1,5 +1,5 @@
 // ========= CONFIG =========
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyBGdFc2n1Ogu-AQADw_03uSoNk-OSQltl5Z-zEgjRDCdwwLIioVerSmGgDlqZWO4qM/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyBGdFc2n1Ogu-AQADw_03uSoNk-OSQltl5Z-zEgjRDCdwwLIioVerSmGgDlqZWO4qM/exec'; // <-- your deployed Apps Script Web App URL
 
 // ========= DOM ELEMENTS =========
 const form = document.getElementById('bcfl-form');
@@ -19,37 +19,64 @@ const maleBestInput = document.getElementById('maleBest');
 const femaleBestList = document.getElementById('femaleBestList');
 const maleBestList = document.getElementById('maleBestList');
 
-// All confidence selects
+// All confidence selects (now all live on Step 4 page)
 const confSelects = Array.from(document.querySelectorAll('.conf-select'));
 
-// Class IDs
+// Class IDs (for looping)
 const femaleClasses = ['47w','52w','57w','63w','69w','76w','84w','84pw'];
 const maleClasses   = ['59m','66m','74m','83m','93m','105m','120m','120pm'];
+
+// Meta for confidence labels
+const classMeta = {
+  '47w':  { labelPrefix: '47 kg Predicted Winner' },
+  '52w':  { labelPrefix: '52 kg Predicted Winner' },
+  '57w':  { labelPrefix: '57 kg Predicted Winner' },
+  '63w':  { labelPrefix: '63 kg Predicted Winner' },
+  '69w':  { labelPrefix: '69 kg Predicted Winner' },
+  '76w':  { labelPrefix: '76 kg Predicted Winner' },
+  '84w':  { labelPrefix: '84 kg Predicted Winner' },
+  '84pw': { labelPrefix: '84+ kg Predicted Winner' },
+
+  '59m':   { labelPrefix: '59 kg Predicted Winner' },
+  '66m':   { labelPrefix: '66 kg Predicted Winner' },
+  '74m':   { labelPrefix: '74 kg Predicted Winner' },
+  '83m':   { labelPrefix: '83 kg Predicted Winner' },
+  '93m':   { labelPrefix: '93 kg Predicted Winner' },
+  '105m':  { labelPrefix: '105 kg Predicted Winner' },
+  '120m':  { labelPrefix: '120 kg Predicted Winner' },
+  '120pm': { labelPrefix: '120+ kg Predicted Winner' }
+};
 
 // ========= STATE =========
 let currentStep = 0;
 
 // ========= SCROLL HELPERS =========
+
 function scrollToFormTop() {
   const formContainer = document.getElementById('form-container');
   if (formContainer) {
     const rect = formContainer.getBoundingClientRect();
-    const y = rect.top + window.pageYOffset - 16;
-    window.scrollTo({ top: y, behavior: 'smooth' });
+    const targetY = rect.top + window.pageYOffset - 16; // small margin
+    window.scrollTo({ top: targetY, behavior: 'smooth' });
   } else {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }
 
-function scrollToFirstError() {
-  const errorFields = [...document.querySelectorAll('[id$="Error"]')]
-    .filter(el => el.textContent.trim() !== '');
+function scrollToFirstErrorInStep(stepIndex) {
+  const stepEl = steps[stepIndex];
+  if (!stepEl) return;
 
-  if (errorFields.length > 0) {
-    const el = errorFields[0];
-    const y = el.getBoundingClientRect().top + window.pageYOffset - 120;
-    window.scrollTo({ top: y, behavior: 'smooth' });
-  }
+  const errorEls = Array.from(
+    stepEl.querySelectorAll('[id$="Error"]')
+  ).filter(el => el.textContent.trim() !== '');
+
+  if (errorEls.length === 0) return;
+
+  const firstError = errorEls[0];
+  const rect = firstError.getBoundingClientRect();
+  const targetY = rect.top + window.pageYOffset - 80;
+  window.scrollTo({ top: targetY, behavior: 'smooth' });
 }
 
 // ========= UTILS =========
@@ -60,13 +87,19 @@ function showStep(index) {
 
   currentStep = index;
   backBtn.style.visibility = index === 0 ? 'hidden' : 'visible';
-  nextBtn.textContent = index === steps.length - 1 ? 'Submit' : 'Next';
+
+  if (index === steps.length - 1) {
+    nextBtn.textContent = 'Submit';
+  } else {
+    nextBtn.textContent = 'Next';
+  }
 
   const labels = [
-    'Step 1 of 4 – Contact',
-    'Step 2 of 4 – Women’s Predictions',
-    'Step 3 of 4 – Men’s Predictions',
-    'Step 4 of 4 – Best Lifters'
+    'Step 1 of 5 – Contact',
+    'Step 2 of 5 – Women’s Predictions',
+    'Step 3 of 5 – Men’s Predictions',
+    'Step 4 of 5 – Confidence Ratings',
+    'Step 5 of 5 – Best Lifters'
   ];
   stepLabel.textContent = labels[index] || '';
 }
@@ -77,12 +110,43 @@ function showStatus(message, isError = false) {
 }
 
 function clearErrors() {
-  document.querySelectorAll('[id$="Error"]').forEach(el => { el.textContent = ''; });
+  document.querySelectorAll('[id$="Error"]').forEach(el => {
+    el.textContent = '';
+  });
 }
 
 function setError(id, msg) {
   const el = document.getElementById(id);
   if (el) el.textContent = msg;
+}
+
+// ========= CONFIDENCE LABELS (Step 4) =========
+
+function updateConfidenceLabels() {
+  const allClasses = [...femaleClasses, ...maleClasses];
+
+  allClasses.forEach(cls => {
+    const meta = classMeta[cls];
+    const labelEl = document.getElementById('confLabel_' + cls);
+    if (!meta || !labelEl) return;
+
+    const wSel = document.getElementById('w' + cls);
+    const tInput = document.getElementById('t' + cls);
+
+    const winner = wSel && wSel.value ? wSel.value : '';
+    const total = tInput && tInput.value ? tInput.value.trim() : '';
+
+    if (!winner) {
+      labelEl.textContent = meta.labelPrefix + ' — no winner selected yet.';
+      return;
+    }
+
+    if (total) {
+      labelEl.textContent = `${meta.labelPrefix} — ${winner} (${total} kg nominated)`;
+    } else {
+      labelEl.textContent = `${meta.labelPrefix} — ${winner}`;
+    }
+  });
 }
 
 // ========= CONFIDENCE RATING LOGIC =========
@@ -91,11 +155,13 @@ function initConfidenceOptions() {
   confSelects.forEach(sel => {
     sel.innerHTML = '';
 
+    // Placeholder
     const placeholder = document.createElement('option');
     placeholder.value = '';
     placeholder.textContent = 'Select rating…';
     sel.appendChild(placeholder);
 
+    // Ratings 1–16
     for (let i = 1; i <= 16; i++) {
       const opt = document.createElement('option');
       opt.value = String(i);
@@ -103,7 +169,7 @@ function initConfidenceOptions() {
       sel.appendChild(opt);
     }
 
-    // NEW CLEAR ALL OPTION
+    // CLEAR ALL OPTION — global
     const clearOpt = document.createElement('option');
     clearOpt.value = 'CLEAR_ALL';
     clearOpt.textContent = '⚠️ Clear ALL confidence ratings';
@@ -114,13 +180,15 @@ function initConfidenceOptions() {
 
 function refreshConfidenceDisables() {
   const used = new Set(
-    confSelects.map(sel => sel.value).filter(v => v !== '' && v !== 'CLEAR_ALL')
+    confSelects
+      .map(sel => sel.value)
+      .filter(v => v !== '' && v !== 'CLEAR_ALL')
   );
 
   confSelects.forEach(sel => {
     const current = sel.value;
     Array.from(sel.options).forEach(opt => {
-      if (!opt.value || opt.value === 'CLEAR_ALL') return;
+      if (!opt.value || opt.value === 'CLEAR_ALL') return; // skip placeholder + clear
       opt.disabled = used.has(opt.value) && opt.value !== current;
     });
   });
@@ -130,30 +198,41 @@ function refreshConfidenceDisables() {
 
 confSelects.forEach(sel => {
   sel.addEventListener('change', () => {
-    if (sel.value !== 'CLEAR_ALL') return;
+    if (sel.value === 'CLEAR_ALL') {
+      const ok = window.confirm(
+        'Are you sure you want to clear ALL confidence ratings for ALL weight classes?'
+      );
 
-    const ok = confirm(
-      'Are you sure you want to clear ALL 16 confidence ratings?\n\nThis will reset every rating for both men’s and women’s classes.'
-    );
+      if (!ok) {
+        sel.value = '';
+        return;
+      }
 
-    if (!ok) {
+      const allClasses = [...femaleClasses, ...maleClasses];
+
+      // Clear all confidence selects across men and women
+      allClasses.forEach(cls => {
+        const cSel = document.getElementById('c' + cls);
+        if (cSel) {
+          cSel.value = '';
+        }
+      });
+
+      refreshConfidenceDisables();
+      showStatus('All confidence ratings have been reset. Please reassign 1–16.', false);
       sel.value = '';
       return;
     }
 
-    // Clear ALL 16 confidence dropdowns
-    confSelects.forEach(s => { s.value = ''; });
-
+    // Normal rating selection -> refresh disables
     refreshConfidenceDisables();
-
-    showStatus('All confidence ratings have been cleared.', false);
-    scrollToFormTop();
   });
 });
 
 // ========= BEST LIFTER LISTS =========
 
 function buildBestLifterLists() {
+  // Collect options from all female and male class winner dropdowns
   const femaleOptions = new Set();
   const maleOptions = new Set();
 
@@ -199,7 +278,6 @@ function validateStep(stepIndex) {
   clearErrors();
   let valid = true;
 
-  // STEP 0 — CONTACT
   if (stepIndex === 0) {
     const emailVal = emailInput.value.trim();
     if (!emailVal) {
@@ -215,19 +293,14 @@ function validateStep(stepIndex) {
     }
   }
 
-  // STEP 1 — WOMEN'S
   if (stepIndex === 1) {
+    // Women – winners & totals required (confidence is on Step 4 now)
     femaleClasses.forEach(cls => {
       const wSel = document.getElementById('w' + cls);
-      const cSel = document.getElementById('c' + cls);
       const tInput = document.getElementById('t' + cls);
 
       if (!wSel.value) {
         setError('w' + cls + 'Error', 'Please pick a winner.');
-        valid = false;
-      }
-      if (!cSel.value) {
-        setError('c' + cls + 'Error', 'Please choose a confidence rating.');
         valid = false;
       }
 
@@ -239,19 +312,14 @@ function validateStep(stepIndex) {
     });
   }
 
-  // STEP 2 — MEN'S
   if (stepIndex === 2) {
+    // Men – winners & totals required (confidence is on Step 4 now)
     maleClasses.forEach(cls => {
       const wSel = document.getElementById('w' + cls);
-      const cSel = document.getElementById('c' + cls);
       const tInput = document.getElementById('t' + cls);
 
       if (!wSel.value) {
         setError('w' + cls + 'Error', 'Please pick a winner.');
-        valid = false;
-      }
-      if (!cSel.value) {
-        setError('c' + cls + 'Error', 'Please choose a confidence rating.');
         valid = false;
       }
 
@@ -261,45 +329,59 @@ function validateStep(stepIndex) {
         valid = false;
       }
     });
+  }
 
-    // UNIQUE RATING CHECK (16 ratings exactly once)
-    const allValues = confSelects
-      .map(sel => sel.value)
+  if (stepIndex === 3) {
+    // Confidence Ratings – all 16 must be filled and 1–16 used exactly once
+    const allClasses = [...femaleClasses, ...maleClasses];
+
+    allClasses.forEach(cls => {
+      const cSel = document.getElementById('c' + cls);
+      if (!cSel || !cSel.value || cSel.value === 'CLEAR_ALL') {
+        setError('c' + cls + 'Error', 'Please choose a confidence rating.');
+        valid = false;
+      }
+    });
+
+    const allValues = allClasses
+      .map(cls => {
+        const cSel = document.getElementById('c' + cls);
+        return cSel ? cSel.value : '';
+      })
       .filter(v => v !== '' && v !== 'CLEAR_ALL');
 
     const unique = new Set(allValues);
-
     if (allValues.length !== 16 || unique.size !== 16) {
-      showStatus(
-        'Each confidence rating 1–16 must be used exactly once across ALL men’s and women’s classes.',
-        true
-      );
+      showStatus('Each confidence rating 1–16 must be used exactly once across all weight classes.', true);
       valid = false;
     }
   }
 
-  // STEP 3 — BEST LIFTERS
-  if (stepIndex === 3) {
-    const femaleInput = femaleBestInput.value.trim().toLowerCase();
-    const maleInput   = maleBestInput.value.trim().toLowerCase();
+  if (stepIndex === 4) {
+    // Best Lifters
+    const femaleInput = document.getElementById('femaleBest');
+    const maleInput   = document.getElementById('maleBest');
 
-    const femaleOpts = [...document.querySelectorAll('#femaleBestList option')]
-      .map(o => o.value.trim().toLowerCase());
-    const maleOpts = [...document.querySelectorAll('#maleBestList option')]
+    const femaleOptions = [...document.querySelectorAll('#femaleBestList option')]
       .map(o => o.value.trim().toLowerCase());
 
-    let localValid = true;
+    const maleOptions = [...document.querySelectorAll('#maleBestList option')]
+      .map(o => o.value.trim().toLowerCase());
 
-    if (!femaleOpts.includes(femaleInput)) {
-      setError('femaleBestError', 'Please select a lifter from the list.');
-      localValid = false;
-    }
-    if (!maleOpts.includes(maleInput)) {
-      setError('maleBestError', 'Please select a lifter from the list.');
-      localValid = false;
+    const femaleVal = femaleInput.value.trim().toLowerCase();
+    const maleVal   = maleInput.value.trim().toLowerCase();
+
+    if (!femaleOptions.includes(femaleVal)) {
+      document.getElementById('femaleBestError').textContent =
+        'Please select a lifter from the list.';
+      valid = false;
     }
 
-    if (!localValid) return false;
+    if (!maleOptions.includes(maleVal)) {
+      document.getElementById('maleBestError').textContent =
+        'Please select a lifter from the list.';
+      valid = false;
+    }
   }
 
   return valid;
@@ -307,6 +389,7 @@ function validateStep(stepIndex) {
 
 // ========= DUPLICATE EMAIL HELPERS =========
 
+// Assumes backend supports ?action=checkEmail&email=...
 async function checkEmailExists(email) {
   const res = await fetch(
     SCRIPT_URL + '?action=checkEmail&email=' + encodeURIComponent(email),
@@ -316,9 +399,11 @@ async function checkEmailExists(email) {
   if (!json.ok) {
     throw new Error(json.message || 'Could not check email.');
   }
+  // Expecting { ok:true, exists:true/false }
   return !!json.exists;
 }
 
+// Assumes backend supports ?action=sendLink&email=...
 async function sendEditLink(email) {
   const res = await fetch(
     SCRIPT_URL + '?action=sendLink&email=' + encodeURIComponent(email),
@@ -327,10 +412,12 @@ async function sendEditLink(email) {
   const json = await res.json();
 
   if (!json.ok) {
+    // Show message but don't blow up JS
     showStatus(json.message || 'Could not send your private link. Please try again later.', true);
     return false;
   }
 
+  // Optionally show a success message here, but main one is set in caller
   return true;
 }
 
@@ -340,66 +427,80 @@ async function prefillIfToken() {
   const params = new URLSearchParams(window.location.search);
   const existingToken = params.get('token');
 
-  if (!existingToken) return;
+  if (!existingToken) {
+    // Still want labels based on default (blank) winners/totals
+    updateConfidenceLabels();
+    return;
+  }
 
+  // Put token into hidden input so submit will update same row
   tokenInput.value = existingToken;
 
   try {
     showStatus('Loading your saved entry…', false);
-
     const res = await fetch(
       SCRIPT_URL + '?action=prefill&token=' + encodeURIComponent(existingToken),
       { method: 'GET' }
     );
     const json = await res.json();
-
     if (!json.ok) {
       showStatus(json.message || 'Could not load previous entry.', true);
+      updateConfidenceLabels();
       return;
     }
-
     const d = json.data || {};
 
-    // Prefill contact
+    // Contact
     if (d.email)           emailInput.value = d.email;
     if (d.instagramHandle) igInput.value = d.instagramHandle;
     if (d.leaderboardName) leaderboardInput.value = d.leaderboardName;
 
-    // Lock email
+    // 🔒 When editing via token, lock the email field
     emailInput.readOnly = true;
     emailInput.classList.add('bg-gray-700', 'cursor-not-allowed');
 
-    // Prefill women
+    // Winners – Women
     femaleClasses.forEach(cls => {
       const wSel = document.getElementById('w' + cls);
       const tInput = document.getElementById('t' + cls);
       const cSel  = document.getElementById('c' + cls);
 
-      if (d['w' + cls] && wSel)   wSel.value = d['w' + cls];
-      if (d['t' + cls] && tInput) tInput.value = d['t' + cls];
-      if (d['c' + cls] && cSel)   cSel.value = String(d['c' + cls]);
+      const wKey = 'w' + cls;
+      const tKey = 't' + cls;
+      const cKey = 'c' + cls;
+
+      if (d[wKey] && wSel)   wSel.value = d[wKey];
+      if (d[tKey] && tInput) tInput.value = d[tKey];
+      if (d[cKey] && cSel)   cSel.value = String(d[cKey]);
     });
 
-    // Prefill men
+    // Winners – Men
     maleClasses.forEach(cls => {
       const wSel = document.getElementById('w' + cls);
       const tInput = document.getElementById('t' + cls);
       const cSel  = document.getElementById('c' + cls);
 
-      if (d['w' + cls] && wSel)   wSel.value = d['w' + cls];
-      if (d['t' + cls] && tInput) tInput.value = d['t' + cls];
-      if (d['c' + cls] && cSel)   cSel.value = String(d['c' + cls]);
+      const wKey = 'w' + cls;
+      const tKey = 't' + cls;
+      const cKey = 'c' + cls;
+
+      if (d[wKey] && wSel)   wSel.value = d[wKey];
+      if (d[tKey] && tInput) tInput.value = d[tKey];
+      if (d[cKey] && cSel)   cSel.value = String(d[cKey]);
     });
 
-    // Prefill best lifters
+    // Best lifters
     if (d.femaleBest) femaleBestInput.value = d.femaleBest;
     if (d.maleBest)   maleBestInput.value   = d.maleBest;
 
+    // After setting confidence values, refresh disables and labels
     refreshConfidenceDisables();
-    showStatus('Your previous entry has been loaded. You can edit and resubmit.', false);
+    updateConfidenceLabels();
 
+    showStatus('Your previous entry has been loaded. You can edit and resubmit.', false);
   } catch (err) {
     showStatus('Error loading previous entry. You can still submit a new one.', true);
+    updateConfidenceLabels();
   }
 }
 
@@ -409,13 +510,15 @@ async function submitForm() {
   clearErrors();
   showStatus('');
 
+  // Normalise email
   emailInput.value = emailInput.value.trim().toLowerCase();
 
-  // Validate *all* steps before submission
+  // Validate ALL steps before submitting
   for (let s = 0; s < steps.length; s++) {
     if (!validateStep(s)) {
       showStep(s);
-      scrollToFormTop();
+      // Wait a tiny moment for DOM to show correct step then scroll to first error
+      setTimeout(() => scrollToFirstErrorInStep(s), 50);
       return;
     }
   }
@@ -426,11 +529,11 @@ async function submitForm() {
 
   try {
     const formData = new FormData(form);
-
     const res = await fetch(SCRIPT_URL, {
       method: 'POST',
       body: formData
     });
+
     const json = await res.json();
 
     if (!json.ok) {
@@ -440,19 +543,20 @@ async function submitForm() {
       return;
     }
 
-    showStatus(json.message || 'Entry saved. Check your email for confirmation and edit link.', false);
+    // Success message
+    showStatus(json.message || 'Entry saved. Check your email for confirmation and your edit link.', false);
 
-    // Display edit link on page
+    // === SHOW EDIT LINK ON PAGE ===
     if (json.ok && json.token) {
       const editLink = `https://solacestrength.github.io/britishclassicfl/entry.html?token=${encodeURIComponent(json.token)}`;
-      const box = document.getElementById('edit-link-box');
+      const linkBox = document.getElementById('edit-link-box');
 
-      if (box) {
-        box.innerHTML = `
+      if (linkBox) {
+        linkBox.innerHTML = `
           <div class="p-4 mt-4 rounded-lg bg-gray-800 border border-gray-700 text-center text-sm text-gray-200">
-            <p class="font-semibold mb-2">Your private edit link:</p>
-            <a href="${editLink}" class="text-blue-400 break-all" target="_blank">${editLink}</a>
-            <p class="text-gray-400 mt-2">(This has also been emailed to you.)</p>
+              <p class="font-semibold mb-2">Your private edit link:</p>
+              <a href="${editLink}" class="text-blue-400 break-all" target="_blank">${editLink}</a>
+              <p class="text-gray-400 mt-2">(This has also been emailed to you.)</p>
           </div>
         `;
       }
@@ -466,7 +570,7 @@ async function submitForm() {
   backBtn.disabled = false;
 }
 
-// ========= NAVIGATION =========
+// ========= NAVIGATION HANDLERS =========
 
 backBtn.addEventListener('click', () => {
   if (currentStep > 0) {
@@ -476,23 +580,20 @@ backBtn.addEventListener('click', () => {
 });
 
 nextBtn.addEventListener('click', async () => {
+  // Not on last step yet
   if (currentStep < steps.length - 1) {
-
-    // validate current page
+    // Local validation for current step
     if (!validateStep(currentStep)) {
-      // NEW: Scroll to first error
-      const firstErr = document.querySelector('[id$="Error"]:not(:empty)');
-      if (firstErr) {
-        firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+      scrollToFirstErrorInStep(currentStep);
       return;
     }
 
-    // STEP 0 — duplicate email check
+    // Special handling on Step 0 for duplicate emails
     if (currentStep === 0) {
       const emailVal = emailInput.value.trim().toLowerCase();
       const tokenVal = tokenInput.value.trim();
 
+      // Only check for duplicates if this is NOT an edit via token
       if (emailVal && !tokenVal) {
         try {
           showStatus('Checking email…', false);
@@ -502,30 +603,35 @@ nextBtn.addEventListener('click', async () => {
           const exists = await checkEmailExists(emailVal);
 
           if (exists) {
-            const wantLink = confirm(
-              'An entry with this email already exists.\n\n' +
-              'Press OK to send your private edit link.\n' +
-              'Press Cancel to enter a different email.'
+            // Popup: send link or cancel
+            const wantLink = window.confirm(
+              'An entry with this email address already exists.\n\n' +
+              'Press OK to send your private edit link to this email so you can edit your existing entry.\n' +
+              'Press Cancel to change the email address.'
             );
 
             if (wantLink) {
-              await sendEditLink(emailVal);
-              showStatus('Your private edit link has been emailed to you.', false);
+              const sentOk = await sendEditLink(emailVal);
+              if (sentOk) {
+                showStatus('Your private edit link has been emailed to you. Please use that link to update your entry.', false);
+              }
             } else {
-              showStatus('Please enter a different email.', true);
+              showStatus('Please enter a different email address to create a new entry.', true);
             }
 
             nextBtn.disabled = false;
             backBtn.disabled = false;
+            // 🔒 Do NOT advance to Step 2 in either case
             return;
           }
 
+          // If no existing entry, clear any "checking" status
           showStatus('', false);
           nextBtn.disabled = false;
           backBtn.disabled = false;
 
-        } catch {
-          showStatus('Could not check email right now. Try again.', true);
+        } catch (err) {
+          showStatus('Could not check this email right now. Please try again.', true);
           nextBtn.disabled = false;
           backBtn.disabled = false;
           return;
@@ -533,11 +639,11 @@ nextBtn.addEventListener('click', async () => {
       }
     }
 
-    // advance
+    // If we reach here, it's safe to advance
     showStep(currentStep + 1);
     scrollToFormTop();
-
   } else {
+    // Last step -> submit
     submitForm();
   }
 });
@@ -545,8 +651,23 @@ nextBtn.addEventListener('click', async () => {
 // ========= INIT =========
 
 document.addEventListener('DOMContentLoaded', async () => {
-  initConfidenceOptions();      // includes CLEAR ALL option
-  buildBestLifterLists();       // datalists for best lifter inputs
-  showStep(0);                  // show Step 1 on load
-  await prefillIfToken();       // load saved entry if ?token= present
+  initConfidenceOptions();
+  buildBestLifterLists();
+  showStep(0);
+
+  // Wire up live updates for confidence labels
+  const allClasses = [...femaleClasses, ...maleClasses];
+  allClasses.forEach(cls => {
+    const wSel = document.getElementById('w' + cls);
+    const tInput = document.getElementById('t' + cls);
+    if (wSel) {
+      wSel.addEventListener('change', updateConfidenceLabels);
+    }
+    if (tInput) {
+      tInput.addEventListener('input', updateConfidenceLabels);
+    }
+  });
+
+  await prefillIfToken();
+  updateConfidenceLabels();
 });
