@@ -131,21 +131,18 @@ function updateConfidenceLabels() {
     if (!meta || !labelEl) return;
 
     const wSel = document.getElementById('w' + cls);
-    const tInput = document.getElementById('t' + cls);
 
     const winner = wSel && wSel.value ? wSel.value : '';
-    const total = tInput && tInput.value ? tInput.value.trim() : '';
 
     if (!winner) {
       labelEl.textContent = meta.labelPrefix + ' — no winner selected yet.';
       return;
     }
 
-    if (total) {
-      labelEl.textContent = `${meta.labelPrefix} — ${winner} (${total} kg nominated)`;
-    } else {
-      labelEl.textContent = `${meta.labelPrefix} — ${winner}`;
-    }
+    // ✔️ Show ONLY the lifter’s name (strip nominated total)
+    const cleanName = winner.replace(/\s*\([\d\.]+\s*kg\)/i, '').trim();
+
+    labelEl.textContent = `${meta.labelPrefix} — ${cleanName}`;
   });
 }
 
