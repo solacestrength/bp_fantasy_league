@@ -131,18 +131,17 @@ function updateConfidenceLabels() {
     if (!meta || !labelEl) return;
 
     const wSel = document.getElementById('w' + cls);
-
     const winner = wSel && wSel.value ? wSel.value : '';
 
     if (!winner) {
-      labelEl.textContent = meta.labelPrefix + ' — no winner selected yet.';
+      labelEl.textContent = `Your ${meta.labelPrefix} — no winner selected yet.`;
       return;
     }
 
-    // ✔️ Show ONLY the lifter’s name (strip nominated total)
+    // ✔️ Remove totals e.g. "(707.5 kg)"
     const cleanName = winner.replace(/\s*\([\d\.]+\s*kg\)/i, '').trim();
 
-    labelEl.textContent = `${meta.labelPrefix} — ${cleanName}`;
+    labelEl.textContent = `Your ${meta.labelPrefix} — ${cleanName}`;
   });
 }
 
