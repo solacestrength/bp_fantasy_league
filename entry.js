@@ -647,6 +647,16 @@ nextBtn.addEventListener('click', async () => {
 // ========= INIT =========
 
 document.addEventListener('DOMContentLoaded', async () => {
+  const params = new URLSearchParams(window.location.search);
+  const editingToken = params.get('token');
+
+  // 🔥 If editing via private link → bypass Spotify gate entirely
+  if (editingToken) {
+    sessionStorage.setItem('spotifyPassed', '1');
+    const spotifyLock = document.getElementById('spotify-lock');
+    if (spotifyLock) spotifyLock.classList.add('hidden');
+  }
+
   initConfidenceOptions();
   buildBestLifterLists();
   showStep(0);
@@ -656,6 +666,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   allClasses.forEach(cls => {
     const wSel = document.getElementById('w' + cls);
     const tInput = document.getElementById('t' + cls);
+
     if (wSel) {
       wSel.addEventListener('change', updateConfidenceLabels);
     }
