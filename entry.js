@@ -110,6 +110,8 @@ function showStep(index) {
   ];
   stepLabel.textContent = labels[index] || '';
 
+  positionUtilityButtons();
+
   // Show Save/Clear on Steps 0–3; hide on final step (4)
   if (saveBtn && clearBtn) {
     if (index === steps.length - 1) {
@@ -724,6 +726,25 @@ async function submitForm() {
 }
 
 // ========= NAVIGATION HANDLERS =========
+
+function positionUtilityButtons() {
+  const clearBtns = document.querySelectorAll('.clearFormBtn');
+  const saveBtns  = document.querySelectorAll('.saveProgressBtn');
+
+  // Hide all by default
+  clearBtns.forEach(btn => btn.classList.add('hidden'));
+  saveBtns.forEach(btn => btn.classList.add('hidden'));
+
+  // Step 4 is the last step with save/clear — DON’T show on Step 5
+  if (currentStep === 4) return;
+
+  // Show buttons for Steps 1–4
+  const clear = document.querySelector(`.clearFormBtn[data-step="${currentStep}"]`);
+  const save  = document.querySelector(`.saveProgressBtn[data-step="${currentStep}"]`);
+
+  if (clear) clear.classList.remove('hidden');
+  if (save)  save.classList.remove('hidden');
+}
 
 backBtn.addEventListener('click', () => {
   if (currentStep > 0) {
