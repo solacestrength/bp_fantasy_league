@@ -13,6 +13,13 @@
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
   <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
+  <link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#b91c1c">
+
+<!-- iOS -->
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
   <style>
 /* === GLOBAL THEME === */
@@ -2211,6 +2218,14 @@ const bottomBackToTop = document.getElementById('bottomBackToTop');
 if (bottomBackToTop) {
   bottomBackToTop.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
+</script>
+
+  <script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/service-worker.js");
   });
 }
 </script>
