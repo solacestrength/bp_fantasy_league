@@ -1,5 +1,6 @@
 // ========= CONFIG =========
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyBGdFc2n1Ogu-AQADw_03uSoNk-OSQltl5Z-zEgjRDCdwwLIioVerSmGgDlqZWO4qM/exec'; // <-- your deployed Apps Script Web App URL
+const AUTO_SAVE_KEY = 'bcfl_savedProgress_v1';
 
 // ========= DOM ELEMENTS =========
 const form = document.getElementById('bcfl-form');
@@ -18,6 +19,10 @@ const femaleBestInput = document.getElementById('femaleBest');
 const maleBestInput = document.getElementById('maleBest');
 const femaleBestList = document.getElementById('femaleBestList');
 const maleBestList = document.getElementById('maleBestList');
+
+// Save / Clear buttons (must exist in HTML)
+const saveBtn = document.getElementById('saveProgressBtn');
+const clearBtn = document.getElementById('clearFormBtn');
 
 // All confidence selects (now all live on Step 4 page)
 const confSelects = Array.from(document.querySelectorAll('.conf-select'));
@@ -49,6 +54,8 @@ const classMeta = {
 
 // ========= STATE =========
 let currentStep = 0;
+let autoSaveIntervalId = null;
+let editingToken = null;
 
 // ========= SCROLL HELPERS =========
 
@@ -102,6 +109,17 @@ function showStep(index) {
     'Step 5 of 5 – Best Lifters'
   ];
   stepLabel.textContent = labels[index] || '';
+
+  // Show Save/Clear on Steps 0–3; hide on final step (4)
+  if (saveBtn && clearBtn) {
+    if (index === steps.length - 1) {
+      saveBtn.classList.add('hidden');
+      clearBtn.classList.add('hidden');
+    } else {
+      saveBtn.classList.remove('hidden');
+      clearBtn.classList.remove('hidden');
+    }
+  }
 }
 
 function showStatus(message, isError = false) {
@@ -138,7 +156,7 @@ function updateConfidenceLabels() {
       return;
     }
 
-    // ✔️ Remove totals e.g. "(707.5 kg)"
+    // Remove nominated totals e.g. "(707.5 kg)"
     const cleanName = winner.replace(/\s*\([\d\.]+\s*kg\)/i, '').trim();
 
     labelEl.textContent = `Your ${meta.labelPrefix} — ${cleanName}`;
@@ -383,6 +401,143 @@ function validateStep(stepIndex) {
   return valid;
 }
 
+// ========= SAVE / RESTORE PROGRESS =========
+
+function collectFormState() {
+  const data = {};
+  if (!form) return data;
+
+  const fd = new FormData(form);
+  fd.forEach((value, key) => {
+    data[key] = value;
+  });
+
+  data.currentStep = currentStep;
+  return data;
+}
+
+function applyFormState(state) {
+  if (!state) return;
+
+  // Restore all named fields except currentStep
+  Object.keys(state).forEach(key => {
+    if (key === 'currentStep') return;
+    const el = form.querySelector(`[name="${key}"]`);
+    if (!el) return;
+
+    if (el.type === 'checkbox' || el.type === 'radio') {
+      el.checked = state[key] === el.value;
+    } else {
+      el.value = state[key];
+    }
+  });
+
+  // Clamp step between 0 and last
+  let savedStep = typeof state.currentStep === 'number' ? state.currentStep : 0;
+  if (isNaN(savedStep)) savedStep = 0;
+  savedStep = Math.max(0, Math.min(savedStep, steps.length - 1));
+
+  showStep(savedStep);
+  refreshConfidenceDisables();
+  updateConfidenceLabels();
+}
+
+function saveProgress(showMessage = true, isAuto = false) {
+  if (!form) return;
+
+  const emailVal = emailInput.value.trim();
+  if (!emailVal) {
+    if (!isAuto && showMessage) {
+      showStatus('Add your email before saving progress.', true);
+    }
+    return;
+  }
+
+  const state = collectFormState();
+  try {
+    localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(state));
+  } catch (e) {
+    if (!isAuto && showMessage) {
+      showStatus('Unable to save progress (storage error).', true);
+    }
+    return;
+  }
+
+  if (!showMessage) return;
+
+  if (isAuto) {
+    statusEl.textContent = 'Auto-saved';
+    statusEl.className = 'text-xs mt-1 text-gray-400';
+  } else {
+    showStatus('Progress saved.', false);
+  }
+
+  setTimeout(() => {
+    if (statusEl.textContent === 'Auto-saved' || statusEl.textContent === 'Progress saved.') {
+      statusEl.textContent = '';
+    }
+  }, 3000);
+}
+
+function restoreSavedProgressIfAny() {
+  const raw = localStorage.getItem(AUTO_SAVE_KEY);
+  if (!raw) return false;
+
+  let state;
+  try {
+    state = JSON.parse(raw);
+  } catch (e) {
+    return false;
+  }
+
+  applyFormState(state);
+  showStatus('Restored your saved progress.', false);
+  return true;
+}
+
+function clearFormAll() {
+  const ok = window.confirm('Are you sure you want to clear all form progress?');
+  if (!ok) return;
+
+  const existingToken = tokenInput.value;
+
+  form.reset();
+
+  // Preserve token if user is editing via private link
+  tokenInput.value = existingToken;
+
+  // Re-init confidence & labels
+  initConfidenceOptions();
+  refreshConfidenceDisables();
+  updateConfidenceLabels();
+
+  // Reset step to first
+  showStep(0);
+  scrollToFormTop();
+
+  // Clear saved progress
+  localStorage.removeItem(AUTO_SAVE_KEY);
+
+  // Stop auto-save if running
+  if (autoSaveIntervalId) {
+    clearInterval(autoSaveIntervalId);
+    autoSaveIntervalId = null;
+  }
+
+  showStatus('Form cleared. You can start again.', false);
+}
+
+// ========= AUTO-SAVE =========
+
+function startAutoSave() {
+  if (autoSaveIntervalId) return;
+  if (!emailInput.value.trim()) return;
+
+  autoSaveIntervalId = setInterval(() => {
+    saveProgress(true, true); // with subtle message
+  }, 30000);
+}
+
 // ========= DUPLICATE EMAIL HELPERS =========
 
 // Assumes backend supports ?action=checkEmail&email=...
@@ -558,6 +713,8 @@ async function submitForm() {
       }
     }
 
+    // On successful submit, you *could* clear saved progress
+    // but I'll leave it intact in case they want to tweak again.
   } catch (err) {
     showStatus('Network or server error. Please try again.', true);
   }
@@ -617,7 +774,7 @@ nextBtn.addEventListener('click', async () => {
 
             nextBtn.disabled = false;
             backBtn.disabled = false;
-            // 🔒 Do NOT advance to Step 2 in either case
+            // 🔒 Do NOT advance in either case
             return;
           }
 
@@ -633,6 +790,9 @@ nextBtn.addEventListener('click', async () => {
           return;
         }
       }
+
+      // Start auto-save once Step 0 is valid and email is set
+      startAutoSave();
     }
 
     // If we reach here, it's safe to advance
@@ -648,10 +808,12 @@ nextBtn.addEventListener('click', async () => {
 
 document.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
-  const editingToken = params.get('token');
+  editingToken = params.get('token');
 
-  // 🔥 If editing via private link → bypass Spotify gate entirely
-  if (editingToken) {
+  const hasSavedProgress = !!localStorage.getItem(AUTO_SAVE_KEY);
+
+  // If editing via private link OR returning with saved progress → bypass Spotify gate
+  if (editingToken || hasSavedProgress) {
     sessionStorage.setItem('spotifyPassed', '1');
     const spotifyLock = document.getElementById('spotify-lock');
     if (spotifyLock) spotifyLock.classList.add('hidden');
@@ -675,6 +837,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // Hook up Save / Clear buttons
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => {
+      saveProgress(true, false);
+    });
+  }
+
+  if (clearBtn) {
+    clearBtn.addEventListener('click', clearFormAll);
+  }
+
+  // If NOT editing via token, restore saved progress if available
+  if (!editingToken && hasSavedProgress) {
+    restoreSavedProgressIfAny();
+  }
+
+  // Prefill from token if present (will also update labels)
   await prefillIfToken();
+
+  // Ensure labels are correct at start
   updateConfidenceLabels();
+
+  // If email already present (from saved progress or token), start auto-save
+  if (emailInput.value.trim()) {
+    startAutoSave();
+  }
 });
