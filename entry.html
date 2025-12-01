@@ -1007,20 +1007,49 @@
                 </p>
               </div>
 
-              <!-- Navigation buttons -->
-              <div class="flex items-center justify-between pt-4 border-t border-gray-700 mt-4">
-                <button type="button" id="backBtn"
-                        class="px-3 py-2 rounded-full bg-gray-800 text-xs font-semibold border border-gray-700 hover:bg-gray-700 transition">
-                  Back
-                </button>
+              <!-- ========================= -->
+<!-- UNIFIED NAVIGATION BLOCK (used for ALL steps) -->
+<div id="navContainer" class="mt-6 border-t border-gray-700 pt-4">
 
-                <button type="button" id="nextBtn"
-                        class="px-4 py-2 rounded-full bg-red-600 text-xs sm:text-sm font-semibold hover:bg-red-500 transition">
-                  Next
-                </button>
-                <button type="button" id="saveProgressBtn" class="...">Save Progress</button>
-<button type="button" id="clearFormBtn" class="...">Clear Form</button>
-              </div>
+  <!-- Top row: Back + Next -->
+  <div class="flex items-center justify-between">
+
+    <!-- Back -->
+    <button type="button" id="backBtn"
+      class="px-4 py-2 rounded-full bg-gray-800 text-xs sm:text-sm font-semibold
+             border border-gray-700 hover:bg-gray-700 transition">
+      Back
+    </button>
+
+    <!-- Next / Submit -->
+    <button type="button" id="nextBtn"
+      class="px-5 py-2 rounded-full bg-red-600 text-xs sm:text-sm font-semibold
+             hover:bg-red-500 transition">
+      Next
+    </button>
+
+  </div>
+
+  <!-- Bottom row: Save / Clear -->
+  <div class="flex items-center justify-between mt-3">
+
+    <!-- Clear Form -->
+    <button type="button" id="clearFormBtn"
+      class="px-4 py-2 rounded-full bg-gray-800 text-xs sm:text-sm font-semibold
+             border border-gray-700 hover:bg-gray-700 transition">
+      Clear Form
+    </button>
+
+    <!-- Save Progress -->
+    <button type="button" id="saveProgressBtn"
+      class="px-4 py-2 rounded-full bg-gray-800 text-xs sm:text-sm font-semibold
+             border border-gray-700 hover:bg-gray-700 transition">
+      Save Progress
+    </button>
+
+  </div>
+
+</div>
             </form>
 
             <!-- Edit link display box (filled after submit) -->
