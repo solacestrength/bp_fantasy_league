@@ -1,9 +1,9 @@
 {
   "name": "British Classic Fantasy League",
   "short_name": "BC Fantasy",
-  "description": "British Classic Fantasy League — Live Leaderboards, Accuracy Scores & Metrics.",
-  "start_url": "/index.html",
-  "scope": "/",
+  "description": "British Classic Fantasy League — Leaderboards, Accuracy Scores & Metrics.",
+  "start_url": "/britishclassicfl/index.html",
+  "scope": "/britishclassicfl/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#b91c1c",
@@ -11,12 +11,12 @@
 
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
