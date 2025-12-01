@@ -57,6 +57,13 @@
 
   <!-- Fixes for mobile menu stacking/pointer events -->
   <link rel="stylesheet" href="/assets/css/fix-dropdown.css">
+  <link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#b91c1c">
+
+<!-- iOS -->
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body class="relative bg-gray-900 text-white font-sans min-h-screen flex flex-col">
 
@@ -363,6 +370,12 @@
 
   toggleMenu(false);
 </script>
-
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/service-worker.js");
+  });
+}
+</script>
 </body>
 </html>
