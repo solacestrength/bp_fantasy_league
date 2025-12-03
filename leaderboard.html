@@ -38,10 +38,15 @@
   width: 100%;
 }
 
-    /* Make the name column wider */
+    /* Wider name column + nice wrapping (used on both pages) */
 #leaderboardTable th:nth-child(2),
-#leaderboardTable td:nth-child(2) {
-  min-width: 160px;  /* adjust to taste: 150–200px is most common */
+#leaderboardTable td:nth-child(2),
+#accuracyTable th:nth-child(2),
+#accuracyTable td:nth-child(2) {
+  min-width: 170px;        /* adjust as preferred */
+  white-space: normal;     /* allow multi-line names */
+  word-break: break-word;  /* break long words cleanly */
+  overflow-wrap: anywhere;
 }
 
 #leaderboardTable th,
