@@ -38,6 +38,12 @@
   width: 100%;
 }
 
+    /* Make the name column wider */
+#leaderboardTable th:nth-child(2),
+#leaderboardTable td:nth-child(2) {
+  min-width: 160px;  /* adjust to taste: 150–200px is most common */
+}
+
 #leaderboardTable th,
 #leaderboardTable td {
   white-space: normal !important;   /* force wrapping */
