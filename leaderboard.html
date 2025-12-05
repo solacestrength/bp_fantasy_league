@@ -38,6 +38,17 @@
   width: 100%;
 }
 
+    /* Contextual Share Button Fade-Out */
+#contextualShareBtn {
+    opacity: 1;
+    transition: opacity 0.5s ease;
+}
+
+#contextualShareBtn.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
     /* Wider name column + nice wrapping (used on both pages) */
 #leaderboardTable th:nth-child(2),
 #leaderboardTable td:nth-child(2),
@@ -317,6 +328,10 @@ if (fabBottom) {
   const rowsPerPage=50;
   let allRows=[],filteredRows=[],currentPage=1,searchMatches=[],currentMatchIndex=-1;
   let headerRow=[],nameColIdx=-1,contextualShareBtn=null;
+
+  /* ✅ Added fade timer variable */
+  let shareButtonFadeTimer = null;
+
   const searchInput=document.getElementById("searchInput");
   const clearBtn=document.getElementById("clearSearchBtn");
 
@@ -470,11 +485,42 @@ if (fabBottom) {
       }
     }
   });
+
+  /* ---------------------------------------------------------
+     ✔️ UPDATED CLEAR BUTTON (with contextual share fade-out)
+     --------------------------------------------------------- */
   clearBtn.addEventListener("click",()=>{
-    searchInput.value="";clearBtn.classList.add("hidden");
-    searchMatches=[];currentMatchIndex=-1;filteredRows=[...allRows];
-    currentPage=1;removeContextualShare();renderTable();
+    searchInput.value="";
+    clearBtn.classList.add("hidden");
+    searchMatches=[];
+    currentMatchIndex=-1;
+    filteredRows=[...allRows];
+    currentPage=1;
+
+    /* ----- NEW FADE LOGIC BEGIN ----- */
+    const shareBtn = document.getElementById("contextualShareBtn");
+
+    if (shareBtn) {
+      // Cancel existing timer if any
+      if (shareButtonFadeTimer) {
+        clearTimeout(shareButtonFadeTimer);
+        shareButtonFadeTimer = null;
+      }
+
+      // Show immediately (in case fading was mid-way)
+      shareBtn.classList.remove("hidden");
+
+      // Begin fade-out timer
+      shareButtonFadeTimer = setTimeout(() => {
+        shareBtn.classList.add("hidden");
+      }, 3000);
+    }
+    /* ----- NEW FADE LOGIC END ----- */
+
+    removeContextualShare();
+    renderTable();
   });
+  /* ------------------------------------------------------- */
 
   /* ---------- Share ---------- */
   function detectBrowserShareSupport(){
