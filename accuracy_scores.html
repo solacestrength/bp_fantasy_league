@@ -38,6 +38,16 @@
       transition: opacity 0.25s ease-in-out, transform 0.25s ease-in-out;
     }
 
+    #contextualShareBtn {
+    opacity: 1;
+    transition: opacity 0.5s ease;
+}
+
+#contextualShareBtn.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
     /* Existing centering rules */
 #accuracyTable th,
 #accuracyTable td {
@@ -264,6 +274,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  let shareButtonFadeTimer = null;
 
   /* ---------- Toast Warning ---------- */
   function showWarning(message) {
@@ -807,6 +819,27 @@ document.addEventListener("DOMContentLoaded", () => {
       currentMatchIndex = -1;
       filteredRows = [...allRows];
 
+      // ---- FADE OUT CONTEXTUAL SHARE BUTTON AFTER 3 SECONDS ----
+      const shareBtn = document.getElementById("contextualShareBtn");
+
+      // Make sure it exists before we manipulate it
+      if (shareBtn) {
+        // Reset any prior fade timers
+        if (shareButtonFadeTimer) {
+          clearTimeout(shareButtonFadeTimer);
+          shareButtonFadeTimer = null;
+        }
+
+        // Ensure the button is visible immediately when clearing search
+        shareBtn.classList.remove("hidden");
+
+        // Start the fade-out timer
+        shareButtonFadeTimer = setTimeout(() => {
+          shareBtn.classList.add("hidden");
+        }, 3000);
+      }
+      // -----------------------------------------------------------
+
       // CLEAR: keep the user on the page of the last matched result.
       if (lastMatchedGlobalIndex !== null) {
         lastMatchedPage = Math.floor(lastMatchedGlobalIndex / rowsPerPage) + 1;
@@ -822,7 +855,7 @@ document.addEventListener("DOMContentLoaded", () => {
         renderTable();
       }
     });
-  }
+}
 
   /* ---------- Device-Aware Share Logic (no DOM hacks) ---------- */
   function detectBrowserShareSupport() {
