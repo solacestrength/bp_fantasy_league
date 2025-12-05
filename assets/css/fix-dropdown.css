@@ -5,15 +5,29 @@
   pointer-events: none !important;
 }
 
-/* header always above backgrounds */
+/* header always above backgrounds and interactive */
 .site-header {
   z-index: 9999 !important;
   position: relative !important;
+  pointer-events: auto !important;
+}
+
+/* ensure burger button is always clickable */
+#menu-btn {
+  position: relative;
+  z-index: 10001; /* above header content */
+  pointer-events: auto !important;
 }
 
 /* dropdown above everything else */
 #mobile-menu {
   z-index: 10000 !important;
-  /* Allow JS to control pointer-events via class toggles; avoid overriding with !important */
+  /* Allow JS to control pointer-events via class toggles */
   pointer-events: auto;
+}
+
+/* if any entry deadline overlay exists, make it non-interactive */
+.entry-deadline-overlay {
+  pointer-events: none !important;
+  z-index: 0 !important;
 }
