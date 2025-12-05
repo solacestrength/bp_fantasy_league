@@ -7,12 +7,13 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
   <link rel="manifest" href="/britishclassicfl/manifest.json">
-<meta name="theme-color" content="#b91c1c">
+  <meta name="theme-color" content="#b91c1c">
 
-<!-- iOS -->
-<link rel="apple-touch-icon" href="/britishclassicfl/icon-192.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- iOS -->
+  <link rel="apple-touch-icon" href="/britishclassicfl/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
   <style>
     @keyframes fadeInUp {
       0% { opacity: 0; transform: translateY(10px); }
@@ -55,7 +56,16 @@
 
     /* Show All button styling like leaderboard */
     #toggleViewBtn {
-      @apply px-3 py-1 rounded bg-gray-700/60 hover:bg-gray-600 text-white text-sm mt-2;
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.375rem;
+      background-color: rgba(55, 65, 81, 0.6);
+      color: white;
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+      transition: background-color 0.2s;
+    }
+    #toggleViewBtn:hover {
+      background-color: rgba(75, 85, 99, 0.6);
     }
   </style>
 </head>
@@ -149,12 +159,13 @@
             </table>
           </div>
 
+          <!-- Pagination -->
           <div id="paginationContainer"
                class="flex justify-center items-center mt-4 flex-wrap text-sm text-gray-300"></div>
 
           <!-- Show All Entries button (below pagination) -->
           <div class="flex justify-center">
-            <button id="toggleViewBtn" class="px-3 py-1 rounded bg-gray-700/60 hover:bg-gray-600 text-white text-sm mt-2">Show All Entries</button>
+            <button id="toggleViewBtn">Show All Entries</button>
           </div>
 
           <p class="text-xs text-gray-500 text-center mt-3">
@@ -243,7 +254,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   let allRows=[], filteredRows=[], headerRow=[], nameColIdx=-1, rowsPerPage=50, currentPage=1;
-  let searchMatches=[], currentMatchIndex=-1, lastMatchedGlobalIndex=null, lastMatchedPage=null;
+  let searchMatches=[], currentMatchIndex=-1;
   let isShowingAll=false, contextualShareBtn=null;
   const searchInput=document.getElementById("searchInput");
   const clearBtn=document.getElementById("clearSearchBtn");
@@ -256,14 +267,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const csvUrl="https://docs.google.com/spreadsheets/d/e/2PACX-1vSuA8YB98ghNeM-cS6Fs1pJNkEBOI0x7WKI4R0vtvAG68mo7PJZYVj2HsdxH3DDqvieaTpe9zUzJcNW/pub?gid=1841956952&single=true&output=csv";
     const response=await fetch(csvUrl);
     const text=await response.text();
-    const rows=text.trim().split(/\r?\n/).map(l=>l.split(","));
-    if(!rows.length) return;
-    headerRow=rows.shift();
-    nameColIdx=headerRow.findIndex(h=>/name|entrant/i.test(h.trim()));
+    const parsed = Papa.parse(text, { skipEmptyLines: true });
+    let rows = parsed.data;
+    if(!rows || rows.length===0) return;
+
+    headerRow = rows.shift();
+    nameColIdx = headerRow.findIndex(h=>/name|entrant/i.test(h.trim()));
     if(nameColIdx<0) nameColIdx=1;
-    document.getElementById("accuracyHeader").innerHTML=headerRow.map(h=>`<th class="px-3 py-2 text-center">${h}</th>`).join("");
-    allRows=rows;
-    filteredRows=[...allRows];
+
+    document.getElementById("accuracyHeader").innerHTML = headerRow.map(h=>`<th class="px-3 py-2 text-center">${h}</th>`).join("");
+    allRows = rows;
+    filteredRows = [...allRows];
     renderTable();
   }
 
@@ -358,11 +372,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   clearBtn.addEventListener("click",()=>{ searchInput.value=""; searchInput.dispatchEvent(new Event("input")); });
 
-  toggleViewBtn.addEventListener("click",()=>{ isShowingAll=!isShowingAll; toggleViewBtn.textContent=isShowingAll?"Show Paginated":"Show All Entries"; renderTable(); });
+  toggleViewBtn.addEventListener("click",()=>{
+    isShowingAll=!isShowingAll;
+    toggleViewBtn.textContent=isShowingAll?"Show Paginated":"Show All Entries";
+    renderTable();
+  });
+
+  loadAccuracyScores();
 
   /* ---------- Service Worker ---------- */
   if('serviceWorker' in navigator){ navigator.serviceWorker.register('/service-worker.js').then(r=>console.log("SW registered",r)).catch(err=>console.warn("SW failed",err)); }
-
 });
   </script>
 </body>
