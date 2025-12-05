@@ -2,6 +2,24 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyBGdFc2n1Ogu-AQADw_03uSoNk-OSQltl5Z-zEgjRDCdwwLIioVerSmGgDlqZWO4qM/exec'; // <-- your deployed Apps Script Web App URL
 const AUTO_SAVE_KEY = 'bcfl_savedProgress_v1';
 
+// ========= DEADLINE ENFORCEMENT =========
+const ENTRY_DEADLINE = new Date("2025-12-04T23:59:00Z");
+
+function isPastDeadline() {
+  const now = new Date();
+  return now > ENTRY_DEADLINE;
+}
+
+function lockFormForDeadline() {
+  const overlay = document.getElementById('deadline-closed-overlay');
+  if (overlay) overlay.classList.remove('hidden');
+
+  // Disable everything except viewing
+  document.querySelectorAll('input, select, button, textarea').forEach(el => {
+    el.disabled = true;
+  });
+}
+
 // ========= DOM ELEMENTS =========
 const form = document.getElementById('bcfl-form');
 const steps = Array.from(document.querySelectorAll('.step'));
@@ -838,6 +856,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     sessionStorage.setItem('spotifyPassed', '1');
     const spotifyLock = document.getElementById('spotify-lock');
     if (spotifyLock) spotifyLock.classList.add('hidden');
+  }
+
+    // 🔒 Hard deadline enforcement + bypass Spotify gate
+  if (isPastDeadline()) {
+    // Bypass Spotify lock automatically
+    sessionStorage.setItem('spotifyPassed', '1');
+    const spotifyLock = document.getElementById('spotify-lock');
+    if (spotifyLock) spotifyLock.classList.add('hidden');
+
+    // Fully lock the form
+    lockFormForDeadline();
+    return;
   }
 
   initConfidenceOptions();
