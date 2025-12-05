@@ -1,183 +1,221 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Accuracy Scores | British Classic Fantasy League 2025 🇬🇧</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="assets/css/fix-dropdown.css" />
-<link rel="manifest" href="/britishclassicfl/manifest.json">
-<meta name="theme-color" content="#b91c1c">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Accuracy Scores | British Classic Fantasy League 2025 🇬🇧</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
+  <link rel="manifest" href="/britishclassicfl/manifest.json">
+  <meta name="theme-color" content="#b91c1c">
 
-<!-- iOS -->
-<link rel="apple-touch-icon" href="/britishclassicfl/icon-192.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- iOS -->
+  <link rel="apple-touch-icon" href="/britishclassicfl/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-<style>
-/* Animations */
-@keyframes fadeInUp {
-  0% { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-.animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
-.animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
+  <style>
+    /* Animations */
+    @keyframes fadeInUp {
+      0% { opacity: 0; transform: translateY(10px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-up { animation: fadeInUp 0.8s ease-out forwards; }
+    .animate-fade-in { animation: fadeInUp 1s ease-out forwards; }
 
-/* Pulse row highlight */
-@keyframes pulse-row-red {
-  0% { background-color: rgba(239,68,68,0.3); }
-  50% { background-color: rgba(239,68,68,0.15); }
-  100% { background-color: rgba(239,68,68,0.3); }
-}
-.pulse-row {
-  animation: pulse-row-red 1.2s ease-in-out 1;
-  background-color: rgba(239,68,68,0.3);
-  font-weight: bold;
-}
+    @keyframes pulse-row-red {
+      0%   { background-color: rgba(239,68,68,0.3); }
+      50%  { background-color: rgba(239,68,68,0.15); }
+      100% { background-color: rgba(239,68,68,0.3); }
+    }
+    .pulse-row { animation: pulse-row-red 1.2s ease-in-out 1; font-weight: bold; }
 
-/* FAB transitions */
-#backToTopFab, #backToBottomFab {
-  transition: opacity 0.25s ease-in-out, transform 0.25s ease-in-out;
-}
+    /* FAB transitions */
+    #backToTopFab, #backToBottomFab {
+      transition: opacity 0.25s ease-in-out, transform 0.25s ease-in-out;
+    }
 
-#contextualShareBtn {
-  opacity: 1;
-  transition: opacity 0.5s ease;
-}
-#contextualShareBtn.hidden {
-  opacity: 0;
-  pointer-events: none;
-}
+    #contextualShareBtn { opacity: 1; transition: opacity 0.5s ease; }
+    #contextualShareBtn.hidden { opacity: 0; pointer-events: none; }
 
-/* Table styling */
-#accuracyTable th, #accuracyTable td { text-align: center; white-space: normal; word-break: break-word; }
-#accuracyTable th:nth-child(2), #accuracyTable td:nth-child(2) { min-width: 165px; }
-#accuracyTable { table-layout: fixed; width: 100%; }
+    /* Table */
+    #accuracyTable { table-layout: fixed; width: 100%; }
+    #accuracyTable th, #accuracyTable td { text-align: center; white-space: normal; word-break: break-word; }
+    #accuracyTable th:nth-child(2), #accuracyTable td:nth-child(2) { min-width: 165px; }
 
-/* Show All button like leaderboard */
-#toggleViewBtn {
-  @apply px-3 py-1 rounded bg-gray-700/60 hover:bg-gray-600 text-white text-sm mt-2;
-}
-</style>
+    /* Show All button like leaderboard */
+    #toggleViewBtn {
+      @apply px-3 py-1 rounded bg-gray-700/60 hover:bg-gray-600 text-white text-sm mt-2;
+    }
+  </style>
 </head>
-
 <body class="relative bg-gray-900 text-white font-sans">
-<div class="site-background absolute inset-0 bg-[url('image_accuracy.jpg')] bg-cover bg-center opacity-45"></div>
-<div class="site-background-overlay absolute inset-0 bg-black/70"></div>
 
-<div class="relative z-10">
-  <!-- Header -->
-  <header class="site-header w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 relative z-50">
-    <div class="w-full flex items-center justify-center px-4 py-3">
-      <div class="flex-1 text-center">
-        <a href="index.html" class="font-bold text-white hover:text-red-500 transition animate-fade-in-up text-sm sm:text-lg md:text-xl lg:text-2xl">
-          British Classic Fantasy League 2025 🇬🇧
-        </a>
+  <!-- Background -->
+  <div class="site-background absolute inset-0 bg-[url('image_accuracy.jpg')] bg-cover bg-center opacity-45"></div>
+  <div class="site-background-overlay absolute inset-0 bg-black/70"></div>
+
+  <div class="relative z-10">
+    <!-- Header -->
+    <header class="site-header w-full bg-gray-900/90 backdrop-blur-sm border-b border-gray-800 relative z-50">
+      <div class="w-full flex items-center justify-center px-4 py-3">
+        <div class="flex-1 text-center">
+          <a href="index.html"
+             class="font-bold text-white hover:text-red-500 transition animate-fade-in-up text-sm sm:text-lg md:text-xl lg:text-2xl">
+             British Classic Fantasy League 2025 🇬🇧
+          </a>
+        </div>
+        <div class="absolute right-4 top-1/2 -translate-y-1/2">
+          <button id="menu-btn" aria-expanded="false" class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            <span class="sr-only">Open menu</span>
+          </button>
+        </div>
       </div>
-      <div class="absolute right-4 top-1/2 -translate-y-1/2">
-        <button id="menu-btn" aria-expanded="false" class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-          <span class="sr-only">Open menu</span>
-        </button>
-      </div>
+    </header>
+
+    <!-- Dropdown menu -->
+    <div id="mobile-menu"
+         class="fixed top-16 right-4 w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-md shadow-lg z-50 scale-y-0 opacity-0 origin-top transition-transform duration-300 ease-in-out pointer-events-none">
+      <nav class="flex flex-col py-2 text-white">
+        <a href="index.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Home</a>
+        <a href="entry.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">League Entry</a>
+        <a href="leaderboard.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Leaderboard</a>
+        <a href="accuracy_scores.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Accuracy Scores</a>
+        <a href="metrics.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Metrics</a>
+      </nav>
     </div>
-  </header>
 
-  <!-- Mobile Dropdown Menu -->
-  <div id="mobile-menu" class="fixed top-16 right-4 w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-800 rounded-md shadow-lg z-50 scale-y-0 opacity-0 origin-top transition-transform duration-300 ease-in-out pointer-events-none">
-    <nav class="flex flex-col py-2 text-white">
-      <a href="index.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Home</a>
-      <a href="entry.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">League Entry</a>
-      <a href="leaderboard.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Leaderboard</a>
-      <a href="accuracy_scores.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Accuracy Scores</a>
-      <a href="metrics.html" class="px-4 py-2 hover:text-red-500 hover:bg-gray-800 transition">Metrics</a>
-    </nav>
-  </div>
+    <!-- Main content -->
+    <main class="pt-20 md:pt-24 animate-fade-in">
+      <section class="w-full px-4">
+        <div class="w-full max-w-3xl lg:max-w-4xl mx-auto bg-gray-800/60 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-gray-700">
 
-  <!-- Main -->
-  <main class="pt-20 md:pt-24 animate-fade-in">
-    <section class="w-full px-4">
-      <div class="w-full max-w-3xl lg:max-w-4xl mx-auto bg-gray-800/60 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-gray-700">
-
-        <!-- Page Header -->
-        <div class="w-full mt-10 mb-6 flex flex-col sm:grid sm:grid-cols-3 items-center">
-          <div class="hidden sm:block"></div>
-          <h2 class="text-2xl font-bold text-white text-center sm:text-center">Accuracy Scores</h2>
-          <div class="flex items-center space-x-2 mt-3 sm:mt-0 sm:justify-self-end">
-            <button id="shareRankingBtn" class="bg-red-600 hover:bg-red-500 text-white rounded-lg flex items-center justify-center" style="height: 32px; width: 32px;" aria-label="Share Accuracy Score">
-              <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000" alt="Share Icon" class="w-4 h-4 invert" />
-            </button>
-            <div class="relative flex flex-col sm:flex-row">
-              <input type="text" id="searchInput" placeholder="Search" class="bg-gray-700/60 text-white placeholder-gray-400 text-sm rounded-lg pl-8 pr-6 py-1 focus:outline-none focus:ring-2 focus:ring-red-500" style="width: calc(11ch + 16px); height: 32px;" />
-              <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z" />
-              </svg>
-              <button id="clearSearchBtn" class="hidden absolute right-1.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-gray-500/70 text-[10px] leading-[14px] flex items-center justify-center text-white hover:bg-red-500">×</button>
+          <!-- Page header -->
+          <div class="w-full mt-10 mb-6 flex flex-col sm:grid sm:grid-cols-3 items-center">
+            <div class="hidden sm:block"></div>
+            <h2 class="text-2xl font-bold text-white text-center sm:text-center">Accuracy Scores</h2>
+            <div class="flex items-center space-x-2 mt-3 sm:mt-0 sm:justify-self-end">
+              <button id="shareRankingBtn"
+                      class="bg-red-600 hover:bg-red-500 text-white rounded-lg flex items-center justify-center"
+                      style="height: 32px; width: 32px;" aria-label="Share Accuracy Score">
+                <img src="https://img.icons8.com/?size=100&id=qWomDF3YJPZv&format=png&color=000000"
+                     alt="Share Icon" class="w-4 h-4 invert" />
+              </button>
+              <div class="relative">
+                <input type="text" id="searchInput" placeholder="Search"
+                       class="bg-gray-700/60 text-white placeholder-gray-400 text-sm rounded-lg pl-8 pr-6 py-1
+                              focus:outline-none focus:ring-2 focus:ring-red-500"
+                       style="width: calc(11ch + 16px); height: 32px;" />
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     class="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z" />
+                </svg>
+                <button id="clearSearchBtn"
+                        class="hidden absolute right-1.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full
+                               bg-gray-500/70 text-[10px] leading-[14px] flex items-center justify-center
+                               text-white hover:bg-red-500">
+                  ×
+                </button>
+              </div>
             </div>
           </div>
+
+          <!-- Table -->
+          <div class="overflow-hidden rounded-xl border border-gray-700">
+            <table id="accuracyTable" class="w-full text-sm text-gray-200 text-center">
+              <thead class="bg-gray-700 text-gray-100">
+                <tr id="accuracyHeader"></tr>
+              </thead>
+              <tbody id="accuracyBody" class="divide-y divide-gray-700"></tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div id="paginationContainer" class="flex justify-center items-center mt-4 flex-wrap text-sm text-gray-300"></div>
+
+          <!-- Show All Entries button -->
+          <div class="flex justify-center">
+            <button id="toggleViewBtn"
+                    class="px-3 py-1 rounded bg-gray-700/60 hover:bg-gray-600 text-white text-sm mt-2">
+              Show All Entries
+            </button>
+          </div>
+
+          <p class="text-xs text-gray-500 text-center mt-3">
+            Data auto-updates from Google Sheets
+          </p>
         </div>
+      </section>
 
-        <!-- Table -->
-        <div class="overflow-hidden rounded-xl border border-gray-700">
-          <table id="accuracyTable" class="w-full text-sm text-gray-200 text-center">
-            <thead class="bg-gray-700 text-gray-100"><tr id="accuracyHeader"></tr></thead>
-            <tbody id="accuracyBody" class="divide-y divide-gray-700"></tbody>
-          </table>
-        </div>
-
-        <!-- Pagination -->
-        <div id="paginationContainer" class="flex justify-center items-center mt-4 flex-wrap text-sm text-gray-300"></div>
-
-        <!-- Show All Entries -->
-        <div class="flex justify-center">
-          <button id="toggleViewBtn" class="px-3 py-1 rounded bg-gray-700/60 hover:bg-gray-600 text-white text-sm mt-2">Show All Entries</button>
-        </div>
-
-        <p class="text-xs text-gray-500 text-center mt-3">Data auto-updates from Google Sheets</p>
-
+      <!-- View Metrics Button -->
+      <div class="flex justify-center mt-8">
+        <a href="metrics.html"
+           class="inline-flex items-center justify-center bg-gray-800/60 border border-gray-700
+                  text-gray-200 font-semibold px-6 py-3 rounded-full backdrop-blur-sm shadow-lg
+                  hover:bg-gray-700/70 hover:text-red-400 transition text-sm">
+          View Metrics
+        </a>
       </div>
-    </section>
 
-    <div class="flex justify-center mt-8">
-      <a href="metrics.html" class="inline-flex items-center justify-center bg-gray-800/60 border border-gray-700 text-gray-200 font-semibold px-6 py-3 rounded-full backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition text-sm">View Metrics</a>
-    </div>
+      <!-- Back to Top Button -->
+      <div class="flex justify-center mt-8">
+        <button id="bottomBackToTop"
+                class="bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full
+                       flex items-center justify-center backdrop-blur-sm shadow-lg
+                       hover:bg-gray-700/70 hover:text-red-400 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+          </svg>
+        </button>
+      </div>
+    </main>
 
-    <div class="flex justify-center mt-8">
-      <button id="bottomBackToTop" class="bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
-        </svg>
-      </button>
-    </div>
+    <footer class="text-center text-gray-500 text-sm mt-16 pb-4">
+      Sponsored by the Sabado Sessions Podcast
+    </footer>
+  </div>
 
-  </main>
+  <!-- FAB Back-to-Top / Bottom -->
+  <button id="backToTopFab"
+          class="fixed right-4 top-1/2 -translate-y-1/2 bg-gray-800/60 border border-gray-700 text-red-500
+                 w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm shadow-lg
+                 hover:bg-gray-700/70 hover:text-red-400 transition opacity-0 pointer-events-none z-50">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+    </svg>
+  </button>
 
-  <footer class="text-center text-gray-500 text-sm mt-16 pb-4">Sponsored by the Sabado Sessions Podcast</footer>
-</div>
+  <button id="backToBottomFab"
+          class="fixed right-4 top-[calc(50%+3.5rem)] bg-gray-800/60 border border-gray-700 text-red-500
+                 w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm shadow-lg
+                 hover:bg-gray-700/70 hover:text-red-400 transition opacity-0 pointer-events-none z-50">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+    </svg>
+  </button>
 
-<!-- FAB Back-to-Top / Bottom -->
-<button id="backToTopFab" class="fixed right-4 top-1/2 -translate-y-1/2 bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition opacity-0 pointer-events-none z-50">
-  <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-    <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
-  </svg>
-</button>
+  <!-- JS: PapaParse + html2canvas -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
-<button id="backToBottomFab" class="fixed right-4 top-[calc(50%+3.5rem)] bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm shadow-lg hover:bg-gray-700/70 hover:text-red-400 transition opacity-0 pointer-events-none z-50">
-  <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-  </svg>
-</button>
-
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-
-<script>
+  <script>
 document.addEventListener("DOMContentLoaded", () => {
+  const ua = navigator.userAgent.toLowerCase();
+  const isAndroidChrome = ua.includes("android") && ua.includes("chrome") && !ua.includes("edge") && !ua.includes("opr") && !ua.includes("opera");
+  const isiOS = /iphone|ipad|ipod/.test(ua);
   const menuBtn = document.getElementById("menu-btn");
   const mobileMenu = document.getElementById("mobile-menu");
-  if(menuBtn && mobileMenu) {
+
+  if(menuBtn && mobileMenu){
     menuBtn.addEventListener("click", e => {
       const open = mobileMenu.classList.contains("opacity-100");
       mobileMenu.classList.toggle("opacity-100", !open);
@@ -188,20 +226,22 @@ document.addEventListener("DOMContentLoaded", () => {
       e.stopPropagation();
     });
     document.addEventListener("click", e => {
-      if(!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+      if(!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)){
         mobileMenu.classList.remove("opacity-100","scale-y-100");
         mobileMenu.classList.add("opacity-0","scale-y-0","pointer-events-none");
       }
     });
   }
 
-  let allRows=[], filteredRows=[], headerRow=[], nameColIdx=-1, rowsPerPage=50, currentPage=1;
-  let searchMatches=[], currentMatchIndex=-1;
-  let isShowingAll=false, contextualShareBtn=null;
+  /* ------------------- Accuracy Table ------------------- */
+  let allRows=[], filteredRows=[], headerRow=[], nameColIdx=-1;
+  let rowsPerPage=50, currentPage=1;
+  let searchMatches=[], currentMatchIndex=-1, isShowingAll=false;
   const searchInput=document.getElementById("searchInput");
   const clearBtn=document.getElementById("clearSearchBtn");
   const paginationContainer=document.getElementById("paginationContainer");
   const toggleViewBtn=document.getElementById("toggleViewBtn");
+  let contextualShareBtn=null;
 
   function escapeRegExp(str){ return str.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); }
 
@@ -220,18 +260,21 @@ document.addEventListener("DOMContentLoaded", () => {
     renderTable();
   }
 
+  function removeContextualShare(){ const ex=document.querySelector(".contextual-share-row"); if(ex) ex.remove(); contextualShareBtn=null; }
+
   function insertContextualShare(targetRow){
     removeContextualShare();
     if(!targetRow || !headerRow.length) return;
     const tr=document.createElement("tr");
     tr.className="contextual-share-row";
-    tr.innerHTML=`<td colspan="${headerRow.length}" class="text-center py-1"><button id="contextualShareBtn" class="bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1" style="min-width:130px;height:24px;">Share My Score</button></td>`;
+    tr.innerHTML=`<td colspan="${headerRow.length}" class="text-center py-1">
+      <button id="contextualShareBtn" class="bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1"
+              style="min-width:130px;height:24px;">Share My Score</button>
+    </td>`;
     targetRow.parentNode.insertBefore(tr,targetRow);
     contextualShareBtn=document.getElementById("contextualShareBtn");
-    if(contextualShareBtn) contextualShareBtn.addEventListener("click",shareScore);
+    if(contextualShareBtn) contextualShareBtn.addEventListener("click", shareScore);
   }
-
-  function removeContextualShare(){ const ex=document.querySelector(".contextual-share-row"); if(ex) ex.remove(); contextualShareBtn=null; }
 
   function renderTable(){
     const tbody=document.getElementById("accuracyBody");
@@ -243,19 +286,37 @@ document.addEventListener("DOMContentLoaded", () => {
     const end=isShowingAll?filteredRows.length:start+rowsPerPage;
     const regex=hasQuery?new RegExp(`(${escapeRegExp(query)})`,"ig"):null;
 
-    filteredRows.slice(start,end).forEach((row,i)=>{
-      const globalIndex=start+i;
-      const highlight=searchMatches.length&&currentMatchIndex>=0&&searchMatches[currentMatchIndex]===globalIndex;
-      const cls=highlight?"pulse-row":"";
-      const tds=row.map((c,ci)=>ci===nameColIdx&&regex?c.replace(regex,"<strong>$1</strong>"):c).map(c=>`<td class="px-3 py-2 text-center">${c}</td>`).join("");
+    searchMatches=[];
+    filteredRows.forEach((row,i)=>{
+      const rowText = row.join(" ").toLowerCase();
+      if(hasQuery && rowText.includes(query)) searchMatches.push(i);
+    });
+
+    let rowsToRender;
+    if(isAndroidChrome) {
+      rowsToRender = (searchMatches.length && hasQuery)? [filteredRows[searchMatches[0]]] : filteredRows.slice(start,end);
+    } else { // iOS and others show multi-row
+      rowsToRender = filteredRows.slice(start,end);
+    }
+
+    rowsToRender.forEach((row,i)=>{
+      const globalIndex = start + i;
+      const highlight = searchMatches.includes(globalIndex);
+      const cls = highlight?"pulse-row":"";
+      const tds = row.map((c,ci)=>ci===nameColIdx && regex ? c.replace(regex,"<strong>$1</strong>") : c)
+                     .map(c=>`<td class="px-3 py-2 text-center">${c}</td>`).join("");
       tbody.insertAdjacentHTML("beforeend",`<tr class="${cls}" data-global-index="${globalIndex}">${tds}</tr>`);
     });
 
-    renderPagination();
-    if(searchMatches.length) {
-      const firstMatchRow=tbody.querySelector("tr");
+    // Insert contextual share only for first match
+    if(searchMatches.length){
+      const firstMatchRow = tbody.querySelector("tr.pulse-row");
       if(firstMatchRow) insertContextualShare(firstMatchRow);
+    } else {
+      removeContextualShare();
     }
+
+    renderPagination();
   }
 
   function renderPagination(){
@@ -265,9 +326,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const prevBtn=document.createElement("button");
     prevBtn.textContent="Previous";
-    prevBtn.className="px-2 py-1 mx-0.5 rounded text-xs bg-gray-700/60 text-gray-200 hover:bg-gray-600";
-    prevBtn.disabled=currentPage===1;
-    prevBtn.addEventListener("click",()=>{ if(currentPage>1){ currentPage--; renderTable(); }});
+    prevBtn.disabled=(currentPage===1);
+    prevBtn.className=`px-2 py-1 mx-0.5 rounded text-xs ${currentPage===1?"bg-gray-600/50 text-gray-400 cursor-not-allowed":"bg-gray-700/60 text-gray-200 hover:bg-gray-600"}`;
+    prevBtn.addEventListener("click",()=>{ if(currentPage>1) { currentPage--; renderTable(); } });
     paginationContainer.appendChild(prevBtn);
 
     for(let i=1;i<=pageCount;i++){
@@ -280,9 +341,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const nextBtn=document.createElement("button");
     nextBtn.textContent="Next";
-    nextBtn.className="px-2 py-1 mx-0.5 rounded text-xs bg-gray-700/60 text-gray-200 hover:bg-gray-600";
-    nextBtn.disabled=currentPage===pageCount;
-    nextBtn.addEventListener("click",()=>{ if(currentPage<pageCount){ currentPage++; renderTable(); }});
+    nextBtn.disabled=(currentPage===pageCount);
+    nextBtn.className=`px-2 py-1 mx-0.5 rounded text-xs ${currentPage===pageCount?"bg-gray-600/50 text-gray-400 cursor-not-allowed":"bg-gray-700/60 text-gray-200 hover:bg-gray-600"}`;
+    nextBtn.addEventListener("click",()=>{ if(currentPage<pageCount){ currentPage++; renderTable(); } });
     paginationContainer.appendChild(nextBtn);
   }
 
@@ -300,7 +361,7 @@ document.addEventListener("DOMContentLoaded", () => {
     html2canvas(clone,{scrollY:-window.scrollY}).then(canvas=>{
       canvas.toBlob(blob=>{
         const file=new File([blob],"accuracy_snapshot.png",{type:"image/png"});
-        if(navigator.canShare&&navigator.canShare({files:[file]})){
+        if(navigator.canShare && navigator.canShare({files:[file]})){
           navigator.share({files:[file],title:"My Accuracy Score",text:"British Classic Fantasy League 2025"});
         } else {
           const url=URL.createObjectURL(file);
@@ -316,10 +377,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   searchInput.addEventListener("input",()=>{
     const val=searchInput.value.trim().toLowerCase();
-    searchMatches=[];
-    currentMatchIndex=-1;
-    filteredRows=allRows.filter(row=>row.some(c=>c.toLowerCase().includes(val)));
-    filteredRows.forEach((row,i)=>{ if(row.some(c=>c.toLowerCase().includes(val))) searchMatches.push(i); });
     currentPage=1;
     renderTable();
     clearBtn.classList.toggle("hidden",!val);
@@ -327,13 +384,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   clearBtn.addEventListener("click",()=>{ searchInput.value=""; searchInput.dispatchEvent(new Event("input")); });
 
-  toggleViewBtn.addEventListener("click",()=>{ isShowingAll=!isShowingAll; toggleViewBtn.textContent=isShowingAll?"Show Paginated":"Show All Entries"; renderTable(); });
+  toggleViewBtn.addEventListener("click",()=>{
+    isShowingAll = !isShowingAll;
+    toggleViewBtn.textContent = isShowingAll ? "Show Paginated" : "Show All Entries";
+    renderTable();
+  });
 
   loadAccuracyScores();
 
+  /* ---------- Service Worker ---------- */
   if('serviceWorker' in navigator){ navigator.serviceWorker.register('/service-worker.js').then(r=>console.log("SW registered",r)).catch(err=>console.warn("SW failed",err)); }
 
 });
-</script>
+  </script>
 </body>
 </html>
