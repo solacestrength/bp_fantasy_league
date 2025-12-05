@@ -14,5 +14,6 @@
 /* dropdown above everything else */
 #mobile-menu {
   z-index: 10000 !important;
-  pointer-events: auto !important;
+  /* Allow JS to control pointer-events via class toggles; avoid overriding with !important */
+  pointer-events: auto;
 }
