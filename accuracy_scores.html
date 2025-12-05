@@ -229,9 +229,9 @@
 </button>
 
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
-  <script>
+<script>
 document.addEventListener("DOMContentLoaded", () => {
   /* ---------- Device Detection (used throughout) ---------- */
   const ua = navigator.userAgent.toLowerCase();
@@ -327,38 +327,45 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const fabBottom = document.getElementById("backToBottomFab");
 
-window.addEventListener("scroll", () => {
-  const y = window.scrollY;
-  const nearTop = y < 150;
-  const nearBottom = y + window.innerHeight > document.body.scrollHeight - 150;
+  window.addEventListener("scroll", () => {
+    const y = window.scrollY;
+    const nearTop = y < 150;
+    const nearBottom = y + window.innerHeight > document.body.scrollHeight - 150;
 
-  // Hide both initially
-  fab.style.opacity = 0;
-  fab.style.pointerEvents = "none";
-  fab.style.transform = "translateY(-50%) scale(0.9)";
-  fabBottom.style.opacity = 0;
-  fabBottom.style.pointerEvents = "none";
-  fabBottom.style.transform = "translateY(-50%) scale(0.9)";
-
-  clearTimeout(scrollTimer);
-  scrollTimer = setTimeout(() => {
-    if (!nearTop && !nearBottom) {
-      fab.style.opacity = 1;
-      fab.style.pointerEvents = "auto";
-      fab.style.transform = "translateY(-50%) scale(1)";
-
-      fabBottom.style.opacity = 1;
-      fabBottom.style.pointerEvents = "auto";
-      fabBottom.style.transform = "translateY(-50%) scale(1)";
+    // Hide both initially (guard if elements missing)
+    if (fab) {
+      fab.style.opacity = 0;
+      fab.style.pointerEvents = "none";
+      fab.style.transform = "translateY(-50%) scale(0.9)";
     }
-  }, 120);
-});
+    if (fabBottom) {
+      fabBottom.style.opacity = 0;
+      fabBottom.style.pointerEvents = "none";
+      fabBottom.style.transform = "translateY(-50%) scale(0.9)";
+    }
 
-if (fabBottom) {
-  fabBottom.addEventListener("click", () => {
-    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => {
+      if (!nearTop && !nearBottom) {
+        if (fab) {
+          fab.style.opacity = 1;
+          fab.style.pointerEvents = "auto";
+          fab.style.transform = "translateY(-50%) scale(1)";
+        }
+        if (fabBottom) {
+          fabBottom.style.opacity = 1;
+          fabBottom.style.pointerEvents = "auto";
+          fabBottom.style.transform = "translateY(-50%) scale(1)";
+        }
+      }
+    }, 120);
   });
-}
+
+  if (fabBottom) {
+    fabBottom.addEventListener("click", () => {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    });
+  }
 
   const bottomBackToTop = document.getElementById("bottomBackToTop");
   if (bottomBackToTop) {
@@ -378,8 +385,50 @@ if (fabBottom) {
   let nameColIdx = -1;
   let contextualShareBtn = null;
 
+  // New state for show-all + remembering last matched index/page
+  let isShowingAll = false;
+  let lastMatchedGlobalIndex = null; // global index of the last highlighted match
+  let lastMatchedPage = null; // page number where that match was when searched
+
   const searchInput = document.getElementById("searchInput");
   const clearBtn = document.getElementById("clearSearchBtn");
+  const paginationContainer = document.getElementById("paginationContainer");
+
+  // Create or reuse a toggle button for Show All Entries
+  let toggleViewBtn = document.getElementById("toggleViewBtn");
+  if (!toggleViewBtn) {
+    toggleViewBtn = document.createElement("button");
+    toggleViewBtn.id = "toggleViewBtn";
+    toggleViewBtn.textContent = "Show All Entries";
+    toggleViewBtn.className =
+      "px-3 py-1 ml-3 rounded bg-gray-700/60 hover:bg-gray-600 text-white text-sm";
+    // Insert toggle near the pagination container if possible, else append to body header
+    if (paginationContainer && paginationContainer.parentNode) {
+      paginationContainer.parentNode.insertBefore(toggleViewBtn, paginationContainer);
+    } else {
+      document.body.insertBefore(toggleViewBtn, document.body.firstChild);
+    }
+  }
+
+  toggleViewBtn.addEventListener("click", () => {
+    isShowingAll = !isShowingAll;
+    toggleViewBtn.textContent = isShowingAll ? "Show 50 per page" : "Show All Entries";
+    // keep currentPage reasonable when toggling off "show all"
+    if (!isShowingAll) {
+      // if we had a remembered last matched page, ensure currentPage points to it
+      if (lastMatchedGlobalIndex !== null) {
+        currentPage = Math.floor(lastMatchedGlobalIndex / rowsPerPage) + 1;
+      } else {
+        currentPage = 1;
+      }
+    }
+    renderTable();
+    // after render, if there was a last match, scroll to it for UX continuity
+    if (lastMatchedGlobalIndex !== null) {
+      // small timeout to ensure DOM painted
+      setTimeout(() => scrollToGlobalIndex(lastMatchedGlobalIndex), 80);
+    }
+  });
 
   function escapeRegExp(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -401,9 +450,12 @@ if (fabBottom) {
     );
     if (nameColIdx < 0) nameColIdx = 1;
 
-    document.getElementById("accuracyHeader").innerHTML = headerRow
-      .map((h) => `<th class="px-3 py-2 text-center">${h}</th>`)
-      .join("");
+    const headerEl = document.getElementById("accuracyHeader");
+    if (headerEl) {
+      headerEl.innerHTML = headerRow
+        .map((h) => `<th class="px-3 py-2 text-center">${h}</th>`)
+        .join("");
+    }
 
     allRows = rows;
     filteredRows = [...allRows];
@@ -439,6 +491,46 @@ if (fabBottom) {
     }
   }
 
+  /* ---------- Utility: find row element by global index ---------- */
+  function findRowElementByGlobalIndex(globalIdx) {
+    const tbody = document.getElementById("accuracyBody");
+    if (!tbody) return null;
+    return tbody.querySelector(`tr[data-global-index="${globalIdx}"]`);
+  }
+
+  /* ---------- Utility: scroll to a specific global index (row) ---------- */
+  function scrollToGlobalIndex(globalIdx) {
+    if (globalIdx === null || typeof globalIdx === "undefined") return;
+    // If in paginated mode, ensure correct page is rendered first
+    if (!isShowingAll && !isAndroidChrome) {
+      const pageOfIndex = Math.floor(globalIdx / rowsPerPage) + 1;
+      if (currentPage !== pageOfIndex) {
+        currentPage = pageOfIndex;
+        renderTable();
+      }
+    } else {
+      // in show-all or android one-row mode, just render (android will limit to one row)
+      renderTable();
+    }
+
+    // small delay to let DOM update, then scroll
+    setTimeout(() => {
+      const row = findRowElementByGlobalIndex(globalIdx);
+      if (row) {
+        const header = document.querySelector(".site-header");
+        const headerH = header ? header.offsetHeight : 0;
+        const rowRect = row.getBoundingClientRect();
+        const rowHeight = rowRect.height || 32;
+        const desiredTop = headerH + rowHeight * 2;
+        const currentTopAbs = rowRect.top + window.scrollY;
+        const dest = Math.max(0, currentTopAbs - desiredTop);
+        window.scrollTo({ top: dest, behavior: "smooth" });
+        // reinsert contextual share near the row
+        setTimeout(() => insertContextualShare(row), 220);
+      }
+    }, 80);
+  }
+
   /* ---------- Render Table ---------- */
   function renderTable() {
     const tbody = document.getElementById("accuracyBody");
@@ -451,7 +543,7 @@ if (fabBottom) {
     const query = (searchInput?.value || "").trim().toLowerCase();
     const hasQuery = !!query;
 
-    // ANDROID CHROME: show ONLY current matched row + contextual pill
+    // ANDROID CHROME: show ONLY current matched row + contextual pill (if searching)
     if (isAndroidChrome && hasQuery && searchMatches.length && currentMatchIndex >= 0) {
       const matchGlobalIndex = searchMatches[currentMatchIndex];
       const row = allRows[matchGlobalIndex];
@@ -475,13 +567,13 @@ if (fabBottom) {
 
         insertContextualShare(tr);
       }
-      // No pagination shown in this mode
+      // No pagination shown in this Android one-row mode
       return;
     }
 
-    // ALL OTHER BROWSERS: normal paginated view
-    const start = (currentPage - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
+    // Determine slice depending on isShowingAll (Show All) or paginated view
+    const start = isShowingAll ? 0 : (currentPage - 1) * rowsPerPage;
+    const end = isShowingAll ? filteredRows.length : start + rowsPerPage;
     const regex = hasQuery
       ? new RegExp(`(${escapeRegExp(query)})`, "ig")
       : null;
@@ -510,7 +602,8 @@ if (fabBottom) {
       );
     });
 
-    renderPagination();
+    // Render pagination only when not showing all and more than 1 page
+    if (!isShowingAll) renderPagination();
   }
 
   /* ---------- Pagination (non-Android search mode only) ---------- */
@@ -541,6 +634,23 @@ if (fabBottom) {
         if (currentPage > 1) {
           currentPage--;
           renderTable();
+          // keep view stable after page change
+          setTimeout(() => {
+            // if there was a last matched index in this page, scroll to it
+            if (lastMatchedGlobalIndex !== null &&
+                Math.floor(lastMatchedGlobalIndex / rowsPerPage) + 1 === currentPage) {
+              scrollToGlobalIndex(lastMatchedGlobalIndex);
+            } else {
+              // otherwise scroll to top of table
+              const table = document.getElementById("accuracyTable");
+              if (table) {
+                const header = document.querySelector(".site-header");
+                const headerH = header ? header.offsetHeight : 0;
+                const top = table.getBoundingClientRect().top + window.scrollY - headerH - 4;
+                window.scrollTo({ top, behavior: "smooth" });
+              }
+            }
+          }, 80);
         }
       },
       currentPage === 1
@@ -557,6 +667,13 @@ if (fabBottom) {
         () => {
           currentPage = i;
           renderTable();
+          setTimeout(() => {
+            // if a last match is on this page, scroll to it
+            if (lastMatchedGlobalIndex !== null &&
+                Math.floor(lastMatchedGlobalIndex / rowsPerPage) + 1 === currentPage) {
+              scrollToGlobalIndex(lastMatchedGlobalIndex);
+            }
+          }, 80);
         },
         false,
         i === currentPage
@@ -580,41 +697,8 @@ if (fabBottom) {
     if (isAndroidChrome) return; // not used in Android one-row mode
 
     if (!searchMatches.length || currentMatchIndex < 0) return;
-    const tbody = document.getElementById("accuracyBody");
-    if (!tbody) return;
-
-    const rows = tbody.querySelectorAll("tr[data-global-index]");
-    if (!rows.length) return;
-
     const targetGlobal = searchMatches[currentMatchIndex];
-    const targetRow = [...rows].find(
-      (r) => parseInt(r.getAttribute("data-global-index")) === targetGlobal
-    );
-    if (!targetRow) return;
-
-    const header = document.querySelector(".site-header");
-    const headerH = header ? header.offsetHeight : 0;
-    const table = document.getElementById("accuracyTable");
-    const tableTopAbs = table.getBoundingClientRect().top + window.scrollY;
-    const rowRect = targetRow.getBoundingClientRect();
-    const rowHeight = rowRect.height || 32;
-    const totalRows = allRows.length;
-    const start = (currentPage - 1) * rowsPerPage;
-    const rowIndexOnPage = targetGlobal - start;
-
-    let dest;
-    if (rowIndexOnPage < 5) {
-      dest = tableTopAbs - headerH - 4;
-    } else if (totalRows - targetGlobal <= 5) {
-      dest = document.body.scrollHeight - window.innerHeight;
-    } else {
-      const desiredTop = headerH + rowHeight * 2;
-      const currentTopAbs = rowRect.top + window.scrollY;
-      dest = currentTopAbs - desiredTop;
-    }
-
-    window.scrollTo({ top: dest, behavior: "smooth" });
-    setTimeout(() => insertContextualShare(targetRow), 250);
+    scrollToGlobalIndex(targetGlobal);
   }
 
   /* ---------- Search Behavior ---------- */
@@ -629,12 +713,27 @@ if (fabBottom) {
       removeContextualShare();
 
       if (!f) {
+        // CLEAR case: keep the user on the page of the previously matched result (unless null)
         filteredRows = [...allRows];
-        currentPage = 1;
-        renderTable();
+
+        if (lastMatchedGlobalIndex !== null) {
+          // compute the page for the last matched index
+          lastMatchedPage = Math.floor(lastMatchedGlobalIndex / rowsPerPage) + 1;
+          if (!isShowingAll) {
+            currentPage = lastMatchedPage;
+          }
+          // render and scroll back to matched row
+          renderTable();
+          setTimeout(() => scrollToGlobalIndex(lastMatchedGlobalIndex), 100);
+        } else {
+          // no previous match known -> keep current page (do not reset to page 1)
+          renderTable();
+        }
+
         return;
       }
 
+      // Normal search case
       filteredRows = [...allRows];
 
       allRows.forEach((row, idx) => {
@@ -645,17 +744,26 @@ if (fabBottom) {
 
       if (searchMatches.length) {
         currentMatchIndex = 0;
+        // remember global index and page of first match
+        lastMatchedGlobalIndex = searchMatches[currentMatchIndex];
+        lastMatchedPage = Math.floor(lastMatchedGlobalIndex / rowsPerPage) + 1;
 
         if (isAndroidChrome) {
-          // One-row mode: no pagination / no scroll jump
+          // One-row mode: no pagination / no scroll jump beyond showing the single row
           renderTable();
         } else {
-          currentPage =
-            Math.floor(searchMatches[0] / rowsPerPage) + 1;
+          // In paginated / other browsers: jump to page containing the first match
+          if (!isShowingAll) {
+            currentPage = Math.floor(searchMatches[0] / rowsPerPage) + 1;
+          } else {
+            // in show-all mode we stay on the all view
+            currentPage = Math.floor(searchMatches[0] / rowsPerPage) + 1; // keep for consistency
+          }
           renderTable();
           scrollToHighlighted();
         }
       } else {
+        // no matches: still render (clears previous highlights)
         renderTable();
       }
     });
@@ -666,16 +774,24 @@ if (fabBottom) {
         if (searchMatches.length > 1) {
           currentMatchIndex =
             (currentMatchIndex + 1) % searchMatches.length;
+        } else {
+          currentMatchIndex = 0;
         }
+
+        // update last matched index & page for navigation/clear behaviour
+        lastMatchedGlobalIndex = searchMatches[currentMatchIndex];
+        lastMatchedPage = Math.floor(lastMatchedGlobalIndex / rowsPerPage) + 1;
 
         if (isAndroidChrome) {
           // Cycle through matches, still one row only
           renderTable();
         } else {
-          currentPage =
-            Math.floor(
-              searchMatches[currentMatchIndex] / rowsPerPage
-            ) + 1;
+          if (!isShowingAll) {
+            currentPage =
+              Math.floor(
+                searchMatches[currentMatchIndex] / rowsPerPage
+              ) + 1;
+          }
           renderTable();
           scrollToHighlighted();
         }
@@ -690,9 +806,21 @@ if (fabBottom) {
       searchMatches = [];
       currentMatchIndex = -1;
       filteredRows = [...allRows];
-      currentPage = 1;
-      removeContextualShare();
-      renderTable();
+
+      // CLEAR: keep the user on the page of the last matched result.
+      if (lastMatchedGlobalIndex !== null) {
+        lastMatchedPage = Math.floor(lastMatchedGlobalIndex / rowsPerPage) + 1;
+        if (!isShowingAll) {
+          currentPage = lastMatchedPage;
+        }
+        removeContextualShare();
+        renderTable();
+        setTimeout(() => scrollToGlobalIndex(lastMatchedGlobalIndex), 100);
+      } else {
+        // No last match known: preserve currentPage (do not force page 1)
+        removeContextualShare();
+        renderTable();
+      }
     });
   }
 
@@ -705,7 +833,7 @@ if (fabBottom) {
   }
 
   async function shareScore() {
-    if (!searchMatches.length) {
+    if (!searchMatches.length && lastMatchedGlobalIndex === null) {
       showWarning("Please search for your name before sharing.");
       return;
     }
@@ -754,7 +882,9 @@ if (fabBottom) {
   /* ---------- Snapshot Builder ---------- */
   async function buildSnapshotFile() {
     const total = allRows.length;
-    const matchIndex = searchMatches[currentMatchIndex];
+    const matchIndex = (lastMatchedGlobalIndex !== null && lastMatchedGlobalIndex !== undefined)
+      ? lastMatchedGlobalIndex
+      : (searchMatches.length ? searchMatches[currentMatchIndex] : 0);
 
     // If something went weird, fallback to first row
     const safeIndex =
@@ -765,18 +895,18 @@ if (fabBottom) {
         : 0;
 
     let start = Math.max(0, safeIndex - 4);
-let end = Math.min(total - 1, safeIndex + 5);
+    let end = Math.min(total - 1, safeIndex + 5);
 
-// --- Top 10 entries: always show ranks 1–10 ---
-if (safeIndex < 10) {
-  start = 0;
-  end = Math.min(total - 1, 9);
-}
-// --- Bottom 5 entries: always show final 10 ---
-else if (total - safeIndex <= 5) {
-  start = Math.max(0, total - 10);
-  end = total - 1;
-}
+    // --- Top 10 entries: always show ranks 1–10 ---
+    if (safeIndex < 10) {
+      start = 0;
+      end = Math.min(total - 1, 9);
+    }
+    // --- Bottom 5 entries: always show final 10 ---
+    else if (total - safeIndex <= 5) {
+      start = Math.max(0, total - 10);
+      end = total - 1;
+    }
 
     const slice = allRows.slice(start, end + 1);
     while (slice.length < 10)
@@ -880,6 +1010,7 @@ else if (total - safeIndex <= 5) {
   loadAccuracyScores();
 });
 </script>
+
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
