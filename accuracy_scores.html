@@ -7,15 +7,13 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="assets/css/fix-dropdown.css" />
   <link rel="manifest" href="/britishclassicfl/manifest.json">
-  <meta name="theme-color" content="#b91c1c">
+<meta name="theme-color" content="#b91c1c">
 
-  <!-- iOS -->
-  <link rel="apple-touch-icon" href="/britishclassicfl/icon-192.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
+<!-- iOS -->
+<link rel="apple-touch-icon" href="/britishclassicfl/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <style>
-    /* ---------- Animations ---------- */
     @keyframes fadeInUp {
       0% { opacity: 0; transform: translateY(10px); }
       100% { opacity: 1; transform: translateY(0); }
@@ -35,16 +33,10 @@
       font-weight: bold;
     }
 
-    /* Back-to-top FAB transitions */
-    #backToTopFab {
-      transition: opacity 0.25s ease-in-out, transform 0.25s ease-in-out;
-    }
+    /* FAB transitions */
+    #backToTopFab { transition: opacity 0.25s ease-in-out, transform 0.25s ease-in-out; }
+    #backToBottomFab { transition: opacity 0.25s ease-in-out, transform 0.25s ease-in-out; }
 
-    #backToBottomFab {
-      transition: opacity 0.25s ease-in-out, transform 0.25s ease-in-out;
-    }
-
-    /* Contextual share button fade */
     #contextualShareBtn {
       opacity: 1;
       transition: opacity 0.5s ease;
@@ -54,26 +46,16 @@
       pointer-events: none;
     }
 
-    /* Table centering and wrapping */
+    /* Table styling */
     #accuracyTable th,
-    #accuracyTable td {
-      text-align: center;
-      white-space: normal;
-      word-wrap: break-word;
-      word-break: break-word;
-    }
-
+    #accuracyTable td { text-align: center; white-space: normal; word-break: break-word; }
     #accuracyTable th:nth-child(2),
-    #accuracyTable td:nth-child(2) {
-      min-width: 165px;
-      white-space: normal;
-      word-break: break-word;
-      overflow-wrap: anywhere;
-    }
+    #accuracyTable td:nth-child(2) { min-width: 165px; }
+    #accuracyTable { table-layout: fixed; width: 100%; }
 
-    #accuracyTable {
-      table-layout: fixed;
-      width: 100%;
+    /* Show All button styling like leaderboard */
+    #toggleViewBtn {
+      @apply px-3 py-1 rounded bg-gray-700/60 hover:bg-gray-600 text-white text-sm mt-2;
     }
   </style>
 </head>
@@ -93,7 +75,6 @@
             British Classic Fantasy League 2025 🇬🇧
           </a>
         </div>
-        <!-- Burger button -->
         <div class="absolute right-4 top-1/2 -translate-y-1/2">
           <button id="menu-btn" aria-expanded="false"
             class="text-gray-300 p-2 rounded-md hover:bg-gray-800/50">
@@ -142,14 +123,12 @@
                   class="bg-gray-700/60 text-white placeholder-gray-400 text-sm rounded-lg pl-8 pr-6 py-1
                          focus:outline-none focus:ring-2 focus:ring-red-500"
                   style="width: calc(11ch + 16px); height: 32px;" />
-                <!-- Magnifier -->
                 <svg xmlns="http://www.w3.org/2000/svg"
                   class="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
                   fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z" />
                 </svg>
-                <!-- Clear X -->
                 <button id="clearSearchBtn"
                   class="hidden absolute right-1.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full
                          bg-gray-500/70 text-[10px] leading-[14px] flex items-center justify-center
@@ -172,6 +151,12 @@
 
           <div id="paginationContainer"
                class="flex justify-center items-center mt-4 flex-wrap text-sm text-gray-300"></div>
+
+          <!-- Show All Entries button (below pagination) -->
+          <div class="flex justify-center">
+            <button id="toggleViewBtn" class="px-3 py-1 rounded bg-gray-700/60 hover:bg-gray-600 text-white text-sm mt-2">Show All Entries</button>
+          </div>
+
           <p class="text-xs text-gray-500 text-center mt-3">
             Data auto-updates from Google Sheets
           </p>
@@ -188,7 +173,7 @@
         </a>
       </div>
 
-      <!-- Back to Top Button (static link) -->
+      <!-- Back to Top Button -->
       <div class="flex justify-center mt-8">
         <button id="bottomBackToTop"
                 class="bg-gray-800/60 border border-gray-700 text-red-500 w-10 h-10 rounded-full
@@ -207,7 +192,7 @@
     </footer>
   </div>
 
-  <!-- Floating Back-to-Top Arrow -->
+  <!-- FAB Back-to-Top / Bottom -->
   <button id="backToTopFab"
     class="fixed right-4 top-1/2 -translate-y-1/2 bg-gray-800/60 border border-gray-700 text-red-500
            w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm shadow-lg
@@ -218,38 +203,29 @@
     </svg>
   </button>
 
-  <!-- Floating Back-to-Bottom Arrow -->
   <button id="backToBottomFab"
-    class="fixed right-4 top-[calc(50%+3.5rem)] bg-gray-800/60 border border-gray-700 text-red-500
-           w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm shadow-lg
-           hover:bg-gray-700/70 hover:text-red-400 transition opacity-0 pointer-events-none z-50">
+  class="fixed right-4 top-[calc(50%+3.5rem)] bg-gray-800/60 border border-gray-700 text-red-500
+         w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm shadow-lg
+         hover:bg-gray-700/70 hover:text-red-400 transition opacity-0 pointer-events-none z-50">
     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
          viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
       <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
     </svg>
   </button>
 
-  <!-- External libraries -->
+  <!-- JS: PapaParse + html2canvas -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <script>
 document.addEventListener("DOMContentLoaded", () => {
-  /* ---------- Device Detection ---------- */
   const ua = navigator.userAgent.toLowerCase();
-  const isAndroidChrome =
-    ua.includes("android") &&
-    ua.includes("chrome") &&
-    !ua.includes("edge") &&
-    !ua.includes("opr") &&
-    !ua.includes("opera");
-
-  /* ---------- Burger Menu ---------- */
+  const isAndroidChrome = ua.includes("android") && ua.includes("chrome") && !ua.includes("edge") && !ua.includes("opr") && !ua.includes("opera");
   const menuBtn = document.getElementById("menu-btn");
   const mobileMenu = document.getElementById("mobile-menu");
 
-  if (menuBtn && mobileMenu) {
-    menuBtn.addEventListener("click", (e) => {
+  if(menuBtn && mobileMenu) {
+    menuBtn.addEventListener("click", e => {
       const open = mobileMenu.classList.contains("opacity-100");
       mobileMenu.classList.toggle("opacity-100", !open);
       mobileMenu.classList.toggle("opacity-0", open);
@@ -258,314 +234,136 @@ document.addEventListener("DOMContentLoaded", () => {
       mobileMenu.classList.toggle("pointer-events-none", open);
       e.stopPropagation();
     });
-    document.addEventListener("click", (e) => {
-      if (!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
-        mobileMenu.classList.remove("opacity-100", "scale-y-100");
-        mobileMenu.classList.add("opacity-0", "scale-y-0", "pointer-events-none");
+    document.addEventListener("click", e => {
+      if(!mobileMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+        mobileMenu.classList.remove("opacity-100","scale-y-100");
+        mobileMenu.classList.add("opacity-0","scale-y-0","pointer-events-none");
       }
     });
   }
 
-  /* ---------- Toast Warning ---------- */
-  function showWarning(message) {
-    const existing = document.getElementById("shareWarningToast");
-    if (existing) existing.remove();
-    const toast = document.createElement("div");
-    toast.id = "shareWarningToast";
-    toast.textContent = message;
-    Object.assign(toast.style, {
-      position: "fixed",
-      top: "18px",
-      left: "50%",
-      transform: "translateX(-50%)",
-      background: "rgba(239,68,68,0.9)",
-      color: "white",
-      padding: "8px 14px",
-      borderRadius: "8px",
-      fontSize: "13px",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
-      zIndex: 9999,
-      opacity: 0,
-      transition: "opacity 0.4s ease-in-out"
-    });
-    document.body.appendChild(toast);
-    requestAnimationFrame(() => (toast.style.opacity = 1));
-    setTimeout(() => {
-      toast.style.opacity = 0;
-      setTimeout(() => toast.remove(), 400);
-    }, 2500);
-  }
+  let allRows=[], filteredRows=[], headerRow=[], nameColIdx=-1, rowsPerPage=50, currentPage=1;
+  let searchMatches=[], currentMatchIndex=-1, lastMatchedGlobalIndex=null, lastMatchedPage=null;
+  let isShowingAll=false, contextualShareBtn=null;
+  const searchInput=document.getElementById("searchInput");
+  const clearBtn=document.getElementById("clearSearchBtn");
+  const paginationContainer=document.getElementById("paginationContainer");
+  const toggleViewBtn=document.getElementById("toggleViewBtn");
 
-  /* ---------- FAB Logic ---------- */
-  const fabTop = document.getElementById("backToTopFab");
-  const fabBottom = document.getElementById("backToBottomFab");
-  const bottomBackToTop = document.getElementById("bottomBackToTop");
-  let scrollTimer;
-  function handleFABs() {
-    const y = window.scrollY;
-    const nearTop = y < 150;
-    const nearBottom = y + window.innerHeight > document.body.scrollHeight - 150;
-    if (fabTop) {
-      fabTop.style.opacity = 0;
-      fabTop.style.pointerEvents = "none";
-      fabTop.style.transform = "translateY(-50%) scale(0.9)";
-    }
-    if (fabBottom) {
-      fabBottom.style.opacity = 0;
-      fabBottom.style.pointerEvents = "none";
-      fabBottom.style.transform = "translateY(-50%) scale(0.9)";
-    }
-    clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(() => {
-      if (!nearTop && !nearBottom) {
-        if (fabTop) { fabTop.style.opacity = 1; fabTop.style.pointerEvents = "auto"; fabTop.style.transform = "translateY(-50%) scale(1)"; }
-        if (fabBottom) { fabBottom.style.opacity = 1; fabBottom.style.pointerEvents = "auto"; fabBottom.style.transform = "translateY(-50%) scale(1)"; }
-      }
-    }, 120);
-  }
-  window.addEventListener("scroll", handleFABs);
-  if (fabTop) fabTop.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
-  if (fabBottom) fabBottom.addEventListener("click", () => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
-  if (bottomBackToTop) bottomBackToTop.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+  function escapeRegExp(str){ return str.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); }
 
-  /* ---------- Table State ---------- */
-  const rowsPerPage = 50;
-  let allRows = [];
-  let filteredRows = [];
-  let currentPage = 1;
-  let searchMatches = [];
-  let currentMatchIndex = -1;
-  let headerRow = [];
-  let nameColIdx = -1;
-  let contextualShareBtn = null;
-  let isShowingAll = false;
-  let lastMatchedGlobalIndex = null;
-  let lastMatchedPage = null;
-  let shareButtonFadeTimer = null;
-
-  const searchInput = document.getElementById("searchInput");
-  const clearBtn = document.getElementById("clearSearchBtn");
-  const paginationContainer = document.getElementById("paginationContainer");
-
-  /* ---------- Toggle Show All ---------- */
-  let toggleViewBtn = document.getElementById("toggleViewBtn");
-  if (!toggleViewBtn) {
-    toggleViewBtn = document.createElement("button");
-    toggleViewBtn.id = "toggleViewBtn";
-    toggleViewBtn.textContent = "Show All Entries";
-    toggleViewBtn.className = "px-3 py-1 ml-3 rounded bg-gray-700/60 hover:bg-gray-600 text-white text-sm";
-    if (paginationContainer && paginationContainer.parentNode) {
-      paginationContainer.parentNode.insertBefore(toggleViewBtn, paginationContainer);
-    } else { document.body.insertBefore(toggleViewBtn, document.body.firstChild); }
-  }
-  toggleViewBtn.addEventListener("click", () => {
-    isShowingAll = !isShowingAll;
-    toggleViewBtn.textContent = isShowingAll ? "Show 50 per page" : "Show All Entries";
-    if (!isShowingAll && lastMatchedGlobalIndex !== null) { currentPage = Math.floor(lastMatchedGlobalIndex / rowsPerPage) + 1; }
+  async function loadAccuracyScores(){
+    const csvUrl="https://docs.google.com/spreadsheets/d/e/2PACX-1vSuA8YB98ghNeM-cS6Fs1pJNkEBOI0x7WKI4R0vtvAG68mo7PJZYVj2HsdxH3DDqvieaTpe9zUzJcNW/pub?gid=1841956952&single=true&output=csv";
+    const response=await fetch(csvUrl);
+    const text=await response.text();
+    const rows=text.trim().split(/\r?\n/).map(l=>l.split(","));
+    if(!rows.length) return;
+    headerRow=rows.shift();
+    nameColIdx=headerRow.findIndex(h=>/name|entrant/i.test(h.trim()));
+    if(nameColIdx<0) nameColIdx=1;
+    document.getElementById("accuracyHeader").innerHTML=headerRow.map(h=>`<th class="px-3 py-2 text-center">${h}</th>`).join("");
+    allRows=rows;
+    filteredRows=[...allRows];
     renderTable();
-    if (lastMatchedGlobalIndex !== null) setTimeout(() => scrollToGlobalIndex(lastMatchedGlobalIndex), 80);
+  }
+
+  function removeContextualShare(){ const ex=document.querySelector(".contextual-share-row"); if(ex) ex.remove(); contextualShareBtn=null; }
+  function insertContextualShare(targetRow){
+    removeContextualShare();
+    if(!targetRow || !headerRow.length) return;
+    const tr=document.createElement("tr");
+    tr.className="contextual-share-row";
+    tr.innerHTML=`<td colspan="${headerRow.length}" class="text-center py-1"><button id="contextualShareBtn" class="bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1" style="min-width:130px;height:24px;">Share My Score</button></td>`;
+    targetRow.parentNode.insertBefore(tr,targetRow);
+    contextualShareBtn=document.getElementById("contextualShareBtn");
+    if(contextualShareBtn) contextualShareBtn.addEventListener("click",shareScore);
+  }
+
+  function renderTable(){
+    const tbody=document.getElementById("accuracyBody");
+    if(!tbody) return;
+    tbody.innerHTML="";
+    const query=(searchInput?.value||"").trim().toLowerCase();
+    const hasQuery=!!query;
+    const start=isShowingAll?0:(currentPage-1)*rowsPerPage;
+    const end=isShowingAll?filteredRows.length:start+rowsPerPage;
+    const regex=hasQuery?new RegExp(`(${escapeRegExp(query)})`,"ig"):null;
+
+    filteredRows.slice(start,end).forEach((row,i)=>{
+      const globalIndex=start+i;
+      const highlight=searchMatches.length&&currentMatchIndex>=0&&searchMatches[currentMatchIndex]===globalIndex;
+      const cls=highlight?"pulse-row":"";
+      const tds=row.map((c,ci)=>ci===nameColIdx&&regex?c.replace(regex,"<strong>$1</strong>"):c).map(c=>`<td class="px-3 py-2 text-center">${c}</td>`).join("");
+      tbody.insertAdjacentHTML("beforeend",`<tr class="${cls}" data-global-index="${globalIndex}">${tds}</tr>`);
+    });
+    renderPagination();
+  }
+
+  function renderPagination(){
+    const pageCount=Math.ceil(filteredRows.length/rowsPerPage);
+    paginationContainer.innerHTML="";
+    if(pageCount<=1) return;
+    for(let i=1;i<=pageCount;i++){
+      const btn=document.createElement("button");
+      btn.textContent=i;
+      btn.className=`px-2 py-1 mx-0.5 rounded text-xs ${i===currentPage?"bg-red-600 text-white":"bg-gray-700/60 text-gray-200 hover:bg-gray-600"}`;
+      btn.addEventListener("click",()=>{ currentPage=i; renderTable(); });
+      paginationContainer.appendChild(btn);
+    }
+  }
+
+  function shareScore(){
+    const tbody=document.getElementById("accuracyBody");
+    if(!tbody) return;
+    const targetRow=tbody.querySelector(".pulse-row");
+    if(!targetRow) return;
+    const clone=document.createElement("div");
+    const tableClone=document.getElementById("accuracyTable").cloneNode(true);
+    clone.appendChild(tableClone);
+    tableClone.querySelectorAll("tr").forEach(tr=>tr.style.border="1px solid #ddd");
+    tableClone.style.background="white";
+    tableClone.style.color="black";
+    html2canvas(clone,{scrollY:-window.scrollY}).then(canvas=>{
+      canvas.toBlob(blob=>{
+        const file=new File([blob],"accuracy_snapshot.png",{type:"image/png"});
+        if(navigator.canShare&&navigator.canShare({files:[file]})){
+          navigator.share({files:[file],title:"My Accuracy Score",text:"British Classic Fantasy League 2025"});
+        } else {
+          const url=URL.createObjectURL(file);
+          const a=document.createElement("a");
+          a.href=url;
+          a.download="accuracy_snapshot.png";
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      });
+    });
+  }
+
+  searchInput.addEventListener("input",()=>{
+    const val=searchInput.value.trim().toLowerCase();
+    searchMatches=[];
+    currentMatchIndex=-1;
+    filteredRows=allRows.filter(row=>row.some(c=>c.toLowerCase().includes(val)));
+    filteredRows.forEach((row,i)=>{ if(row.some(c=>c.toLowerCase().includes(val))) searchMatches.push(i); });
+    currentPage=1;
+    renderTable();
+    if(filteredRows.length) {
+      const tbody=document.getElementById("accuracyBody");
+      const tr=tbody.querySelector("tr");
+      if(tr) insertContextualShare(tr);
+    }
+    clearBtn.classList.toggle("hidden",!val);
   });
 
-  function escapeRegExp(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+  clearBtn.addEventListener("click",()=>{ searchInput.value=""; searchInput.dispatchEvent(new Event("input")); });
 
-  /* ---------- Load CSV Data ---------- */
-  async function loadAccuracyScores() {
-    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSuA8YB98ghNeM-cS6Fs1pJNkEBOI0x7WKI4R0vtvAG68mo7PJZYVj2HsdxH3DDqvieaTpe9zUzJcNW/pub?gid=1841956952&single=true&output=csv";
-    const response = await fetch(csvUrl);
-    const text = await response.text();
-    const rows = text.trim().split(/\r?\n/).map(l => l.split(","));
-    if (!rows.length) return;
-    headerRow = rows.shift();
-    nameColIdx = headerRow.findIndex(h => /name|entrant/i.test(h.trim()));
-    if (nameColIdx < 0) nameColIdx = 1;
-    document.getElementById("accuracyHeader").innerHTML = headerRow.map(h => `<th class="px-3 py-2 text-center">${h}</th>`).join("");
-    allRows = rows;
-    filteredRows = [...allRows];
-    renderTable();
-  }
+  toggleViewBtn.addEventListener("click",()=>{ isShowingAll=!isShowingAll; toggleViewBtn.textContent=isShowingAll?"Show Paginated":"Show All Entries"; renderTable(); });
 
-  /* ---------- Contextual Share ---------- */
-  function removeContextualShare() {
-    const ex = document.querySelector(".contextual-share-row");
-    if (ex) ex.remove();
-    contextualShareBtn = null;
-  }
-  function insertContextualShare(targetRow) {
-    removeContextualShare();
-    if (!targetRow || !headerRow.length) return;
-    const tr = document.createElement("tr");
-    tr.className = "contextual-share-row";
-    tr.innerHTML = `<td colspan="${headerRow.length}" class="text-center py-1">
-      <button id="contextualShareBtn"
-        class="bg-red-600 hover:bg-red-500 text-white rounded-full text-xs font-semibold shadow-md px-3 py-1"
-        style="min-width:130px;height:24px;">Share My Score</button>
-    </td>`;
-    targetRow.parentNode.insertBefore(tr, targetRow);
-    contextualShareBtn = document.getElementById("contextualShareBtn");
-    if (contextualShareBtn) contextualShareBtn.addEventListener("click", shareScore);
-  }
+  /* ---------- Service Worker ---------- */
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('/service-worker.js').then(r=>console.log("SW registered",r)).catch(err=>console.warn("SW failed",err)); }
 
-  function findRowElementByGlobalIndex(globalIdx) { return document.querySelector(`#accuracyBody tr[data-global-index='${globalIdx}']`); }
-
-  function scrollToGlobalIndex(globalIdx) {
-    if (globalIdx === null) return;
-    if (!isShowingAll && !isAndroidChrome) {
-      const pageOfIndex = Math.floor(globalIdx / rowsPerPage) + 1;
-      if (currentPage !== pageOfIndex) currentPage = pageOfIndex;
-      renderTable();
-    } else renderTable();
-    setTimeout(() => {
-      const row = findRowElementByGlobalIndex(globalIdx);
-      if (row) {
-        const headerH = document.querySelector(".site-header")?.offsetHeight || 0;
-        const rowRect = row.getBoundingClientRect();
-        const rowHeight = rowRect.height || 32;
-        const dest = Math.max(0, rowRect.top + window.scrollY - headerH - rowHeight);
-        window.scrollTo({ top: dest, behavior: "smooth" });
-        setTimeout(() => insertContextualShare(row), 220);
-      }
-    }, 80);
-  }
-
-  /* ---------- Render Table ---------- */
-  function renderTable() {
-    const tbody = document.getElementById("accuracyBody");
-    const pagination = document.getElementById("paginationContainer");
-    if (!tbody) return;
-    tbody.innerHTML = "";
-    if (pagination) pagination.innerHTML = "";
-    const query = (searchInput?.value || "").trim().toLowerCase();
-    const hasQuery = !!query;
-    const start = isShowingAll ? 0 : (currentPage - 1) * rowsPerPage;
-    const end = isShowingAll ? filteredRows.length : start + rowsPerPage;
-    const regex = hasQuery ? new RegExp(`(${escapeRegExp(query)})`, "ig") : null;
-
-    filteredRows.slice(start, end).forEach((row, i) => {
-      const globalIndex = start + i;
-      const highlight = searchMatches.length && currentMatchIndex >= 0 && searchMatches[currentMatchIndex] === globalIndex;
-      const tds = row.map((c, ci) => { let content = c; if (hasQuery && ci === nameColIdx && regex) content = c.replace(regex, "<strong>$1</strong>"); return `<td class="px-3 py-2 text-center">${content}</td>`; }).join("");
-      tbody.insertAdjacentHTML("beforeend", `<tr class="${highlight?'pulse-row':''}" data-global-index="${globalIndex}">${tds}</tr>`);
-    });
-
-    if (!isShowingAll) renderPagination();
-  }
-
-  /* ---------- Pagination ---------- */
-  function renderPagination() {
-    const container = document.getElementById("paginationContainer");
-    if (!container) return;
-    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
-    container.innerHTML = "";
-    if (totalPages <= 1) return;
-    const makeBtn = (t, h, disabled = false, active = false) => {
-      const b = document.createElement("button");
-      b.textContent = t;
-      b.className = "px-2 py-1 mx-1 rounded " + (active ? "bg-red-600 text-white" : "bg-gray-700/60 hover:bg-gray-600");
-      b.disabled = disabled;
-      b.onclick = h;
-      container.appendChild(b);
-    };
-    makeBtn("« Prev", () => { if (currentPage>1){currentPage--; renderTable(); setTimeout(()=>{ if(lastMatchedGlobalIndex!==null && Math.floor(lastMatchedGlobalIndex/rowsPerPage)+1===currentPage) scrollToGlobalIndex(lastMatchedGlobalIndex); },80); } }, currentPage===1);
-    const maxBtns=5; let s=Math.max(1,currentPage-Math.floor(maxBtns/2)); let e=Math.min(totalPages,s+maxBtns-1); if(e-s<maxBtns-1) s=Math.max(1,e-maxBtns+1);
-    for(let i=s;i<=e;i++) makeBtn(i,()=>{ currentPage=i; renderTable(); setTimeout(()=>{ if(lastMatchedGlobalIndex!==null && Math.floor(lastMatchedGlobalIndex/rowsPerPage)+1===currentPage) scrollToGlobalIndex(lastMatchedGlobalIndex); },80); },false,i===currentPage);
-    makeBtn("Next »",()=>{if(currentPage<totalPages){currentPage++; renderTable();}},currentPage===totalPages);
-  }
-
-  /* ---------- Search ---------- */
-  if (searchInput) {
-    searchInput.addEventListener("input", ()=>{
-      const f = searchInput.value.trim().toLowerCase();
-      if(clearBtn) clearBtn.classList.toggle("hidden",!searchInput.value);
-      searchMatches=[]; currentMatchIndex=-1; removeContextualShare();
-      if(!f){
-        filteredRows=[...allRows];
-        if(lastMatchedGlobalIndex!==null){ currentPage=Math.floor(lastMatchedGlobalIndex/rowsPerPage)+1; renderTable(); setTimeout(()=>scrollToGlobalIndex(lastMatchedGlobalIndex),100); }
-        else renderTable(); return;
-      }
-      filteredRows=[...allRows];
-      allRows.forEach((row,idx)=>{ if(row.join(" ").toLowerCase().includes(f)) searchMatches.push(idx); });
-      if(searchMatches.length){ currentMatchIndex=0; lastMatchedGlobalIndex=searchMatches[currentMatchIndex]; lastMatchedPage=Math.floor(lastMatchedGlobalIndex/rowsPerPage)+1;
-        if(isAndroidChrome) renderTable(); else { currentPage=Math.floor(searchMatches[0]/rowsPerPage)+1; renderTable(); scrollToGlobalIndex(lastMatchedGlobalIndex); } }
-      else renderTable();
-    });
-    searchInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter"&&searchMatches.length){ e.preventDefault(); currentMatchIndex=(searchMatches.length>1)?(currentMatchIndex+1)%searchMatches.length:0; lastMatchedGlobalIndex=searchMatches[currentMatchIndex]; lastMatchedPage=Math.floor(lastMatchedGlobalIndex/rowsPerPage)+1; if(isAndroidChrome) renderTable(); else { if(!isShowingAll) currentPage=Math.floor(searchMatches[currentMatchIndex]/rowsPerPage)+1; renderTable(); scrollToGlobalIndex(lastMatchedGlobalIndex); } } });
-  }
-
-  if(clearBtn){
-    clearBtn.addEventListener("click",()=>{
-      if(searchInput) searchInput.value="";
-      clearBtn.classList.add("hidden");
-      searchMatches=[]; currentMatchIndex=-1; filteredRows=[...allRows];
-      const shareBtn=document.getElementById("contextualShareBtn");
-      if(shareBtn){ if(shareButtonFadeTimer){clearTimeout(shareButtonFadeTimer); shareButtonFadeTimer=null;} shareBtn.classList.remove("hidden"); shareButtonFadeTimer=setTimeout(()=>{ shareBtn.classList.add("hidden"); },3000);}
-      if(lastMatchedGlobalIndex!==null){ currentPage=Math.floor(lastMatchedGlobalIndex/rowsPerPage)+1; removeContextualShare(); renderTable(); setTimeout(()=>scrollToGlobalIndex(lastMatchedGlobalIndex),100); } else { removeContextualShare(); renderTable(); }
-    });
-  }
-
-  /* ---------- Share ---------- */
-  function detectBrowserShareSupport(){ return { isAndroidChrome, isChromeIOS: ua.includes("crios") }; }
-  async function shareScore(){
-    if(!searchMatches.length && lastMatchedGlobalIndex===null){ showWarning("Please search for your name before sharing."); return; }
-    const { isChromeIOS } = detectBrowserShareSupport();
-    const btn = contextualShareBtn || document.getElementById("shareRankingBtn");
-    if(!btn) return;
-    const originalLabel=btn.textContent||btn.innerText||"Share My Score";
-    btn.disabled=true;
-    if(btn===contextualShareBtn) btn.textContent="Generating…";
-    try{
-      const file=await buildSnapshotFile();
-      if(!isChromeIOS && navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({title:"British Classic Fantasy League 2025 🇬🇧",text:"Check out my accuracy score!",files:[file]}); }
-      else{ const url=URL.createObjectURL(file); const link=document.createElement("a"); link.href=url; link.download=file.name; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url); }
-    }catch(err){ console.error("Share failed:",err);}
-    finally{ btn.disabled=false; if(btn===contextualShareBtn) btn.textContent=originalLabel; }
-  }
-
-  async function buildSnapshotFile(){
-    const total=allRows.length;
-    const matchIndex=(lastMatchedGlobalIndex!==null && lastMatchedGlobalIndex!==undefined)?lastMatchedGlobalIndex:(searchMatches.length?searchMatches[currentMatchIndex]:0);
-    const safeIndex=(typeof matchIndex==="number" && matchIndex>=0 && matchIndex<allRows.length)?matchIndex:0;
-    let start=Math.max(0,safeIndex-4), end=Math.min(total-1,safeIndex+5);
-    if(safeIndex<10){ start=0; end=Math.min(total-1,9); } else if(total-safeIndex<=5){ start=Math.max(0,total-10); end=total-1; }
-    const slice=allRows.slice(start,end+1); while(slice.length<10) slice.push(new Array(headerRow.length).fill(""));
-        const rowsHtml = slice.map((r, i) => {
-      const actual = start + i;
-      const bold = actual === safeIndex ? "font-weight:bold;" : "";
-      return `<tr style="${bold}">${r.map(c => `<td style="padding:4px;text-align:center;border:1px solid #ddd;">${c}</td>`).join("")}</tr>`;
-    }).join("");
-
-    const html = `
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <title>Accuracy Snapshot</title>
-        </head>
-        <body>
-          <table style="border-collapse: collapse; width:100%; font-family: Arial, sans-serif; font-size:12px;">
-            <thead>
-              <tr>
-                ${headerRow.map(h => `<th style="padding:4px;text-align:center;border:1px solid #ddd;background:#f2f2f2;">${h}</th>`).join("")}
-              </tr>
-            </thead>
-            <tbody>
-              ${rowsHtml}
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `;
-    return new File([html], "accuracy_snapshot.html", { type: "text/html" });
-  }
-
-  /* ---------- Initialize ---------- */
-  loadAccuracyScores();
-
-  /* ---------- Service Worker Registration ---------- */
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js')
-      .then(reg => console.log('Service Worker registered:', reg))
-      .catch(err => console.warn('Service Worker registration failed:', err));
-  }
 });
-</script>
+  </script>
 </body>
 </html>
